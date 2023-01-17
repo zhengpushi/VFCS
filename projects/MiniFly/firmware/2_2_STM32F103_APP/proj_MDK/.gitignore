@@ -1,0 +1,5 @@
+obj/
+JLinkLog.txt
+*.uvguix.*
+*.uvoptx
+*.bin

@@ -1,0 +1,34 @@
+# ===================================================================
+# Copyright 2022 ZhengPu Shi
+#  This file is part of VFCS. It is distributed under the MIT
+#  "expat license". You should have recieved a LICENSE file with it.
+# ===================================================================
+
+-R ./VFCS VFCS
+
+-arg -w -arg -notation-overridden
+-arg -w -arg -deprecated-hint-without-locality
+-arg -w -arg -redundant-canonical-projection
+-arg -w -arg -ambiguous-paths
+-arg -w -arg -local-declaration
+
+# ====== Math ====================
+VFCS/Math/DifferenceEquation/DifferenceEquation.v
+#VFCS/Math/Complex/Complex.v
+#VFCS/Math/Quaternion/Quaternion.v
+VFCS/Math/LaplaceTransform/LaplaceTransform.v
+
+# ====== Automatic Control System ====================
+VFCS/ACS/Diagram.v
+VFCS/ACS/DifferentialEquation.v
+VFCS/ACS/RationalExpression.v
+
+# ====== Flight Control System ====================
+VFCS/FCS/Propulsion/RAux.v
+VFCS/FCS/Propulsion/PSModel.v
+VFCS/FCS/Propulsion/PSExtension.v
+VFCS/FCS/Propulsion/Q1.v
+VFCS/FCS/Propulsion/Q2.v
+VFCS/FCS/Propulsion/Q3.v
+VFCS/FCS/Propulsion/Q4.v
+#VFCS/FCS/Propulsion/ExtractionThis.v
