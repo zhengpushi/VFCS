@@ -1,0 +1,24 @@
+# ignore tex temporary files
+*.aux
+*.log
+*.out
+*.gz
+*.pdf
+*.toc
+*.aux
+*.log
+*.out
+*.gz
+*.pdf
+*.toc
+*.4ct
+*.4tc
+*.idv
+*.lg
+*.tmp
+*.xref
+*.dvi
+*.png
+
+# don't ignore
+!/figures/*.pdf

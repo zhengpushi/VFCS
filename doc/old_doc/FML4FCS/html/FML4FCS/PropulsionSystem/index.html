@@ -1,0 +1,2881 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>FML4FCS - Propulsion System</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
+<meta name="generator" content="TeX4ht (https://tug.org/tex4ht/)"> 
+<meta name="originator" content="TeX4ht (https://tug.org/tex4ht/)"> 
+<!-- html --> 
+<meta name="src" content="index.tex"> 
+<link rel="stylesheet" type="text/css" href="index.css"> 
+</head><body 
+>
+<script src="/FML4FCS/web-common/jquery-3.6.0.min.js"></script>
+<div id="header"></div><script type="text/javascript">$("#header").load("/FML4FCS/web-common/header.html");</script>
+<!--l. 57--><p class="noindent" >
+                                                                                
+
+                                                                                
+<!--l. 57--><p class="indent" >
+                                                                                
+
+                                                                                
+<div class="center" 
+>
+<!--l. 57--><p class="noindent" >
+<!--l. 57--><p class="noindent" ><span 
+class="cmr-17">Formal Method Library for Propulsion System of FCS</span>
+<div class="tabular"> <table id="TBL-1" class="tabular" 
+cellspacing="0" cellpadding="0"  
+><colgroup id="TBL-1-1g"><col 
+id="TBL-1-1"></colgroup><tr  
+ style="vertical-align:baseline;" id="TBL-1-1-"><td  style="white-space:nowrap; text-align:center;" id="TBL-1-1-1"  
+class="td11"> <span 
+class="cmr-12">Zhengpu Shi  </span></td>
+</tr><tr 
+class="vspace" style="font-size:10.00002pt"><td 
+>&nbsp;</td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-1-2-"><td  style="white-space:nowrap; text-align:center;" id="TBL-1-2-1"  
+class="td11">  <span 
+class="cmr-12">Draft V1.0   </span></td></tr></table></div>
+<!--l. 57--><p class="noindent" ><span 
+class="cmr-12">Oct 25, 2020</span></div>
+<!--l. 58--><p class="indent" >
+                                                                                
+
+                                                                                
+    <h3 class="likesectionHead"><a 
+ id="x1-1000"></a>Contents</h3>
+    <div class="tableofcontents">
+    <span class="sectionToc" >1 <a 
+href="#x1-20001" id="QQ2-1-2">Introduction</a></span>
+<br />    <span class="sectionToc" >2 <a 
+href="#x1-30002" id="QQ2-1-3">Propulsion System (PS)</a></span>
+<br />    &#x00A0;<span class="subsectionToc" >2.1 <a 
+href="#x1-40002.1" id="QQ2-1-4">Common Module</a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.1.1 <a 
+href="#x1-50002.1.1" id="QQ2-1-5">Definition of constants</a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.1.2 <a 
+href="#x1-60002.1.2" id="QQ2-1-6">Definition of variables</a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.1.3 <a 
+href="#x1-70002.1.3" id="QQ2-1-7">Variable Relation Graph (VRG) </a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.1.4 <a 
+href="#x1-80002.1.4" id="QQ2-1-9">Definition of basic functions</a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.1.5 <a 
+href="#x1-90002.1.5" id="QQ2-1-10">Definitions of basic inverse functions</a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.1.6 <a 
+href="#x1-100002.1.6" id="QQ2-1-11">Definitions of extended functions</a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.1.7 <a 
+href="#x1-110002.1.7" id="QQ2-1-12">Definitions of advanced extended functions</a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.1.8 <a 
+href="#x1-120002.1.8" id="QQ2-1-13">Simplest Form of Functions (SFFs)</a></span>
+<br />    &#x00A0;<span class="subsectionToc" >2.2 <a 
+href="#x1-130002.2" id="QQ2-1-16">Formal verification</a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.2.1 <a 
+href="#x1-140002.2.1" id="QQ2-1-17">Customized automatic tactic</a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.2.2 <a 
+href="#x1-150002.2.2" id="QQ2-1-18">Verification of equality of function transformation</a></span>
+<br />    &#x00A0;<span class="subsectionToc" >2.3 <a 
+href="#x1-160002.3" id="QQ2-1-19">Example 1: Estimate the longest hovering time</a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.3.1 <a 
+href="#x1-170002.3.1" id="QQ2-1-20">Analysis of the question</a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.3.2 <a 
+href="#x1-180002.3.2" id="QQ2-1-21">General calculation step</a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.3.3 <a 
+href="#x1-190002.3.3" id="QQ2-1-22">Direct calculate formulas</a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.3.4 <a 
+href="#x1-200002.3.4" id="QQ2-1-23">Vefiry direct formulas</a></span>
+<br />    &#x00A0;<span class="subsectionToc" >2.4 <a 
+href="#x1-210002.4" id="QQ2-1-24">Example 2: Estimate system effencicy at max throttle</a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.4.1 <a 
+href="#x1-220002.4.1" id="QQ2-1-25">Analysis of the question</a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.4.2 <a 
+href="#x1-230002.4.2" id="QQ2-1-26">General calculation step</a></span>
+<br />    &#x00A0;<span class="subsectionToc" >2.5 <a 
+href="#x1-240002.5" id="QQ2-1-27">Example 3: Estimate maximum load and maximum pitch Angle</a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.5.1 <a 
+href="#x1-250002.5.1" id="QQ2-1-28">Analysis of the question</a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.5.2 <a 
+href="#x1-260002.5.2" id="QQ2-1-29">General calculation step</a></span>
+<br />    &#x00A0;<span class="subsectionToc" >2.6 <a 
+href="#x1-270002.6" id="QQ2-1-30">Example 4: Estimate maximum flat flight speed and distance</a></span>
+<br />    &#x00A0;&#x00A0;<span class="subsubsectionToc" >2.6.1 <a 
+href="#x1-280002.6.1" id="QQ2-1-31">Analysis of the question</a></span>
+<br />    <span class="sectionToc" >3 <a 
+href="#x1-290003" id="QQ2-1-32">Summary</a></span>
+    </div>
+                                                                                
+
+                                                                                
+    <h3 class="sectionHead"><span class="titlemark">1   </span> <a 
+ id="x1-20001"></a>Introduction</h3>
+<!--l. 78--><p class="noindent" >This is one part of the FML4FCS project. For detail information, please refer the introduction of the
+whole project in this website.
+<!--l. 82--><p class="indent" >
+                                                                                
+
+                                                                                
+    <h3 class="sectionHead"><span class="titlemark">2   </span> <a 
+ id="x1-30002"></a>Propulsion System (PS)</h3>
+<!--l. 87--><p class="noindent" >The modeling of Propulsion System (we called PS) is a basic condition for designing the flight control
+system.
+<!--l. 89--><p class="indent" >    We set up a module named Common Module which related to the general issues. Then we set up
+some modules named like Example* Module for several specific problems.
+<!--l. 92--><p class="noindent" >
+    <h4 class="subsectionHead"><span class="titlemark">2.1   </span> <a 
+ id="x1-40002.1"></a>Common Module</h4>
+<!--l. 94--><p class="noindent" >
+    <h5 class="subsubsectionHead"><span class="titlemark">2.1.1   </span> <a 
+ id="x1-50002.1.1"></a>Definition of constants</h5>
+<!--l. 95--><p class="noindent" >Constants refer to values that do not change after the aircraft is designed, such as propeller size. We
+have slightly simplified the aerodynamics, and set the flight altitude and ambient temperature to
+constants, so the air pressure and air density also become constants. The reason for this is that their
+changes during low-altitude flight are very small, almost negligible, and in order to highlight other
+more important variables, simplifying them to constants will make the entire model more
+concise.
+<!--l. 99--><p class="indent" >    Although the Coq system supports to using Unicode characters as identifier, we still use ASCII
+text represent an identify. Because other languages may not support this feature and we need to
+maintain naming consistency.
+                                                                                
+
+                                                                                
+    <div class="tabular">
+ <table id="TBL-2" class="tabular" 
+cellspacing="0" cellpadding="0"  
+><colgroup id="TBL-2-1g"><col 
+id="TBL-2-1"></colgroup><colgroup id="TBL-2-2g"><col 
+id="TBL-2-2"></colgroup><colgroup id="TBL-2-3g"><col 
+id="TBL-2-3"></colgroup><colgroup id="TBL-2-4g"><col 
+id="TBL-2-4"></colgroup><colgroup id="TBL-2-5g"><col 
+id="TBL-2-5"></colgroup><tr  
+ style="vertical-align:baseline;" id="TBL-2-1-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-1-1"  
+class="td11"> <span 
+class="cmbx-8">Symbol  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-1-2"  
+class="td11">  <span 
+class="cmbx-8">Identifier  </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-1-3"  
+class="td11">                      <span 
+class="cmbx-8">Meaning  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-1-4"  
+class="td11">   <span 
+class="cmbx-8">Unit    </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-1-5"  
+class="td11"> <span 
+class="cmbx-8">Remark       </span></td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-2-"><td colspan="3" style="white-space:nowrap; text-align:center;" id="TBL-2-2-1"  
+class="td11"></td>                                  <div class="multicolumn"  style="white-space:nowrap; text-align:center;"><span 
+class="cmr-8">E N V I R O N M E N T</span></div></tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-3-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-3-1"  
+class="td11"> <span 
+class="cmmi-8">T</span><sub>
+<span 
+class="cmr-6">0</span></sub>       </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-3-2"  
+class="td11">     <span 
+class="cmr-8">T</span><span 
+class="cmr-8">_0       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-3-3"  
+class="td11">            <span 
+class="cmr-8">standard temperature  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-3-4"  
+class="td11">     <span 
+class="cmmi-8">K      </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-3-5"  
+class="td11"> <span 
+class="cmr-8">273.15K         </span></td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-4-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-4-1"  
+class="td11">    <span 
+class="cmmi-8">p</span><sub><span 
+class="cmr-6">0</span></sub>        </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-4-2"  
+class="td11">     <span 
+class="cmr-8">p</span><span 
+class="cmr-8">_0       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-4-3"  
+class="td11">     <span 
+class="cmr-8">standard atmospheric pressur  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-4-4"  
+class="td11">    <span 
+class="cmmi-8">Pa     </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-4-5"  
+class="td11"> <span 
+class="cmr-8">101</span><span 
+class="cmmi-8">.</span><span 
+class="cmr-8">325 </span><span 
+class="cmsy-8">&#x00D7; </span><span 
+class="cmr-8">10</span><sup><span 
+class="cmr-6">5</span></sup>  </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-5-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-5-1"  
+class="td11">    <span 
+class="cmmi-8">&#x03C1;</span><sub><span 
+class="cmr-6">0</span></sub>        </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-5-2"  
+class="td11">    <span 
+class="cmr-8">rho</span><span 
+class="cmr-8">_0      </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-5-3"  
+class="td11">     <span 
+class="cmr-8">standard atmospheric density  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-5-4"  
+class="td11">   <span 
+class="cmmi-8">kg&#x2215;m</span><sup><span 
+class="cmr-6">3</span></sup>    </td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-5-5"  
+class="td11"> <span 
+class="cmr-8">1.293             </span></td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-6-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-6-1"  
+class="td11">     <span 
+class="cmmi-8">h      </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-6-2"  
+class="td11">      <span 
+class="cmr-8">h         </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-6-3"  
+class="td11">                        <span 
+class="cmr-8">Altitude  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-6-4"  
+class="td11">     <span 
+class="cmmi-8">m      </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-6-5"  
+class="td11">               </td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-7-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-7-1"  
+class="td11"> <span 
+class="cmmi-8">T</span><sub>
+<span 
+class="cmmi-6">t</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-7-2"  
+class="td11">     <span 
+class="cmr-8">T</span><span 
+class="cmr-8">_t       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-7-3"  
+class="td11">        <span 
+class="cmr-8">Environment temperature  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-7-4"  
+class="td11">    <sup><span 
+class="cmsy-6">&#x2218;</span></sup><span 
+class="cmr-8">C      </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-7-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-8-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-8-1"  
+class="td11">    <span 
+class="cmmi-8">n</span><sub><span 
+class="cmmi-6">r</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-8-2"  
+class="td11">     <span 
+class="cmr-8">n</span><span 
+class="cmr-8">_r        </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-8-3"  
+class="td11">                <span 
+class="cmr-8">Number of rotors  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-8-4"  
+class="td11">   <span 
+class="cmmi-8">piece    </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-8-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-9-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-9-1"  
+class="td11">     <span 
+class="cmmi-8">G      </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-9-2"  
+class="td11">      <span 
+class="cmr-8">G         </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-9-3"  
+class="td11">                    <span 
+class="cmr-8">Total weight  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-9-4"  
+class="td11">     <span 
+class="cmmi-8">N      </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-9-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-10-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-10-1"  
+class="td11">   <span 
+class="cmmi-8">I</span><sub><span 
+class="cmmi-6">other</span></sub>    </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-10-2"  
+class="td11">   <span 
+class="cmr-8">I</span><span 
+class="cmr-8">_other     </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-10-3"  
+class="td11">                   <span 
+class="cmr-8">Other current  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-10-4"  
+class="td11">     <span 
+class="cmmi-8">A      </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-10-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-11-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-11-1"  
+class="td11">     <span 
+class="cmmi-8">p      </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-11-2"  
+class="td11">      <span 
+class="cmr-8">p         </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-11-3"  
+class="td11">             <span 
+class="cmr-8">atmospheric pressure  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-11-4"  
+class="td11">    <span 
+class="cmmi-8">Pa     </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-11-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-12-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-12-1"  
+class="td11">     <span 
+class="cmmi-8">&#x03C1;      </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-12-2"  
+class="td11">     <span 
+class="cmr-8">rho        </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-12-3"  
+class="td11">                         <span 
+class="cmr-8">density  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-12-4"  
+class="td11">   <span 
+class="cmmi-8">kg&#x2215;m</span><sup><span 
+class="cmr-6">3</span></sup>    </td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-12-5"  
+class="td11">               </td>
+</tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-13-"><td colspan="3" style="white-space:nowrap; text-align:center;" id="TBL-2-13-1"  
+class="td11"></td>                                    <div class="multicolumn"  style="white-space:nowrap; text-align:center;"><span 
+class="cmr-8">P R O P E L L E R</span></div></tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-14-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-14-1"  
+class="td11"> <span 
+class="cmmi-8">D</span><sub>
+<span 
+class="cmmi-6">p</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-14-2"  
+class="td11">     <span 
+class="cmr-8">D</span><span 
+class="cmr-8">_p       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-14-3"  
+class="td11">               <span 
+class="cmr-8">Propeller diameter  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-14-4"  
+class="td11">     <span 
+class="cmmi-8">m      </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-14-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-15-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-15-1"  
+class="td11">    <span 
+class="cmmi-8">H</span><sub><span 
+class="cmmi-6">p</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-15-2"  
+class="td11">     <span 
+class="cmr-8">H</span><span 
+class="cmr-8">_p       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-15-3"  
+class="td11">         <span 
+class="cmr-8">Propeller geometric pitch  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-15-4"  
+class="td11">     <span 
+class="cmmi-8">m      </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-15-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-16-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-16-1"  
+class="td11">    <span 
+class="cmmi-8">B</span><sub><span 
+class="cmmi-6">p</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-16-2"  
+class="td11">     <span 
+class="cmr-8">B</span><span 
+class="cmr-8">_p       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-16-3"  
+class="td11">               <span 
+class="cmr-8">Number of blades  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-16-4"  
+class="td11">   <span 
+class="cmmi-8">piece    </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-16-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-17-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-17-1"  
+class="td11">    <span 
+class="cmmi-8">G</span><sub><span 
+class="cmmi-6">p</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-17-2"  
+class="td11">     <span 
+class="cmr-8">G</span><span 
+class="cmr-8">_p       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-17-3"  
+class="td11">                 <span 
+class="cmr-8">Propeller weight  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-17-4"  
+class="td11">     <span 
+class="cmmi-8">N      </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-17-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-18-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-18-1"  
+class="td11">   <span 
+class="cmmi-8">PP</span><sub><span 
+class="cmmi-6">A</span></sub>    </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-18-2"  
+class="td11">    <span 
+class="cmr-8">PP</span><span 
+class="cmr-8">_A      </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-18-3"  
+class="td11">            <span 
+class="cmr-8">Propeller parameter*  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-18-4"  
+class="td11">     <span 
+class="cmr-8">-        </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-18-5"  
+class="td11"> <span class="cite"><span 
+class="cmr-8">[</span><a 
+href="#Xqq"><span 
+class="cmr-8">1</span></a><span 
+class="cmr-8">]</span></span><span 
+class="cmr-8">[p67]           </span></td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-19-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-19-1"  
+class="td11">   <span 
+class="cmmi-8">PP</span><sub><span 
+class="cmmi-6">&#x03B5;</span></sub>     </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-19-2"  
+class="td11">  <span 
+class="cmr-8">PP</span><span 
+class="cmr-8">_epsilon  </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-19-3"  
+class="td11">            <span 
+class="cmr-8">Propeller parameter*  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-19-4"  
+class="td11">     <span 
+class="cmr-8">-        </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-19-5"  
+class="td11"> <span class="cite"><span 
+class="cmr-8">[</span><a 
+href="#Xqq"><span 
+class="cmr-8">1</span></a><span 
+class="cmr-8">]</span></span><span 
+class="cmr-8">[p67]           </span></td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-20-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-20-1"  
+class="td11">   <span 
+class="cmmi-8">PP</span><sub><span 
+class="cmmi-6">&#x03BB;</span></sub>     </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-20-2"  
+class="td11"> <span 
+class="cmr-8">PP</span><span 
+class="cmr-8">_lambda  </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-20-3"  
+class="td11">            <span 
+class="cmr-8">Propeller parameter*  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-20-4"  
+class="td11">     <span 
+class="cmr-8">-        </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-20-5"  
+class="td11"> <span class="cite"><span 
+class="cmr-8">[</span><a 
+href="#Xqq"><span 
+class="cmr-8">1</span></a><span 
+class="cmr-8">]</span></span><span 
+class="cmr-8">[p67]           </span></td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-21-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-21-1"  
+class="td11">   <span 
+class="cmmi-8">PP</span><sub><span 
+class="cmmi-6">&#x03B6;</span></sub>     </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-21-2"  
+class="td11">   <span 
+class="cmr-8">PP</span><span 
+class="cmr-8">_zeta    </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-21-3"  
+class="td11">            <span 
+class="cmr-8">Propeller parameter*  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-21-4"  
+class="td11">     <span 
+class="cmr-8">-        </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-21-5"  
+class="td11"> <span class="cite"><span 
+class="cmr-8">[</span><a 
+href="#Xqq"><span 
+class="cmr-8">1</span></a><span 
+class="cmr-8">]</span></span><span 
+class="cmr-8">[p67]           </span></td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-22-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-22-1"  
+class="td11">   <span 
+class="cmmi-8">PP</span><sub><span 
+class="cmmi-6">e</span></sub>     </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-22-2"  
+class="td11">    <span 
+class="cmr-8">PP</span><span 
+class="cmr-8">_e      </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-22-3"  
+class="td11">            <span 
+class="cmr-8">Propeller parameter*  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-22-4"  
+class="td11">     <span 
+class="cmr-8">-        </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-22-5"  
+class="td11"> <span class="cite"><span 
+class="cmr-8">[</span><a 
+href="#Xqq"><span 
+class="cmr-8">1</span></a><span 
+class="cmr-8">]</span></span><span 
+class="cmr-8">[p67]           </span></td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-23-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-23-1"  
+class="td11">   <span 
+class="cmmi-8">PP</span><sub><span 
+class="cmmi-6">K</span><span 
+class="cmr-6">0</span></sub>     </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-23-2"  
+class="td11">   <span 
+class="cmr-8">PP</span><span 
+class="cmr-8">_K0     </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-23-3"  
+class="td11">            <span 
+class="cmr-8">Propeller parameter*  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-23-4"  
+class="td11">     <span 
+class="cmr-8">-        </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-23-5"  
+class="td11"> <span class="cite"><span 
+class="cmr-8">[</span><a 
+href="#Xqq"><span 
+class="cmr-8">1</span></a><span 
+class="cmr-8">]</span></span><span 
+class="cmr-8">[p67]           </span></td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-24-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-24-1"  
+class="td11">   <span 
+class="cmmi-8">PP</span><sub><span 
+class="cmmi-6">&#x03B1;</span><span 
+class="cmr-6">0</span></sub>     </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-24-2"  
+class="td11">  <span 
+class="cmr-8">PP</span><span 
+class="cmr-8">_alpha0   </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-24-3"  
+class="td11">            <span 
+class="cmr-8">Propeller parameter*  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-24-4"  
+class="td11">     <span 
+class="cmr-8">-        </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-24-5"  
+class="td11"> <span class="cite"><span 
+class="cmr-8">[</span><a 
+href="#Xqq"><span 
+class="cmr-8">1</span></a><span 
+class="cmr-8">]</span></span><span 
+class="cmr-8">[p67]           </span></td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-25-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-25-1"  
+class="td11">    <span 
+class="cmmi-8">C</span><sub><span 
+class="cmmi-6">fd</span></sub>     </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-25-2"  
+class="td11">    <span 
+class="cmr-8">C</span><span 
+class="cmr-8">_fd       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-25-3"  
+class="td11">          <span 
+class="cmr-8">Zero-lift drag coefficient  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-25-4"  
+class="td11">     <span 
+class="cmr-8">-        </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-25-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-26-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-26-1"  
+class="td11">    <span 
+class="cmmi-8">C</span><sub><span 
+class="cmmi-6">T</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-26-2"  
+class="td11">     <span 
+class="cmr-8">C</span><span 
+class="cmr-8">_T       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-26-3"  
+class="td11">                <span 
+class="cmr-8">Thrust coefficient  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-26-4"  
+class="td11">     <span 
+class="cmsy-8">-   </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-26-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-27-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-27-1"  
+class="td11">    <span 
+class="cmmi-8">C</span><sub><span 
+class="cmmi-6">M</span></sub>     </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-27-2"  
+class="td11">    <span 
+class="cmr-8">C</span><span 
+class="cmr-8">_M       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-27-3"  
+class="td11">                <span 
+class="cmr-8">Torque coefficient  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-27-4"  
+class="td11">     <span 
+class="cmsy-8">-   </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-27-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-28-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-28-1"  
+class="td11">    <span 
+class="cmmi-8">C</span><sub><span 
+class="cmmi-6">d</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-28-2"  
+class="td11">     <span 
+class="cmr-8">C</span><span 
+class="cmr-8">_d       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-28-3"  
+class="td11">                 <span 
+class="cmr-8">Drag coefficient  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-28-4"  
+class="td11">     <span 
+class="cmsy-8">-   </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-28-5"  
+class="td11">               </td>
+</tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-29-"><td colspan="3" style="white-space:nowrap; text-align:center;" id="TBL-2-29-1"  
+class="td11"></td>                                        <div class="multicolumn"  style="white-space:nowrap; text-align:center;"><span 
+class="cmr-8">M O T O R</span></div>
+</tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-30-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-30-1"  
+class="td11">   <span 
+class="cmmi-8">K</span><sub><span 
+class="cmmi-6">V </span><span 
+class="cmr-6">0</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-30-2"  
+class="td11">    <span 
+class="cmr-8">K</span><span 
+class="cmr-8">_V0      </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-30-3"  
+class="td11">       <span 
+class="cmr-8">Nominal no-load motor KV  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-30-4"  
+class="td11"> <span 
+class="cmmi-8">r&#x2215;min&#x2215;V  </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-30-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-31-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-31-1"  
+class="td11">   <span 
+class="cmmi-8">U</span><sub><span 
+class="cmmi-6">m</span><span 
+class="cmr-6">0</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-31-2"  
+class="td11">    <span 
+class="cmr-8">U</span><span 
+class="cmr-8">_m0      </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-31-3"  
+class="td11">    <span 
+class="cmr-8">Nominal no-load motor voltage  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-31-4"  
+class="td11">     <span 
+class="cmmi-8">V       </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-31-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-32-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-32-1"  
+class="td11">    <span 
+class="cmmi-8">I</span><sub><span 
+class="cmmi-6">m</span><span 
+class="cmr-6">0</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-32-2"  
+class="td11">    <span 
+class="cmr-8">I</span><span 
+class="cmr-8">_m0      </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-32-3"  
+class="td11">    <span 
+class="cmr-8">Nominal no-load motor current  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-32-4"  
+class="td11">     <span 
+class="cmmi-8">A      </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-32-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-33-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-33-1"  
+class="td11">  <span 
+class="cmmi-8">I</span><sub><span 
+class="cmmi-6">mMax</span></sub>   </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-33-2"  
+class="td11">   <span 
+class="cmr-8">I</span><span 
+class="cmr-8">_mMax    </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-33-3"  
+class="td11">    <span 
+class="cmr-8">Maximum motor input current  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-33-4"  
+class="td11">     <span 
+class="cmmi-8">A      </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-33-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-34-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-34-1"  
+class="td11">    <span 
+class="cmmi-8">R</span><sub><span 
+class="cmmi-6">m</span></sub>     </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-34-2"  
+class="td11">    <span 
+class="cmr-8">R</span><span 
+class="cmr-8">_m       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-34-3"  
+class="td11">                <span 
+class="cmr-8">Motor resistance  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-34-4"  
+class="td11">     <span 
+class="cmr-8">&#x03A9;       </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-34-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-35-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-35-1"  
+class="td11">    <span 
+class="cmmi-8">G</span><sub><span 
+class="cmmi-6">m</span></sub>     </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-35-2"  
+class="td11">    <span 
+class="cmr-8">G</span><span 
+class="cmr-8">_m       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-35-3"  
+class="td11">                   <span 
+class="cmr-8">Motor weight  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-35-4"  
+class="td11">     <span 
+class="cmmi-8">N      </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-35-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-36-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-36-1"  
+class="td11">    <span 
+class="cmmi-8">K</span><sub><span 
+class="cmmi-6">E</span></sub>     </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-36-2"  
+class="td11">     <span 
+class="cmr-8">K</span><span 
+class="cmr-8">_E       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-36-3"  
+class="td11"> <span 
+class="cmr-8">Back-electromotive force constant  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-36-4"  
+class="td11">     <span 
+class="cmsy-8">-   </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-36-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-37-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-37-1"  
+class="td11">    <span 
+class="cmmi-8">K</span><sub><span 
+class="cmmi-6">T</span></sub>     </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-37-2"  
+class="td11">    <span 
+class="cmr-8">K</span><span 
+class="cmr-8">_T       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-37-3"  
+class="td11">                 <span 
+class="cmr-8">Torque constant  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-37-4"  
+class="td11">     <span 
+class="cmsy-8">-   </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-37-5"  
+class="td11">               </td>
+</tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-38-"><td colspan="3" style="white-space:nowrap; text-align:center;" id="TBL-2-38-1"  
+class="td11"></td>                                           <div class="multicolumn"  style="white-space:nowrap; text-align:center;"><span 
+class="cmr-8">E S C</span></div></tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-39-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-39-1"  
+class="td11"> <span 
+class="cmmi-8">I</span><sub>
+<span 
+class="cmmi-6">eMax</span></sub>    </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-39-2"  
+class="td11">   <span 
+class="cmr-8">I</span><span 
+class="cmr-8">_eMax     </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-39-3"  
+class="td11">    <span 
+class="cmr-8">Maximum ESC output current  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-39-4"  
+class="td11">     <span 
+class="cmmi-8">A      </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-39-5"  
+class="td11">               </td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-40-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-40-1"  
+class="td11"> <span 
+class="cmmi-8">R</span><sub>
+<span 
+class="cmmi-6">e</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-40-2"  
+class="td11">     <span 
+class="cmr-8">R</span><span 
+class="cmr-8">_e       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-40-3"  
+class="td11">                  <span 
+class="cmr-8">ESC resistance  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-40-4"  
+class="td11">     <span 
+class="cmr-8">&#x03A9;       </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-40-5"  
+class="td11">               </td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-41-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-41-1"  
+class="td11"> <span 
+class="cmmi-8">G</span><sub>
+<span 
+class="cmmi-6">e</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-41-2"  
+class="td11">     <span 
+class="cmr-8">G</span><span 
+class="cmr-8">_e       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-41-3"  
+class="td11">                     <span 
+class="cmr-8">ESC weight  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-41-4"  
+class="td11">     <span 
+class="cmmi-8">N      </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-41-5"  
+class="td11">               </td>
+</tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-42-"><td colspan="3" style="white-space:nowrap; text-align:center;" id="TBL-2-42-1"  
+class="td11"></td>                                      <div class="multicolumn"  style="white-space:nowrap; text-align:center;"><span 
+class="cmr-8">B A T T E R Y</span></div></tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-43-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-43-1"  
+class="td11"> <span 
+class="cmmi-8">R</span><sub>
+<span 
+class="cmmi-6">b</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-43-2"  
+class="td11">     <span 
+class="cmr-8">R</span><span 
+class="cmr-8">_b       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-43-3"  
+class="td11">               <span 
+class="cmr-8">Battery resistance  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-43-4"  
+class="td11">     <span 
+class="cmr-8">&#x03A9;       </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-43-5"  
+class="td11">               </td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-44-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-44-1"  
+class="td11"> <span 
+class="cmmi-8">U</span><sub>
+<span 
+class="cmmi-6">b</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-44-2"  
+class="td11">     <span 
+class="cmr-8">U</span><span 
+class="cmr-8">_b       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-44-3"  
+class="td11">                 <span 
+class="cmr-8">Battery voltage  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-44-4"  
+class="td11">     <span 
+class="cmmi-8">V       </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-44-5"  
+class="td11">               </td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-45-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-45-1"  
+class="td11"> <span 
+class="cmmi-8">C</span><sub>
+<span 
+class="cmmi-6">b</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-45-2"  
+class="td11">     <span 
+class="cmr-8">C</span><span 
+class="cmr-8">_b       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-45-3"  
+class="td11">                <span 
+class="cmr-8">Battery capacity  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-45-4"  
+class="td11">   <span 
+class="cmmi-8">mAh    </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-45-5"  
+class="td11">               </td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-46-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-46-1"  
+class="td11"> <span 
+class="cmmi-8">C</span><sub>
+<span 
+class="cmmi-6">min</span></sub>    </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-46-2"  
+class="td11">    <span 
+class="cmr-8">C</span><span 
+class="cmr-8">_min     </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-46-3"  
+class="td11">       <span 
+class="cmr-8">Battery minimum capacity  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-46-4"  
+class="td11">   <span 
+class="cmmi-8">mAh    </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-46-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-47-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-47-1"  
+class="td11">    <span 
+class="cmmi-8">K</span><sub><span 
+class="cmmi-6">b</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-47-2"  
+class="td11">     <span 
+class="cmr-8">K</span><span 
+class="cmr-8">_b       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-47-3"  
+class="td11">         <span 
+class="cmr-8">Maximum discharge rate  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-47-4"  
+class="td11">     <span 
+class="cmmi-8">C      </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-47-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-48-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-48-1"  
+class="td11">    <span 
+class="cmmi-8">G</span><sub><span 
+class="cmmi-6">b</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-48-2"  
+class="td11">     <span 
+class="cmr-8">G</span><span 
+class="cmr-8">_b       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-2-48-3"  
+class="td11">                  <span 
+class="cmr-8">Battery weight  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-48-4"  
+class="td11">     <span 
+class="cmmi-8">N      </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-2-48-5"  
+class="td11">               </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-2-49-"><td  style="white-space:nowrap; text-align:center;" id="TBL-2-49-1"  
+class="td11">           </td> </tr></table></div>
+<!--l. 169--><p class="indent" >    Notice that, some constants are composed by more basic constants. We give all the relationship of
+them.
+<!--l. 171--><p class="indent" >    Definition of <span 
+class="cmmi-10">p</span>, see <span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.66, 4.4]
+    <table 
+class="equation"><tr><td><a 
+ id="x1-5001r1"></a>
+    <center class="math-display" >
+<img 
+src="index0x.png" alt="     (            h   )5.2561
+p = p0 1- 0.0065 T-+-T--
+                 0   t
+" class="math-display" ></center></td><td class="equation-label">(2.1)</td></tr></table>
+<!--l. 174--><p class="nopar" >
+<!--l. 176--><p class="indent" >    Definition of <span 
+class="cmmi-10">&#x03C1;</span>, see <span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.66, 4.3]
+                                                                                
+
+                                                                                
+    <table 
+class="equation"><tr><td><a 
+ id="x1-5002r2"></a>
+    <center class="math-display" >
+<img 
+src="index1x.png" alt="&#x03C1; = ---T0p---&#x03C1;
+    p0(T0 + Tt) 0
+" class="math-display" ></center></td><td class="equation-label">(2.2)</td></tr></table>
+<!--l. 179--><p class="nopar" >
+<!--l. 181--><p class="indent" >    Definition of <span 
+class="cmmi-10">C</span><sub><span 
+class="cmmi-7">T</span></sub>, see <span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.67, 4.6]
+    <table 
+class="equation"><tr><td><a 
+ id="x1-5003r3"></a>
+    <center class="math-display" >
+<img 
+src="index2x.png" alt="          3  2    &#x03B5;arctan&#x03C0;HDpP-- &#x03B1;0
+CT = 0.25&#x03C0; &#x03BB; &#x03B6;BpK0 ----&#x03C0;A-+-K0----
+" class="math-display" ></center></td><td class="equation-label">(2.3)</td></tr></table>
+<!--l. 184--><p class="nopar" >
+<!--l. 186--><p class="indent" >    Definition of <span 
+class="cmmi-10">C</span><sub><span 
+class="cmmi-7">d</span></sub>, see <span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.67, 4.7]
+    <table 
+class="equation"><tr><td><a 
+ id="x1-5004r4"></a>
+    <center class="math-display" >
+<img 
+src="index3x.png" alt="                (       Hp-    )2
+          &#x03C0;AK20--&#x03B5;arctan-&#x03C0;Dp --&#x03B1;0--
+Cd = Cfd +  e       (&#x03C0;A + K0 )2
+" class="math-display" ></center></td><td class="equation-label">(2.4)</td></tr></table>
+<!--l. 190--><p class="nopar" >
+<!--l. 192--><p class="indent" >    Definition of <span 
+class="cmmi-10">C</span><sub><span 
+class="cmmi-7">M</span></sub>, see <span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.67, 4.6]
+                                                                                
+
+                                                                                
+    <table 
+class="equation"><tr><td><a 
+ id="x1-5005r5"></a>
+    <center class="math-display" >
+<img 
+src="index4x.png" alt="C  = -1-&#x03C0;2C &#x03B6;2&#x03BB;B2
+ M   8A    d     p
+" class="math-display" ></center></td><td class="equation-label">(2.5)</td></tr></table>
+<!--l. 195--><p class="nopar" >
+<!--l. 197--><p class="indent" >    Definition of <span 
+class="cmmi-10">K</span><sub><span 
+class="cmmi-7">E</span></sub>, see <span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.80, 4.64]
+    <table 
+class="equation"><tr><td><a 
+ id="x1-5006r6"></a>
+    <center class="math-display" >
+<img 
+src="index5x.png" alt="KE = Um0---Im0Rm-
+        KV 0Um0
+" class="math-display" ></center></td><td class="equation-label">(2.6)</td></tr></table>
+<!--l. 200--><p class="nopar" >
+<!--l. 202--><p class="indent" >    Definition of <span 
+class="cmmi-10">K</span><sub><span 
+class="cmmi-7">T</span></sub>, see <span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.80, 4.65]
+    <table 
+class="equation"><tr><td><a 
+ id="x1-5007r7"></a>
+    <center class="math-display" >
+<img 
+src="index6x.png" alt="KT = 9.55KE
+" class="math-display" ></center></td><td class="equation-label">(2.7)</td></tr></table>
+<!--l. 205--><p class="nopar" >
+                                                                                
+
+                                                                                
+<!--l. 208--><p class="noindent" >
+    <h5 class="subsubsectionHead"><span class="titlemark">2.1.2   </span> <a 
+ id="x1-60002.1.2"></a>Definition of variables</h5>
+<!--l. 210--><p class="noindent" >Variable means that its value may changed at different or in different problems.
+    <div class="tabular">
+ <table id="TBL-3" class="tabular" 
+cellspacing="0" cellpadding="0"  
+><colgroup id="TBL-3-1g"><col 
+id="TBL-3-1"></colgroup><colgroup id="TBL-3-2g"><col 
+id="TBL-3-2"></colgroup><colgroup id="TBL-3-3g"><col 
+id="TBL-3-3"></colgroup><colgroup id="TBL-3-4g"><col 
+id="TBL-3-4"></colgroup><colgroup id="TBL-3-5g"><col 
+id="TBL-3-5"></colgroup><tr  
+ style="vertical-align:baseline;" id="TBL-3-1-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-1-1"  
+class="td11">  <span 
+class="cmbx-8">Symbol  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-1-2"  
+class="td11">  <span 
+class="cmbx-8">Identifier  </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-1-3"  
+class="td11">                    <span 
+class="cmbx-8">Meaning  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-1-4"  
+class="td11">  <span 
+class="cmbx-8">Unit   </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-1-5"  
+class="td11"> <span 
+class="cmbx-8">Remark  </span></td>
+</tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-2-"><td colspan="3" style="white-space:nowrap; text-align:center;" id="TBL-3-2-1"  
+class="td11"></td>                              <div class="multicolumn"  style="white-space:nowrap; text-align:center;"><span 
+class="cmr-8">E N V I R O N M E N T</span></div></tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-3-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-3-1"  
+class="td11"> <span 
+class="cmmi-8">p </span></td> <td  style="white-space:nowrap; text-align:center;" id="TBL-3-3-2"  
+class="td11"> <span 
+class="cmr-8">p </span></td> <td  style="white-space:nowrap; text-align:right;" id="TBL-3-3-3"  
+class="td11"> <span 
+class="cmr-8">atmospheric pressure  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-3-4"  
+class="td11">   <span 
+class="cmmi-8">Pa    </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-3-5"  
+class="td11">           </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-4-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-4-1"  
+class="td11">     <span 
+class="cmmi-8">&#x03C1;       </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-4-2"  
+class="td11">     <span 
+class="cmr-8">rho       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-4-3"  
+class="td11">                       <span 
+class="cmr-8">density  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-4-4"  
+class="td11"> <span 
+class="cmmi-8">kg&#x2215;m</span><sup><span 
+class="cmr-6">3</span></sup>  </td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-4-5"  
+class="td11">           </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-5-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-5-1"  
+class="td11">    <span 
+class="cmmi-8">T</span><sub><span 
+class="cmmi-6">b</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-5-2"  
+class="td11">     <span 
+class="cmr-8">T</span><span 
+class="cmr-8">_b       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-5-3"  
+class="td11">            <span 
+class="cmr-8">Time of endurance  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-5-4"  
+class="td11">   <span 
+class="cmmi-8">min   </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-5-5"  
+class="td11">           </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-6-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-6-1"  
+class="td11">     <span 
+class="cmmi-8">V       </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-6-2"  
+class="td11">      <span 
+class="cmr-8">V         </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-6-3"  
+class="td11">                  <span 
+class="cmr-8">Flight speed  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-6-4"  
+class="td11">  <span 
+class="cmmi-8">m&#x2215;s   </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-6-5"  
+class="td11">           </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-7-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-7-1"  
+class="td11">   <span 
+class="cmmi-8">V</span> <sub><span 
+class="cmmi-6">max</span></sub>    </td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-7-2"  
+class="td11">   <span 
+class="cmr-8">V</span><span 
+class="cmr-8">_max     </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-7-3"  
+class="td11">         <span 
+class="cmr-8">Maximum flight speed  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-7-4"  
+class="td11">  <span 
+class="cmmi-8">m&#x2215;s   </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-7-5"  
+class="td11">           </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-8-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-8-1"  
+class="td11">     <span 
+class="cmmi-8">Z      </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-8-2"  
+class="td11">      <span 
+class="cmr-8">Z         </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-8-3"  
+class="td11">                <span 
+class="cmr-8">Flight distance  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-8-4"  
+class="td11">   <span 
+class="cmmi-8">m    </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-8-5"  
+class="td11">           </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-9-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-9-1"  
+class="td11">   <span 
+class="cmmi-8">Z</span><sub><span 
+class="cmmi-6">max</span></sub>    </td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-9-2"  
+class="td11">   <span 
+class="cmr-8">Z</span><span 
+class="cmr-8">_max     </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-9-3"  
+class="td11">       <span 
+class="cmr-8">Maximum flight distance  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-9-4"  
+class="td11">   <span 
+class="cmmi-8">m    </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-9-5"  
+class="td11">           </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-10-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-10-1"  
+class="td11">     <span 
+class="cmmi-8">&#x03B7;       </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-10-2"  
+class="td11">     <span 
+class="cmr-8">eta        </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-10-3"  
+class="td11">              <span 
+class="cmr-8">System efficiency  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-10-4"  
+class="td11">   <span 
+class="cmmi-8">m    </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-10-5"  
+class="td11"> <span 
+class="cmr-8">0&#x02DC;1          </span></td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-11-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-11-1"  
+class="td11"> <span 
+class="cmmi-8">G</span><sub><span 
+class="cmmi-6">maxload</span></sub>  </td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-11-2"  
+class="td11"> <span 
+class="cmr-8">G</span><span 
+class="cmr-8">_maxload  </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-11-3"  
+class="td11">                <span 
+class="cmr-8">Maximum load  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-11-4"  
+class="td11">   <span 
+class="cmmi-8">N     </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-11-5"  
+class="td11">           </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-12-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-12-1"  
+class="td11">   <span 
+class="cmmi-8">&#x03B8;</span><sub><span 
+class="cmmi-6">max</span></sub>     </td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-12-2"  
+class="td11">  <span 
+class="cmr-8">theta</span><span 
+class="cmr-8">_max   </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-12-3"  
+class="td11">          <span 
+class="cmr-8">Maximum pitch angle  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-12-4"  
+class="td11">   <span 
+class="cmmi-8">rad    </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-12-5"  
+class="td11">           </td>
+</tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-13-"><td colspan="3" style="white-space:nowrap; text-align:center;" id="TBL-3-13-1"  
+class="td11"></td>                                <div class="multicolumn"  style="white-space:nowrap; text-align:center;"><span 
+class="cmr-8">P R O P E L L E R</span></div></tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-14-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-14-1"  
+class="td11"> <span 
+class="cmmi-8">T </span></td> <td  style="white-space:nowrap; text-align:center;" id="TBL-3-14-2"  
+class="td11"> <span 
+class="cmr-8">T </span></td> <td  style="white-space:nowrap; text-align:right;" id="TBL-3-14-3"  
+class="td11"> <span 
+class="cmr-8">Propeller thrust  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-14-4"  
+class="td11">   <span 
+class="cmmi-8">N     </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-14-5"  
+class="td11">           </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-15-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-15-1"  
+class="td11">     <span 
+class="cmmi-8">M      </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-15-2"  
+class="td11">      <span 
+class="cmr-8">M        </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-15-3"  
+class="td11">               <span 
+class="cmr-8">Propeller torque  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-15-4"  
+class="td11">  <span 
+class="cmmi-8">N.m   </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-15-5"  
+class="td11">           </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-16-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-16-1"  
+class="td11">     <span 
+class="cmmi-8">N      </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-16-2"  
+class="td11">      <span 
+class="cmr-8">N         </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-16-3"  
+class="td11">                  <span 
+class="cmr-8">Motor speed  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-16-4"  
+class="td11">  <span 
+class="cmmi-8">r&#x2215;min  </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-16-5"  
+class="td11">           </td>
+</tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-17-"><td colspan="3" style="white-space:nowrap; text-align:center;" id="TBL-3-17-1"  
+class="td11"></td>                                    <div class="multicolumn"  style="white-space:nowrap; text-align:center;"><span 
+class="cmr-8">M O T O R</span></div></tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-18-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-18-1"  
+class="td11"> <span 
+class="cmmi-8">E</span><sub>
+<span 
+class="cmmi-6">a</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-18-2"  
+class="td11">     <span 
+class="cmr-8">E</span><span 
+class="cmr-8">_a       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-18-3"  
+class="td11">       <span 
+class="cmr-8">Back-electromotive force  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-18-4"  
+class="td11">    <span 
+class="cmmi-8">V     </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-18-5"  
+class="td11">           </td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-19-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-19-1"  
+class="td11"> <span 
+class="cmmi-8">U</span><sub>
+<span 
+class="cmmi-6">m</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-19-2"  
+class="td11">    <span 
+class="cmr-8">U</span><span 
+class="cmr-8">_m      </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-19-3"  
+class="td11"> <span 
+class="cmr-8">Equivalent motor input voltage  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-19-4"  
+class="td11">    <span 
+class="cmmi-8">V     </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-19-5"  
+class="td11">           </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-20-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-20-1"  
+class="td11">    <span 
+class="cmmi-8">I</span><sub><span 
+class="cmmi-6">m</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-20-2"  
+class="td11">     <span 
+class="cmr-8">I</span><span 
+class="cmr-8">_m       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-20-3"  
+class="td11"> <span 
+class="cmr-8">Equivalent motor input current  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-20-4"  
+class="td11">    <span 
+class="cmmi-8">A     </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-20-5"  
+class="td11">           </td>
+</tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-21-"><td colspan="3" style="white-space:nowrap; text-align:center;" id="TBL-3-21-1"  
+class="td11"></td>                                      <div class="multicolumn"  style="white-space:nowrap; text-align:center;"><span 
+class="cmr-8">E S C</span></div></tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-22-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-22-1"  
+class="td11"> <span 
+class="cmmi-8">I</span><sub>
+<span 
+class="cmmi-6">e</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-22-2"  
+class="td11">     <span 
+class="cmr-8">I</span><span 
+class="cmr-8">_e        </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-22-3"  
+class="td11">             <span 
+class="cmr-8">ESC input current  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-22-4"  
+class="td11">    <span 
+class="cmmi-8">A     </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-22-5"  
+class="td11">           </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-23-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-23-1"  
+class="td11">    <span 
+class="cmmi-8">U</span><sub><span 
+class="cmmi-6">e</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-23-2"  
+class="td11">     <span 
+class="cmr-8">U</span><span 
+class="cmr-8">_e       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-23-3"  
+class="td11">             <span 
+class="cmr-8">ESC input voltage  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-23-4"  
+class="td11">    <span 
+class="cmmi-8">V     </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-23-5"  
+class="td11">           </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-24-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-24-1"  
+class="td11">    <span 
+class="cmmi-8">U</span><sub><span 
+class="cmmi-6">eo</span></sub>     </td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-24-2"  
+class="td11">    <span 
+class="cmr-8">U</span><span 
+class="cmr-8">_eo      </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-24-3"  
+class="td11">  <span 
+class="cmr-8">Equivalent ESC output voltage  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-24-4"  
+class="td11">    <span 
+class="cmmi-8">V     </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-24-5"  
+class="td11">           </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-25-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-25-1"  
+class="td11">     <span 
+class="cmmi-8">&#x03C3;</span><sub><span 
+class="cmmi-6">e</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-25-2"  
+class="td11">   <span 
+class="cmr-8">sigma</span><span 
+class="cmr-8">_e    </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-25-3"  
+class="td11">                  <span 
+class="cmr-8">ESC throttle  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-25-4"  
+class="td11">    <span 
+class="cmr-8">-      </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-25-5"  
+class="td11"> <span 
+class="cmr-8">0&#x02DC;1          </span></td>
+</tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-26-"><td colspan="3" style="white-space:nowrap; text-align:center;" id="TBL-3-26-1"  
+class="td11"></td>                                  <div class="multicolumn"  style="white-space:nowrap; text-align:center;"><span 
+class="cmr-8">B A T T E R Y</span></div></tr><tr 
+class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-27-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-27-1"  
+class="td11"> <span 
+class="cmmi-8">I</span><sub>
+<span 
+class="cmmi-6">b</span></sub>      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-27-2"  
+class="td11">     <span 
+class="cmr-8">I</span><span 
+class="cmr-8">_b       </span></td><td  style="white-space:nowrap; text-align:right;" id="TBL-3-27-3"  
+class="td11">               <span 
+class="cmr-8">Battery current  </span></td><td  style="white-space:nowrap; text-align:center;" id="TBL-3-27-4"  
+class="td11">    <span 
+class="cmmi-8">A     </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-27-5"  
+class="td11">           </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-3-28-"><td  style="white-space:nowrap; text-align:center;" id="TBL-3-28-1"  
+class="td11">           </td> </tr></table></div>
+<!--l. 256--><p class="noindent" >
+    <h5 class="subsubsectionHead"><span class="titlemark">2.1.3   </span> <a 
+ id="x1-70002.1.3"></a>Variable Relation Graph (VRG) </h5>
+<!--l. 258--><p class="noindent" >We study the engineering relationship between the various components of the PS, and give the VRG of
+the most important 14 variables in Fig <a 
+href="#x1-7001r1">1<!--tex4ht:ref: fig:fig1_VariableFlow --></a>, which can help us visually design function expressions
+between the variables.
+<!--l. 260--><p class="indent" >    Here is the dependency relationship between all variables. From this picture, you can intuitively
+see how to calculate between two variables or multiple variables. The double-headed arrow
+means that two variables can be freely converted. The dashed line represents the derived
+simple relationship. A one-way arrow refers to a situation where there are multiple inputs
+and a single output. Although the reverse solution cannot be obtained directly, because
+there are also relationships between the input variables, the solution process can still be
+constructed.
+<!--l. 267--><p class="indent" >    This picture can help us deal with the forward and reverse problems in the propulsion system.
+Forward solution refers to solving the aircraft&#8217;s performance indicators (longest hovering time,
+maximum load, maximum pitch angle, etc.) based on known hardware parameters (propeller, motor,
+ESC, battery, etc.). The reverse solution is to solve the hardware parameters according to the given
+aircraft performance index.
+<!--l. 271--><p class="indent" >    <hr class="figure"><div class="figure" 
+>
+                                                                                
+
+                                                                                
+<a 
+ id="x1-7001r1"></a>
+                                                                                
+
+                                                                                
+<div  
+class="centerline">                                      <img 
+src="figures/fig1_VariableFlow-.png" alt="PIC"  
+width="800" >                                      </div>
+<br /> <div class="caption" 
+><span class="id">Figure&#x00A0;1: </span><span  
+class="content">Variable Relationship Graph of Propulsion Subsystem</span></div><!--tex4ht:label?: x1-7001r1 -->
+                                                                                
+
+                                                                                
+<!--l. 275--><p class="indent" >    </div><hr class="endfigure">
+<!--l. 277--><p class="indent" >    The graph is divided into four parts, namely the propeller, motor, ESC and battery. Each circle in
+the graph represents a variable, and the connection represents a function. It can be seen from the graph
+that there is a one-to-one function obtained by one or more steps between any nodes, although some
+function forms can be more complex.
+    <h5 class="subsubsectionHead"><span class="titlemark">2.1.4   </span> <a 
+ id="x1-80002.1.4"></a>Definition of basic functions</h5>
+<!--l. 283--><p class="noindent" >Basic functions are given by engineering principles that describe the most basic conversion relationship
+between variables.
+<!--l. 285--><p class="indent" >    Calculate <span 
+class="cmmi-10">T </span>by <span 
+class="cmmi-10">N</span>, see <span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.66, 4.1]
+    <table 
+class="equation"><tr><td><a 
+ id="x1-8001r8"></a>
+    <center class="math-display" >
+<img 
+src="index7x.png" alt="                     ( N )2
+get T-by N (N) = &#x03C1;CTD4P 60
+" class="math-display" ></center></td><td class="equation-label">(2.8)</td></tr></table>
+<!--l. 288--><p class="nopar" >
+<!--l. 290--><p class="indent" >    Calculate <span 
+class="cmmi-10">M </span>by <span 
+class="cmmi-10">N</span>, see<span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.66, 4.2]
+    <table 
+class="equation"><tr><td><a 
+ id="x1-8002r9"></a>
+    <center class="math-display" >
+<img 
+src="index8x.png" alt="                    ( N )2
+get M-by N (N) = CM &#x03C1; --  D5P
+                      60
+" class="math-display" ></center></td><td class="equation-label">(2.9)</td></tr></table>
+<!--l. 293--><p class="nopar" >
+<!--l. 295--><p class="indent" >    Calculate <span 
+class="cmmi-10">E</span><sub><span 
+class="cmmi-7">a</span></sub> by <span 
+class="cmmi-10">N</span>, see<span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.80, 4.61]
+    <table 
+class="equation"><tr><td><a 
+ id="x1-8003r10"></a>
+                                                                                
+
+                                                                                
+    <center class="math-display" >
+<img 
+src="index9x.png" alt="get E a-by N (N) = KEN
+" class="math-display" ></center></td><td class="equation-label">(2.10)</td></tr></table>
+<!--l. 298--><p class="nopar" >
+<!--l. 300--><p class="indent" >    Calculate <span 
+class="cmmi-10">M </span>by <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">m</span></sub>, see<span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.80, 4.59]
+    <table 
+class="equation"><tr><td><a 
+ id="x1-8004r11"></a>
+    <center class="math-display" >
+<img 
+src="index10x.png" alt="get M-by-I m (I ) = K (I - I  )
+             m     T  m   m0
+" class="math-display" ></center></td><td class="equation-label">(2.11)</td></tr></table>
+<!--l. 303--><p class="nopar" >
+<!--l. 305--><p class="indent" >    Calculate <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">m</span></sub> by <span 
+class="cmmi-10">E</span><sub><span 
+class="cmmi-7">a</span></sub> and <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">m</span></sub>, see<span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.72]
+    <table 
+class="equation"><tr><td><a 
+ id="x1-8005r12"></a>
+    <center class="math-display" >
+<img 
+src="index11x.png" alt="get U-m by-E-a and-I-m(Ea,Im) = Ea + RmIm
+" class="math-display" ></center></td><td class="equation-label">(2.12)</td></tr></table>
+<!--l. 308--><p class="nopar" >
+<!--l. 310--><p class="indent" >    Calculate <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">eo</span></sub> by <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">m</span></sub> and <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">m</span></sub>, see<span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.69, 4.12]
+    <table 
+class="equation"><tr><td><a 
+ id="x1-8006r13"></a>
+                                                                                
+
+                                                                                
+    <center class="math-display" >
+<img 
+src="index12x.png" alt="get U eo-by U m-and I-m(Um, Im) = Um +ImRe
+" class="math-display" ></center></td><td class="equation-label">(2.13)</td></tr></table>
+<!--l. 313--><p class="nopar" >
+<!--l. 315--><p class="indent" >    Calculate <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">eo</span></sub> by <span 
+class="cmmi-10">sigma</span><sub><span 
+class="cmmi-7">e</span></sub>, see<span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.69, 4.13]
+    <table 
+class="equation"><tr><td><a 
+ id="x1-8007r14"></a>
+    <center class="math-display" >
+<img 
+src="index13x.png" alt="get U eo-by sigma-e(sigma ) = sigma U
+                       e        e b
+" class="math-display" ></center></td><td class="equation-label">(2.14)</td></tr></table>
+<!--l. 318--><p class="nopar" >
+<!--l. 320--><p class="indent" >    Calculate <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">e</span></sub> by <span 
+class="cmmi-10">sigma</span><sub><span 
+class="cmmi-7">e</span></sub> and <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">m</span></sub>, see<span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.69, 4.14]
+    <table 
+class="equation"><tr><td><a 
+ id="x1-8008r15"></a>
+    <center class="math-display" >
+<img 
+src="index14x.png" alt="get-I e-by sigma-e and-I-m(sigmae,Im) = &#x03C3;eIm
+" class="math-display" ></center></td><td class="equation-label">(2.15)</td></tr></table>
+<!--l. 323--><p class="nopar" >
+<!--l. 325--><p class="indent" >    Calculate <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">b</span></sub> by <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">e</span></sub>, see<span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.70, 4.17]
+    <table 
+class="equation"><tr><td><a 
+ id="x1-8009r16"></a>
+                                                                                
+
+                                                                                
+    <center class="math-display" >
+<img 
+src="index15x.png" alt="get I-b by I-e(Ie) = nrIe + Iother
+" class="math-display" ></center></td><td class="equation-label">(2.16)</td></tr></table>
+<!--l. 328--><p class="nopar" >
+<!--l. 330--><p class="indent" >    Calculate <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">e</span></sub> by <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">b</span></sub>, see<span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.70, 4.20]
+    <table 
+class="equation"><tr><td><a 
+ id="x1-8010r17"></a>
+    <center class="math-display" >
+<img 
+src="index16x.png" alt="get U e-by-I-b(I ) = U - I R
+             b    b   b b
+" class="math-display" ></center></td><td class="equation-label">(2.17)</td></tr></table>
+<!--l. 333--><p class="nopar" >
+<!--l. 335--><p class="indent" >    Calculate <span 
+class="cmmi-10">T</span><sub><span 
+class="cmmi-7">b</span></sub> by <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">b</span></sub>, see<span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.70, 4.22]. Notice that, we simplify the battery model. First, we assume
+the battery voltage is a fixed value when it is discharging. Second, we assume the remain capacity of
+battery is linear changed when it is discharging.
+    <table 
+class="equation"><tr><td><a 
+ id="x1-8011r18"></a>
+    <center class="math-display" >
+<img 
+src="index17x.png" alt="get-T-b by I-b(I ) = Cb --Cmin-60
+             b       Ib    1000
+" class="math-display" ></center></td><td class="equation-label">(2.18)</td></tr></table>
+<!--l. 341--><p class="nopar" >
+<!--l. 343--><p class="indent" >    Calculate <span 
+class="cmmi-10">G</span><sub><span 
+class="cmmi-7">maxload</span></sub> by <span 
+class="cmmi-10">T</span>, see<span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.74, 4.35]
+    <table 
+class="equation"><tr><td><a 
+ id="x1-8012r19"></a>
+                                                                                
+
+                                                                                
+    <center class="math-display" >
+<img 
+src="index18x.png" alt="get G maxload-by T (T ) = nrT - G
+" class="math-display" ></center></td><td class="equation-label">(2.19)</td></tr></table>
+<!--l. 346--><p class="nopar" >
+<!--l. 348--><p class="indent" >    Calculate <span 
+class="cmmi-10">&#x03B8;</span><sub><span 
+class="cmmi-7">max</span></sub> by <span 
+class="cmmi-10">T</span>, see<span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.74, 4.36]
+    <table 
+class="equation"><tr><td><a 
+ id="x1-8013r20"></a>
+    <center class="math-display" >
+<img 
+src="index19x.png" alt="                           -G--
+get theta max-by-T(T) = arccosnrT
+" class="math-display" ></center></td><td class="equation-label">(2.20)</td></tr></table>
+<!--l. 351--><p class="nopar" >
+<!--l. 353--><p class="indent" >    Calculate <span 
+class="cmmi-10">&#x03B7; </span>by <span 
+class="cmmi-10">M </span>and <span 
+class="cmmi-10">N </span>and <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">b</span></sub>, see<span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.73, 4.32]
+    <table 
+class="equation"><tr><td><a 
+ id="x1-8014r21"></a>
+    <center class="math-display" >
+<img 
+src="index20x.png" alt="                                   26&#x03C0;0nrM N
+get eta-by-M-and N-and I-b(M, N, Ib) =--UbIb--
+" class="math-display" ></center></td><td class="equation-label">(2.21)</td></tr></table>
+<!--l. 356--><p class="nopar" >
+                                                                                
+
+                                                                                
+<!--l. 359--><p class="noindent" >
+    <h5 class="subsubsectionHead"><span class="titlemark">2.1.5   </span> <a 
+ id="x1-90002.1.5"></a>Definitions of basic inverse functions</h5>
+<!--l. 360--><p class="noindent" >The basic inverse functions are some inverse functions of unary functions which belongs to basic
+function.
+<!--l. 362--><p class="indent" >    Calculate <span 
+class="cmmi-10">N </span>by <span 
+class="cmmi-10">T</span>, it is an inverse function of (<a 
+href="#x1-8001r8">2.8<!--tex4ht:ref: basic.get_T_by_N --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-9001r22"></a>
+    <center class="math-display" >
+<img 
+src="index21x.png" alt="                 &#x2218; -------
+                     T
+get N-by-T(T) = 60  &#x03C1;C-D4--
+                     T  p
+" class="math-display" ></center></td><td class="equation-label">(2.22)</td></tr></table>
+<!--l. 365--><p class="nopar" >
+<!--l. 367--><p class="indent" >    Calculate <span 
+class="cmmi-10">N </span>by <span 
+class="cmmi-10">M</span>, it is an inverse function of (<a 
+href="#x1-8002r9">2.9<!--tex4ht:ref: basic.get_M_by_N --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-9002r23"></a>
+    <center class="math-display" >
+<img 
+src="index22x.png" alt="                  &#x2218; -------
+get N-by-M (M ) = 60 --M----
+                    &#x03C1;D5pCM
+" class="math-display" ></center></td><td class="equation-label">(2.23)</td></tr></table>
+<!--l. 370--><p class="nopar" >
+<!--l. 372--><p class="indent" >    Calculate <span 
+class="cmmi-10">N </span>by <span 
+class="cmmi-10">E</span><sub><span 
+class="cmmi-7">a</span></sub>, it is an inverse function of (<a 
+href="#x1-8003r10">2.10<!--tex4ht:ref: basic.get_E_a_by_N --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-9003r24"></a>
+    <center class="math-display" >
+<img 
+src="index23x.png" alt="get N-by E a(E ) = Ea
+             a    KE
+" class="math-display" ></center></td><td class="equation-label">(2.24)</td></tr></table>
+<!--l. 375--><p class="nopar" >
+<!--l. 377--><p class="indent" >    Calculate <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">m</span></sub> by <span 
+class="cmmi-10">M</span>, it is an inverse function of (<a 
+href="#x1-8004r11">2.11<!--tex4ht:ref: basic.get_M_by_I_m --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-9004r25"></a>
+    <center class="math-display" >
+<img 
+src="index24x.png" alt="get-I m by-M (M ) =-M + I
+                 KT    m0
+" class="math-display" ></center></td><td class="equation-label">(2.25)</td></tr></table>
+<!--l. 380--><p class="nopar" >
+<!--l. 382--><p class="indent" >    Calculate <span 
+class="cmmi-10">sigma</span><sub><span 
+class="cmmi-7">e</span></sub> by <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">eo</span></sub>, it is an inverse function of (<a 
+href="#x1-8007r14">2.14<!--tex4ht:ref: basic.get_U_eo_by_sigma_e --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-9005r26"></a>
+    <center class="math-display" >
+<img 
+src="index25x.png" alt="get sigma-e by-U-eo(U ) = Ueo
+                       Ub
+" class="math-display" ></center></td><td class="equation-label">(2.26)</td></tr></table>
+<!--l. 385--><p class="nopar" >
+<!--l. 387--><p class="indent" >    Calculate <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">e</span></sub> by <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">b</span></sub>, it is an inverse function of (<a 
+href="#x1-8009r16">2.16<!--tex4ht:ref: basic.get_I_b_by_I_e --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-9006r27"></a>
+    <center class="math-display" >
+<img 
+src="index26x.png" alt="get I e-by I-b(I ) = Ib---Iother
+            e       nr
+" class="math-display" ></center></td><td class="equation-label">(2.27)</td></tr></table>
+<!--l. 390--><p class="nopar" >
+<!--l. 392--><p class="indent" >    Calculate <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">b</span></sub> by <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">e</span></sub>, it is an inverse function of (<a 
+href="#x1-8010r17">2.17<!--tex4ht:ref: basic.get_U_e_by_I_b --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-9007r28"></a>
+    <center class="math-display" >
+<img 
+src="index27x.png" alt="get I-b by-U-e(U ) = Ub---Ue
+              e     Rb
+" class="math-display" ></center></td><td class="equation-label">(2.28)</td></tr></table>
+<!--l. 395--><p class="nopar" >
+<!--l. 397--><p class="indent" >    Calculate <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">b</span></sub> by <span 
+class="cmmi-10">T</span><sub><span 
+class="cmmi-7">b</span></sub>, it is an inverse function of (<a 
+href="#x1-8011r18">2.18<!--tex4ht:ref: basic.get_T_b_by_I_b --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-9008r29"></a>
+    <center class="math-display" >
+<img 
+src="index28x.png" alt="get I-b by-T-b(Tb) = Cb --Cmin-60
+                     Tb    1000
+" class="math-display" ></center></td><td class="equation-label">(2.29)</td></tr></table>
+<!--l. 400--><p class="nopar" >
+<!--l. 402--><p class="indent" >    Calculate <span 
+class="cmmi-10">T </span>by <span 
+class="cmmi-10">G</span><sub><span 
+class="cmmi-7">maxload</span></sub>, it is an inverse function of (<a 
+href="#x1-8012r19">2.19<!--tex4ht:ref: basic.get_G_maxload_by_T --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-9009r30"></a>
+    <center class="math-display" >
+<img 
+src="index29x.png" alt="get-T-by-G maxload(G       ) = Gmaxload +-G-
+                   maxload        nr
+" class="math-display" ></center></td><td class="equation-label">(2.30)</td></tr></table>
+<!--l. 405--><p class="nopar" >
+<!--l. 407--><p class="indent" >    Calculate <span 
+class="cmmi-10">T </span>by <span 
+class="cmmi-10">&#x03B8;</span><sub><span 
+class="cmmi-7">max</span></sub>, it is an inverse function of (<a 
+href="#x1-8013r20">2.20<!--tex4ht:ref: basic.get_theta_max_by_T --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-9010r31"></a>
+    <center class="math-display" >
+<img 
+src="index30x.png" alt="get T-by theta max (&#x03B8; ) =----G-----
+                 max    nrcos&#x03B8;max
+" class="math-display" ></center></td><td class="equation-label">(2.31)</td></tr></table>
+<!--l. 410--><p class="nopar" >
+<!--l. 413--><p class="noindent" >
+    <h5 class="subsubsectionHead"><span class="titlemark">2.1.6   </span> <a 
+ id="x1-100002.1.6"></a>Definitions of extended functions</h5>
+<!--l. 414--><p class="noindent" >Extended function are some composited functions by basic functions and basic inverse functions, and
+the compositions are one or more steps.
+<!--l. 416--><p class="indent" >    Calculate <span 
+class="cmmi-10">T </span>by <span 
+class="cmmi-10">M</span>, it is composed by (<a 
+href="#x1-9002r23">2.23<!--tex4ht:ref: basic.get_N_by_M --></a>) and (<a 
+href="#x1-8001r8">2.8<!--tex4ht:ref: basic.get_T_by_N --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-10001r32"></a>
+    <center class="math-display" >
+<img 
+src="index31x.png" alt="get-T by-M (M ) = CT-*-M-
+                 DpCM
+" class="math-display" ></center></td><td class="equation-label">(2.32)</td></tr></table>
+<!--l. 419--><p class="nopar" >
+<!--l. 421--><p class="indent" >    Calculate <span 
+class="cmmi-10">M </span>by <span 
+class="cmmi-10">T</span>, it is an inversion function of (<a 
+href="#x1-10001r32">2.32<!--tex4ht:ref: basic.get_T_by_M --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-10002r33"></a>
+                                                                                
+
+                                                                                
+    <center class="math-display" >
+<img 
+src="index32x.png" alt="                C  D T
+get-M by-T(T) = -M--p--
+                  CT
+" class="math-display" ></center></td><td class="equation-label">(2.33)</td></tr></table>
+<!--l. 424--><p class="nopar" >
+<!--l. 426--><p class="indent" >    Calculate <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">m</span></sub> by <span 
+class="cmmi-10">T</span>, it is composed by (<a 
+href="#x1-10002r33">2.33<!--tex4ht:ref: basic.get_M_by_T --></a>) and (<a 
+href="#x1-9004r25">2.25<!--tex4ht:ref: basic.get_I_m_by_M --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-10003r34"></a>
+    <center class="math-display" >
+<img 
+src="index33x.png" alt="                 CM DpT
+get I-m by-T(T) = K-C---+ Im0
+                   T T
+" class="math-display" ></center></td><td class="equation-label">(2.34)</td></tr></table>
+<!--l. 429--><p class="nopar" >
+<!--l. 431--><p class="indent" >    Calculate <span 
+class="cmmi-10">T </span>by <span 
+class="cmmi-10">M</span>, it is composed by (<a 
+href="#x1-9001r22">2.22<!--tex4ht:ref: basic.get_N_by_T --></a>) and (<a 
+href="#x1-8003r10">2.10<!--tex4ht:ref: basic.get_E_a_by_N --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-10004r35"></a>
+    <center class="math-display" >
+<img 
+src="index34x.png" alt="                     &#x2218; -------
+get E a-by T (T ) = 60KE--T----
+                       &#x03C1;CTD4p
+" class="math-display" ></center></td><td class="equation-label">(2.35)</td></tr></table>
+<!--l. 434--><p class="nopar" >
+<!--l. 436--><p class="indent" >    Calculate <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">m</span></sub> by <span 
+class="cmmi-10">T</span>, it is composed by (<a 
+href="#x1-10004r35">2.35<!--tex4ht:ref: basic.get_E_a_by_T --></a>) and (<a 
+href="#x1-10003r34">2.34<!--tex4ht:ref: basic.get_I_m_by_T --></a>) and (<a 
+href="#x1-8005r12">2.12<!--tex4ht:ref: basic.get_U_m_by_E_a_and_I_m --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-10005r36"></a>
+                                                                                
+
+                                                                                
+    <center class="math-display" >
+<img 
+src="index35x.png" alt="                      &#x2218; -------     (             )
+get U m-by-T(T ) = 60KE  --T---+ Rm   CM-DpT- + Im0
+                        &#x03C1;CTD4p        KT CT
+" class="math-display" ></center></td><td class="equation-label">(2.36)</td></tr></table>
+<!--l. 440--><p class="nopar" >
+<!--l. 442--><p class="indent" >    Calculate <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">m</span></sub> by <span 
+class="cmmi-10">N </span>and <span 
+class="cmmi-10">M</span>, it is composed by (<a 
+href="#x1-8003r10">2.10<!--tex4ht:ref: basic.get_E_a_by_N --></a>) and (<a 
+href="#x1-9004r25">2.25<!--tex4ht:ref: basic.get_I_m_by_M --></a>) and (<a 
+href="#x1-8005r12">2.12<!--tex4ht:ref: basic.get_U_m_by_E_a_and_I_m --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-10006r37"></a>
+    <center class="math-display" >
+<img 
+src="index36x.png" alt="                                    (         )
+get-U-m-by N-and M (N, M ) = K N + R   M--+ I
+                            E     m   KT    m0
+" class="math-display" ></center></td><td class="equation-label">(2.37)</td></tr></table>
+<!--l. 447--><p class="nopar" >
+<!--l. 449--><p class="indent" >    Calculate <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">m</span></sub> by <span 
+class="cmmi-10">N</span>, it is composed by (<a 
+href="#x1-8002r9">2.9<!--tex4ht:ref: basic.get_M_by_N --></a>) and (<a 
+href="#x1-10006r37">2.37<!--tex4ht:ref: basic.get_U_m_by_N_and_M --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-10007r38"></a>
+    <center class="math-display" >
+<img 
+src="index37x.png" alt="                            (     (  )         )
+                              CM &#x03C1; N60 2D5P
+get-U-m-by N (N) = KEN + Rm   ----KT------+ Im0
+" class="math-display" ></center></td><td class="equation-label">(2.38)</td></tr></table>
+<!--l. 452--><p class="nopar" >
+<!--l. 454--><p class="indent" >    Calculate <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">m</span></sub> by <span 
+class="cmmi-10">M</span>, it is composed by (<a 
+href="#x1-9002r23">2.23<!--tex4ht:ref: basic.get_N_by_M --></a>) and (<a 
+href="#x1-10006r37">2.37<!--tex4ht:ref: basic.get_U_m_by_N_and_M --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-10008r39"></a>
+                                                                                
+
+                                                                                
+    <center class="math-display" >
+<img 
+src="index38x.png" alt="                       &#x2218; -------     (          )
+get U m-by M (M ) = 60KE --M----+ Rm   -M- +Im0
+                         &#x03C1;D5pCM        KT
+" class="math-display" ></center></td><td class="equation-label">(2.39)</td></tr></table>
+<!--l. 459--><p class="nopar" >
+<!--l. 461--><p class="indent" >    Calculate <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">m</span></sub> by <span 
+class="cmmi-10">E</span><sub><span 
+class="cmmi-7">a</span></sub>, it is composed by (<a 
+href="#x1-8005r12">2.12<!--tex4ht:ref: basic.get_U_m_by_E_a_and_I_m --></a>) and (<a 
+href="#x1-8006r13">2.13<!--tex4ht:ref: basic.get_U_eo_by_U_m_and_I_m --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-10009r40"></a>
+    <center class="math-display" >
+<img 
+src="index39x.png" alt="get-U-eo by-E-a and-I-m(Ea,Im) = Ea + (Rm + Re )Im
+" class="math-display" ></center></td><td class="equation-label">(2.40)</td></tr></table>
+<!--l. 464--><p class="nopar" >
+<!--l. 466--><p class="indent" >    Calculate <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">eo</span></sub> by <span 
+class="cmmi-10">N</span>, it is composed by (<a 
+href="#x1-8006r13">2.13<!--tex4ht:ref: basic.get_U_eo_by_U_m_and_I_m --></a>), (<a 
+href="#x1-8005r12">2.12<!--tex4ht:ref: basic.get_U_m_by_E_a_and_I_m --></a>), (<a 
+href="#x1-8003r10">2.10<!--tex4ht:ref: basic.get_E_a_by_N --></a>), (<a 
+href="#x1-9004r25">2.25<!--tex4ht:ref: basic.get_I_m_by_M --></a>) and (<a 
+href="#x1-8002r9">2.9<!--tex4ht:ref: basic.get_M_by_N --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-10010r41"></a>
+    <center class="math-display" >
+<img 
+src="index40x.png" alt="                                5
+get U eo-by-N (N ) = (Rm-+-Re)CM-&#x03C1;DpN 2 + KEN + (Rm + Re)Im0
+                       KT602
+" class="math-display" ></center></td><td class="equation-label">(2.41)</td></tr></table>
+<!--l. 474--><p class="nopar" >
+<!--l. 476--><p class="indent" >    Calculate <span 
+class="cmmi-10">sigma</span><sub><span 
+class="cmmi-7">e</span></sub> by <span 
+class="cmmi-10">E</span><sub><span 
+class="cmmi-7">a</span></sub> and <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">m</span></sub>, it is composed by (<a 
+href="#x1-9005r26">2.26<!--tex4ht:ref: basic.get_sigma_e_by_U_eo --></a>) and (<a 
+href="#x1-10009r40">2.40<!--tex4ht:ref: basic.get_U_eo_by_E_a_and_I_m --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-10011r42"></a>
+                                                                                
+
+                                                                                
+    <center class="math-display" >
+<img 
+src="index41x.png" alt="                                 E  + (R   + R )I
+get sigma-e by-E-a and I-m(Ea,Im ) =-a--m----e--m
+                                        Ub
+" class="math-display" ></center></td><td class="equation-label">(2.42)</td></tr></table>
+<!--l. 479--><p class="nopar" >
+<!--l. 481--><p class="indent" >    Calculate <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">e</span></sub> by <span 
+class="cmmi-10">E</span><sub><span 
+class="cmmi-7">a</span></sub> and <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">m</span></sub>, it is composed by (<a 
+href="#x1-10011r42">2.42<!--tex4ht:ref: basic.get_sigma_e_by_E_a_and_I_m --></a>) and (<a 
+href="#x1-8008r15">2.15<!--tex4ht:ref: basic.get_I_e_by_sigma_e_and_I_m --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-10012r43"></a>
+    <center class="math-display" >
+<img 
+src="index42x.png" alt="                             (E  +(R   +R  )I  )I
+get I-e by-E-a and I-m(Ea,Im ) =-a---m----e-m--m-
+                                      Ub
+" class="math-display" ></center></td><td class="equation-label">(2.43)</td></tr></table>
+<!--l. 484--><p class="nopar" >
+<!--l. 486--><p class="indent" >    Calculate <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">e</span></sub> by <span 
+class="cmmi-10">T</span>, it is composed by (<a 
+href="#x1-10012r43">2.43<!--tex4ht:ref: basic.get_I_e_by_E_a_and_I_m --></a>), (<a 
+href="#x1-10004r35">2.35<!--tex4ht:ref: basic.get_E_a_by_T --></a>) and (<a 
+href="#x1-10003r34">2.34<!--tex4ht:ref: basic.get_I_m_by_T --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-10013r44"></a>
+    <center class="math-display" >
+<img 
+src="index43x.png" alt="                     &#x2218; --T---             CMDpT-       CMDpT-
+get-I e-by T(T ) = ((60KE-&#x03C1;CTD4p)+-(Rm-+-Re)(KT-CT-+-Im0))(-KTCT--+-Im0-)
+                                        Ub
+" class="math-display" ></center></td><td class="equation-label">(2.44)</td></tr></table>
+<!--l. 490--><p class="nopar" >
+<!--l. 492--><p class="indent" >    Calculate <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">e</span></sub> by <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">e</span></sub>, it is composed by (<a 
+href="#x1-8010r17">2.17<!--tex4ht:ref: basic.get_U_e_by_I_b --></a>) and (<a 
+href="#x1-8009r16">2.16<!--tex4ht:ref: basic.get_I_b_by_I_e --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-10014r45"></a>
+                                                                                
+
+                                                                                
+    <center class="math-display" >
+<img 
+src="index44x.png" alt="get U-e by-I e(Ie) = Ub - (nrIe + Iother)Rb
+" class="math-display" ></center></td><td class="equation-label">(2.45)</td></tr></table>
+<!--l. 495--><p class="nopar" >
+<!--l. 497--><p class="indent" >    Calculate <span 
+class="cmmi-10">T</span><sub><span 
+class="cmmi-7">b</span></sub> by <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">e</span></sub>, it is composed by (<a 
+href="#x1-8011r18">2.18<!--tex4ht:ref: basic.get_T_b_by_I_b --></a>) and (<a 
+href="#x1-8009r16">2.16<!--tex4ht:ref: basic.get_I_b_by_I_e --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-10015r46"></a>
+    <center class="math-display" >
+<img 
+src="index45x.png" alt="                  -Cb --Cmin--60-
+get-T-b by I-e(Ie) = nrIe + Iother 1000
+" class="math-display" ></center></td><td class="equation-label">(2.46)</td></tr></table>
+<!--l. 500--><p class="nopar" >
+<!--l. 502--><p class="noindent" >
+    <h5 class="subsubsectionHead"><span class="titlemark">2.1.7   </span> <a 
+ id="x1-110002.1.7"></a>Definitions of advanced extended functions</h5>
+<!--l. 503--><p class="noindent" >Advanced extended function are some extended functions that would got several solutions. Usually,
+these functions are complex higher order equations. In actual situations, only one solution will be left
+based on the context constraint.
+<!--l. 507--><p class="indent" >    In fact, these definitions are too difficult so that we don&#8217;t like it. We will deform and simplify these
+formulas appropriately before using it.
+<!--l. 510--><p class="indent" >    Calculate <span 
+class="cmmi-10">M </span>by <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">m</span></sub>, it is an inverse function of (<a 
+href="#x1-10007r38">2.38<!--tex4ht:ref: basic.get_U_m_by_N --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-11001r47"></a>
+    <center class="math-display" >
+<img 
+src="index46x.png" alt="                            (       &#x2218; ----------------------------)
+                    1800KT                   RmCM  &#x03C1;D5p(RmIm0 - Um )
+get-N-by U m (Um ) = R-C-&#x03C1;D5-( - KE ±  K2E - --------900K----------)
+                    m M    p                            T
+" class="math-display" ></center></td><td class="equation-label">(2.47)</td></tr></table>
+<!--l. 515--><p class="nopar" >
+<!--l. 517--><p class="indent" >    Calculate <span 
+class="cmmi-10">N </span>by <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">eo</span></sub>, it is an inverse function of (<a 
+href="#x1-11002r48">2.48<!--tex4ht:ref: basic.get_U_eo_by_N --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-11002r48"></a>
+    <center class="math-display" >
+<img 
+src="index47x.png" alt="                                   (       &#x2218; ----------------------------------------)
+                   ----1800KT------(           2  (Rm-+-Re-)CM-&#x03C1;D5p                   )
+get N by-U-eo(Ueo) = (Rm + Re)CM &#x03C1;D5p  - KE ±   K E -     900KT      ((Rm + Re)Im0 - Ueo)
+" class="math-display" ></center></td><td class="equation-label">(2.48)</td></tr></table>
+<!--l. 523--><p class="nopar" >
+<!--l. 526--><p class="noindent" >
+    <h5 class="subsubsectionHead"><span class="titlemark">2.1.8   </span> <a 
+ id="x1-120002.1.8"></a>Simplest Form of Functions (SFFs)</h5>
+<!--l. 527--><p class="noindent" >SFF is the simplest function in mathematical form relative to the variables wer care about. This is done
+by rearranging the order of operations, separating the arguments and making the whole
+coffecient expression as a constant. Then the calculation cost will be reduced to minimize. It is
+very useful to improve calculation performance, especially when the function will be called
+frequently.
+<!--l. 532--><p class="indent" >    Another benefit to us is that we can see the type of the new function more clearly contrast to the
+old form.
+<!--l. 534--><p class="indent" >    For example, the new SFF for calculating motor input voltage <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">m</span></sub> by propeller speed <span 
+class="cmmi-10">N </span>is (<a 
+href="#x1-12001r49">2.49<!--tex4ht:ref: basic.get_U_m_by_N_sff --></a>),
+it is an equivelent transformation of (<a 
+href="#x1-10007r38">2.38<!--tex4ht:ref: basic.get_U_m_by_N --></a>).
+    <table 
+class="equation"><tr><td><a 
+ id="x1-12001r49"></a>
+    <center class="math-display" >
+<img 
+src="index48x.png" alt="                      RmCM--&#x03C1;D5p- 2
+get U m-by N-sff(N) =  3600KT  N  + KEN  + RmIm0
+" class="math-display" ></center></td><td class="equation-label">(2.49)</td></tr></table>
+<!--l. 539--><p class="nopar" >
+<!--l. 541--><p class="indent" >    We can analyze the difference between (<a 
+href="#x1-10007r38">2.38<!--tex4ht:ref: basic.get_U_m_by_N --></a>) and (<a 
+href="#x1-12001r49">2.49<!--tex4ht:ref: basic.get_U_m_by_N_sff --></a>) in calculation. <hr class="figure"><div class="figure" 
+>
+                                                                                
+
+                                                                                
+<a 
+ id="x1-12002r2"></a>
+                                                                                
+
+                                                                                
+<div  
+class="centerline">                                       <img 
+src="figures/fig3_CompareTwoMethods-.png" alt="PIC"  
+width="800" >                                      </div>
+<br /> <div class="caption" 
+><span class="id">Figure&#x00A0;2: </span><span  
+class="content">Comparison of traditional functions and SFF</span></div><!--tex4ht:label?: x1-12002r2 -->
+                                                                                
+
+                                                                                
+<!--l. 546--><p class="indent" >    </div><hr class="endfigure">
+<!--l. 547--><p class="indent" >    As can be seen from Fig <a 
+href="#x1-12002r2">2<!--tex4ht:ref: fig:fig3_CompareTwoMethods --></a>, the new SFF are calculated less and the number of intermediate
+variables are reduced too. At the same time, the type of the new SFF is more clearly than old form, it
+is an unary quadratic function form.
+<!--l. 550--><p class="indent" >    This comparison shows that SFF is a better approach and may greatly improve the efficiency of
+engineering computing.
+<!--l. 552--><p class="indent" >    We have done equivalent transformations to many original functions, and given the SFF table, see
+Fig <a 
+href="#x1-12003r3">3<!--tex4ht:ref: fig:fig2_SimplestFormFunctions --></a>. <hr class="figure"><div class="figure" 
+>
+                                                                                
+
+                                                                                
+<a 
+ id="x1-12003r3"></a>
+                                                                                
+
+                                                                                
+<div  
+class="centerline">                                       <img 
+src="figures/fig2_SimplestFormFunctions-.png" alt="PIC"  
+width="800" >                                      </div>
+<br /> <div class="caption" 
+><span class="id">Figure&#x00A0;3: </span><span  
+class="content">Simplest Form of Function Table of Propulsion Subsystem</span></div><!--tex4ht:label?: x1-12003r3 -->
+                                                                                
+
+                                                                                
+<!--l. 557--><p class="indent" >    </div><hr class="endfigure">
+<!--l. 558--><p class="indent" >    The first column of the table is the input, and the first row is the output, the a, b, c in the table
+represent a constant expression in SFF, and the a, b, c in different functions is not the same value, just
+means they are constant expressions. We haven&#8217;t filled all blank grids because some functions only have
+mathematical meaning, haven&#8217;t engineering meaning, and the form is more complicated, so it is not the
+first priority to complete. Because we know from VRG that there are calculation paths between any
+nodes, there should be a function for each grid, and there must be an SFF. It should be pointed
+out that any pair of functions that are symmetrical on the main diagonal are mutually
+inverse.
+<!--l. 563--><p class="indent" >    There are now 14 important variables in total. After a rough estimate, the number of formulas that
+can be obtained is 13 + 12 + <span 
+class="cmmi-10">... </span>+ 1 = 91, but in fact some of them are meaningless and there is no need
+to list them.
+    <h4 class="subsectionHead"><span class="titlemark">2.2   </span> <a 
+ id="x1-130002.2"></a>Formal verification</h4>
+<!--l. 568--><p class="noindent" >
+    <h5 class="subsubsectionHead"><span class="titlemark">2.2.1   </span> <a 
+ id="x1-140002.2.1"></a>Customized automatic tactic</h5>
+<!--l. 570--><p class="noindent" >In the field of engineering control, the most common is the lengthy mathematical formula of the real
+number type. The real number type in the Coq system is constructed with axioms, and the related
+proofs require a lot of lemmas to rewrite and simplify. This is a manual proof example of
+correctness of a function which composited by two functions about thrust <span 
+class="cmmi-10">T </span>and propeller speed
+<span 
+class="cmmi-10">N</span>.
+                                                                                
+
+                                                                                
+    <div class="verbatim" id="verbatim-1">
+Lemma&#x00A0;verify_trans_N_and_T&#x00A0;N&#x00A0;:&#x00A0;0&#x00A0;&#x003C;&#x00A0;N&#x00A0;-&#x003E;&#x00A0;get_N_by_T&#x00A0;(get_T_by_N&#x00A0;N)&#x00A0;=&#x00A0;N.
+&#x00A0;<br />Proof.
+&#x00A0;<br />&#x00A0;&#x00A0;intros&#x00A0;H1.&#x00A0;unfold&#x00A0;get_N_by_T,&#x00A0;get_T_by_N.
+&#x00A0;<br />&#x00A0;&#x00A0;remember&#x00A0;(rho&#x00A0;*&#x00A0;C_T&#x00A0;*&#x00A0;D_p&#x00A0;^&#x00A0;4)&#x00A0;as&#x00A0;a.
+&#x00A0;<br />&#x00A0;&#x00A0;unfold&#x00A0;Rdiv.&#x00A0;rewrite&#x00A0;Rinv_r_simpl_m.
+&#x00A0;<br />&#x00A0;&#x00A0;-&#x00A0;rewrite&#x00A0;sqrt_pow2.
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;+&#x00A0;rewrite&#x00A0;-&#x003E;&#x00A0;Rmult_assoc.&#x00A0;rewrite&#x00A0;Rinv_r_simpl_m;&#x00A0;trivial.
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;+&#x00A0;apply&#x00A0;Rle_mult_inv_pos.&#x00A0;trivial.&#x00A0;lra.
+&#x00A0;<br />&#x00A0;&#x00A0;-&#x00A0;rewrite&#x00A0;Heqa.
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;apply&#x00A0;Rmult_integral_contrapositive.&#x00A0;split.
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;+&#x00A0;apply&#x00A0;Rmult_integral_contrapositive.&#x00A0;split.
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;*&#x00A0;apply&#x00A0;Rgt_not_eq.&#x00A0;apply&#x00A0;Rlt_gt;&#x00A0;apply&#x00A0;gt0_rho.
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;*&#x00A0;apply&#x00A0;Rgt_not_eq.&#x00A0;apply&#x00A0;Rlt_gt;&#x00A0;apply&#x00A0;gt0_C_T.
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;+&#x00A0;apply&#x00A0;pow_nonzero;&#x00A0;apply&#x00A0;Rgt_not_eq;
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;apply&#x00A0;Rlt_gt;apply&#x00A0;gt0_D_p.
+&#x00A0;<br />Qed.
+</div>
+<!--l. 590--><p class="nopar" >
+<!--l. 592--><p class="indent" >    It can be seen that this script is cumbersome and poor readable. We found that many proofs are
+same pattern, first expand the definition, then use some lemmas to apply, try to use the Ring or Field
+strategy to auto prove the equality, and try to use the Fourier strategy to auto prove the general
+inequality.
+<!--l. 595--><p class="indent" >    We packaged these automatic proof technologies and provide a real number proof module named
+R_prove. This module consists of three parts: a table of commonly used lemmas, see Table <a 
+href="#x1-140002.2.1">2.2.1<!--tex4ht:ref: tab:reals_lemmas --></a>;
+custom lemmas; custom strategies.
+<div class="center" 
+>
+<!--l. 599--><p class="noindent" >
+<div class="tabular"> <table id="TBL-4" class="tabular" 
+cellspacing="0" cellpadding="0"  
+><colgroup id="TBL-4-1g"><col 
+id="TBL-4-1"></colgroup><colgroup id="TBL-4-2g"><col 
+id="TBL-4-2"></colgroup><tr 
+class="hline"><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-4-1-"><td  style="white-space:nowrap; text-align:left;" id="TBL-4-1-1"  
+class="td11"> <span 
+class="cmbx-10">Lemma name      </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-4-1-2"  
+class="td11"> <span 
+class="cmbx-10">Lemma type                    </span></td>
+</tr><tr 
+class="hline"><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-4-2-"><td  style="white-space:nowrap; text-align:left;" id="TBL-4-2-1"  
+class="td11"> Rlt_0_1                  </td><td  style="white-space:nowrap; text-align:left;" id="TBL-4-2-2"  
+class="td11"> 0 <span 
+class="cmmi-10">&#x003C; </span>1                                   </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-4-3-"><td  style="white-space:nowrap; text-align:left;" id="TBL-4-3-1"  
+class="td11"> Rmult_le_pos          </td><td  style="white-space:nowrap; text-align:left;" id="TBL-4-3-2"  
+class="td11"> 0 <span 
+class="cmsy-10">&#x2264; </span><span 
+class="cmmi-10">r</span>1 <span 
+class="cmsy-10">&#x2192; </span>0 <span 
+class="cmsy-10">&#x2264; </span><span 
+class="cmmi-10">r</span>2 <span 
+class="cmsy-10">&#x2192; </span>0 <span 
+class="cmsy-10">&#x2264; </span><span 
+class="cmmi-10">r</span>1        </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-4-4-"><td  style="white-space:nowrap; text-align:left;" id="TBL-4-4-1"  
+class="td11"> Rmult_lt_0_compat  </td><td  style="white-space:nowrap; text-align:left;" id="TBL-4-4-2"  
+class="td11"> 0 <span 
+class="cmmi-10">&#x003C; r</span>1 <span 
+class="cmsy-10">&#x2192; </span>0 <span 
+class="cmmi-10">&#x003C; r</span>2 <span 
+class="cmsy-10">&#x2192; </span>0 <span 
+class="cmmi-10">&#x003C; r</span>1 <span 
+class="cmsy-10">* </span><span 
+class="cmmi-10">r</span>2  </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-4-5-"><td  style="white-space:nowrap; text-align:left;" id="TBL-4-5-1"  
+class="td11"> Rgt_not_eq             </td><td  style="white-space:nowrap; text-align:left;" id="TBL-4-5-2"  
+class="td11"> <span 
+class="cmmi-10">r</span>1 <span 
+class="cmmi-10">&#x003E; r</span>2 <span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmmi-10">r</span>1<span 
+class="cmmi-10">&#x2260;</span><span 
+class="cmmi-10">r</span>2                    </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-4-6-"><td  style="white-space:nowrap; text-align:left;" id="TBL-4-6-1"  
+class="td11"> Rlt_le                    </td><td  style="white-space:nowrap; text-align:left;" id="TBL-4-6-2"  
+class="td11"> <span 
+class="cmmi-10">r</span>1 <span 
+class="cmmi-10">&#x003C; r</span>2 <span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmmi-10">r</span>1 <span 
+class="cmsy-10">&#x2264; </span><span 
+class="cmmi-10">r</span>2                  </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-4-7-"><td  style="white-space:nowrap; text-align:left;" id="TBL-4-7-1"  
+class="td11"> pow_lt                   </td><td  style="white-space:nowrap; text-align:left;" id="TBL-4-7-2"  
+class="td11"> 0 <span 
+class="cmmi-10">&#x003C; x </span><span 
+class="cmsy-10">&#x2192; </span>0 <span 
+class="cmmi-10">&#x003C; x</span><sup><span 
+class="cmmi-7">n</span></sup>                      </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-4-8-"><td  style="white-space:nowrap; text-align:left;" id="TBL-4-8-1"  
+class="td11"> pow_nonzero           </td><td  style="white-space:nowrap; text-align:left;" id="TBL-4-8-2"  
+class="td11"> <span 
+class="cmmi-10">x</span><span 
+class="cmmi-10">&#x2260;</span>0 <span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmmi-10">x</span><sup><span 
+class="cmmi-7">n</span></sup><span 
+class="cmmi-10">&#x2260;</span>0                          </td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-4-9-"><td  style="white-space:nowrap; text-align:left;" id="TBL-4-9-1"  
+class="td11"> Rsqr_sqrt               </td><td  style="white-space:nowrap; text-align:left;" id="TBL-4-9-2"  
+class="td11"> 0 <span 
+class="cmsy-10">&#x2264; </span><span 
+class="cmmi-10">x </span><span 
+class="cmsy-10">&#x2192; </span>(<span 
+class="cmmi-10">sqrtx</span>)<sup><span 
+class="cmr-7">2</span></sup> = <span 
+class="cmmi-10">x            </span></td>
+</tr><tr  
+ style="vertical-align:baseline;" id="TBL-4-10-"><td  style="white-space:nowrap; text-align:left;" id="TBL-4-10-1"  
+class="td11"> sqrt_pow2              </td><td  style="white-space:nowrap; text-align:left;" id="TBL-4-10-2"  
+class="td11"> 0 <span 
+class="cmsy-10">&#x2264; </span><span 
+class="cmmi-10">x </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmmi-10">sqrt</span>(<span 
+class="cmmi-10">x</span><sup><span 
+class="cmr-7">2</span></sup>) = <span 
+class="cmmi-10">x            </span></td>
+</tr><tr 
+class="hline"><td><hr></td><td><hr></td></tr><tr  
+ style="vertical-align:baseline;" id="TBL-4-11-"><td  style="white-space:nowrap; text-align:left;" id="TBL-4-11-1"  
+class="td11">                   </td></tr></table></div></div>
+<!--l. 618--><p class="indent" >    We use the proof strategy library management command Hint to add strategies to a specified
+strategy library. For example, &#8220;Hint Resolve Rlt_le : flyctrl.&#8221; adds the strategy &#8220;apply Rlt_le&#8221; to the
+flyctrl strategy library. Then you can enter &#8220;auto with flyctrl&#8221; to use this automatic proof strategy
+library.
+<!--l. 622--><p class="indent" >    Among the custom strategies, one of the most commonly used strategies is &#8220;simple_equation&#8221;,
+which can solve most of the proof problems in PS.
+                                                                                
+
+                                                                                
+    <div class="verbatim" id="verbatim-2">
+Ltac&#x00A0;simple_equation&#x00A0;:=&#x00A0;intros;
+&#x00A0;<br />&#x00A0;&#x00A0;repeat&#x00A0;autounfold&#x00A0;with&#x00A0;flyctrl;&#x00A0;auto&#x00A0;with&#x00A0;flyctrl;&#x00A0;unfold&#x00A0;Rdiv;
+&#x00A0;<br />&#x00A0;&#x00A0;autorewrite&#x00A0;with&#x00A0;flyctrl;try&#x00A0;field;try&#x00A0;fourier;&#x00A0;auto&#x00A0;with&#x00A0;flyctrl;
+&#x00A0;<br />&#x00A0;&#x00A0;try&#x00A0;apply&#x00A0;Rmult_le_pos;&#x00A0;auto&#x00A0;with&#x00A0;flyctrl;
+&#x00A0;<br />&#x00A0;&#x00A0;try&#x00A0;apply&#x00A0;Rmult_integral_contrapositive;&#x00A0;auto&#x00A0;with&#x00A0;flyctrl;
+&#x00A0;<br />&#x00A0;&#x00A0;repeat&#x00A0;try&#x00A0;split;&#x00A0;auto&#x00A0;with&#x00A0;flyctrl.
+</div>
+<!--l. 630--><p class="nopar" >
+<!--l. 632--><p class="indent" >    The example of manual proof just demonstrated can be done in one step with this
+strategy.
+                                                                                
+
+                                                                                
+    <div class="verbatim" id="verbatim-3">
+Lemma&#x00A0;verify_trans_N_and_T&#8217;&#x00A0;N&#x00A0;:
+&#x00A0;<br />&#x00A0;&#x00A0;0&#x00A0;&#x003C;&#x00A0;N&#x00A0;-&#x003E;&#x00A0;get_N_by_T&#x00A0;(get_T_by_N&#x00A0;N)&#x00A0;=&#x00A0;N.
+&#x00A0;<br />&#x00A0;&#x00A0;Proof.&#x00A0;simple_equation.&#x00A0;Qed.
+</div>
+<!--l. 637--><p class="nopar" >
+<!--l. 639--><p class="noindent" >
+    <h5 class="subsubsectionHead"><span class="titlemark">2.2.2   </span> <a 
+ id="x1-150002.2.2"></a>Verification of equality of function transformation</h5>
+<!--l. 640--><p class="noindent" >It is mainly to verify the definitions of basic inverse functions and derivative functions.
+<!--l. 642--><p class="indent" >    The first is the transformation of the paired basic function and the inverse function, named
+<span class="obeylines-h"><span class="verb"><span 
+class="cmtt-10">verify_trans_XX_and_YY</span></span></span>, where XX and YY represent two variables respectively.
+                                                                                
+
+                                                                                
+    <div class="verbatim" id="verbatim-4">
+Lemma&#x00A0;verify_trans_N_and_T&#x00A0;N&#x00A0;:&#x00A0;get_N_by_T&#x00A0;(get_T_by_N&#x00A0;N)&#x00A0;=&#x00A0;N.
+&#x00A0;<br />Lemma&#x00A0;verify_trans_N_and_M&#x00A0;N&#x00A0;:&#x00A0;get_N_by_M&#x00A0;(get_M_by_N&#x00A0;N)&#x00A0;=&#x00A0;N.
+&#x00A0;<br />Lemma&#x00A0;verify_trans_N_and_E_a&#x00A0;N&#x00A0;:&#x00A0;get_N_by_E_a&#x00A0;(get_E_a_by_N&#x00A0;N)&#x00A0;=&#x00A0;N.
+&#x00A0;<br />Lemma&#x00A0;verify_trans_I_m_and_M&#x00A0;I_m&#x00A0;:&#x00A0;get_I_m_by_M&#x00A0;(get_M_by_I_m&#x00A0;I_m)&#x00A0;=&#x00A0;I_m.
+&#x00A0;<br />Lemma&#x00A0;verify_trans_sigma_e_and_U_eo&#x00A0;sigma_e:
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;get_sigma_e_by_U_eo&#x00A0;(get_U_eo_by_sigma_e&#x00A0;sigma_e)&#x00A0;=&#x00A0;sigma_e.
+&#x00A0;<br />Lemma&#x00A0;verify_trans_I_e_and_I_b&#x00A0;I_e&#x00A0;:&#x00A0;get_I_e_by_I_b&#x00A0;(get_I_b_by_I_e&#x00A0;I_e)&#x00A0;=&#x00A0;I_e.
+&#x00A0;<br />Lemma&#x00A0;verify_trans_I_b_and_T_b&#x00A0;I_b&#x00A0;:&#x00A0;get_I_b_by_T_b&#x00A0;(get_T_b_by_I_b&#x00A0;I_b)&#x00A0;=&#x00A0;I_b.
+&#x00A0;<br />Lemma&#x00A0;verify_trans_I_b_and_U_e&#x00A0;I_b&#x00A0;:&#x00A0;get_I_b_by_U_e&#x00A0;(get_U_e_by_I_b&#x00A0;I_b)&#x00A0;=&#x00A0;I_b.
+&#x00A0;<br />Lemma&#x00A0;verify_trans_T_and_G_maxload&#x00A0;T&#x00A0;:
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;get_T_by_G_maxload&#x00A0;(get_G_maxload_by_T&#x00A0;T)&#x00A0;=&#x00A0;T.
+&#x00A0;<br />Lemma&#x00A0;verify_trans_T_and_sigma_max&#x00A0;T&#x00A0;:
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;get_T_by_theta_max&#x00A0;(get_theta_max_by_T&#x00A0;T)&#x00A0;=&#x00A0;T.
+</div>
+<!--l. 659--><p class="nopar" >
+<!--l. 662--><p class="indent" >    Then let&#8217;s verify the definition of the derived function, and named it <span class="obeylines-h"><span class="verb"><span 
+class="cmtt-10">verify_XXX</span></span></span>, where XXX
+represents the name of the derived function.
+                                                                                
+
+                                                                                
+    <div class="verbatim" id="verbatim-5">
+Lemma&#x00A0;verify_get_T_by_M&#x00A0;M&#x00A0;:&#x00A0;get_T_by_M&#x00A0;M&#x00A0;=&#x00A0;get_T_by_N&#x00A0;(get_N_by_M&#x00A0;M).
+&#x00A0;<br />Lemma&#x00A0;verify_get_M_by_T&#x00A0;M&#x00A0;:&#x00A0;get_M_by_T&#x00A0;(get_T_by_M&#x00A0;M)&#x00A0;=&#x00A0;M.
+&#x00A0;<br />Lemma&#x00A0;verify_get_I_m_by_T&#x00A0;T&#x00A0;:&#x00A0;get_I_m_by_T&#x00A0;T&#x00A0;=&#x00A0;get_I_m_by_M&#x00A0;(get_M_by_T&#x00A0;T).
+&#x00A0;<br />Lemma&#x00A0;verify_get_E_a_by_T&#x00A0;T&#x00A0;:&#x00A0;get_E_a_by_T&#x00A0;T&#x00A0;=&#x00A0;get_E_a_by_N&#x00A0;(get_N_by_T&#x00A0;T).
+&#x00A0;<br />Lemma&#x00A0;verify_get_U_m_by_T&#x00A0;T&#x00A0;:&#x00A0;get_U_m_by_T&#x00A0;T&#x00A0;=
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;get_U_m_by_E_a_and_I_m&#x00A0;(get_E_a_by_T&#x00A0;T)&#x00A0;(get_I_m_by_T&#x00A0;T).
+&#x00A0;<br />
+&#x00A0;<br />Lemma&#x00A0;verify_get_U_m_by_N_and_M&#x00A0;N&#x00A0;M&#x00A0;:&#x00A0;get_U_m_by_N_and_M&#x00A0;N&#x00A0;M&#x00A0;=
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;get_U_m_by_E_a_and_I_m&#x00A0;(get_E_a_by_N&#x00A0;N)&#x00A0;(get_I_m_by_M&#x00A0;M).
+&#x00A0;<br />Lemma&#x00A0;verify_get_U_m_by_N&#x00A0;N&#x00A0;:&#x00A0;get_U_m_by_N&#x00A0;N&#x00A0;=
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;get_U_m_by_N_and_M&#x00A0;N&#x00A0;(get_M_by_N&#x00A0;N).
+&#x00A0;<br />Lemma&#x00A0;verify_get_U_m_by_M&#x00A0;M&#x00A0;:&#x00A0;get_U_m_by_M&#x00A0;M&#x00A0;=
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;get_U_m_by_N_and_M&#x00A0;(get_N_by_M&#x00A0;M)&#x00A0;M.
+&#x00A0;<br />
+&#x00A0;<br />Lemma&#x00A0;verify_get_U_eo_by_E_a_and_I_m&#x00A0;E_a&#x00A0;I_m&#x00A0;:
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;get_U_eo_by_E_a_and_I_m&#x00A0;E_a&#x00A0;I_m&#x00A0;=
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;get_U_eo_by_U_m_and_I_m&#x00A0;(get_U_m_by_E_a_and_I_m&#x00A0;E_a&#x00A0;I_m)&#x00A0;I_m.
+&#x00A0;<br />Lemma&#x00A0;verify_get_U_eo_by_N&#x00A0;N&#x00A0;:&#x00A0;get_U_eo_by_N&#x00A0;N&#x00A0;=
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;get_U_eo_by_E_a_and_I_m&#x00A0;(get_E_a_by_N&#x00A0;N)
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;(get_I_m_by_M&#x00A0;(get_M_by_N&#x00A0;N)).
+&#x00A0;<br />
+&#x00A0;<br />Lemma&#x00A0;verify_get_sigma_e_by_E_a_and_I_m&#x00A0;E_a&#x00A0;I_m&#x00A0;:
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;get_sigma_e_by_E_a_and_I_m&#x00A0;E_a&#x00A0;I_m&#x00A0;=
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;get_sigma_e_by_U_eo&#x00A0;(get_U_eo_by_E_a_and_I_m&#x00A0;E_a&#x00A0;I_m).
+&#x00A0;<br />Lemma&#x00A0;verify_get_I_e_by_E_a_and_I_m&#x00A0;E_a&#x00A0;I_m&#x00A0;:&#x00A0;get_I_e_by_E_a_and_I_m&#x00A0;E_a&#x00A0;I_m&#x00A0;=
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;get_I_e_by_sigma_e_and_I_m&#x00A0;(get_sigma_e_by_E_a_and_I_m&#x00A0;E_a&#x00A0;I_m)&#x00A0;I_m.
+&#x00A0;<br />Lemma&#x00A0;verify_get_I_e_by_T&#x00A0;T&#x00A0;:&#x00A0;get_I_e_by_T&#x00A0;T&#x00A0;=
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;get_I_e_by_E_a_and_I_m&#x00A0;(get_E_a_by_T&#x00A0;T)&#x00A0;(get_I_m_by_T&#x00A0;T).
+&#x00A0;<br />Lemma&#x00A0;verify_get_U_e_by_I_e&#x00A0;I_e&#x00A0;:&#x00A0;get_U_e_by_I_e&#x00A0;I_e&#x00A0;=
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;get_U_e_by_I_b&#x00A0;(get_I_b_by_I_e&#x00A0;I_e).
+&#x00A0;<br />Lemma&#x00A0;verify_get_T_b_by_I_e&#x00A0;I_e&#x00A0;:&#x00A0;get_T_b_by_I_e&#x00A0;I_e&#x00A0;=
+&#x00A0;<br />&#x00A0;&#x00A0;&#x00A0;&#x00A0;get_T_b_by_I_b&#x00A0;(get_I_b_by_I_e&#x00A0;I_e).
+&#x00A0;<br />Lemma&#x00A0;verify_get_N_by_U_m&#x00A0;U_m&#x00A0;:&#x00A0;get_U_m_by_N&#x00A0;(get_N_by_U_m&#x00A0;U_m)&#x00A0;=&#x00A0;U_m.
+&#x00A0;<br />Lemma&#x00A0;verify_get_N_by_U_eo&#x00A0;U_eo&#x00A0;:&#x00A0;get_U_eo_by_N&#x00A0;(get_N_by_U_eo&#x00A0;U_eo)&#x00A0;=&#x00A0;U_eo.
+&#x00A0;<br />
+</div>
+<!--l. 701--><p class="nopar" >
+<!--l. 705--><p class="indent" >
+                                                                                
+
+                                                                                
+    <h4 class="subsectionHead"><span class="titlemark">2.3   </span> <a 
+ id="x1-160002.3"></a>Example 1: Estimate the longest hovering time</h4>
+<!--l. 710--><p class="noindent" >
+    <h5 class="subsubsectionHead"><span class="titlemark">2.3.1   </span> <a 
+ id="x1-170002.3.1"></a>Analysis of the question</h5>
+<!--l. 711--><p class="noindent" >Question: In the hover mode, according to the known parameters, estimate the time of endurance <span 
+class="cmmi-10">T</span><sub><span 
+class="cmmi-7">b</span></sub>,
+see <span class="cite">[<a 
+href="#Xqq">1</a>]</span> P75.
+<!--l. 713--><p class="indent" >    Principle: In the hovering state, the thrust generated by the PS is exactly equal to the total weight
+of the aircraft.
+<!--l. 715--><p class="noindent" >
+    <h5 class="subsubsectionHead"><span class="titlemark">2.3.2   </span> <a 
+ id="x1-180002.3.2"></a>General calculation step</h5>
+<!--l. 716--><p class="noindent" >Calculation steps, see <span class="cite">[<a 
+href="#Xqq">1</a>]</span> p81-p82:
+<!--l. 719--><p class="indent" >
+        <dl class="enumerate-enumitem"><dt class="enumerate-enumitem">
+    (1). </dt><dd 
+class="enumerate-enumitem">Calculate the thrust required by a single propeller, simply divide the total mass by the
+        number of propellers.
+        <table 
+class="equation-star"><tr><td>
+        <center class="math-display" >
+        <img 
+src="index49x.png" alt="T = G&#x2215;n-r
+        " class="math-display" ><a 
+ id="x1-180011"></a></center></td></tr></table>
+        <!--l. 722--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (2). </dt><dd 
+class="enumerate-enumitem">Calculate the propeller speed
+        <table 
+class="equation-star"><tr><td>
+        <center class="math-display" >
+        <img 
+src="index50x.png" alt="N = get N-by T (T )
+        " class="math-display" ><a 
+ id="x1-180022"></a></center></td></tr></table>
+                                                                                
+
+                                                                                
+        <!--l. 727--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (3). </dt><dd 
+class="enumerate-enumitem">Calculate the propeller torque
+        <table 
+class="equation-star"><tr><td>
+        <center class="math-display" >
+        <img 
+src="index51x.png" alt="M = get M by-T(T)
+        " class="math-display" ><a 
+ id="x1-180033"></a></center></td></tr></table>
+        <!--l. 732--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (4). </dt><dd 
+class="enumerate-enumitem">Calculate the back-electromotive force of the motor
+        <table 
+class="equation-star"><tr><td>
+        <center class="math-display" >
+        <img 
+src="index52x.png" alt="Ea = get-E-a by-N (N )
+        " class="math-display" ><a 
+ id="x1-180044"></a></center></td></tr></table>
+        <!--l. 737--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (5). </dt><dd 
+class="enumerate-enumitem">Calculate the input current of the motor
+        <table 
+class="equation-star"><tr><td>
+        <center class="math-display" >
+        <img 
+src="index53x.png" alt="Im = get I-m by-M (M )
+        " class="math-display" ><a 
+ id="x1-180055"></a></center></td></tr></table>
+        <!--l. 742--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (6). </dt><dd 
+class="enumerate-enumitem">Calculate the input voltage of the motor
+        <table 
+class="equation-star"><tr><td>
+        <center class="math-display" >
+        <img 
+src="index54x.png" alt="Um  = get U m by-E a-and-I m (Ea,Im)
+        " class="math-display" ><a 
+ id="x1-180066"></a></center></td></tr></table>
+        <!--l. 747--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (7). </dt><dd 
+class="enumerate-enumitem">Calculate the output voltage of the ESC
+        <table 
+class="equation-star"><tr><td>
+        <center class="math-display" >
+        <img 
+src="index55x.png" alt="Ueo = get U-eo by-U-m and-I-m(Um, Im )
+        " class="math-display" ><a 
+ id="x1-180077"></a></center></td></tr></table>
+        <!--l. 752--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (8). </dt><dd 
+class="enumerate-enumitem">Calculate the ESC throttle
+        <table 
+class="equation-star"><tr><td>
+        <center class="math-display" >
+                                                                                
+
+                                                                                
+        <img 
+src="index56x.png" alt="&#x03C3;e = get-sigma-e by-U-eo and U b(Ueo,Ub)
+        " class="math-display" ><a 
+ id="x1-180088"></a></center></td></tr></table>
+        <!--l. 757--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (9). </dt><dd 
+class="enumerate-enumitem">Calculate the input current of the ESC
+        <table 
+class="equation-star"><tr><td>
+        <center class="math-display" >
+        <img 
+src="index57x.png" alt="Ie = get I e-by I-m and-sigma-e(Im, sigmae )
+        " class="math-display" ><a 
+ id="x1-180099"></a></center></td></tr></table>
+        <!--l. 762--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+   (10). </dt><dd 
+class="enumerate-enumitem">Calculate the output current of the battery
+        <table 
+class="equation-star"><tr><td>
+        <center class="math-display" >
+        <img 
+src="index58x.png" alt="Ib = get I-b by-I-e(Ie)
+        " class="math-display" ><a 
+ id="x1-1801010"></a></center></td></tr></table>
+        <!--l. 767--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+   (11). </dt><dd 
+class="enumerate-enumitem">Calculate the hover time
+        <table 
+class="equation-star"><tr><td>
+                                                                                
+
+                                                                                
+        <center class="math-display" >
+        <img 
+src="index59x.png" alt="Tb = get T b-by I-b(Ib)
+        " class="math-display" ><a 
+ id="x1-1801111"></a></center></td></tr></table>
+        <!--l. 772--><p class="nopar" >
+        </dd></dl>
+<!--l. 777--><p class="noindent" >
+    <h5 class="subsubsectionHead"><span class="titlemark">2.3.3   </span> <a 
+ id="x1-190002.3.3"></a>Direct calculate formulas</h5>
+<!--l. 778--><p class="noindent" >The formula of direct calculation is given here, which provides another way of calculation.
+<!--l. 780--><p class="indent" >    A direct formula, calculate <span 
+class="cmmi-10">N</span>.
+    <table 
+class="equation"><tr><td><a 
+ id="x1-19001r50"></a>
+    <center class="math-display" >
+<img 
+src="index60x.png" alt="           &#x2218; ---------
+direct N = 60 ----G----
+             &#x03C1;D4pCTnr
+" class="math-display" ></center></td><td class="equation-label">(2.50)</td></tr></table>
+<!--l. 783--><p class="nopar" >
+<!--l. 785--><p class="indent" >    A direct formula, calculate <span 
+class="cmmi-10">M</span>.
+    <table 
+class="equation"><tr><td><a 
+ id="x1-19002r51"></a>
+    <center class="math-display" >
+<img 
+src="index61x.png" alt="direct M = CM-DpG--
+           CT nr
+" class="math-display" ></center></td><td class="equation-label">(2.51)</td></tr></table>
+                                                                                
+
+                                                                                
+<!--l. 788--><p class="nopar" >
+<!--l. 790--><p class="indent" >    A direct formula, calculate <span 
+class="cmmi-10">E</span><sub><span 
+class="cmmi-7">a</span></sub>.
+    <table 
+class="equation"><tr><td><a 
+ id="x1-19003r52"></a>
+    <center class="math-display" >
+<img 
+src="index62x.png" alt="                &#x2218; ---------
+                      G
+direct E-a = 60KE  &#x03C1;D4C--n--
+                     p T  r
+" class="math-display" ></center></td><td class="equation-label">(2.52)</td></tr></table>
+<!--l. 793--><p class="nopar" >
+<!--l. 795--><p class="indent" >    A direct formula, calculate <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">m</span></sub>.
+    <table 
+class="equation"><tr><td><a 
+ id="x1-19004r53"></a>
+    <center class="math-display" >
+<img 
+src="index63x.png" alt="            CM DpG
+direct I m = C-n-K--+ Im0
+             T  r T
+" class="math-display" ></center></td><td class="equation-label">(2.53)</td></tr></table>
+<!--l. 798--><p class="nopar" >
+<!--l. 800--><p class="indent" >    A direct formula, calculate <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">m</span></sub>.
+    <table 
+class="equation"><tr><td><a 
+ id="x1-19005r54"></a>
+    <center class="math-display" >
+<img 
+src="index64x.png" alt="                 &#x2218; ---------     (             )
+direct U-m = 60KE  ---G4-----+ Rm   CM-DpG--+Im0
+                   &#x03C1;D pCTnr        CTKT nr
+" class="math-display" ></center></td><td class="equation-label">(2.54)</td></tr></table>
+                                                                                
+
+                                                                                
+<!--l. 804--><p class="nopar" >
+<!--l. 806--><p class="indent" >    A direct formula, calculate <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">eo</span></sub>.
+    <table 
+class="equation"><tr><td><a 
+ id="x1-19006r55"></a>
+    <center class="math-display" >
+<img 
+src="index65x.png" alt="                 &#x2218; ---------
+                      G                ( CM DpG       )
+direct U-eo = 60KE &#x03C1;D4-C-n--+ (Rm  + Re)  C-K--n--+ Im0
+                      p T r               T  T r
+" class="math-display" ></center></td><td class="equation-label">(2.55)</td></tr></table>
+<!--l. 811--><p class="nopar" >
+<!--l. 813--><p class="indent" >    A direct formula, calculate <span 
+class="cmmi-10">&#x03C3;</span><sub><span 
+class="cmmi-7">e</span></sub>.
+    <table 
+class="equation"><tr><td><a 
+ id="x1-19007r56"></a>
+    <center class="math-display" >
+<img 
+src="index66x.png" alt="                    &#x2218; ---G----           (CMDpG--     )
+               60KE---&#x03C1;D4pCTnr +-(Rm-+-Re-)-CTKTnr-+-Im0-
+direct-sigma e =                    Ub
+" class="math-display" ></center></td><td class="equation-label">(2.56)</td></tr></table>
+<!--l. 818--><p class="nopar" >
+<!--l. 820--><p class="indent" >    A direct formula, calculate <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">e</span></sub>.
+    <table 
+class="equation"><tr><td><a 
+ id="x1-19008r57"></a>
+    <center class="math-display" >
+<img 
+src="index67x.png" alt="                &#x2218; --------          (            )
+           60KE   &#x03C1;D4GC-n-+ (Rm + Re)  CCMDKpGn--+Im0  (              )
+direct-I e =---------p-T-r--------------T-T-r-------  CM-DpG--+ Im0
+                              Ub                     CTnrKT
+" class="math-display" ></center></td><td class="equation-label">(2.57)</td></tr></table>
+<!--l. 826--><p class="nopar" >
+<!--l. 828--><p class="indent" >    A direct formula, calculate <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">b</span></sub>.
+    <table 
+class="equation"><tr><td><a 
+ id="x1-19009r58"></a>
+    <center class="math-display" >
+<img 
+src="index68x.png" alt="             (     &#x2218; ---G----           (-CMDpG-     ) (             ) )
+             |60KE---&#x03C1;D4pCTnr-+-(Rm--+-Re)-CTKT-nr +-Im0  -CM-DpG-       |
+direct I-b = nr (                 Ub                     CT nrKT + Im0  ) + Iother
+" class="math-display" ></center></td><td class="equation-label">(2.58)</td></tr></table>
+<!--l. 836--><p class="nopar" >
+<!--l. 838--><p class="indent" >    A direct formula, calculate <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">e</span></sub>.
+    <table 
+class="equation"><tr><td><a 
+ id="x1-19010r59"></a>
+    <center class="math-display" >
+<img 
+src="index69x.png" alt="              (   (      &#x2218; --------           (            )                 )       )
+              |   | 60KE   &#x03C1;D4pGCTnr +(Rm + Re ) CCMTDKpTGnr-+ Im0  (CM DpG       ) |       |
+direct U e = Ub-(nr (-------------------U--------------------  C--n-K--+ Im0  ) + Iother) Rb
+                                        b                       T r T
+" class="math-display" ></center></td><td class="equation-label">(2.59)</td></tr></table>
+<!--l. 846--><p class="nopar" >
+<!--l. 848--><p class="indent" >    A direct formula, calculate <span 
+class="cmmi-10">T</span><sub><span 
+class="cmmi-7">b</span></sub>.
+    <table 
+class="equation"><tr><td><a 
+ id="x1-19011r60"></a>
+                                                                                
+
+                                                                                
+    <center class="math-display" >
+<img 
+src="index70x.png" alt="                                     Cb - Cmin                          60
+direct-T-b =---(60K-&#x2218;----G--+-(R--+R-)(-CMDpG+I--)---------------)--------1000
+           n  (---E--&#x03C1;D4pCTnr---m---e-CTKT-nr--m0- (CMDpG--+ I  )) + I
+            r                 Ub                 CTnrKT    m0      other
+" class="math-display" ></center></td><td class="equation-label">(2.60)</td></tr></table>
+<!--l. 857--><p class="nopar" >
+<!--l. 859--><p class="indent" >    Note that these formulas are not so handsome but really correct. If we transform them using the
+SFF method, then we will get a more elegant form.
+<!--l. 862--><p class="noindent" >
+    <h5 class="subsubsectionHead"><span class="titlemark">2.3.4   </span> <a 
+ id="x1-200002.3.4"></a>Vefiry direct formulas</h5>
+<!--l. 864--><p class="noindent" >Verify that the results calculated by general method are equal to the new given direct fomulas, so we
+can ensure that the new formulas are reliable.
+                                                                                
+
+                                                                                
+    <div class="verbatim" id="verbatim-6">
+Lemma&#x00A0;direct_N_correct&#x00A0;:&#x00A0;direct_N&#x00A0;=&#x00A0;N.
+&#x00A0;<br />Lemma&#x00A0;direct_M_correct&#x00A0;:&#x00A0;direct_M&#x00A0;=&#x00A0;M.
+&#x00A0;<br />Lemma&#x00A0;direct_E_a_correct&#x00A0;:&#x00A0;direct_E_a&#x00A0;=&#x00A0;E_a.
+&#x00A0;<br />Lemma&#x00A0;direct_I_m_correct&#x00A0;:&#x00A0;direct_I_m&#x00A0;=&#x00A0;I_m.
+&#x00A0;<br />Lemma&#x00A0;direct_U_m_correct&#x00A0;:&#x00A0;direct_U_m&#x00A0;=&#x00A0;U_m.
+&#x00A0;<br />Lemma&#x00A0;direct_U_eo_correct&#x00A0;:&#x00A0;direct_U_eo&#x00A0;=&#x00A0;U_eo.
+&#x00A0;<br />Lemma&#x00A0;direct_sigma_e_correct&#x00A0;:&#x00A0;direct_sigma_e&#x00A0;=&#x00A0;sigma_e.
+&#x00A0;<br />Lemma&#x00A0;direct_I_e_correct&#x00A0;:&#x00A0;direct_I_e&#x00A0;=&#x00A0;I_e.
+&#x00A0;<br />Lemma&#x00A0;direct_I_b_correct&#x00A0;:&#x00A0;direct_I_b&#x00A0;=&#x00A0;I_b.
+&#x00A0;<br />Lemma&#x00A0;direct_U_e_correct&#x00A0;:&#x00A0;direct_U_e&#x00A0;=&#x00A0;U_e.
+&#x00A0;<br />Lemma&#x00A0;direct_T_b_correct&#x00A0;:&#x00A0;direct_T_b&#x00A0;=&#x00A0;T_b.
+</div>
+<!--l. 879--><p class="nopar" >
+<!--l. 881--><p class="indent" >
+                                                                                
+
+                                                                                
+    <h4 class="subsectionHead"><span class="titlemark">2.4   </span> <a 
+ id="x1-210002.4"></a>Example 2: Estimate system effencicy at max throttle</h4>
+<!--l. 886--><p class="noindent" >
+    <h5 class="subsubsectionHead"><span class="titlemark">2.4.1   </span> <a 
+ id="x1-220002.4.1"></a>Analysis of the question</h5>
+<!--l. 887--><p class="noindent" >Question: Solve the motor voltage, motor current, propeller speed and system efficiency under the
+maximum throttle mode.
+<!--l. 889--><p class="indent" >    Principle: Under the maximum throttle, the electric throttle is equal to 1. At this time, multiple
+equations are combined to solve the result.
+<!--l. 892--><p class="indent" >    For the solution of the key variable &#8221;propeller speed N&#8221;, literature <span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p71, 4.30] gives a system of
+equations, A numerical iteration method is proposed to solve the problem, but the final expression is
+not given. The author gives the formula of direct calculation.
+<!--l. 897--><p class="noindent" >
+    <h5 class="subsubsectionHead"><span class="titlemark">2.4.2   </span> <a 
+ id="x1-230002.4.2"></a>General calculation step</h5>
+<!--l. 900--><p class="noindent" >
+        <dl class="enumerate-enumitem"><dt class="enumerate-enumitem">
+    (1). </dt><dd 
+class="enumerate-enumitem">Given the throttle, see <span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.71, 4.30]
+        <table 
+class="equation"><tr><td><a 
+ id="x1-23002r61"></a>
+        <center class="math-display" >
+        <img 
+src="index71x.png" alt="sigmae = 1
+        " class="math-display" ></center></td><td class="equation-label">(2.61)</td></tr></table>
+        <!--l. 904--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (2). </dt><dd 
+class="enumerate-enumitem">Calculate <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">eo</span></sub>
+        <table 
+class="equation"><tr><td><a 
+ id="x1-23004r62"></a>
+        <center class="math-display" >
+        <img 
+src="index72x.png" alt="Ueo = get U-eo by-sigma-e(sigmae)
+        " class="math-display" ></center></td><td class="equation-label">(2.62)</td></tr></table>
+        <!--l. 909--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (3). </dt><dd 
+class="enumerate-enumitem">Calculate <span 
+class="cmmi-10">N</span>
+        <table 
+class="equation"><tr><td><a 
+ id="x1-23006r63"></a>
+        <center class="math-display" >
+        <img 
+src="index73x.png" alt="N = get N by-Ueo(Ueo)
+        " class="math-display" ></center></td><td class="equation-label">(2.63)</td></tr></table>
+        <!--l. 914--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (4). </dt><dd 
+class="enumerate-enumitem">Calculate <span 
+class="cmmi-10">M</span>
+        <table 
+class="equation"><tr><td><a 
+ id="x1-23008r64"></a>
+        <center class="math-display" >
+        <img 
+src="index74x.png" alt="M  = get M-by N (N)
+        " class="math-display" ></center></td><td class="equation-label">(2.64)</td></tr></table>
+        <!--l. 919--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (5). </dt><dd 
+class="enumerate-enumitem">Calculate <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">m</span></sub>
+        <table 
+class="equation"><tr><td><a 
+ id="x1-23010r65"></a>
+                                                                                
+
+                                                                                
+        <center class="math-display" >
+        <img 
+src="index75x.png" alt="Im = get I-m by M (M )
+        " class="math-display" ></center></td><td class="equation-label">(2.65)</td></tr></table>
+        <!--l. 924--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (6). </dt><dd 
+class="enumerate-enumitem">Calculate <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">e</span></sub>
+        <table 
+class="equation"><tr><td><a 
+ id="x1-23012r66"></a>
+        <center class="math-display" >
+        <img 
+src="index76x.png" alt="Ie = get-I e-by I-m-and-sigma e(Im,sigmae)
+        " class="math-display" ></center></td><td class="equation-label">(2.66)</td></tr></table>
+        <!--l. 929--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (7). </dt><dd 
+class="enumerate-enumitem">Calculate <span 
+class="cmmi-10">I</span><sub><span 
+class="cmmi-7">e</span></sub>
+        <table 
+class="equation"><tr><td><a 
+ id="x1-23014r67"></a>
+        <center class="math-display" >
+        <img 
+src="index77x.png" alt="Ib = get I-b by-I e(Ie)
+        " class="math-display" ></center></td><td class="equation-label">(2.67)</td></tr></table>
+        <!--l. 934--><p class="nopar" >
+                                                                                
+
+                                                                                
+        </dd><dt class="enumerate-enumitem">
+    (8). </dt><dd 
+class="enumerate-enumitem">Calculate <span 
+class="cmmi-10">&#x03B7;</span>
+        <table 
+class="equation"><tr><td><a 
+ id="x1-23016r68"></a>
+        <center class="math-display" >
+        <img 
+src="index78x.png" alt="&#x03B7; = get eta by-M and N and I-b(M, N, Ib)
+        " class="math-display" ></center></td><td class="equation-label">(2.68)</td></tr></table>
+        <!--l. 939--><p class="nopar" >
+        </dd></dl>
+<!--l. 944--><p class="noindent" >
+                                                                                
+
+                                                                                
+    <h4 class="subsectionHead"><span class="titlemark">2.5   </span> <a 
+ id="x1-240002.5"></a>Example 3: Estimate maximum load and maximum pitch Angle</h4>
+<!--l. 949--><p class="noindent" >
+    <h5 class="subsubsectionHead"><span class="titlemark">2.5.1   </span> <a 
+ id="x1-250002.5.1"></a>Analysis of the question</h5>
+<!--l. 950--><p class="noindent" >Question: Calculate the maximum load weight and the maximum pitch Angle of multiple rotors with a
+certain safety margin (e.g., 20%) reserved for throttle commands.
+<!--l. 952--><p class="indent" >    Principle: Use the maximum throttle in safe mode, here 0.8, then combine multiple equations to
+solve the result.
+<!--l. 954--><p class="indent" >    For the solution of the key variable &#8221;propeller speed N&#8221;, literature <span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p73, 4.33] gives a system of
+equations, A numerical iteration method is proposed to solve the problem, but the final expression is
+not given. This problem is similar to the &#8221;maximum throttle mode&#8221; problem, and the direct calculation
+formula is given.
+<!--l. 958--><p class="noindent" >
+    <h5 class="subsubsectionHead"><span class="titlemark">2.5.2   </span> <a 
+ id="x1-260002.5.2"></a>General calculation step</h5>
+<!--l. 961--><p class="noindent" >
+        <dl class="enumerate-enumitem"><dt class="enumerate-enumitem">
+    (1). </dt><dd 
+class="enumerate-enumitem">Given the throttle, see <span class="cite">[<a 
+href="#Xqq">1</a>]</span>[p.73, 4.33]
+        <table 
+class="equation"><tr><td><a 
+ id="x1-26002r69"></a>
+        <center class="math-display" >
+        <img 
+src="index79x.png" alt="sigmae = 0.8
+        " class="math-display" ></center></td><td class="equation-label">(2.69)</td></tr></table>
+        <!--l. 965--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (2). </dt><dd 
+class="enumerate-enumitem">Calculate <span 
+class="cmmi-10">U</span><sub><span 
+class="cmmi-7">eo</span></sub>
+        <table 
+class="equation"><tr><td><a 
+ id="x1-26004r70"></a>
+        <center class="math-display" >
+        <img 
+src="index80x.png" alt="Ueo = get U-eo by-sigma-e(sigmae)
+        " class="math-display" ></center></td><td class="equation-label">(2.70)</td></tr></table>
+        <!--l. 970--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (3). </dt><dd 
+class="enumerate-enumitem">Calculate <span 
+class="cmmi-10">N</span>
+        <table 
+class="equation"><tr><td><a 
+ id="x1-26006r71"></a>
+        <center class="math-display" >
+        <img 
+src="index81x.png" alt="N = get N by-Ueo(Ueo)
+        " class="math-display" ></center></td><td class="equation-label">(2.71)</td></tr></table>
+        <!--l. 975--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (4). </dt><dd 
+class="enumerate-enumitem">Calculate <span 
+class="cmmi-10">T</span>
+        <table 
+class="equation"><tr><td><a 
+ id="x1-26008r72"></a>
+        <center class="math-display" >
+        <img 
+src="index82x.png" alt="T = get T-by N (N )
+        " class="math-display" ></center></td><td class="equation-label">(2.72)</td></tr></table>
+        <!--l. 980--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (5). </dt><dd 
+class="enumerate-enumitem">Calculate <span 
+class="cmmi-10">G</span><sub><span 
+class="cmmi-7">maxload</span></sub>
+        <table 
+class="equation"><tr><td><a 
+ id="x1-26010r73"></a>
+                                                                                
+
+                                                                                
+        <center class="math-display" >
+        <img 
+src="index83x.png" alt="Gmaxload = get G-maxload by-T(T)
+        " class="math-display" ></center></td><td class="equation-label">(2.73)</td></tr></table>
+        <!--l. 985--><p class="nopar" >
+        </dd><dt class="enumerate-enumitem">
+    (6). </dt><dd 
+class="enumerate-enumitem">Calculate <span 
+class="cmmi-10">&#x03B8;</span><sub><span 
+class="cmmi-7">max</span></sub>
+        <table 
+class="equation"><tr><td><a 
+ id="x1-26012r74"></a>
+        <center class="math-display" >
+        <img 
+src="index84x.png" alt="&#x03B8;max = get &#x03B8; max-by-T(T )
+        " class="math-display" ></center></td><td class="equation-label">(2.74)</td></tr></table>
+        <!--l. 990--><p class="nopar" >
+        </dd></dl>
+<!--l. 994--><p class="noindent" >
+                                                                                
+
+                                                                                
+    <h4 class="subsectionHead"><span class="titlemark">2.6   </span> <a 
+ id="x1-270002.6"></a>Example 4: Estimate maximum flat flight speed and distance</h4>
+<!--l. 999--><p class="noindent" >
+    <h5 class="subsubsectionHead"><span class="titlemark">2.6.1   </span> <a 
+ id="x1-280002.6.1"></a>Analysis of the question</h5>
+<!--l. 1001--><p class="noindent" >Question: Designers are concerned about two performance metrics: maximum flat flight speed and
+distance. The function relationship between pitch Angle and flight speed can be obtained
+after the model is established by force analysis. The solving method given by the author
+of the original book is numerical iteration method, but the author wants to try to find a
+better formula for direct calculation. The knowledge of derivative and extreme point is
+introduced to try to solve the extreme point. There is no conclusion and the issue is on
+hold.
+<!--l. 1007--><p class="indent" >    Principle: The function relationship between flight speed and pitch Angle is established firstly, and
+then the pitch Angle when the maximum flight speed is obtained is solved. Then other parameters are
+easy to be solved. Similarly, the maximum flight distance can also be established as a function of pitch
+Angle, which can be solved in the same way.
+<!--l. 1011--><p class="indent" >
+                                                                                
+
+                                                                                
+    <h3 class="sectionHead"><span class="titlemark">3   </span> <a 
+ id="x1-290003"></a>Summary</h3>
+<!--l. 1017--><p class="noindent" >In order ot realize control system as computer software, it is necessary to extract the exisiting
+engineering knowledge into the reference manual of software programming model required by computer
+programming. This process is traditionally completed by people manully, and its reliability cannot be
+guaranteed. We use the theorem prover COQ to gradually establish a reliable knowledge base for the
+control system from the bottom level in the way of mathematical reasoning. At the same time, we also
+get a reliable model that has been formally verified. We take the flight control system of
+small unmanned aerial vehicle as the research object, and analyze the control principle
+and algorithm of each subsystem. The research object of this chapter is propulsion system
+modeling.
+<!--l. 1024--><p class="indent" >    In future work, we will use program generation technology to automatically generate high
+reliability control system software from this model.
+<!--l. 1026--><p class="noindent" >
+    <h3 class="likesectionHead"><a 
+ id="x1-300003"></a>References</h3>
+<!--l. 1026--><p class="noindent" >
+    <div class="thebibliography">
+    <p class="bibitem" ><span class="biblabel">
+  [1]<span class="bibsp">&#x00A0;&#x00A0;&#x00A0;</span></span><a 
+ id="Xqq"></a>Quan, Q. . Introduction to Multicopter Design and Control. Springer Singapore, 2017.
+    </p>
+    <p class="bibitem" ><span class="biblabel">
+  [2]<span class="bibsp">&#x00A0;&#x00A0;&#x00A0;</span></span><a 
+ id="Xpractical"></a>Shi, D. , et al. &#8221;A Practical Performance Evaluation Method for Electric Multicopters.&#8221;
+    IEEE/ASME Transactions on Mechatronics 22.3(2017):1337-1348.</p></div>
+     
+<div id="footer"></div><script type="text/javascript">$("#footer").load("/FML4FCS/web-common/footer.html");</script>
+</body></html> 
+
+                                                                                
+
+
