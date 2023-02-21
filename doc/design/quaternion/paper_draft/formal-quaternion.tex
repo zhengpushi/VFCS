@@ -1,0 +1,205 @@
+% !TEX TS-program = pdflatex
+% This is samplepaper.tex, a sample chapter demonstrating the
+% LLNCS macro package for Springer Computer Science proceedings;
+% Version 2.21 of 2022/01/12
+%
+\documentclass[runningheads]{llncs}
+%
+
+\usepackage[T1]{fontenc}
+% T1 fonts will be used to generate the final print and online PDFs,
+% so please use T1 fonts in your manuscript whenever possible.
+% Other font encodings may result in incorrect characters.
+%
+
+\usepackage{graphicx}
+% Used for displaying a sample figure. If possible, figure files should
+% be included in EPS format.
+
+\usepackage{amssymb}
+% mathematical symbols
+%
+
+\usepackage{pifont}
+% more style for bullets
+%
+
+\usepackage{makecell}
+% cell style, support wrap
+%
+
+\usepackage[
+bookmarksnumbered=true,
+bookmarksopen=false,
+bookmarksopenlevel=1,
+colorlinks=true,  % it must be enabled to enable other color option
+citecolor=black,
+filecolor=black,
+linkcolor=black,
+urlcolor=black,
+pdfstartview=Fit
+]{hyperref}
+% set bookmark
+%
+% If you use the hyperref package, please uncomment the following two lines
+% to display URLs in blue roman font according to Springer's eBook style:
+
+\usepackage{minted}
+%% Format and highlight programming language source code with minted
+% 风格    关键字    类型    注释     备注
+% default 绿色      红色    深青斜体
+% colorful绿色      深蓝    灰色斜体
+% abap    浅蓝      浅蓝    灰色斜体
+% autumn  深蓝      青色    灰色斜体
+% sas     浅蓝      浅蓝    绿色斜体
+% vs      浅蓝      深青    绿色
+% igor    浅蓝      浅蓝    红色斜体
+\usemintedstyle{autumn}%default}%autumn}
+% delimit with # (Jing hao))
+\newminted[coqJ]{coq}{fontsize=\footnotesize,%\small,
+  mathescape, texcomments, escapeinside=\#\#,
+  linenos,numbersep=-5pt}
+% delimit with ? (Wen hao)
+\newminted[coqW]{coq}{fontsize=\footnotesize,
+  mathescape, texcomments, escapeinside=??,
+  linenos,numbersep=-5pt}
+
+\usepackage{makecell}
+%% Support wrap in cell of table
+
+\usepackage{color}
+\renewcommand\UrlFont{\color{blue}\rmfamily}
+%
+\usepackage{marvosym}
+%\usepackage{ifsym}
+% corresponding author
+%
+
+%% Short name for special nouns.
+% (1) prover, languages, project, etc.
+\newcommand{\Coq}{{\sc Coq}}
+\newcommand{\HOLLight}{{\sc HOL-Light}}
+\newcommand{\IsaHOL}{{\sc Isabelle/HOL}}
+\newcommand{\Lean}{{\sc Lean}}
+\newcommand{\Ocaml}{{\sc Ocaml}}
+\newcommand{\MC}{{\sc Mathematical Components}}
+\newcommand{\Coquelicot}{{\sc Coquelicot}}
+\newcommand{\CoqPackIdx}{{\sc Coq Package Index}}
+\newcommand{\CoqStdLib}{{\sc Coq Standard Library}}
+\newcommand{\CoqMatrix}{{\sc CoqMatrix}}
+% (2) math symbols
+\newcommand{\bN}{\mathbb{N}}
+\newcommand{\bR}{\mathbb{R}}
+\newcommand{\bQ}{\mathbb{Q}}
+\newcommand{\bZ}{\mathbb{Z}}
+\newcommand{\bC}{\mathbb{C}}
+
+\begin{document}
+%
+\title{Formal Quaternions in Coq
+%\thanks{Supported by organization x.}
+}
+%
+%\titlerunning{Abbreviated paper title}
+% If the paper title is too long for the running head, you can set
+% an abbreviated paper title here
+%
+\author{ZhengPu Shi
+  % \orcidID{0000-0001-5151-507X}
+  % \and Gang Chen$^{(\textrm{\Letter})}$\orcidID{0000-0003-1790-2484}
+}
+%
+%\authorrunning{F. Author et al.}
+% First names are abbreviated in the running head.
+% If there are more than two authors, 'et al.' is used.
+%
+%\institute{Princeton University, Princeton NJ 08544, USA \and
+%Springer Heidelberg, Tiergartenstr. 17, 69121 Heidelberg, Germany
+%\email{lncs@springer.com}\\
+%\url{http://www.springer.com/gp/computer-science/lncs} \and
+%ABC Institute, Rupert-Karls-University Heidelberg, Heidelberg, Germany\\
+%\email{\{abc,lncs\}@uni-heidelberg.de}}
+% \institute{Nanjing University of Aeronautics and Astronautics, NanJing 211106, China
+% \email{zhengpushi@nuaa.edu.cn}~~~\email{gangchensh@qq.com}}
+
+%
+\maketitle              % typeset the header of the contribution
+%
+\begin{abstract}
+  (preserved)
+  \keywords{Coq Proof Assistant
+    \and Quaternion
+% \and formal matrix theory
+% \and interface and implementation
+% \and isomorphic mapping
+    .
+}
+\end{abstract}
+%
+%
+%
+% ##################################################################################################
+
+% Here are demo code for figure, table, reference etc.
+% As shown in Fig.~\Ref{fig_title1}.
+% \begin{figure}[htbp]
+% {\centering
+% \includegraphics[width=0.7\textwidth]{figures/fig1.pdf}
+% \caption{Title of the figure}
+% \label{fig_title1}
+% }\end{figure}
+
+% As shown in Table~\ref{tab_title1}.
+% \begin{table}\begin{center}
+%   \caption{Title of the table.}
+%   \label{tab_title1}
+%   \begin{tabular}{|r|c|c|}
+%     \hline
+%     No & Title & Remark \\
+%     \hline
+%     1 & ab & cd
+%     \hline
+%   \end{tabular}
+% \end{center}\end{table}
+
+
+\section{Introduction}\label{intro}
+  (preserved)
+
+\begin{coqJ}
+  Definition a : R := 1.
+\end{coqJ}
+  
+
+% ##################################################################################################
+\section{Conclusion}\label{conclusion}
+  (preserved)
+
+% ##################################################################################################
+\subsection*{Acknowledgments}
+% I would like to thank xxx for their research on xx formalization techniques, and my colleagues for their discussions and suggestions.
+  (preserved)
+
+%
+% ---- Bibliography ----
+%
+% BibTeX users should specify bibliography style 'splncs04'.
+% References will then be sorted and formatted in the correct style.
+%
+% \bibliographystyle{splncs04}
+% \bibliography{mybibliography}
+%
+\begin{thebibliography}{99}
+
+\bibitem{ref_overview_formal_methods}
+Wang J, Zhan NJ, Feng XY, Liu ZM. Overview of formal methods. Ruan Jian Xue Bao/Journal of Software, 2019, 30(1):33-61(in Chinese with English abstract). \doi{doi:10.13328/j.cnki.jos.005652}
+
+\bibitem{ref_fem}
+Chen G, Shi ZP. Formalized engineering mathematics. Communications of the CCF, 2017, 13(10)(in Chinese with English abstract).
+
+\bibitem{ref_coq}
+Coq Development Team. The Coq Reference Manual 8.13.2.
+
+\end{thebibliography}
+
+\end{document}
