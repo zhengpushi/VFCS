@@ -21,7 +21,7 @@
 
 Require Export Reals.
 Require Export Lra.
-From CoqExt Require Export FuncExt StrExt.
+From CoqMatrix Require Export FuncExt StrExt.
 
 Open Scope string_scope.
 Open Scope R_scope.

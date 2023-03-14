@@ -19,7 +19,7 @@
   5. 留数法
 *)
 
-From CoqExt Require Export FuncExt.
+From CoqMatrix Require Export FuncExt.
 
 
 (** 代数表达式作用域 *)
