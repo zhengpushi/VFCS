@@ -19,66 +19,86 @@ Open Scope R_scope.
 
 (** ** Some useful properties *)
 
-(** Equality of two pairs, iff their corresponding components are all equal. *)
-Lemma Prod_eq : forall {A B} (z1 z2 : A*B), z1 = z2 <-> fst z1 = fst z2 /\ snd z1 = snd z2.
-Proof.
-  intros A B (a1,b1) (a2,b2). split; intros H; inv H; auto.
-  simpl in *; subst. auto.
-Qed.
+Section general_useful_props.
 
-(** The equality of real numbers is decidable *)
-Lemma Reqdec : forall (a b : R), {a = b}+{a <> b}.
-Proof.
-  intros. apply decidable.
-Qed.
+  (** Equality of two pairs, iff their corresponding components are all equal. *)
+  Lemma prod_eq_iff : forall {A B} (z1 z2 : A * B),
+      z1 = z2 <-> fst z1 = fst z2 /\ snd z1 = snd z2.
+  Proof.
+    intros A B (a1,b1) (a2,b2). split; intros H; inv H; auto.
+    simpl in *; subst. auto.
+  Qed.
 
-(** Basic inequality *)
+  (** Inequality of two pairs, iff at least one of components are not equal. *)
+  Lemma prod_neq_iff : forall {A B} {Aeqdec:Decidable (@eq A)} {Beqdec:Decidable (@eq B)}
+                         (z1 z2 : A * B),
+      z1 <> z2 <-> fst z1 <> fst z2 \/ snd z1 <> snd z2.
+  Proof.
+    intros A B HA HB (a1,b1) (a2,b2). split; intros H; simpl in *.
+    - destruct (decidable a1 a2), (decidable b1 b2); subst; auto.
+    - destruct (decidable a1 a2), (decidable b1 b2); subst; auto.
+      all: intro H1; inv H1; destruct H; auto.
+  Qed.
 
-(** ineq1 *)
-Lemma basic_ineq1 : forall a b : R, sqrt (a * a + b * b) <= Rabs a + Rabs b.
-Proof.
-  intros.
-  rewrite <- sqrt_square.
-  - apply sqrt_le_1_alt.
-    apply Rle_trans with (Rabs a * Rabs a + Rabs b * Rabs b)%R.
-    + rewrite <- ?Rabs_mult. apply Rplus_le_compat.
-      apply RRle_abs. apply RRle_abs.
-    + ring_simplify.
-      rewrite ?Rplus_assoc. apply Rplus_le_compat_l.
-      rewrite <- Rplus_0_l at 1.
-      rewrite <- ?Rplus_assoc. apply Rplus_le_compat_r.
-      assert (0 <= Rabs a) by ra; assert (0 <= Rabs b) by ra. ra.
-  - assert (0 <= Rabs a) by ra; assert (0 <= Rabs b) by ra. ra.
-Qed.
+  (** The equality of real numbers is decidable *)
+  Lemma Reqdec : forall (a b : R), {a = b}+{a <> b}.
+  Proof.
+    intros. apply decidable.
+  Qed.
 
-(** ineq2 *)
-Lemma basic_ineq2 : forall a b c d : R, a * c + b * d <= sqrt((a² + b²) * (c² + d²)).
-Proof.
-  intros.
-  apply Rsqr_incr_0_var; ra. ring_simplify.
-  autorewrite with R. rewrite ?Rsqr_sqrt; ra.
-  ring_simplify.
-  rewrite ?Rplus_assoc; repeat apply Rplus_le_compat_l.
-  rewrite <- ?Rplus_assoc; repeat apply Rplus_le_compat_r.
-  (* 2acbd <= a^2*d^2+b^2*c^2 *)
-  autorewrite with R.
-  replace (2 * a * c * b * d)%R with (2 * (a * d) * (b * c))%R by ring.
-  replace (a² * d² + c² * b²)%R with ((a*d)² + (b * c)²)%R; try (cbv; ring).
-  apply R_neq1.
-Qed.
+  (** Basic inequality *)
+
+  (** ineq1 *)
+  Lemma basic_ineq1 : forall a b : R, sqrt (a * a + b * b) <= Rabs a + Rabs b.
+  Proof.
+    intros.
+    rewrite <- sqrt_square.
+    - apply sqrt_le_1_alt.
+      apply Rle_trans with (Rabs a * Rabs a + Rabs b * Rabs b)%R.
+      + rewrite <- ?Rabs_mult. apply Rplus_le_compat.
+        apply RRle_abs. apply RRle_abs.
+      + ring_simplify.
+        rewrite ?Rplus_assoc. apply Rplus_le_compat_l.
+        rewrite <- Rplus_0_l at 1.
+        rewrite <- ?Rplus_assoc. apply Rplus_le_compat_r.
+        assert (0 <= Rabs a) by ra; assert (0 <= Rabs b) by ra. ra.
+    - assert (0 <= Rabs a) by ra; assert (0 <= Rabs b) by ra. ra.
+  Qed.
+
+  (** ineq2 *)
+  Lemma basic_ineq2 : forall a b c d : R, a * c + b * d <= sqrt((a² + b²) * (c² + d²)).
+  Proof.
+    intros.
+    apply Rsqr_incr_0_var; ra. ring_simplify.
+    autorewrite with R. rewrite ?Rsqr_sqrt; ra.
+    ring_simplify.
+    rewrite ?Rplus_assoc; repeat apply Rplus_le_compat_l.
+    rewrite <- ?Rplus_assoc; repeat apply Rplus_le_compat_r.
+    (* 2acbd <= a^2*d^2+b^2*c^2 *)
+    autorewrite with R.
+    replace (2 * a * c * b * d)%R with (2 * (a * d) * (b * c))%R by ring.
+    replace (a² * d² + c² * b²)%R with ((a*d)² + (b * c)²)%R; try (cbv; ring).
+    apply R_neq1.
+  Qed.
+
+  (* (** (r1,r2) <> 0 <-> (((r1*r1) + (r2*r2)) <> 0) *) *)
+  (* Lemma Raux_neq0_neq0_imply_RplusRsqr_ge0 (r1 r2 : R) : *)
+  (*   (r1, r2) <> (0,0) <-> (((r1*r1) + (r2*r2)) <> 0)%R. *)
+  (* Proof. *)
+  (*   split; intros. *)
+  (*   - apply Cnorm2_pos_iff in H. apply not_eq_sym. apply Rlt_not_eq; auto. *)
+  (*   - intro. inversion H0. subst. lra. *)
+  (* Qed. *)
+  (* Global Hint Resolve Raux_neq0_neq0_imply_RplusRsqr_ge0 : real. *)
 
 
-(** r * r = r²。此转换虽然简单，但Coq就是不能自动转换 *)
-Lemma Rmult_eq_Rsqr (r : R) : (r * r)%R = r².
-Proof. auto. Qed.
+  (** 周期函数在整数类型上的支持，标准库只有 nat 上的支持 *)
+  Section cos_sin_period.
 
-(** 周期函数在整数类型上的支持，标准库只有 nat 上的支持 *)
-Section cos_sin_period.
-
-  (* 在 section 中打开的 Scope，会自动关闭，可放心临时使用 *)
-  Open Scope R.
-  
-(*   (* 这是标准库里的代码 *)
+    (* 在 section 中打开的 Scope，会自动关闭，可放心临时使用 *)
+    Open Scope R.
+    
+    (*   (* 这是标准库里的代码 *)
   Lemma cos_period : forall (x:R) (k:nat), cos (x + 2 * INR k * PI) = cos x.
   Proof.
     intros x k; induction k as [| k Hreck].
@@ -91,81 +111,59 @@ Section cos_sin_period.
     rewrite S_INR in |- *;  ring.
   Qed. *)
 
-  Lemma cos_period_Z : forall (x:R) (k:Z), cos (x + 2 * IZR k * PI) = cos x.
-  Proof.
-    intros x k. induction k.
-    - (* 利用 cos_period *)
-      replace 0 with (INR 0); auto. apply cos_period.
-    - (* 利用 cos_period *)
-      replace (Z.pos p) with (Z.of_nat (Pos.to_nat p)).
-      + rewrite <- INR_IZR_INZ. apply cos_period.
-      + apply positive_nat_Z.
-    - (* 先将负整数转换为减去自然数，再归纳 *)
-      replace (Z.neg p) with (- (Z.of_nat (Pos.to_nat p)))%Z.
-      + rewrite Ropp_Ropp_IZR.
-        rewrite <- INR_IZR_INZ.
-        rewrite <- Ropp_mult_distr_r.
-        rewrite Ropp_mult_distr_l_reverse.
-        induction (Pos.to_nat p).
-        * replace (x + - (2 * INR 0 * PI)) with x; auto.
-          replace (INR 0) with 0; auto; ring.
-        * replace (x + - (2 * INR (S n) * PI)) with
-            (x - (2 * INR n * PI) - 2 * PI).
-          { rewrite cos_minus; rewrite ?sin_2PI,?cos_2PI. ring_simplify; auto. }
-          { rewrite S_INR. ring. }
-      + rewrite positive_nat_Z. auto.
-  Qed.
+    Lemma cos_period_Z : forall (x:R) (k:Z), cos (x + 2 * IZR k * PI) = cos x.
+    Proof.
+      intros x k. induction k.
+      - (* 利用 cos_period *)
+        replace 0 with (INR 0); auto. apply cos_period.
+      - (* 利用 cos_period *)
+        replace (Z.pos p) with (Z.of_nat (Pos.to_nat p)).
+        + rewrite <- INR_IZR_INZ. apply cos_period.
+        + apply positive_nat_Z.
+      - (* 先将负整数转换为减去自然数，再归纳 *)
+        replace (Z.neg p) with (- (Z.of_nat (Pos.to_nat p)))%Z.
+        + rewrite Ropp_Ropp_IZR.
+          rewrite <- INR_IZR_INZ.
+          rewrite <- Ropp_mult_distr_r.
+          rewrite Ropp_mult_distr_l_reverse.
+          induction (Pos.to_nat p).
+          * replace (x + - (2 * INR 0 * PI)) with x; auto.
+            replace (INR 0) with 0; auto; ring.
+          * replace (x + - (2 * INR (S n) * PI)) with
+              (x - (2 * INR n * PI) - 2 * PI).
+            { rewrite cos_minus; rewrite ?sin_2PI,?cos_2PI. ring_simplify; auto. }
+            { rewrite S_INR. ring. }
+        + rewrite positive_nat_Z. auto.
+    Qed.
 
-  Lemma sin_period_Z : forall (x:R) (k:Z), sin (x + 2 * IZR k * PI) = sin x.
-  Proof.
-    intros x k. induction k.
-    - (* 利用 sin_period *)
-      replace 0 with (INR 0); auto. apply sin_period.
-    - (* 利用 sin_period *)
-      replace (Z.pos p) with (Z.of_nat (Pos.to_nat p)).
-      + rewrite <- INR_IZR_INZ. apply sin_period.
-      + apply positive_nat_Z.
-    - (* 先将负整数转换为减去自然数，再归纳 *)
-      replace (Z.neg p) with (- (Z.of_nat (Pos.to_nat p)))%Z.
-      + rewrite Ropp_Ropp_IZR.
-        rewrite <- INR_IZR_INZ.
-        rewrite <- Ropp_mult_distr_r.
-        rewrite Ropp_mult_distr_l_reverse.
-        induction (Pos.to_nat p).
-        * replace (x + - (2 * INR 0 * PI)) with x; auto.
-          replace (INR 0) with 0; auto; ring.
-        * replace (x + - (2 * INR (S n) * PI)) with
-            (x - (2 * INR n * PI) - 2 * PI).
-          { rewrite sin_minus; rewrite ?sin_2PI,?cos_2PI. ring_simplify; auto. }
-          { rewrite S_INR. ring. }
-      + rewrite positive_nat_Z. auto.
-  Qed.
-  
-End cos_sin_period.
+    Lemma sin_period_Z : forall (x:R) (k:Z), sin (x + 2 * IZR k * PI) = sin x.
+    Proof.
+      intros x k. induction k.
+      - (* 利用 sin_period *)
+        replace 0 with (INR 0); auto. apply sin_period.
+      - (* 利用 sin_period *)
+        replace (Z.pos p) with (Z.of_nat (Pos.to_nat p)).
+        + rewrite <- INR_IZR_INZ. apply sin_period.
+        + apply positive_nat_Z.
+      - (* 先将负整数转换为减去自然数，再归纳 *)
+        replace (Z.neg p) with (- (Z.of_nat (Pos.to_nat p)))%Z.
+        + rewrite Ropp_Ropp_IZR.
+          rewrite <- INR_IZR_INZ.
+          rewrite <- Ropp_mult_distr_r.
+          rewrite Ropp_mult_distr_l_reverse.
+          induction (Pos.to_nat p).
+          * replace (x + - (2 * INR 0 * PI)) with x; auto.
+            replace (INR 0) with 0; auto; ring.
+          * replace (x + - (2 * INR (S n) * PI)) with
+              (x - (2 * INR n * PI) - 2 * PI).
+            { rewrite sin_minus; rewrite ?sin_2PI,?cos_2PI. ring_simplify; auto. }
+            { rewrite S_INR. ring. }
+        + rewrite positive_nat_Z. auto.
+    Qed.
+    
+  End cos_sin_period.
 
-(** 0 <= 平方。标准库是 0 <= r²，无法直接重写 *)
-Lemma Raux_Rmult_ge0 (r : R) : 0 <= r * r.
-Proof. apply Rle_0_sqr. Qed.
-Global Hint Resolve Raux_Rmult_ge0 : real.
-
-(** 0 <= 平方和。即：0 <= r1 * r1 + r2 * r2 *)
-Lemma Raux_Rplus_Rmult_ge0 (r1 r2 : R) : 0 <= ((r1 * r1) + (r2 * r2)).
-Proof. apply Rplus_le_le_0_compat; auto with real. Qed.
-Global Hint Resolve Raux_Rplus_Rmult_ge0 : real.
-
-(** 两个实数的平方和为零 iff 这两个实数为零 *)
-Lemma Rplus_Rsqr_Rsqr_eq0_iff : forall (r1 r2 : R),
-  (r1 * r1 + r2 * r2 = 0)%R <-> r1 = 0%R /\ r2 = 0%R.
-Proof.
-  intros. split; intros.
-  - split.
-    + apply Rplus_eq_0_l in H; auto with real. apply Rsqr_eq_0 in H. auto.
-    + rewrite Rplus_comm in H.
-      apply Rplus_eq_0_l in H; auto with real. apply Rsqr_eq_0 in H. auto.
-  - destruct H. subst. ring.
-Qed.
-
-
+End general_useful_props.
 
 
 (** ** Definition of C and basic operations *)
@@ -176,54 +174,98 @@ Delimit Scope C_scope with C.
 Bind Scope C_scope with C.
 Open Scope C_scope.
 
-(** Definition of complex number *)
-Definition C : Set := R * R.
+(** *** Definition of complex number *)
+Section def.
+  
+  Definition C : Set := R * R.
 
-(** Convert two real numbers to a complex number *)
-Definition RR2C (a : R) (b : R) : C := (a, b).
+  (** Convert two real numbers to a complex number *)
+  Definition RR2C (a : R) (b : R) : C := (a, b).
+  Infix " '+i' " := RR2C (at level 60) : C_scope.
+
+  (** Convert a real number to a complex number *)
+  Definition IRC (a : R) : C := a +i 0.
+  Coercion IRC : R >-> C.
+
+  (** Common constant complex numbers *)
+  Definition C0 := 0 +i 0.
+  Definition C1 := 1 +i 0.
+  Definition Ci := 0 +i 1.
+  Notation "0" := C0 : C_scope.
+  Notation "1" := C1 : C_scope.
+
+  Definition Cre (z : C) : R :=
+    let (a, b) := z in
+    a.
+  Notation "z '.a'" := (Cre z) (at level 20) : C_scope.
+
+  Definition Cim (z : C) : R :=
+    let (a, b) := z in
+    b.
+  Notation "z '.b'" := (Cim z) (at level 20) : C_scope.
+
+  Lemma Cproj_right : forall z : C, z = (z.a, z.b).
+  Proof.
+    intros (a,b). auto.
+  Qed.
+
+  Lemma Cexist_rep_complex : forall a b : R, exists x : C, Cre x = a /\ Cim x = b.
+  Proof.
+    intros. exists (a +i b). auto.
+  Qed.
+
+  (** Equality on C is decidable *)
+  Global Instance Decidable_Ceq : Decidable (@eq C).
+  Proof.
+    constructor. intros (a1,b1) (a2,b2).
+    destruct (decidable a1 a2), (decidable b1 b2); subst.
+    - left; auto.
+    - right; intro; inv H; easy.
+    - right; intro; inv H; easy.
+    - right; intro; inv H; easy.
+  Qed.
+
+  Lemma Ceq_iff : forall z1 z2 : C, z1 = z2 <-> z1.a = z2.a /\ z1.b = z2.b.
+  Proof.
+    intros (a1,b1) (a2,b2). split; intros H; inv H; auto.
+    simpl in *; subst. auto.
+  Qed.
+
+  (** Two complex numbers are neq, iff at least one components are neq *)
+  Lemma Cneq_iff : forall z1 z2 : C, z1 <> z2 <-> (z1.a <> z2.a \/ z1.b <> z2.b).
+  Proof.
+    intros (a1,b1) (a2,b2); simpl.
+    split; intros.
+    - destruct (decidable a1 a2), (decidable b1 b2); subst; auto.
+    - destruct (decidable a1 a2), (decidable b1 b2); subst; auto.
+      + intro H1; inv H1. destruct H; auto.
+      + intro H1; inv H1. destruct H; auto.
+      + intro H1; inv H1. destruct H; auto.
+      + intro H1; inv H1. destruct H; auto.
+  Qed.
+
+  (** 1 <> 0 *)
+  Lemma C1_neq_C0 : 1 <> 0.
+  Proof.
+    intro H.
+    apply (proj1 (Ceq_iff _ _)) in H. simpl in *. destruct H; auto with R.
+  Qed.
+
+End def.
+
+Hint Resolve C1_neq_C0 : complex.
+
 Infix " '+i' " := RR2C (at level 60) : C_scope.
-
-(** Convert a real number to a complex number *)
-Definition IRC (a : R) : C := a +i 0.
-Coercion IRC : R >-> C.
-
-(** Common constant complex numbers *)
-Definition C0 := 0 +i 0.
-Definition C1 := 1 +i 0.
-Definition Ci := 0 +i 1.
-
 Notation "0" := C0 : C_scope.
 Notation "1" := C1 : C_scope.
-
-Definition Cre (z : C) : R :=
-  let (a, b) := z in
-  a.
-
-Definition Cim (z : C) : R :=
-  let (a, b) := z in
-  b.
-
 Notation "z '.a'" := (Cre z) (at level 20) : C_scope.
 Notation "z '.b'" := (Cim z) (at level 20) : C_scope.
 
-Lemma Cproj_right : forall z : C, z = (z.a, z.b).
-Proof.
-  intros (a,b). auto.
-Qed.
-
-Lemma Ceq : forall z1 z2 : C, z1 = z2 <-> z1.a = z2.a /\ z1.b = z2.b.
-Proof.
-  intros (a1,b1) (a2,b2). split; intros H; inv H; auto.
-  simpl in *; subst. auto.
-Qed.
-
-Lemma Cexist_rep_complex : forall a b : R, exists x : C, Cre x = a /\ Cim x = b.
-Proof.
-  intros. exists (a +i b). auto.
-Qed.
 
 
-(** Tactic: simplify the environment contain complex numbers *)
+(** *** Tactics for basic proof on complex number *)
+
+(** simplify the environment contain complex numbers *)
 Ltac Csimpl :=
   intros;
   repeat
@@ -232,41 +274,12 @@ Ltac Csimpl :=
     end;
   simpl.
 
-(** Tactic: Proof equality of complex numbers *)
+(** equality of complex numbers *)
 Ltac Ceq :=
   Csimpl;
-  apply (proj2 (Ceq _ _)); (* z1.a = z2.a /\ z2.b = z2.b -> z1 = z2 *)
+  apply (proj2 (Ceq_iff _ _)); (* z1.a = z2.a /\ z2.b = z2.b -> z1 = z2 *)
   split; simpl; try lra.
 
-(** Equality on C is decidable *)
-Global Instance Decidable_Ceq : Decidable (@eq C).
-Proof.
-  constructor. Csimpl.
-  destruct (decidable a a0), (decidable b b0); subst.
-  - left; auto.
-  - right; intro; inv H; easy.
-  - right; intro; inv H; easy.
-  - right; intro; inv H; easy.
-Qed.
-
-(** A complex number a +i b is nonzero, iff a or b nonzero *)
-Lemma Cneq0_iff_re_or_im_neq0 : forall z, z <> 0 <-> (Cre z <> 0%R \/ Cim z <> 0%R).
-Proof.
-  Csimpl.
-  split; intros H.
-  - destruct (Reqdec a 0), (Reqdec b 0); subst; try easy;
-      try (left; easy); try (right; easy).
-  - intros H1; inv H1. destruct H; easy.
-Qed.
-Hint Resolve Cneq0_iff_re_or_im_neq0 : complex.
-
-(** 1 <> 0 *)
-Lemma C1_neq_C0 : 1 <> 0.
-Proof.
-  intro H.
-  apply (proj1 (Ceq _ _)) in H. simpl in *. destruct H; auto with R.
-Qed.
-Hint Resolve C1_neq_C0 : complex.
 
 
 (** *** Injection from nat or Z to complex numbers *)
@@ -302,7 +315,33 @@ Section Cnorm2.
     assert (b = R0) by nra. subst. f_equal; auto.
   Qed.
 
+  (** z <> 0 <-> C2 |z| <> 0 *)
+  Lemma Cneq0_iff_norm2_neq0 : forall z : C, z <> 0 <-> C2|z| <> 0%R.
+  Proof.
+    intros. split; intros; intro.
+    - apply C0_norm_R0 in H0. easy.
+    - apply C0_norm_R0 in H0. easy.
+  Qed.
+
+  (** 0 <= Cnorm2 z *)
+  Lemma Cnorm2_ge0 (z : C) : 0 <= C2|z|.
+  Proof.
+    destruct z. unfold Cnorm2; simpl.
+    apply Rplus_le_le_0_compat; apply Rle_0_sqr.
+  Qed.
+
+  (** 0 < x*x + y*y <-> (x,y) <> 0 *)
+  Lemma Cnorm2_pos_iff (x y : R) : (0 < x * x + y * y) <-> (x, y) <> 0.
+  Proof.
+    split; intros.
+    - intro. inversion H0. subst. lra.
+    - apply prod_neq_iff in H; simpl in H. ra.
+  Qed.
+
+
 End Cnorm2.
+
+Global Hint Resolve Cnorm2_pos_iff : complex.
 
 Notation "R| r |" := (Rabs r) : R_scope.
 Notation "C2| z |" := (Cnorm2 z) : C_scope.
@@ -310,15 +349,24 @@ Notation "C2| z |" := (Cnorm2 z) : C_scope.
 
 (** *** Norm of complex number *)
 Section Cnorm.
+
   Definition Cnorm (z : C) : R := 
     (sqrt (Cnorm2 z)).
   Notation "C| z |" := (Cnorm z) : C_scope.
 
-  (** |z|=0 -> z=0 *)
-  Lemma Cnorm0_imply_C0 : forall z : C, C|z| = R0 -> z = C0.
+  (** Cnorm2 z = (Cnorm z)² *)
+  Lemma Cnorm2_eq (z : C) : C2|z| = (C|z|)².
   Proof.
-    Csimpl. cbv in H.
-    apply Rsqrt_plus_sqr_eq0_iff in H. inv H; auto.
+    unfold Cnorm. rewrite Rsqr_sqrt; auto.
+    apply Cnorm2_ge0.
+  Qed.
+
+  (** z = 0 <-> |z| = 0 *)
+  Lemma Cnorm0_iff_C0 : forall z : C, z = 0 <-> C|z| = R0.
+  Proof.
+    Csimpl. cbv. split; intros.
+    - inv H. ring_simplify.  apply Rsqrt_plus_sqr_eq0_iff. auto.
+    - apply Rsqrt_plus_sqr_eq0_iff in H. destruct H. subst. auto.
   Qed.
 
   (** 0 <= |z| *)
@@ -327,17 +375,25 @@ Section Cnorm.
     Csimpl. unfold Cnorm. ra.
   Qed.
 
+  (** 0 <= |z| *)
+  Lemma Cnorm_ge0 (z : C) : 0 <= C|z|.
+  Proof.
+    unfold Cnorm. apply sqrt_pos.
+  Qed.
+
   (** z <> 0 -> 0 < |z| *)
   Lemma Cnorm_pos_lt : forall z : C, z <> 0 -> R0 < C|z|.
   Proof.
     intros z Hz; case (Cnorm_pos z); intro H; auto.
-    apply eq_sym, Cnorm0_imply_C0 in H. easy.
+    apply eq_sym, Cnorm0_iff_C0 in H. easy.
   Qed.
 
-  (** z <> 0 -> |z| <> 0 *)
-  Lemma Cnorm_neq0 : forall z : C, z <> 0 -> C|z| <> R0.
+  (** z <> 0 <-> |z| <> 0 *)
+  Lemma Cnorm_neq0_iff_neq0 : forall z : C, z <> 0 <-> C|z| <> R0.
   Proof.
-    intros. apply Cnorm_pos_lt in H. lra.
+    intros (a,b). cbv. split; intros H.
+    - intro. apply Rsqrt_plus_sqr_eq0_iff in H0. inv H0. easy.
+    - intro. inv H0. destruct H. apply Rsqrt_plus_sqr_eq0_iff. easy.
   Qed.
 
   (** |0| = 0 *)
@@ -735,16 +791,16 @@ Section Cinv.
     Ceq. cbv; lra. cbv; lra.
   Qed.
 
-  Lemma Cinv_l : forall z : C, z <> 0 -> / z * z = 1.
+  Lemma Cmul_inv_l : forall z : C, z <> 0 -> / z * z = 1.
   Proof.
     Ceq. cbv. field.
     apply Rplus_sqr_neq0_iff2.
-    apply Cneq0_iff_re_or_im_neq0 in H. auto.
+    apply Cneq_iff in H. auto.
   Qed.
 
-  Lemma Cinv_r : forall z:C, z <> C0 -> z * /z = 1.
+  Lemma Cmul_inv_r : forall z:C, z <> C0 -> z * /z = 1.
   Proof.
-    intros. rewrite Cmul_comm. apply Cinv_l. auto.
+    intros. rewrite Cmul_comm. apply Cmul_inv_l. auto.
   Qed.
 
   (** z <> 0 -> |/z| = / |z| *)
@@ -757,18 +813,32 @@ Section Cinv.
   Proof.
     intros (a,b) H. cbv.
     assert (0 < a * a + b * b).
-    { apply Cneq0_iff_re_or_im_neq0 in H; simpl in H. destruct H; ra. }
+    { apply Cneq_iff in H; simpl in H. destruct H; ra. }
     rewrite inv_sqrt; ra.
     apply Rsqr_inj; ra. autorewrite with R. rewrite ?Rsqr_sqrt; ra.
     field. lra.
   Qed.
 
+  
+  (** z <> 0 -> (/z).a = z.a / C2|z| *)
+  Lemma Cre_inv (z : C) : z <> 0 -> (/ z).a = ((z.a) / C2|z |)%R.
+  Proof.
+    auto.
+  Qed.
+
+  (** z <> 0 -> (/z).b = -z.b / C2|z| *)
+  Lemma Cim_inv_neq0 (z : C) : z <> 0 -> (/ z).b = (-z.b / C2|z|)%R.
+  Proof.
+    auto.
+  Qed.
+  
+
 End Cinv.
 
 Notation "/ z" := (Cinv z) : C_scope.
 
-Hint Resolve Cinv_l : complex.
-Hint Resolve Cinv_r : complex.
+Hint Resolve Cmul_inv_l : complex.
+Hint Resolve Cmul_inv_r : complex.
 
 
 (** *** Division of complex numbers *)
@@ -776,6 +846,13 @@ Section Cdiv.
 
   Definition Cdiv (c1 c2 : C) : C := c1 * / c2.
   Infix "/" := Cdiv : C_scope.
+
+  (** z <> 0 -> /z = 1/z *)
+  Lemma Cinv_eq_div (z : C) : z <> 0 -> (/z) = (1/z).
+  Proof.
+    Ceq.
+  Qed.
+
 
 End Cdiv.
 Infix "/" := Cdiv : C_scope.
@@ -880,162 +957,29 @@ Section triangle_ineq.
 End triangle_ineq.
 
 
-(** 复数为零 iff 各分量为零(C版本) *)
-Lemma Ceq0_iff_Cre0_Cim0 (z : C) : z = 0 <-> Cre z = 0%R /\ Cim z = 0%R.
-Proof.
-  destruct z as (a,b). split; intros.
-  - inversion H; simpl. split; auto.
-  - simpl in *. destruct H. subst; auto.
-Qed.
 
-(** 复数为零 iff 各分量为零((a,b)版本) *)
-Lemma Ceq0_iff_Cre0_Cim0' (a b : R) : (a,b) = 0 <-> a = 0%R /\ b = 0%R.
-Proof.
-  split; intros.
-  - inversion H. auto.
-  - destruct H; subst; auto.
-Qed.
+(** * 1.2 Triangle Representation of Complex number (复数的三角表示) *)
 
-(** 复数零的模长为零 *)
-Lemma Cnorm_C0_eq0 : C|0| = R0.
-Proof.
-  unfold Cnorm, Cnorm2. simpl. ring_simplify (0*0+0*0)%R. apply sqrt_0.
-Qed.
+(** ** 1.2.1 Magnitude, Main argument and argument of complex number 
+    (复数的模、主辐角和辐角) *)
 
-(** 复数不为零 iff 至少有一个分量不为零 *)
-Lemma Cneq0_iff_Cre0_or_Cim0 (a b : R) : (a,b) <> 0 <-> a <> 0%R \/ b <> 0%R.
-Proof.
-  (* 凡是实数不等于零的证明，一般都要利用下面的引理来分解 *)
-  destruct (Req_EM_T a 0), (Req_EM_T b 0); split; intros; subst; auto.
-  - destruct H; easy.
-  - intro. destruct n. inversion H0; auto.
-  - intro. destruct n. inversion H0; auto.
-  - intro. inversion H0. lra.
-Qed.
-
-(** z = 0 <-> C|z| = 0 *)
-Lemma Ceq0_iff_Cnorm0 (z : C) : (z = 0) <-> (C|z| = 0%R).
-Proof.
-  destruct z; split; intros; unfold Cnorm, Cnorm2 in *; simpl in *.
-  - inversion H. ring_simplify ((0*0)+(0*0))%R. rewrite sqrt_0; auto.
-  - apply sqrt_eq_0 in H; auto with real.
-    assert (r = 0%R). 
-    { apply Rplus_eq_0_l in H; auto with real.
-      apply Rmult_integral in H. destruct H; auto. }
-    assert (r0 = 0%R).
-    { rewrite Rplus_comm in H. apply Rplus_eq_0_l in H; auto with real.
-      apply Rmult_integral in H. destruct H; auto. }
-    subst; auto.
-Qed.
-
-(** z <> 0 <-> C2 |z| <> 0 *)
-Lemma Cneq0_iff_Cnorm__neq0 (z : C) : z <> 0 <-> C2|z| <> 0%R.
-Proof.
-  intros. split; intros; intro.
-  - apply C0_norm_R0 in H0. easy.
-  - apply C0_norm_R0 in H0. easy.
-Qed.
-
-(** z <> 0 <-> C|z| <> 0 *)
-Lemma Cnorm_ne0_iff_neq0 (z : C) : z <> 0 <-> C|z| <> 0%R.
-Proof.
-  intros. split; intros; intro.
-  - apply Ceq0_iff_Cnorm0 in H0. easy.
-  - apply Ceq0_iff_Cnorm0 in H0. easy.
-Qed.
-
-(** 0 <= Cnorm2 z *)
-Lemma Cnorm2_ge0 (z : C) : 0 <= C2|z|.
-Proof.
-  destruct z. unfold Cnorm2; simpl.
-  apply Rplus_le_le_0_compat; apply Rle_0_sqr.
-Qed.
-
-(** 0 <= |z| *)
-Lemma Cnorm_ge0 (z : C) : 0 <= C|z|.
-Proof.
-  unfold Cnorm. apply sqrt_pos.
-Qed.
-
-(** Cnorm2 z = (Cnorm z)² *)
-Lemma Cnorm2_eq (z : C) : C2|z| = (C|z|)².
-Proof.
-  unfold Cnorm. rewrite Rsqr_sqrt; auto.
-  apply Cnorm2_ge0.
-Qed.
-
-(** 0 < x*x + y*y <-> (x,y) <> 0 *)
-Lemma Cnorm2_pos_iff (x y : R) : (0 < x * x + y * y) <-> (x, y) <> 0.
-Proof.
-  split; intros.
-  - intro. inversion H0. subst. lra.
-  - apply Cnorm_pos_lt in H. ra.
-Qed.
-Global Hint Resolve Cnorm2_pos_iff : real.
-
-(** (r1,r2) <> 0 <-> (((r1*r1) + (r2*r2)) <> 0) *)
-Lemma Raux_neq0_neq0_imply_RplusRsqr_ge0 (r1 r2 : R) :
-  (r1, r2) <> 0 <-> (((r1*r1) + (r2*r2)) <> 0)%R.
-Proof.
-  split; intros.
-  - apply Cnorm2_pos_iff in H. apply not_eq_sym. apply Rlt_not_eq; auto.
-  - intro. inversion H0. subst. lra.
-Qed.
-Global Hint Resolve Raux_neq0_neq0_imply_RplusRsqr_ge0 : real.
-
-(** z <> 0 -> z * (/z) = 1 *)
-Lemma Cmult_Cinv (z : C) : z <> 0 -> z * (/z) = 1.
-Proof.
-  intros; destruct z as (a,b). compute. f_equal; field; auto with real.
-  - apply Raux_neq0_neq0_imply_RplusRsqr_ge0; auto.
-  - apply Raux_neq0_neq0_imply_RplusRsqr_ge0; auto.
-Qed.
-
-(** z <> 0 -> /z = 1/z *)
-Lemma Cinv_eq (z : C) : z <> 0 -> (/z) = (1/z).
-Proof.
-  intros; destruct z as (a,b). compute. f_equal; field.
-  apply Raux_neq0_neq0_imply_RplusRsqr_ge0; auto.
-  apply Raux_neq0_neq0_imply_RplusRsqr_ge0; auto.
-Qed.
-
-(** 0 <> 0 -> False *)
-Lemma C0_neq0_False : 0 <> 0 -> False.
-Proof.
-  intros. destruct H. auto.
-Qed.
-
-(** z <> 0 -> Cre (/z) = (Cre z) / C|z| *)
-Lemma Cre_inv_neq0 (z : C) : z <> 0 -> Cre (/ z) = ((Cre z) / C|z|)%R.
-Proof.
-  intros. Admitted.
-
-(** z <> 0 -> Cim (/z) = (Cim z) / C|z| *)
-Lemma Cim_inv_neq0 (z : C) : z <> 0 -> Cim (/ z) = ((Cim z) / C|z|)%R.
-Proof.
-  intros. Admitted.
-
-
-(** * 1.2 复数的三角表示 *)
-
-(** ** 1.2.1 复数的模、主辐角和辐角 *)
-
-(** 复数的模 *)
+(** *** Magnitude of complex number *)
 (* Check Cnorm. *)
 
-(** 复数模与实部和虚部的几个不等式 *)
 
-Lemma Cnorm_ge_AbsCre (z : C) : R|Cre z| <= C|z|.
+(** Some inequalities about real part or imaginay part of a complex number *)
+
+Lemma Cnorm_ge_AbsCre (z : C) : R|z.a| <= C|z|.
 Proof. apply Cre_le_Cnorm. Qed.
 
-Lemma Cnorm_ge_AbsCim (z : C) : R|Cim z| <= C|z|.
+Lemma Cnorm_ge_AbsCim (z : C) : R|z.b| <= C|z|.
 Proof. apply Cim_le_Cnorm. Qed.
 
 Lemma Cnorm_le_AbsCre_plus_AbsCim (z : C) : 
-  C|z| <= R|Cre z| + R|Cim z|.
+  C|z| <= R|z.a| + R|z.b|.
 Proof. apply Cnorm_le_Cre_Cim. Qed.
 
-(** 复数的主辐角 *)
+(** Main argument *)
 (*
   算法伪代码：
   if (x = 0) {
@@ -1062,13 +1006,18 @@ Definition Carg (z : C) : R :=
 
 Notation "∠ z" := (Carg z) (at level 10) : C_scope.
 
-(** 辐角的定义，是多值函数 *)
-Definition CArg (z : C) (k : Z) : R := (∠z + 2 * (IZR k) * PI)%R.
+(* 辐角的定义，是多值函数 (不再使用该定义，改用谓词来描述性质) *)
+(* Definition CArg (z : C) (k : Z) : R := (∠z + 2 * (IZR k) * PI)%R. *)
 
-(** 由于任意辐角的余弦和正弦都相同，进而得到相同的复数，不再区分辐角和主辐角 *)
+(** Argument of a complex number *)
+Definition is_CArg (z : C) (theta : R) : Prop := exists (k : Z),
+    theta = (∠z + 2 * (IZR k) * PI)%R.
 
+(** Because, every different arguments of a complex number must have same sine and 
+    cosine value, thus we should abtain same complex number.
+    Therefore, we won't distinguish main argument and argument now. *)
 
-(** 验证Carg定义，x > 0 *)
+(** Verify the definition of Carg (x > 0) *)
 Lemma Carg_verify_xlt0 (x y : R) : x > 0 -> 
   ∠(x +i y) = atan (y/x).
 Proof.
@@ -1076,7 +1025,7 @@ Proof.
   destruct (Rcase_abs x); try lra.
 Qed.
 
-(** 验证Carg定义，x = 0, y > 0 *)
+(** Verify the definition of Carg (x = 0, y > 0) *)
 Lemma Carg_verify_xeq0_ygt0 (x y : R) : x = 0%R -> y > 0 -> 
   ∠(x +i y) = (PI / 2)%R.
 Proof.
@@ -1084,7 +1033,7 @@ Proof.
   destruct (Rcase_abs y); try lra.
 Qed.
 
-(** 验证Carg定义，x < 0, y >= 0 *)
+(** Verify the definition of Carg (x < 0, y >= 0) *)
 Lemma Carg_verify_xlt0_yge0 (x y : R) : x < 0%R -> y >= 0 ->
   ∠(x +i y) = (atan (y/x) + PI)%R.
 Proof.
@@ -1093,7 +1042,7 @@ Proof.
   destruct (Rcase_abs y); try lra.
 Qed.
 
-(** 验证Carg定义，x < 0, y < 0 *)
+(** Verify the definition of Carg (x < 0, y < 0) *)
 Lemma Carg_verify_xlt0_ylt0 (x y : R) : x < 0%R -> y < 0 ->
   ∠(x +i y) = (atan (y/x) - PI)%R.
 Proof.
@@ -1102,7 +1051,7 @@ Proof.
   destruct (Rcase_abs y); try lra.
 Qed.
 
-(** 验证Carg定义，x = 0, y < 0 *)
+(** Verify the definition of Carg (x = 0, y < 0) *)
 Lemma Carg_verify_xeq0_ylt0 (x y : R) : x = 0%R -> y < 0 ->
   ∠(x +i y) = (- PI / 2)%R.
 Proof.
@@ -1112,46 +1061,38 @@ Proof.
 Qed.
 
 
-(** 以下关系式，在证明 cos(∠ z) 和 sin(∠ z) 时多次用到，故先证明之 *)
+(** Note, this equation will be used in the proof about cos(∠ z) and sin(∠ z) *)
+
 (** /(sqrt (1+(b/a)²)) = abs(a) / sqrt(a*a + b*b) *)
 Lemma Rinv_Rsqrt_1_plus_Rsqr_a_div_b (a b : R) : a <> 0%R ->
   (/ (sqrt (1+(b/a)²)) = (Rabs a) / sqrt(a*a + b*b))%R.
 Proof.
   intros.
-  replace (1 + (b/a)²)%R with ((a*a + b*b) / ((Rabs a)*(Rabs a)))%R.
-  - rewrite sqrt_div_alt. rewrite sqrt_square. 
-    unfold Cnorm, Cnorm2; simpl. field.
-    split; auto. destruct (sqrt_pos (a*a+b*b)). intro. lra.
-    assert (0 < sqrt (a * a + b * b))%R.
-    apply sqrt_lt_R0. apply Rplus_lt_le_0_compat.
-    apply Rsqr_pos_lt; auto. auto with real. lra.
-    apply Rabs_no_R0; auto.
-    apply Rabs_pos.
-    apply Rsqr_pos_lt.
-    apply Rabs_no_R0; auto.
-  - unfold Rsqr.
-    destruct (Rcase_abs a).
-    + replace (Rabs a) with (-a)%R. field; auto. rewrite Rabs_left; auto.
-    + replace (Rabs a) with a. field; auto. rewrite Rabs_right; auto.
+  replace (1 + (b/a)²)%R with ((a*a + b*b) / (a*a))%R.
+  - rewrite sqrt_div_alt; ra.
+    replace (sqrt (a * a)%R) with R|a|.
+    + field. split; ra.
+      autorewrite with R. auto with R.
+    + autorewrite with R. auto.
+  - cbv. field. auto.
 Qed.
 
-        
-(** 处理 0 < a * a *)
+(** solve "0 < a * a" on real number *)
 Ltac tac_Rsqr_gt0 :=
   match goal with
   (* a < 0 *)
   | H1 : ?a < 0%R |- 0 < ?a * ?a => 
-    apply Rsqr_pos_lt   (* 成为 a <> 0 *)
-    ; apply Rlt_not_eq  (* 变成 a < 0 *)
+    apply Rsqr_pos_lt   (* x <> 0 -> 0 < x² *)
+    ; apply Rlt_not_eq  (* r1 < r2 -> r1 <> r2 *)
     ; assumption
   (* a <> 0 *)
   | H1 : ?a <> 0%R |- 0 < ?a * ?a => 
-    apply Rsqr_pos_lt   (* 变成 a <> 0 *)
+    apply Rsqr_pos_lt   (* x <> 0 -> 0 < x² *)
     ; assumption
   | |- _ => idtac "no match"
   end.
   
-(** 处理实数域上的 0 < a*a + b*b *)
+(** solve "0 < a*a + b*b" on real number *)
 Ltac tac_Rplus_Rsqr_Rsqr_gt0 :=
   match goal with
   (* a < 0, b < 0 *)
@@ -1171,7 +1112,8 @@ Ltac tac_Rplus_Rsqr_Rsqr_gt0 :=
   | |- _ => idtac "no matching"
   end.
 
-(** 非零复数 -> 主辐角的余弦等于实部除以模长 *)
+(** nonzero complex number, the cosine of its main argument equal to 
+    real part divide magnitude (主辐角的余弦等于实部除以模长) *)
 Lemma cos_Carg_neq0 (z : C) : z <> 0 -> cos(∠z) = ((Cre z) / C|z|)%R.
 Proof.
   (* 核心是 cos(atan(y/x))*sqrt(x^2+y^2) = x，几何上看很简单 *)
@@ -1203,7 +1145,8 @@ Proof.
       tac_Rplus_Rsqr_Rsqr_gt0. rewrite Rabs_right; auto.
 Qed.
 
-(** 非零复数 -> 的主辐角的正弦等于虚部除以模长 *)
+(** nonzero complex number, the sine of its main argument equal to 
+    imaginary part divide magnitude (主辐角的正弦等于虚部除以模长) *)
 Lemma sin_Carg_neq0 (z : C) : z <> 0 -> sin(∠z) = ((Cim z) / C|z|)%R.
 Proof.
   intros. unfold Carg. destruct z as (a,b); simpl.
@@ -1258,14 +1201,14 @@ Proof.
 Lemma Cre_eq_Cnorm_mul_cos_Carg (z : C) : z <> 0 -> 
   Cre z = (C|z| * cos(∠z))%R.
 Proof.
-  intros. rewrite cos_Carg_neq0; auto. field. apply Cnorm_neq0 in H; auto.
+  intros. rewrite cos_Carg_neq0; auto. field. apply Cnorm_neq0_iff_neq0 in H; auto.
 Qed.
 
 (** 非零复数虚部等于模乘以辐角正弦 *)
 Lemma Cim_eq_Cnorm_mul_sin_Carg (z : C) : z <> 0 -> 
   Cim z = (C|z| * sin(∠z))%R.
 Proof.
-  intros. rewrite sin_Carg_neq0; auto. field. apply Cnorm_neq0; auto.
+  intros. rewrite sin_Carg_neq0; auto. field. apply Cnorm_neq0_iff_neq0; auto.
 Qed.
 
 (** 非零复数，(相等 <-> 模长和辐角相等) *)
@@ -1273,7 +1216,7 @@ Lemma Cneq0_eq_iff_Cnorm_Carg (z1 z2 : C) (H1 : z1 <> 0) (H2 : z2 <> 0) :
   z1 = z2 <-> (C|z1| = C|z2|) /\ (∠ z1 = ∠ z2).
 Proof.
   split; intros. subst; auto.
-  destruct H. apply Ceq.
+  destruct H. apply Ceq_iff.
   repeat rewrite Cre_eq_Cnorm_mul_cos_Carg, Cim_eq_Cnorm_mul_sin_Carg; auto.
   rewrite H,H0. auto.
 Qed.
@@ -1399,7 +1342,7 @@ Proof.
   (* 展开z会很繁琐 *)
   intros; unfold Cconj, Ctrigo.
   rewrite cos_neg, sin_neg, ?cos_Carg_neq0, ?sin_Carg_neq0; auto.
-  unfold Ccmul. simpl. f_equal; field; apply Cnorm_ne0_iff_neq0; auto.
+  unfold Ccmul. simpl. f_equal; field; apply Cnorm_neq0_iff_neq0; auto.
 Qed.
 
 (** 1/z的三角表示 *)
@@ -1466,7 +1409,7 @@ Proof.
   (* 是否为复数零来分类讨论 *)
   destruct (decidable z1 0), (decidable z2 0);
   subst; rewrite ?Cnorm_C0_eq0; unfold Cdiv.
-  - apply C0_neq0_False in H; easy.
+  - destruct H. auto.
 (*   - rewrite Cmul_0_l. ring_simplify. unfold Rdiv, R_R_to_C.  *)
 (*     f_equal; field; apply Cnorm_ne0_iff_neq0; auto. *)
 (*   - apply C0_neq0_False in H; easy. *)
@@ -1539,7 +1482,7 @@ Qed.
 
 (** 分解分量；化简；分割 *)
 Ltac CusingR_simpl :=
-  rewrite <- Ceq ; simpl ; split.
+  rewrite <- Ceq_iff ; simpl ; split.
 
 (** 若前提中有复数则先分解 *)
 Ltac CusingR_rec := match goal with
@@ -1549,14 +1492,14 @@ Ltac CusingR_rec := match goal with
 (** 若有全称量词则先实例化，并且最后用 real 库自动处理 *)
 Ltac CusingR := 
   intros; try CusingR_rec ; 
-  apply (proj1 (Ceq _ _)) ; split ; simpl ; auto with real.
+  apply (proj1 (Ceq_iff _ _)) ; split ; simpl ; auto with real.
 
 (** 最后还要用 field 策略 处理 *)
 Ltac CusingR_f := CusingR ; field.
 
 (* begin hide *)
 (* Annex tactic that should not be used *)
-Ltac CusingRR :=  try rewrite <- Ceq in * .
+Ltac CusingRR :=  try rewrite <- Ceq_iff in * .
 
 Ltac CusingR_rec1 := 
   (* 展开 not  *)
