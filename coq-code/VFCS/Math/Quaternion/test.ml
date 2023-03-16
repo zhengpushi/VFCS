@@ -13,8 +13,13 @@ let test1 ()  =
   let pq = qmul p q in
   printf "pq is (%.2f, %.2f, %.2f, %.2f)\n" (re pq) (im1 pq) (im2 pq) (im3 pq);;
 
+let test2 () =
+  let ((a,b),c) = ex1 in
+  printf "ex1 is (%.2f, %.2f, %.2f)\n" a b c;;
+
 let test () : unit =
-  test1();;
+  test1();
+  test2();;
   
 let main () =
   welcome_msg();
