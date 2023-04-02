@@ -3,13 +3,14 @@
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
-  Coordinate System
+  purpose   : Formalize Coordinate System
+  author    : ZhengPu Shi
+  date      : Mar, 2021
   
-  reference:
+  reference :
   QuanQuan, UAV design and control, page 90-106
   
-  remark:
-  2020.12.28, fix some formulas
+  remark    :
   
   abbreviations:
     Earth-Fixed Coordinate Frame, short as EFCF, subscript is e.
@@ -23,25 +24,14 @@
 
 Require Import Lra.
 
-From CoqMatrix Require Import MatrixAll VectorAll.
-Import Reals.
-Open Scope R.
-(* From FlyCtrl Require Import Real_proof.
-From FlyCtrl Require Import Quaternion_tttt.
- *)
- 
-Require Import List.  (* formula 5.14 will use it *)
-Import ListNotations.
-
-Open Scope R.
-Open Scope mat_scope.
+From CoqMatrix Require Import VectorR.
 
 
 (* --------------------------------------------------------------- *)
-(** Functions and ᵀactics for tuple *)
+(** Functions and Tactics for tuple *)
 
 (** equality of two tuples, iff corresponding elements are equal. *)
-Lemma tuple2_equality {ᵀ1 ᵀ2} (a1 a2 : ᵀ1) (b1 b2 : ᵀ2) :
+Lemma tuple2_equality {T1 T2} (a1 a2 : T1) (b1 b2 : T2) :
   (a1,b1) = (a2,b2) <-> (a1 = a2 /\ b1 = b2).
 Proof.
   split.
@@ -66,7 +56,7 @@ Proof. intros. subst; auto. Qed.
 
 (* 一些常用的 sumbool 类型的项，用于分情形讨论。
 
-Req_EM_ᵀ: forall r1 r2 : R, {r1 = r2} + {r1 <> r2}
+Req_EM_T: forall r1 r2 : R, {r1 = r2} + {r1 <> r2}
 Rge_dec: forall r1 r2 : R, {r1 >= r2} + {~ r1 >= r2}
 Rlt_le_dec: forall r1 r2 : R, {r1 < r2} + {r2 <= r1}
 Rgt_ge_dec: forall r1 r2 : R, {r1 > r2} + {r2 >= r1}
@@ -95,38 +85,33 @@ Check fun f1 => match (Rgt_ge_dec 0 1) with
     +pi/2,            x = 0, y > 0
     -pi/2,            x = 0, y < 0
     undefined,        x = 0, y = 0
-*)
+ *)
 Definition atan2 (y x : R) : R :=
-  if Rgt_ge_dec x 0           (* {x > 0} + {x <= 0} *)
-  then      (* x > 0 *)
-    atan (y/x)
-  else      (* x <= 0 *)
-    if Rlt_le_dec x 0         (* {x < 0} + {x >= 0} *)
-    then    (* x < 0 *)
-      if Rlt_le_dec y 0       (* {y < 0} + {y >= 0} *)
-      then  (* x < 0, y < 0 *)
-        atan (y/x) - PI
-      else  (* x < 0, y >= 0 *)
-        atan (y/x) + PI
-    else    (* x = 0 *)
-      if Rgt_ge_dec y 0       (* {y > 0} + {y <= 0} *)
-      then  (* x = 0, y > 0 *)
-        PI / 2
-      else  (* x = 0, y <= 0 *)
-        if Rlt_le_dec y 0     (* {y < 0} + {y >= 0} *)
-        then (* x = 0, y < 0 *)
-          - PI / 2
-        else (* x = 0, y = 0 *)
-          0. (* IN FACᵀ, this is undefined *)
+  if x >? 0
+  then atan (y/x)               (* x > 0 *)
+  else
+    if x <? 0
+    then
+      if y >=? 0
+      then atan (y/x) + PI      (* x < 0, y >= 0 *)
+      else atan (y/x) - PI      (* x < 0, y < 0 *)
+    else
+      if y >? 0
+      then PI / 2               (* x = 0, y > 0 *)
+      else
+        if y <? 0
+        then - PI / 2           (* x = 0, y < 0 *)
+        else 0                  (* x = 0, y = 0 *) (* IN FACT, this is undefined *)
+. 
 
 (* --------------------------------------------------------------- *)
 (* custome tactics *)
 
-(* (* ᵀactic for type convertion *)
+(* (* Tactic for type convertion *)
 Ltac simpl_etype :=
-  unfold mul,add,sub,neg,Zero,One,ᵀ,Rsub.
+  unfold mul,add,sub,neg,Zero,One,T,Rsub.
 
-(* ᵀactic for solve one equation, like A = B *)
+(* Tactic for solve one equation, like A = B *)
 Ltac simpl_one_equation :=
   (* trigo and real simplification *)
   trigo_simp; real_simp;
@@ -136,7 +121,7 @@ Ltac simpl_one_equation :=
   try ring. *)
 
 (* 
-(* ᵀactic for simplify matrix multiplication with form of AXB*)
+(* Tactic for simplify matrix multiplication with form of AXB*)
 Ltac simpl_mat_AxB :=
   (* unfold matrix_mult *)
   unfold m_mul, Array.m_mul; simpl;
@@ -147,7 +132,7 @@ Ltac simpl_mat_AxB :=
   (* solve every equation *)
   simpl_one_equation. *)
 
-(* ᵀactic for solve matrix multiplication with forms AxB=C *)
+(* Tactic for solve matrix multiplication with forms AxB=C *)
 (*Ltac simpl_AB_eq_C :=
   simpl_mat_AxB;
   (* type convertion *)
@@ -180,7 +165,7 @@ Ltac trigo_eqation_special_val :=
 Module Cfg4Env.
 
   (** Rotation type *)
-  Inductive Rotationᵀype : Set :=
+  Inductive RotationType : Set :=
     | RotateCoord
     | RotateVector.
 
@@ -202,7 +187,7 @@ End Cfg4Env.
   https://blog.csdn.net/csxiaoshui/article/details/65446125
   
     
-  ᵀhat means:
+  That means:
   1. there are four possible conversions when we talk about "rotation":
     (1). rotation of the axes by an clockwise angle.
     (2). rotation of the axes by an counterclockwise angle.
@@ -214,12 +199,12 @@ End Cfg4Env.
     matrices Rx,Ry,Rz.
   3. in R^3 rotation of the object ralative x-,y-,and z-axes by an
     counterclockwise direction when looking towards the origin give the 
-    matrices Rx^ᵀ, Ry^ᵀ, Rz^ᵀ. i.e., Rx^ᵀ is the transpose of Rx, and so on.
+    matrices Rx^T, Ry^T, Rz^T. i.e., Rx^T is the transpose of Rx, and so on.
   3. How to use the rotation matrix
     (1). Rotate an coordinate system C by an counterclockwise angle α to C', 
       then C' = Rx C. Notice that, C and C' are 3x3 matrix. 
     (2). Rotate an object V relative x-axes to V' by an counterclockwise angle 
-      α, then V' = Rx^ᵀ V. Notice that, V and V' are 3-dim vector.
+      α, then V' = Rx^T V. Notice that, V and V' are 3-dim vector.
   4. the rotation angle has two different meaning:
     ref: https://zhuanlan.zhihu.com/p/172522079
     (1). Rotate by an axis of a coordinate sytem, called "Fixed angles"
@@ -228,100 +213,95 @@ End Cfg4Env.
 *)
 Module BasicRotMat.
   
-  Import MatrixR_MLL.
-  Open Scope R.
-  
   (* For facilitate the calculation, we pack the 3-dim unit vector into a 
     matrix form *)
-  Definition e1 : mat 3 1 := mk_mat_3_1 1 0 0.
-  Definition e2 : mat 3 1 := mk_mat_3_1 0 1 0.
-  Definition e3 : mat 3 1 := mk_mat_3_1 0 0 1.
+  Definition e1 : vec 3 := mk_mat_3_1 1 0 0.
+  Definition e2 : vec 3 := mk_mat_3_1 0 1 0.
+  Definition e3 : vec 3 := mk_mat_3_1 0 0 1.
 
   (* Rotation Matrix for: coordinate system rotations of the x-,y-,and z-axes 
     in an counterclockwise direction when looking towards the origin. *)
-  Definition Rx (α : R) : mat 3 3 := mk_mat_3_3 
-    1 0 0
-    0 (cos α) (sin α)
-    0 (-sin α)%A (cos α).
-    
-  Definition Ry (β : R) : mat 3 3 := mk_mat_3_3 
-    (cos β) 0 (-sin β)%A
-    0 1 0
-    (sin β) 0 (cos β).
+  Definition Rx (α : R) : mat 3 3 :=
+    mk_mat_3_3 
+      1 0 0
+      0 (cos α) (sin α)
+      0 (-sin α)%R (cos α).
+  
+  Definition Ry (β : R) : mat 3 3 :=
+    mk_mat_3_3 
+      (cos β) 0 (-sin β)%R
+      0 1 0
+      (sin β) 0 (cos β).
 
-  Definition Rz (γ : R) : mat 3 3 := mk_mat_3_3 
-    (cos γ) (sin γ) 0
-    (-sin γ)%A (cos γ) 0
-    0 0 1.
+  Definition Rz (γ : R) : mat 3 3 :=
+    mk_mat_3_3 
+      (cos γ) (sin γ) 0
+      (-sin γ)%R (cos γ) 0
+      0 0 1.
 
   (* Rotation Matrix for: rotations of the object relative x-,y-,and z-axes by 
     an counterclockwise direction when looking towards the origin. *)
-  Definition Rxᵀ (α : R) : mat 3 3 := mk_mat_3_3 
-    1 0 0
-    0 (cos α) (-sin α)%A
-    0 (sin α) (cos α).
+  Definition RxT (α : R) : mat 3 3 :=
+    mk_mat_3_3 
+      1 0 0
+      0 (cos α) (-sin α)%R
+      0 (sin α) (cos α).
 
-  Definition Ryᵀ (β : R) : mat 3 3 := mk_mat_3_3 
-    (cos β) 0 (sin β)
-    0 1 0
-    (-sin β)%A 0 (cos β).
+  Definition RyT (β : R) : mat 3 3 :=
+    mk_mat_3_3 
+      (cos β) 0 (sin β)
+      0 1 0
+      (-sin β)%R 0 (cos β).
 
-  Definition Rzᵀ (γ : R) : mat 3 3 := mk_mat_3_3 
-    (cos γ) (-sin γ)%A 0
-    (sin γ) (cos γ) 0
-    0 0 1.
+  Definition RzT (γ : R) : mat 3 3 :=
+    mk_mat_3_3 
+      (cos γ) (-sin γ)%R 0
+      (sin γ) (cos γ) 0
+      0 0 1.
   
-  (* In fact, Rxᵀ is the transpose of Rx. and so on *)
-  Lemma Rx_Rxᵀ_trans (a : R) : Rx a = (Rxᵀ a) ᵀ.
-  Proof. unfold Rx,Rxᵀ. try apply meq_iff. cbv; reflexivity. Qed.
+  (* In fact, RxT is the transpose of Rx. and so on *)
+  Lemma Rx_RxT_trans (a : R) : (Rx a == (RxT a) \T)%mat.
+  Proof. lma. Qed.
 
-  Lemma Ry_Ryᵀ_trans (a : R) : Ry a = (Ryᵀ a) ᵀ.
-  Proof. unfold Ry,Ryᵀ. apply meq_iff. simpl. auto. Qed.
+  Lemma Ry_RyT_trans (a : R) : (Ry a == (RyT a) \T)%mat.
+  Proof. lma. Qed.
 
-  Lemma Rz_Rzᵀ_trans (a : R) : Rz a = (Rzᵀ a) ᵀ.
-  Proof. unfold Rz,Rzᵀ. apply meq_iff. simpl. auto. Qed.
+  Lemma Rz_RzT_trans (a : R) : (Rz a == (RzT a) \T)%mat.
+  Proof. lma. Qed.
+
+  (** a temporary tactic which consists of cbv and ra (R arithmetic solver) *)
+  Ltac cbv_ra :=
+    cbv; ring_simplify; autorewrite with R; auto.
   
   (* verify that these matrices satisfy SO3 *)
   Lemma Rx_so3 : forall a : R, so3 (Rx a).
   Proof.
-    intro. unfold so3; split.
-    - apply meq_iff. simpl. unfold ListExt.ldot. simpl. repeat trigo_simp.
-    - unfold det_of_mat_3_3. simpl. repeat trigo_simp.
+    intro. hnf; split. lma; cbv_ra. cbv_ra.
   Qed.
 
   Lemma Ry_so3 : forall a : R, so3 (Ry a).
   Proof.
-    intro. unfold so3; split.
-    - apply meq_iff. simpl. unfold ListAux.ldot. simpl. repeat trigo_simp.
-    - unfold det_of_mat_3_3. simpl. repeat trigo_simp.
+    intro. hnf; split. lma; cbv_ra. cbv_ra.
   Qed.
 
   Lemma Rz_so3 : forall a : R, so3 (Rz a).
   Proof.
-    intro. unfold so3; split.
-    - apply meq_iff. simpl. unfold ListAux.ldot. simpl. repeat trigo_simp.
-    - unfold det_of_mat_3_3. simpl. repeat trigo_simp.
+    intro. hnf; split. lma; cbv_ra. cbv_ra.
   Qed.
 
-  Lemma Rxᵀ_so3 : forall a : R, so3 (Rxᵀ a).
+  Lemma RxT_so3 : forall a : R, so3 (RxT a).
   Proof.
-    intro. unfold so3; split.
-    - apply meq_iff. simpl. unfold ListAux.ldot. simpl. repeat trigo_simp.
-    - unfold det_of_mat_3_3. simpl. repeat trigo_simp.
+    intro. hnf; split. lma; cbv_ra. cbv_ra.
   Qed.
 
-  Lemma Ryᵀ_so3 : forall a : R, so3 (Ryᵀ a).
+  Lemma RyT_so3 : forall a : R, so3 (RyT a).
   Proof.
-    intro. unfold so3; split.
-    - apply meq_iff. simpl. unfold ListAux.ldot. simpl. repeat trigo_simp.
-    - unfold det_of_mat_3_3. simpl. repeat trigo_simp.
+    intro. hnf; split. lma; cbv_ra. cbv_ra.
   Qed.
 
-  Lemma Rzᵀ_so3 : forall a : R, so3 (Rzᵀ a).
+  Lemma RzT_so3 : forall a : R, so3 (RzT a).
   Proof.
-    intro. unfold so3; split.
-    - apply meq_iff. simpl. unfold ListAux.ldot. simpl. repeat trigo_simp.
-    - unfold det_of_mat_3_3. simpl. repeat trigo_simp.
+    intro. hnf; split. lma; cbv_ra. cbv_ra.
   Qed.
 
 End BasicRotMat.
@@ -344,7 +324,7 @@ Module EA_RotM.
   (* We will use the basic rotaiton matrix here *)
   Import BasicRotMat.
 
-  (** WE DON't USE ᵀHE DEFINIᵀIONS WIᵀH ᵀIME, because this is not something 
+  (** WE DON't USE THE DEFINITIONS WITH TIME, because this is not something 
     that must be done now. And it will increase the complexicity in other 
     related module, like Singularity-Verification below.
     &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& **)
@@ -375,7 +355,7 @@ Module EA_RotM.
   Definition Θ' : matrix 3 1 := [[φ'], [θ'], [ψ']]. 
   *)
   
-  (** WE USE ᵀHE DEFINIᵀIONS WIᵀHOUᵀ ᵀIME, because this is simple and enough to 
+  (** WE USE THE DEFINITIONS WITHOUT TIME, because this is simple and enough to 
     use.
     &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&**)
 
@@ -391,7 +371,7 @@ Module EA_RotM.
   Parameter ψ' : R.
   Definition Θ' : vec 3 := mk_mat_3_1 φ' θ' ψ'. 
   
-  (* ᵀhe unit vectors of ABCF looking from the ABCF itself *)
+  (* The unit vectors of ABCF looking from the ABCF itself *)
   Definition b1_b : vec 3 := e1.
   Definition b2_b : vec 3 := e2.
   Definition b3_b : vec 3 := e3.
@@ -402,19 +382,16 @@ Module EA_RotM.
   Proof. auto. Qed.
   
   (* rotation from CFn to ABCF *)
-  (* Nitice that, we simplify a small process of Rx and Rxᵀ, and so on *)
+  (* Nitice that, we simplify a small process of Rx and RxT, and so on *)
   Definition R_n2b : mat 3 3 := Rx φ.
   Definition n1_b : vec 3 := mmul R_n2b b1_b.
   Definition n2_b : vec 3 := mmul R_n2b b2_b.
   Definition n3_b : vec 3 := mmul R_n2b b3_b.
   
-  Definition n2_b_direct : vec 3 := mk_mat_3_1 0 (cos φ) (-sin φ)%A.
+  Definition n2_b_direct : vec 3 := (mk_mat_3_1 0 (cos φ) (-sin φ))%R.
   
-  Lemma f_5_2_n2_b : n2_b = n2_b_direct.
-  Proof. 
-    apply meq_iff. unfold n2_b, n2_b_direct. simpl.
-    unfold ListAux.ldot. repeat f_equal; simpl; trigo_simp.
-  Qed.
+  Lemma f_5_2_n2_b : n2_b == n2_b_direct.
+  Proof. lma. Qed.
   
   (* rotation from CFk to ABCF *)
   Definition R_k2b : mat 3 3 := mmul (Rx φ) (Ry θ).
@@ -424,14 +401,10 @@ Module EA_RotM.
   Definition k3_b : vec 3 := mmul R_k2b b3_b.
   
   Definition k3_b_direct : vec 3 :=
-    mk_mat_3_1 (-sin θ)%A (sin φ * cos θ) (cos θ * cos φ).
+    (mk_mat_3_1 (-sin θ) (sin φ * cos θ) (cos θ * cos φ))%R.
   
-  Lemma f_5_2_k3_b : k3_b = k3_b_direct.
-  Proof.
-    apply meq_iff. unfold k3_b, k3_b_direct. simpl.
-    unfold ListAux.ldot. repeat f_equal; simpl; trigo_simp.
-    rewrite mul_comm. auto.
-  Qed.
+  Lemma f_5_2_k3_b : k3_b == k3_b_direct.
+  Proof. lma. Qed.
 
   (** Relationship Between Euler-Angle Rates and Body-Axis Rates **)
 
@@ -446,34 +419,30 @@ Module EA_RotM.
     Hypothesis f_5_1 : ω_b = ((ψ' c* k3_b) + (θ' c* n2_b)) + (φ' c* b1_b).
 
     Lemma f_5_4 :
-      let m : mat 3 3 := mk_mat_3_3 
-        1 0 (-sin θ)%A
+      let m : mat 3 3 := (mk_mat_3_3 
+        1 0 (-sin θ)
         0 (cos φ) (cos θ * sin φ)
-        0 (-sin φ)%A (cos θ * cos φ) in
-      ω_b = mmul m Θ'.
+        0 (-sin φ) (cos θ * cos φ))%R in
+      ω_b == mmul m Θ'.
     Proof.
-      rewrite f_5_1. simpl. apply meq_iff. simpl.
-      unfold matmap2dl. simpl.
-      unfold ListAux.ldot. simpl. repeat trigo_simp.
-      repeat apply list_equality; auto;
-      unfold RingᵀypeR.A, add, mul; trigo_simp.
+      rewrite f_5_1. lma.
     Qed.
   
     (* verify the formula 5.5.
       1. Now, we find that there are cos θ in the denominator. When cos θ equal 
         to zero, then there will be singularities.
     *)
-    Definition W : mat 3 3 := mk_mat_3_3 
+    Definition W : mat 3 3 := (mk_mat_3_3 
       1 (tan θ * sin φ) (tan θ * cos φ)
-      0 (cos φ) (-sin φ)%A
-      0 (sin φ / cos θ) (cos φ / cos θ).
+      0 (cos φ) (-sin φ)
+      0 (sin φ / cos θ) (cos φ / cos θ))%R.
 
-    Lemma f_5_5 : cos θ <> 0 -> Θ' = mmul W ω_b.
+    Lemma f_5_5 : cos θ <> 0 -> Θ' == mmul W ω_b.
     Proof.
-      intros. rewrite f_5_4. unfold Θ',W. apply meq_iff; simpl.
+      intros. rewrite f_5_4. lma. unfold Θ',W. apply meq_iff; simpl.
       repeat apply list_equality; auto;
       unfold ListAux.ldot; simpl; repeat trigo_simp.
-      unfold RingᵀypeR.A, add, mul. ring_simplify.
+      unfold RingTypeR.A, add, mul. ring_simplify.
 (*       Search tan.
       Opaque sin.
       autounfold with coordinate; ring_simplify;
@@ -490,19 +459,19 @@ Module EA_RotM.
 
   Definition R_b_e_direct : mat 3 3 := mk_mat_3_3
     (cos θ * cos ψ) 
-    (cos ψ * sin θ * sin φ - sin ψ * cos φ)%A
-    (cos ψ * sin θ * cos φ + sin φ * sin ψ)%A
+    (cos ψ * sin θ * sin φ - sin ψ * cos φ)%R
+    (cos ψ * sin θ * cos φ + sin φ * sin ψ)%R
     (cos θ * sin ψ)
-    (sin ψ * sin θ * sin φ + cos ψ * cos φ)%A
-    (sin ψ * sin θ * cos φ - cos ψ * sin φ)%A
-    (-sin θ)%A (sin φ * cos θ) (cos φ * cos θ).
+    (sin ψ * sin θ * sin φ + cos ψ * cos φ)%R
+    (sin ψ * sin θ * cos φ - cos ψ * sin φ)%R
+    (-sin θ)%R (sin φ * cos θ) (cos φ * cos θ).
 
   Lemma f_5_9 : R_b_e = R_b_e_direct.
   Proof.
     unfold R_b_e,R_b_e_direct. apply meq_iff. simpl.
     unfold ListAux.ldot; simpl.
     repeat apply list_equality;
-    unfold RingᵀypeR.A, add, sub, mul; trigo_simp.
+    unfold RingTypeR.A, add, sub, mul; trigo_simp.
   Qed.
   
   (* verify that the matrix satisfies SO3 *)
@@ -513,7 +482,7 @@ Module EA_RotM.
     - apply meq_iff. simpl.
       unfold ListAux.ldot; simpl.
       repeat apply list_equality;
-      unfold RingᵀypeR.A, add, sub, mul; trigo_simp.
+      unfold RingTypeR.A, add, sub, mul; trigo_simp.
    (*    
       unfold Ring simpl_mat_AxB;
       autounfold with coordinate; ring_simplify;
@@ -532,9 +501,9 @@ Module EA_RotM.
     r21 r22 r23
     r31 r32 r33.
   
-  (* (5.10), ᵀrigonometrics of euler angles deriving by hypothesis *)
+  (* (5.10), Trigonometrics of euler angles deriving by hypothesis *)
   Definition φ_trigo_by_hyp := tan φ = r32 / r33.
-  Definition θ_trigo_by_hyp := sin θ = (-r31)%A.
+  Definition θ_trigo_by_hyp := sin θ = (-r31)%R.
   Definition ψ_trigo_by_hyp := tan ψ = r21 / r11.
   
   (* Note that, when we verify the formula, we found the condition that 
@@ -574,7 +543,7 @@ Module EA_RotM.
     repeat split.
     - rewrite H32,H33.
       (* 1. tan_atan/atan_tan are ready in coq new version.
-         2. and the definition of asin. ᵀhis function was considered as an 
+         2. and the definition of asin. This function was considered as an 
           axiom in the previous time.
         So, Coq is a fast developping platform,
         we can see lots of new library and fix after each update, great! *)
@@ -588,8 +557,8 @@ Module EA_RotM.
       rewrite H. rewrite atan_tan; auto.
     Qed.
   
-  (* ᵀhere are some problems with this method:
-    1. ᵀhere are several preconditions must be satisfied before we can use 
+  (* There are some problems with this method:
+    1. There are several preconditions must be satisfied before we can use 
       these formulas, but these constraints are too strong.
       (1). the codomain of function atan or asin is [-pi/2, pi/2], but in 
         actual situation, the values range between -pi and pi.
@@ -599,13 +568,13 @@ Module EA_RotM.
     
     So, we need to fix the result using other method. *)
   Definition R_b_e_θ_eq_pi_2 := mk_mat_3_3
-    0 (-sin(ψ - φ))%A (cos(ψ - φ))
+    0 (-sin(ψ - φ))%R (cos(ψ - φ))
     0 (cos(ψ - φ)) (sin(ψ - φ))
     (-1) 0 0.
   
   Definition R_b_e_θ_eq_neg_pi_2 := mk_mat_3_3
-    0 (-sin(ψ + φ))%A (-cos(ψ + φ))%A
-    0 (cos(ψ + φ)) (-sin(ψ + φ))%A
+    0 (-sin(ψ + φ))%R (-cos(ψ + φ))%R
+    0 (cos(ψ + φ)) (-sin(ψ + φ))%R
     1 0 0.
   
   (* verify the formula 5.12 *)
@@ -619,7 +588,7 @@ Module EA_RotM.
 (*   Qed. *)
   Admitted.
   
-  Lemma R_b_e_θ_eq_neg_pi_2_correct : θ = (- (PI / 2))%A -> 
+  Lemma R_b_e_θ_eq_neg_pi_2_correct : θ = (- (PI / 2))%R -> 
     R_b_e = R_b_e_θ_eq_neg_pi_2.
   Proof.
     intros. unfold R_b_e_θ_eq_neg_pi_2. rewrite f_5_9. unfold R_b_e_direct. 
@@ -629,7 +598,7 @@ Module EA_RotM.
   
   (* verify the formula 5.12 *)
   Lemma f_5_12_correct : (θ = (PI / 2) -> R_b_e = R_b_e_θ_eq_pi_2)
-    /\ (θ = (- (PI / 2))%A -> R_b_e = R_b_e_θ_eq_neg_pi_2).
+    /\ (θ = (- (PI / 2))%R -> R_b_e = R_b_e_θ_eq_neg_pi_2).
   Proof.
     split.
     apply R_b_e_θ_eq_pi_2_correct.
@@ -640,7 +609,7 @@ Module EA_RotM.
 End EA_RotM.
 
 (* --------------------------------------------------------------- *)
-(* 5.2.2 (Part II) ᵀhe Calculate Euler Angles from Rotation 
+(* 5.2.2 (Part II) The Calculate Euler Angles from Rotation 
   
   1. We give a set of basic formulas but singular.
   2. We show a complex algorithm to eliminate the singularity.
@@ -682,7 +651,7 @@ Module CalcEulerAnglesByRotation
 
     (* (5.13) When r11 and r21 are equal to zero, this is the answer *)
     Definition f_5_13_φ : R := 0.
-    Definition f_5_13_θ : R := (Rsign (-r31)%A) * (PI / 2).
+    Definition f_5_13_θ : R := (Rsign (-r31)%R) * (PI / 2).
     Definition f_5_13_ψ : R := atan2 (-r12) r22.
     
 (*     Lemma f_5_13_correct :
@@ -740,15 +709,15 @@ Module CalcEulerAnglesByRotation
      return value:
       if given list is empty, return minPos we given
     *)
-    Fixpoint list_min_pos {ᵀ : Set} (fcompare : ᵀ -> ᵀ -> bool) (s : list ᵀ) 
-      (len : nat) (minPos : nat) (minᵀ : ᵀ) : nat := match s with
+    Fixpoint list_min_pos {T : Set} (fcompare : T -> T -> bool) (s : list T) 
+      (len : nat) (minPos : nat) (minT : T) : nat := match s with
       | nil => minPos
-      | cons x xs => if fcompare x minᵀ 
+      | cons x xs => if fcompare x minT 
         then list_min_pos fcompare xs (S len) len x
-        else list_min_pos fcompare xs (S len) minPos minᵀ
+        else list_min_pos fcompare xs (S len) minPos minT
       end.
     
-    Module list_min_pos_ᵀESᵀ.
+    Module list_min_pos_TEST.
       
       Open Scope Z.
       Compute list_min_pos (fun x y => if Z_lt_le_dec x y then true else false)
@@ -756,7 +725,7 @@ Module CalcEulerAnglesByRotation
       Compute list_min_pos (fun x y => if Z_lt_le_dec x y then true else false)
         nil 0 0 999.
       
-    End list_min_pos_ᵀESᵀ.
+    End list_min_pos_TEST.
 
     (* When r11 and r21 are not equal to zero, this is the algorithm *)
     Definition f_5_14_findBest : ParamAndResult :=
@@ -781,7 +750,7 @@ Module CalcEulerAnglesByRotation
       let φ := p_φ pr in
       let θ := p_θ pr in
       let ψ := p_ψ pr in
-        ᵀrue.
+        True.
     Proof.
       Abort.
     
@@ -814,7 +783,7 @@ Module CalcEulerAnglesByRotation
         simpl_mat_AxB; trigo_eqation_special_val.
       Qed.
 
-      (* ᵀwo solutions of euler angles *)
+      (* Two solutions of euler angles *)
       Lemma eulerAngels_solutions :
         let pr : ParamAndResult := f_5_14_findBest in
         let φ := p_φ pr in

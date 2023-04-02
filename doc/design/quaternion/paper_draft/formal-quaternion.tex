@@ -3,7 +3,8 @@
 % LLNCS macro package for Springer Computer Science proceedings;
 % Version 2.21 of 2022/01/12
 %
-\documentclass[runningheads]{llncs}
+% \documentclass[runningheads]{llncs}
+\documentclass[runningheads,a4paper,english]{llncs}[2022/01/12]
 %
 
 \usepackage[T1]{fontenc}
@@ -20,12 +21,6 @@
 % mathematical symbols
 %
 
-\usepackage{amsmath}
-% support bmatrix
-
-\usepackage{enumerate}
-% Support more enumerate style
-
 \usepackage{pifont}
 % more style for bullets
 %
@@ -34,6 +29,36 @@
 % cell style, support wrap
 %
 
+\usepackage{color}
+% support color
+
+\usepackage{marvosym}
+%\usepackage{ifsym}
+% corresponding author
+%
+
+%% =============== my extra setting ===============
+
+% mathematical script font
+\usepackage{mathrsfs}
+
+% support bmatrix
+\usepackage{amsmath}
+
+% Support more enumerate style
+\usepackage{enumerate}
+
+% Make font style in pre-defined environment to normal instead of italic
+\let\definition\relax
+\spnewtheorem{definition}{Definition}{\bfseries}{}
+\let\lemma\relax
+\spnewtheorem{lemma}{Lemma}{\bfseries}{}
+\let\theorem\relax
+\spnewtheorem{theorem}{Theorem}{\bfseries}{}
+
+% set bookmark
+% If you use the hyperref package, please uncomment the following two lines
+% to display URLs in blue roman font according to Springer's eBook style:
 \usepackage[
 bookmarksnumbered=true,
 bookmarksopen=false,
@@ -45,13 +70,12 @@ linkcolor=black,
 urlcolor=black,
 pdfstartview=Fit
 ]{hyperref}
-% set bookmark
-%
-% If you use the hyperref package, please uncomment the following two lines
-% to display URLs in blue roman font according to Springer's eBook style:
+% set url color and style
+\renewcommand\UrlFont{\color{blue}\rmfamily}
 
+% minted
 \usepackage{minted}
-%% Format and highlight programming language source code with minted
+% Format and highlight programming language source code with minted
 % 风格    关键字    类型    注释     备注
 % default 绿色      红色    深青斜体
 % colorful绿色      深蓝    灰色斜体
@@ -70,19 +94,8 @@ pdfstartview=Fit
   mathescape, texcomments, escapeinside=??,
   linenos,numbersep=-5pt}
 
-\usepackage{makecell}
-%% Support wrap in cell of table
-
-\usepackage{color}
-\renewcommand\UrlFont{\color{blue}\rmfamily}
-%
-\usepackage{marvosym}
-%\usepackage{ifsym}
-% corresponding author
-%
-
-\usepackage{xparse}
 % Support advanced command definition
+\usepackage{xparse}
 
 %% Short name for special nouns.
 % (1) prover, languages, project, etc.
@@ -106,6 +119,9 @@ pdfstartview=Fit
 \newcommand{\bQ}{\mathbb{Q}}
 \newcommand{\bZ}{\mathbb{Z}}
 \newcommand{\bC}{\mathbb{C}}
+\newcommand{\bH}{\mathbb{H}}
+\newcommand{\sA}{\mathscr{A}} 
+\newcommand{\sR}{\mathscr{R}} 
 
 % (3) abbreviations for math equation writing
 \newcommand{\bmatL}{\begin{bmatrix}}
@@ -189,76 +205,174 @@ pdfstartview=Fit
 We will study the complex, quaternion, rotation, etc. in a formal style in Coq.
 These concepts are parts of basis for control system.
 
-The quaternion is related to 3D rotation, while the complex number is related to 2D rotation.
+The quaternion is related to three-dimensional (3D) rotation, while the complex number is related to two-dimensional (2D) rotation.
 The quaternion has many properties similiar with complex number, thus, study complex number will be helpful for quaternion.
 
-\section{2D rotation and complex number}
-
-\subsection{Definition of complex number}
-
-Given a complex number $z\in\bC$, it could be represented as $z=a+bi$, here, $a,b\in\bR, i^2=-1$.
-$a$ is called the \textit{Real Part} of $z$, $b$ is called the \textit{Imaginary Part} of $z$.
-\begin{equation}
-  \mathtt{Re}(z)\triangleq a,\qquad \mathtt{Im}(z)\triangleq b
-\end{equation}
-
-We can consider that $z=a+bi$ is a Linear Combination on the Basic of $\{1,i\}$.
-So, the Coordinate of it could be used to represent $z$, which is a 2D Vector.
-We define the conversion function from a complex number to a 2D vector as follows.
-\begin{equation}
-  \Cvec{z}\triangleq\bmatL a\\b\bmatR 
-\end{equation}
-
-A 2D vector is corresponding to a Point in Complex Plane, also corresponding to a Point in 2D Plane.
-
-In conclusion, a complex number is corresponding to a 2D vector, and corresponding to a point in 2D plane.
-Therefore, when studying the motion in 2D plane, we have geometric forms and corresponding analytic forms.
-
-\subsection{Operations and properties of complex number}
-
-\subsubsection{Addition and subtraction}
-Given two complex numbers $z_1=a+bi, z_2=c+di$, then the addition and subtraction of them are defined as follows.
-\begin{equation}
-  \mathtt{Cplus}(z_1,z_2)\triangleq (a+c)+(b+d)i,\quad
-  \mathtt{Csub}(z_1,z_2)\triangleq (a-c)+(b-d)i,
-\end{equation}
-which are denoted as $z_1+z_2, z_1-z_2$ seperately.
+\section{Complex number and 2D rotation}
   
+\subsection{Complex number}
 
-\subsubsection{Multiplication}
-We will give two style definitions for multiplication of complex numbers.
-\begin{enumerate}[(1)]
-\item \textbf{ALGEBRAIC STYLE}
-  Given two complex numbers $z_1=a+bi, z_2=c+di$, then the multiplication of them are defined as follows.
+\begin{definition}[Imaginary unit]
+  The \textit{imaginary unit} or \textit{unit imaginary number} is a real number that its square is $-1$, and is denoted with a symbol $i, j$, or $k$.
+  For any imaginary unit $i$, it satisfies:
+  \begin{equation}
+    i^2=-1.
+  \end{equation}
+\end{definition}
+
+Here, the term "imaginary" is used because there is no real number having a negative square.
+
+\begin{definition}[Complex number]
+  A complex number $z$ is a number of the form $a+bi$, where $a$ and $b$ are real numbers, and $i$ is an imaginary unit.
+  The real part and imaginary part of $z$ are seperately defined as:
+  \begin{equation}
+    \mathrm{Re}(a+bi)=a,\quad \mathrm{Im}(a+bi)=b.
+  \end{equation}
+  The set of complex numbers is denoted by the symbol $\bC$.
+\end{definition}
+
+This way, a complex number is defined as a polynomial with real coefficients in the imaginary unit.
+Based on this definition, complex numbers can be added and multiplied, using the addition and multiplication for polynomials.
+
+The complex numbers also form a real vector space of dimension two, with $\{1,i\}$ as a standard basis.
+Thus, a complex number $z=a+bi$ is corresponded to a point in 2D space with the coordinate of an ordered pair $(\mathtt{Re}(z),\mathtt{Im}(z))$ or $(a,b)$.
+Therefore, we can use complex numbers to deal with geometric problems in 2D space by algebraic methods.
+
+\begin{definition}[Vector form of complex number]
+  The vector form of a complex number $z=a+bi$ is defined as:
+  \begin{equation}
+    \Cvec{z}=\bmatL a\\b\bmatR.
+  \end{equation}
+\end{definition}
+
+\begin{definition}[Matrix form of complex number]
+  The matrix form of a complex number $z=a+bi$ is defined as:
   \begin{equation}\label{complex_mult_alg}
-    \mathtt{Cmult_A}(z_1,z_2)\triangleq (a+bi)(c+di)=(ac-bd)+(bc+ad)i,
+    \Cmat{z}\triangleq \bmatL a&-b\\b&a\bmatR.
   \end{equation}
-  which is denoted as $z_1 *_A z_2$.
-  We call the \eqref{complex_mult_alg} is a algebraic style definition.
+\end{definition}
 
-  We can rewrite this result with the multiplication of a matrix and a vector.
+\begin{lemma}
+  $\Cmat$ is a bijective function, such that:
+  \begin{gather}
+    \forall z_1,z_2\in\bC, z_1=z_2\Rightarrow\Cmat{z_1}=\Cmat{z_2},\\
+    \forall z_1,z_2\in\bC, z_1\neq z_2\Rightarrow\Cmat{z_1}\neq\Cmat{z_2}.
+  \end{gather}
+\end{lemma}
+
+\begin{definition}[Addition of complex number]
+  The addition of two complex numbers $z_1=a_1+b_1i, z_2=a_2+b_2i$ is defined as:
   \begin{equation}
-    z_1z_2=(ac-bd)+(bc+ad)i=\bmatL a&-b\\b&a\bmatR \bmatL c\\d\bmatR 
+    \mathrm{Cplus}(z_1,z_2)\triangleq (a_1+a_2)+(b_1+b_2)i,
   \end{equation}
-  Here, $\bmatL c\\d\bmatR =\Cvec{z_2}$ is the vector form of $z_2$, and $\bmatL a&-b\\b&a\bmatR $ is a matrix determined by $z_1$.
-  We find that any complex number has a $2\times 2$ matrix form, and this is a one-to-one correspondence.
-  We define the matrix form of a complex number $z$ as follows.
+  which is denoted as $z_1+z_2$
+\end{definition}
+
+\begin{definition}[Subtraction of complex number]
+  The subtraction of two complex numbers $z_1=a_1+b_1i, z_2=a_2+b_2i$ is defined as:
   \begin{equation}
-    \Cmat{z}\triangleq \bmatL a&-b\\b&a\bmatR 
+    \mathrm{Csub}(z_1,z_2)\triangleq (a_1+a_2)+(b_1+b_2)i,
   \end{equation}
-  We can find that the multiplication of two complex numbers $z_1$ and $z_2$ is equivalent to the multiplication of two matrices $\Cmat{z_1}$ and $\Cvec{z_2}$ (note that vector is column matrix).
-\item \textbf{MATRIX STYLE}
-  Now, we can use matrix form to define the multiplication of two complex numbers.
-  \begin{equation}\label{complex_mult_matrix}
-    \mathtt{Cmult_M}(z_1,z_2)\triangleq\bmatL a&-b\\b&a\bmatR \bmatL c&-d\\d&c\bmatR 
-    =\bmatL ac-bd&\quad -(bc+ad)\\bc+ad&\quad ac-bd\bmatR ,
+  which is denoted as $z_1-z_2$
+\end{definition}
+
+\begin{definition}[Multiplication of complex number]
+  The multiplication of two complex numbers $z_1=a_1+b_1i, z_2=a_2+b_2i$ is defined as:
+  \begin{equation}\label{complex_mult_alg}
+    \mathrm{Cmult}(z_1,z_2)\triangleq (ac-bd)+(bc+ad)i,
   \end{equation}
-  which is denoted as $z_1 *_M z_2$.
-  We call the \eqref{complex_mult_matrix} is a matrix style definition.
+  which is denoted as $z_1z_2$
+\end{definition}
+
+\begin{lemma}[Multiplication of complex number is commutative]
+  Let $z_1=a_1+b_1i, z_2=a_2+b_2i$ are two complex numbers, their multiplication satisfies:
+  \begin{equation}
+    z_1z_2=z_2z_1.
+  \end{equation}
+\end{lemma}
+
+\begin{lemma}[Left multiplication is equivalent to matrix transformation]
+  Multiplication of complex numbers $z_1$ and $z_2$ is equivalent to a matrix transformation of $\Cmat(z_1)$ to $\Cvec(z_2)$:
+  \begin{equation}
+    \Cvec{z_1z_2}=\Cmat{z_1}\Cvec{z_2}
+  \end{equation}
+\end{lemma}
+\begin{proof}
+  \begin{equation*}
+    z_1z_2= (a+bi)(c+di)=(ac-bd)+(bc+ad)i
+  \end{equation*}
+  \qed
+\end{proof}
+
+\begin{lemma}[Multiplication is homomorphism]
+  The matrix form function $\Cmat:\bC\rightarrow \mathrm{mat}$ is homomorphism over complex number multiplication and matrix multiplication.
+  \begin{equation}
+    \Cmat{z_1z_2}=\Cmat{z_1}\Cmat{z_2}
+  \end{equation}
+\end{lemma}
+\begin{proof}
+  \begin{equation*}
+    z_1z_2= (a+bi)(c+di)=(ac-bd)+(bc+ad)i
+  \end{equation*}
+  \qed
+\end{proof}
+
+\begin{lemma}
+  The matrix form function $\Cmat:\bC\rightarrow \mathrm{mat}$ is homomorphism over complex number multiplication and matrix multiplication.
+  \begin{equation}
+    \Cmat{z_1z_2}=\Cmat{z_1}\Cmat{z_2}
+  \end{equation}
+\end{lemma}
+It can be verified as follows.
+\begin{equation*}
+  \begin{aligned}
+    \Cmat{z_1z_2}
+    &=\Cmat{(a_1+b_1i)(a_2+b_2i)}\\
+    &=\Cmat{(}
+    &=\bmatL a&-b\\b&a\bmatR \bmatL c&-d\\d&c\bmatR  \\
+    &=\bmatL ac-bd&\quad -(bc+ad)\\bc+ad&\quad ac-bd\bmatR \\
+    &=\bmatL ca-db&\quad -(cb+da)\\cb+da&\quad ca-db\bmatR \\
+    &=\bmatL c&-d\\d&c\bmatR \bmatL a&-b\\b&a\bmatR  \\
+    &=\bmatL a_1&-b_1\\b_1&a_1\bmatR \bmatL c\\d\bmatR\\
+    &=\Cmat{z_1}\Cmat{z_2}
+  \end{aligned}
+\end{equation*}
+
+  The matrix form of the multiplication of two complex numbers equal to the matrix multiplication of their 
+  For any two complex numbers $z_1=a_1+b_1i, z_2=a_2+b_2i$,
+  The multiplication of two complex numbers equivalent to the multiplication of their matrix form, that is
+
+% \begin{lemma}
   
-  Also, We can observed that the righthand of \eqref{complex_mult_matrix} is exactly equal to $\Cmat{\mathtt{Cmult_A}(z_1,z_2)}$, which is the matrix form of multiplication of $z_1$ and $z_2$.
-  This demonstrating that these two definitons are equivalence.
-\end{enumerate}
+%   \begin{equation}\label{complex_mult_matrix}
+%     \mathtt{Cmult_M}(z_1,z_2)\triangleq\bmatL a&-b\\b&a\bmatR \bmatL c&-d\\d&c\bmatR 
+%     =\bmatL ac-bd&\quad -(bc+ad)\\bc+ad&\quad ac-bd\bmatR ,
+%   \end{equation}
+%   which is denoted as $z_1 *_M z_2$.
+% \end{lemma}
+
+% We can prove it by follows.
+% \begin{equation}
+%   z_1z_2=(ac-bd)+(bc+ad)i=\bmatL a&-b\\b&a\bmatR \bmatL c\\d\bmatR 
+% \end{equation}
+% Here, $\bmatL c\\d\bmatR =\Cvec{z_2}$ is the vector form of $z_2$, and $\bmatL a&-b\\b&a\bmatR $ is a matrix determined by $z_1$.
+% We find that any complex number has a $2\times 2$ matrix form, and this is a one-to-one correspondence.
+% We define the matrix form of a complex number $z$ as follows.
+% \begin{equation}
+% \end{equation}
+
+We can find that the multiplication of two complex numbers $z_1$ and $z_2$ is equivalent to the multiplication of two matrices $\Cmat{z_1}$ and $\Cvec{z_2}$ (note that vector is column matrix).
+\textbf{MATRIX STYLE}
+Now, we can use matrix form to define the multiplication of two complex numbers.
+\begin{equation}\label{complex_mult_matrix}
+  \mathtt{Cmult_M}(z_1,z_2)\triangleq\bmatL a&-b\\b&a\bmatR \bmatL c&-d\\d&c\bmatR 
+  =\bmatL ac-bd&\quad -(bc+ad)\\bc+ad&\quad ac-bd\bmatR ,
+\end{equation}
+which is denoted as $z_1 *_M z_2$.
+We call the \eqref{complex_mult_matrix} is a matrix style definition.
+
+Also, We can observed that the righthand of \eqref{complex_mult_matrix} is exactly equal to $\Cmat{\mathtt{Cmult_A}(z_1,z_2)}$, which is the matrix form of multiplication of $z_1$ and $z_2$.
+This demonstrating that these two definitons are equivalence.
 
 Because we know that multiplication of complex number is commutative, we can verify this property use the two definitions \eqref{complex_mult_alg} and \eqref{complex_mult_matrix} seperately.
 The correctness of them are proved by the derivations of \eqref{cmult_comm_proof_alg} and \eqref{cmult_comm_proof_matrix}.
@@ -347,7 +461,7 @@ Given a complex $z=a+bi$, then:
 
 According the defnition of trigonometric functions, we can get these definitions.
 \begin{equation}
-  \theta=\mathtt{atan2}(b,a),\quad
+  \theta=\mathrm{atan2}(b,a),\quad
   \cos(\theta)=\frac{a}{\Clen{z}},\quad
   \sin(\theta)=\frac{b}{\Clen{z}}
 \end{equation}
@@ -385,7 +499,7 @@ Let's check the transformation to two basis vectors $v_1=\bmatL 1\\0\bmatR $ and
   It shows that, the $v_2$ is first rotated anticlockwise by $\theta$ degree, and then scaled $\Clen{z}$ times.
 \end{enumerate}
 
-Therefore, left multiply the complex number $z_1=a+bi$ to a complex number $z_2$, is corresponding to two effects, which first rotate $z_2$ anticlockwise by $\theta=\mathtt{atan2}(b,a)$ degree, then scale it by $\Vert z_1\Vert=\sqrt{a^2+b^2}$ times.
+Therefore, left multiply the complex number $z_1=a+bi$ to a complex number $z_2$, is corresponding to two effects, which first rotate $z_2$ anticlockwise by $\theta=\mathrm{atan2}(b,a)$ degree, then scale it by $\Clen{z_1}=\sqrt{a^2+b^2}$ times.
 
 If the magnitude of the complex number is $1$, then the geometric meaning of complex number multiplication is just a pure rotation.
 So, if we want to purly rotate a vector $v$ in 2D plane by $\theta$ degree, we could do it by a matrix multiplication.
@@ -412,7 +526,7 @@ a complex number $z$ could be written as
 
 We get the polar form of complex number, after denoted the magnitude with a symbol $r$.
 \begin{equation}
-  z=re^{i\theta}, where~r=\Clen{z},\theta=\mathtt{atan2}(b,a)
+  z=re^{i\theta}, where~r=\Clen{z},\theta=\mathrm{atan2}(b,a)
 \end{equation}
 
 Now, we can give the formula of transformation a vector $v$ by the vector $re^{i\theta}$.
@@ -455,6 +569,15 @@ Because,
 \end{equation}
 Therefore, we can conclude that the composition of two rotation in 2D is also a rotation, the result is independent to the order of each rotation operation, and the the equivalent rotation angle is the sum of their rotation angles.
 
+\subsection{Linear mapping of 2D rotation}
+We claim that the 2D rotation $\sR_2$ is a linear mapping (or homomorphism mapping), that is:
+\begin{align}
+  &\sR_2(\alpha+\beta)=\sR_2(\alpha)+\sR_2(\beta)\\
+  &\sR_2(k\alpha)=k\sR_2(\alpha)
+\end{align}
+It can be easily proved with any method mentioned above.
+
+
 \section{3D rotation}
 
 There are several ways to represent rotation in 3D.
@@ -483,6 +606,130 @@ We can convert an arbitrary 3D vector to unit vector by doing normalization.
   \hat{u}=\frac{u}{\Clen{u}}
 \end{equation}
 
+\subsection{Decomposition of rotation}
+We can decompose a vector $v$ into two components $v_{\Vert}$ and $v_{\perp}$.
+\begin{equation}
+  v=v_{\Vert} + v_{\perp}
+\end{equation}
+The result vector of rotation operation is equal to the vector addition of seperately rotation result.
+(It maybe need to prove later!!).
+\begin{equation}
+  v'=v_{\Vert}' + v_{\perp}'
+\end{equation}
+
+The vector $v_{\perp}$ is the Orthogonal Projection of $v$ on $u$.
+\begin{equation}
+  v_{\Vert}=\mathrm{proj}_u(v)
+  =\frac{u\cdot v}{u\cdot v}u=(u\cdot v)u.
+\end{equation}
+Note that $u\cdot u=\Clen{u}^2=1$.
+Now, we can get an expression of $v_{\perp}$ by $u$ and $v$.
+\begin{equation}\label{vperp_by_v_vvert}
+  v_{\perp}=v-v_{\Vert}=v-(u\cdot v)u
+\end{equation}
+
+\subsection{The rotation of $v_{\Vert}$}
+We can observed that there is no change after the roation of $v_{\Vert}$ by any angles.
+\begin{equation}
+  v_{\Vert}'=v_{\Vert}
+\end{equation}
+
+\subsection{The rotation of $v_{\perp}$}
+For rotation of $v_{\perp}$, we can solve it in a 2D plane using former knowledge in 2D rotation.
+
+First, we need to construct a new vector $w$ which is both orthogonal to $v_{\perp}$ and $u$ and followed the right-hand coordinate.
+\begin{equation}
+  w=u\times v_{\Vert}
+\end{equation}
+We can observed that the vector $w$ is the anticlockwise rotated of $v_{\perp}$ by $\pi/2$ degree.
+Meanwhile, it can be proved that $\Clen{w}$ is equal to $\Clen{v_{\perp}}$.
+\begin{equation}
+  \Clen{w}=\Clen{u\times v_{\Vert}}=\Clen{u}\Clen{v_{\perp}}\sin(\pi/2)=\Clen{v_{\perp}}
+\end{equation}
+
+Next, if $v_{\perp}$ rotated $\theta$ degree, then the result if as follows.
+\begin{equation}
+  \begin{aligned}
+  v_{\perp}'&=v_v'+v_w'=\cos(\theta)v_{\perp}+\sin(\theta)w\\
+            &=\cos(\theta)v_{\perp}+\sin(\theta)(u\times v_{\perp})
+  \end{aligned}
+\end{equation}
+
+\subsection{The rotation of $v$}
+Now, we can write down the rotation of $v$ as follows.
+
+First, write the initial expression.
+\begin{equation}
+  \begin{aligned}
+  v'&=v_{\Vert}'+v_w'\\
+    &=v_{\Vert} +\cos(\theta)v_{\perp}+\sin(\theta)(u\times v_{\perp})
+  \end{aligned}
+\end{equation}
+
+Next, use the formula \eqref{vperp_by_v_vvert}, we can simplify the expression $u\times v_{\perp}$.
+\begin{equation}
+  \begin{aligned}
+    u\times v_{\perp}=u\times (v-v_{\Vert})=u\times v - u\times v_{\Vert} = u\times v
+  \end{aligned}
+\end{equation}
+Note that $u\times v_{\perp}=0$, because $u$ is pareller to $v_{\perp}$.
+Now, the $v'$ becomes to folows.
+\begin{equation}
+  v'=v_{\Vert} +\cos(\theta)v_{\perp}+\sin(\theta)(u\times v)
+\end{equation}
+
+Next, expand the expression of $v_{\Vert}$ and $v_{\perp}$, we can get the final expresson of $v'$.
+\begin{equation}
+  \begin{aligned}
+    v'&=(u\cdot v)u +\cos(\theta)(v-(u\cdot v)u)+\sin(\theta)(u\times v)\\
+      &=\cos(\theta)v+(1-\cos(\theta))(u\cdot v)u+\sin(\theta)(u\times v)
+  \end{aligned}
+\end{equation}
+
+Finally, we got the 3D rotation formula (also called Rodrigues' Rotation Formula).
+\begin{theorem}
+  Any vector $v$ in 3D space rotate $\theta$ degree by a unit vector $u$ is follows.
+  \begin{equation}
+    v'=\cos(\theta)v+(1-\cos(\theta))(u\cdot v)u+\sin(\theta)(u\times v)
+  \end{equation}
+\end{theorem}
+The concept of quaternion is connected with this formula.
+
+
+\section{Quaternion}
+The quaternion is created by William Rowan Hamilton.
+There are three imaginary part for a quaternion, which is similiar to a complex number.
+
+
+Given a quaternion $q\in \bH$, it can be written as follows.
+\begin{equation}
+  q=a+bi+cj+dk,\quad (a,b,c,d\in\bR, and~i^2=j^2=k^2=ijk=-1)
+\end{equation}
+A quaternion $q$ is a linear combination of basic $\{1,i,j,k\}$, with the coordinate $a,b,c,d$.
+Thus, $q$ has a corresponding vector form.
+\begin{equation}
+  q=\bmatL a\\b\\c\\d \bmatR
+\end{equation}
+Note that, a quaternion can not be shown in a geometry manner, because it is a 4D vector here.
+For convenient, we usually seperate the real part and imaginary part of a quaternion.
+\begin{equation}
+  q=[s,\mathbf{v}],\quad (\mathbf{v}=\bmatL x\\y\\z \bmatR,\quad s,x,y,z\in\bR)
+\end{equation}
+
+\subsection{Operations and properties of quaternion}
+\subsubsection{Magnitude(Norm)}
+The magnitude (or called Norm) of a quaternion $q=a+bi+cj+dk$ is defined as follows.
+\begin{equation}
+  \Clen{q}=\sqrt{a^2+b^2+c^2+d^2}=\sqrt{s^2+\Clen{v}^2}=\sqrt{s^2+v\cdot v}
+\end{equation}
+
+\subsubsection{Addition and subtraction}
+\begin{definition}
+  The addition/ subtraction of two quaternions $q_1=a_1+b_1i+c_1j+d_1k, q_2=a_2+b_2i+c_2j+d_2k$ is defined as follows.
+  \begin{equation}
+    q_1\pm q_2=(a_1\pm a_2)
+  \end{equation}
+\end{definition}
 
 
 

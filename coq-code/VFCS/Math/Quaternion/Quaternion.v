@@ -3,11 +3,11 @@
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
-  purpose     : Quaternion
-  author      : ZhengPu Shi
-  date        : 2021.12
-  
-  remark      :
+  purpose   : Quaternion
+  author    : ZhengPu Shi
+  date      : 2022.06
+
+  remark    :
   1. Introduction to Multicopter Design and Control, Springer, Quan Quan
      page 96
 *)
@@ -215,6 +215,22 @@ Definition qsub (q1 q2 : quat) : quat := mk_quat
 
 
 (** Multiplication of two quaternions *)
+Definition qmul' (p q : quat) : quat :=
+  let p0 := Re p in
+  let p1 := Im1 p in
+  let p2 := Im2 p in
+  let p3 := Im3 p in
+  let q0 := Re q in
+  let q1 := Im1 q in
+  let q2 := Im2 q in
+  let q3 := Im3 q in
+    mk_quat
+      (p0 * q0 - p1 * q1 - p2 * q2 - p3 * q3) 
+      (p0 * q1 + p1 * q0 + p2 * q3 - p3 * q2) 
+      (p0 * q2 - p1 * q3 + p2 * q0 + p3 * q1) 
+      (p0 * q3 + p1 * q2 - p2 * q1 + p3 * q0).
+
+
 Definition qmul (q1 q2 : quat) : quat :=
   let w1 := Re q1 in
   let x1 := Im1 q1 in
