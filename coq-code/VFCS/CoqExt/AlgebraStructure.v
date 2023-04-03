@@ -1327,6 +1327,15 @@ Section Theory.
     rewrite identityLeft in H0. easy.
   Qed.
 
+  (** a * b = b -> a = 1 \/ b = 0 *)
+  Lemma field_mul_eq_imply_a1_or_b0 : forall (a b : A) (HDec : @Decidable A),
+      a * b = b -> (a = A1) \/ (b = A0).
+  Proof.
+    intros. destruct (decidable b A0); auto. left.
+    apply symmetry in H. rewrite <- (@identityLeft _ Amul A1) in H at 1 by apply F.
+    apply field_mul_cancel_r in H; auto.
+  Qed.
+
 End Theory.
 
 (** ** Examples *)
