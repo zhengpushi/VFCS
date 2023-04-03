@@ -104,8 +104,8 @@ End test.
 
 (** ** Class *)
 
-Class Decidable {A : Type} := {
-    decidable : forall (a b : A), {a = b} + {a <> b};
+Class Decidable {A : Type} (Aeq : A -> A -> Prop) := {
+    decidable : forall (a b : A), {Aeq a b} + {~(Aeq a b)};
   }.
 (* Global Hint Constructors Decidable : core. *)
 
@@ -114,20 +114,21 @@ Class Decidable {A : Type} := {
 Section Instances.
   Import Arith ZArith Reals.
 
-  Global Instance Decidable_NatEq : @Decidable nat.
-  Proof. constructor. apply Nat.eq_dec. Qed.
+  Global Instance Decidable_NatEq : Decidable (@eq nat).
+  Proof. constructor. apply Nat.eq_dec. Defined.
 
-  Global Instance Decidable_Z : @Decidable Z.
-  Proof. constructor. apply Z.eq_dec. Qed.
+  Global Instance Decidable_Z : Decidable (@eq Z).
+  Proof. constructor. apply Z.eq_dec. Defined.
 
-  Global Instance Decidable_R : @Decidable R.
+  Global Instance Decidable_R : Decidable (@eq R).
   Proof. constructor. apply Req_EM_T. Qed.
-  
-  Global Instance Decidable_list `{Dec:Decidable} : @Decidable (list A).
-  Proof. constructor. apply list_eq_dec. apply decidable. Qed.
 
-  Global Instance Decidable_dlist `{Dec:Decidable} : @Decidable (list (list A)).
-  Proof. constructor. apply decidable. Qed.
+  Global Instance Decidable_list `{Dec:Decidable A eq} : Decidable (@eq (list A)).
+  Proof. constructor. apply list_eq_dec. apply decidable. Defined.
+
+  Global Instance Decidable_dlist `{Dec:Decidable A eq} :
+    Decidable (@eq (list (list A))).
+  Proof. constructor. apply decidable. Defined.
 
 End Instances.
 
@@ -135,25 +136,27 @@ End Instances.
 Section Dec_theory.
 
   Context `{Dec : Decidable}.
+  Infix "==" := Aeq.
 
   (** Tips: these theories are useful for R type *)
   
   (** Calculate equality to boolean, with the help of equality decidability *)
   Definition Aeqb (a b : A) : bool := if decidable a b then true else false.
+  Infix "=?" := Aeqb.
 
   (** Aeqb is true iff equal. *)
-  Lemma Aeqb_true : forall a b, Aeqb a b = true <-> a = b.
+  Lemma Aeqb_true : forall a b, a =? b = true <-> a == b.
   Proof.
     intros. unfold Aeqb. destruct decidable; split; intros; easy.
   Qed.
 
   (** Aeqb is false iff not equal *)
-  Lemma Aeqb_false : forall a b, Aeqb a b = false <-> a <> b.
+  Lemma Aeqb_false : forall a b, a =? b = false <-> ~(a == b).
   Proof.
     intros. unfold Aeqb. destruct decidable; split; intros; easy.
   Qed.
 
-  Lemma Aeq_reflect : forall a b : A, reflect (a =  b) (Aeqb a b).
+  Lemma Aeq_reflect : forall a b : A, reflect (a == b) (a =? b).
   Proof.
     intros. unfold Aeqb. destruct (decidable a b); constructor; auto.
   Qed.
@@ -1315,7 +1318,7 @@ Section Theory.
   Qed.
 
   (** a * b = 0 -> a = 0 \/ b = 0 *)
-  Lemma field_mul_eq0_imply_a0_or_b0 : forall (a b : A) (HDec : @Decidable A),
+  Lemma field_mul_eq0_imply_a0_or_b0 : forall (a b : A) (HDec : Decidable (@eq A)),
       a * b = 0 -> (a = 0) \/ (b = 0).
   Proof.
     intros.
@@ -1328,7 +1331,7 @@ Section Theory.
   Qed.
 
   (** a * b = b -> a = 1 \/ b = 0 *)
-  Lemma field_mul_eq_imply_a1_or_b0 : forall (a b : A) (HDec : @Decidable A),
+  Lemma field_mul_eq_imply_a1_or_b0 : forall (a b : A) (HDec : Decidable (@eq A)),
       a * b = b -> (a = A1) \/ (b = A0).
   Proof.
     intros. destruct (decidable b A0); auto. left.

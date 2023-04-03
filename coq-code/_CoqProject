@@ -12,17 +12,34 @@
 -arg -w -arg -ambiguous-paths
 -arg -w -arg -local-declaration
 
-# ====== Math ====================
+# ====== CoqExt ======================================================
+VFCS/CoqExt/BasicConfig.v
+VFCS/CoqExt/FuncExt.v
+VFCS/CoqExt/AlgebraStructure.v
+VFCS/CoqExt/BoolExt.v
+VFCS/CoqExt/NatExt.v
+VFCS/CoqExt/ZExt.v
+VFCS/CoqExt/QExt.v
+VFCS/CoqExt/QcExt.v
+VFCS/CoqExt/RExt.v
+VFCS/CoqExt/StrExt.v
+VFCS/CoqExt/TupleExt.v
+VFCS/CoqExt/ListExt.v
+VFCS/CoqExt/Sequence.v
+
+
+
+# ====== Math ========================================================
 VFCS/Math/DifferenceEquation/DifferenceEquation.v
 #VFCS/Math/Quaternion/Quaternion.v
 VFCS/Math/LaplaceTransform/LaplaceTransform.v
 
-# ====== Automatic Control System ====================
+# ====== Automatic Control System ====================================
 VFCS/ACS/Diagram.v
 VFCS/ACS/DifferentialEquation.v
 VFCS/ACS/RationalExpression.v
 
-# ====== Flight Control System ====================
+# ====== Flight Control System =======================================
 VFCS/FCS/Propulsion/RAux.v
 VFCS/FCS/Propulsion/PSModel.v
 VFCS/FCS/Propulsion/PSExtension.v
