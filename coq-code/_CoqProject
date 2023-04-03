@@ -27,9 +27,8 @@ VFCS/CoqExt/TupleExt.v
 VFCS/CoqExt/ListExt.v
 VFCS/CoqExt/Sequence.v
 
-
-
 # ====== Math ========================================================
+VFCS/Math/Matrix/Matrix.v
 VFCS/Math/DifferenceEquation/DifferenceEquation.v
 #VFCS/Math/Quaternion/Quaternion.v
 VFCS/Math/LaplaceTransform/LaplaceTransform.v

@@ -985,7 +985,6 @@ Section GroupTheory.
   
     Theorem group_inv_id : - 0 = 0.
     Proof.
-      intros.
       (* -e = -e + e = e *)
       rewrite <- identityRight at 1. group_simp.
     Qed.
@@ -998,6 +997,10 @@ End GroupTheory.
 Section Examples.
   
   Import Reals.
+  Open Scope R.
+
+  Goal (- 0 = 0).
+    rewrite group_inv_id. auto. Qed.
   
   Goal forall x1 x2 y : R, (x1 + y = 0 /\ y + x2 = 0 -> x1 = x2)%R.
     apply group_inv_uniq_l. Qed.
@@ -1021,6 +1024,8 @@ Class AGroup {A} Aadd A0 Aopp := {
     agroupAM :> @AMonoid A Aadd A0;
     agroupComm :> Commutative Aadd;
   }.
+
+Global Coercion agroupGroup : AGroup >-> Group.
 
 Section Theory.
   
@@ -1073,6 +1078,12 @@ End Instances.
 
 Section example.
   Import Reals.
+  Open Scope R.
+  
+  Goal forall a , a + - 0 = a.
+    intros.
+    Fail rewrite group_inv_id.
+    rewrite (group_inv_id (A0:=0)). group_simp. Qed.
   
   Goal forall a b c : R, ((a - b) - c = a - (b + c))%R.
     intros. apply agroup_sub_assoc. Qed.
