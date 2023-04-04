@@ -9,9 +9,9 @@
   
   remark    :
   1. T2 : A * A
-     T3 : A * A * A
+     T3 : A * A * A             that is: (A * A) * A
      ...
-  2. T_3x3 := T3 * T3 * T3.
+  2. T_3_3 := T3 * T3 * T3.
 *)
 
 Open Scope type_scope.
@@ -26,8 +26,8 @@ Section TuplesType.
   Definition T3 := T2 * A.
   Definition T4 := T3 * A.
   
-  (* Definition T_1x1 := T1. *)
-  Definition T_2x2 := T2 * T2.
-  Definition T_3x3 := T3 * T3 * T3.
+  (* Definition T_1_1 := T1. *)
+  Definition T_2_2 := T2 * T2.
+  Definition T_3_3 := T3 * T3 * T3.
 
 End TuplesType.

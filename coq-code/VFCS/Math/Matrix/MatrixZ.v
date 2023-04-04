@@ -1,6 +1,6 @@
 (*
   Copyright 2022 ZhengPu Shi
-  This file is part of CoqMatrix. It is distributed under the MIT
+  This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
   purpose   : Matrix theory on Z.
@@ -8,107 +8,208 @@
   date      : 2021.12
 *)
 
-Require Import MatrixAll.
+Require Export ZExt.
+Require Export Matrix.
 
 
-(* ######################################################################### *)
-(** * Export matrix theory on concrete elements *)
+(* ======================================================================= *)
+(** ** Matrix theory come from common implementations *)
 
-Module MatrixAllZ.
-  Include RingMatrixTheory RingElementTypeZ.
-  Open Scope Z_scope.
-  Open Scope mat_scope.
-End MatrixAllZ.
-  
-Module MatrixZ_DL.
-  Include MatrixAllZ.DL.
-  Open Scope Z_scope.
-  Open Scope mat_scope.
-End MatrixZ_DL.
+Open Scope Z_scope.
+Open Scope mat_scope.
 
-Module MatrixZ_DP.
-  Include MatrixAllZ.DP.
-  Open Scope Z_scope.
-  Open Scope mat_scope.
-End MatrixZ_DP.
+(** general notations *)
+Notation dlist := (dlist Z).
 
-Module MatrixZ_DR.
-  Include MatrixAllZ.DR.
-  Open Scope Z_scope.
-  Open Scope mat_scope.
-End MatrixZ_DR.
+(** *** matrix type and basic operation *)
+Definition mat (r c : nat) : Type := @mat Z r c.
 
-Module MatrixZ_NF.
-  Include MatrixAllZ.NF.
-  Open Scope Z_scope.
-  Open Scope mat_scope.
-End MatrixZ_NF.
+Notation "m ! i ! j " := (mnth 0 m i j) : mat_scope.
 
-Module MatrixZ_SF.
-  Include MatrixAllZ.SF.
-  Open Scope Z_scope.
-  Open Scope mat_scope.
-End MatrixZ_SF.
+(** *** convert between list and matrix *)
+Definition l2m (r c : nat) (dl : dlist) : mat r c := l2m 0 dl.
+Definition m2l {r c : nat} (m : mat r c) : dlist := m2l m.
+
+Lemma m2l_length : forall {r c} (m : mat r c), length (m2l m) = r.
+Proof. intros. apply m2l_length. Qed.
+
+Lemma m2l_width : forall {r c} (m : mat r c), width (m2l m) c.
+Proof. intros. apply m2l_width. Qed.
+
+Lemma m2l_l2m_id : forall {r c} (dl : dlist),
+    length dl = r -> width dl c -> m2l (l2m r c dl) = dl.
+Proof. intros. apply m2l_l2m_id; auto. Qed.
+
+Lemma l2m_m2l_id : forall {r c} (m : mat r c), l2m r c (m2l m) == m.
+Proof. intros. apply l2m_m2l_id; auto. Qed.
+
+Lemma l2m_inj : forall {r c} (d1 d2 : dlist),
+    length d1 = r -> width d1 c -> length d2 = r -> width d2 c -> 
+    d1 <> d2 -> ~(l2m r c d1 == l2m r c d2).
+Proof. intros. apply l2m_inj; auto. Qed.
+
+Lemma l2m_surj : forall {r c} (m : mat r c), (exists d, l2m r c d == m). 
+Proof. intros. apply l2m_surj; auto. Qed.
+
+Lemma m2l_inj : forall {r c} (m1 m2 : mat r c), ~ (m1 == m2) -> m2l m1 <> m2l m2.
+Proof. intros. apply (m2l_inj 0); auto. Qed.
+
+Lemma m2l_surj : forall {r c} (d : dlist), length d = r -> width d c -> 
+    (exists m : mat r c, m2l m = d).
+Proof. intros. apply (m2l_surj 0); auto. Qed.
+
+(** *** convert between tuple and matrix *)
+Definition t2m_3_3 (t : T_3_3) : mat 3 3 := t2m_3_3 0 t.
+Definition m2t_3_3 (m : mat 3 3) : T_3_3 := m2t_3_3 m.
+Definition m2t_1_1 (m : mat 1 1) := m2t_1_1 m.
+
+(** *** build matrix from elements *)
+Definition mk_mat_1_1 a11 : mat 1 1 :=
+  mk_mat_1_1 (A0:=0) a11.
+Definition mk_mat_3_1 a11 a12 a13 : mat 3 1 :=
+  mk_mat_3_1 (A0:=0) a11 a12 a13.
+Definition mk_mat_3_3 a11 a12 a13 a21 a22 a23 a31 a32 a33 : mat 3 3 :=
+  mk_mat_3_3 (A0:=0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
+
+(** *** matrix transposition *)
+Definition mtrans {r c : nat} (m : mat r c) : mat c r := mtrans m.
+Notation "m \T" := (mtrans m) : mat_scope.
+
+Lemma mtrans_trans : forall {r c} (m : mat r c), m \T\T == m.
+Proof. intros. apply mtrans_trans. Qed.
+
+(** *** matrix mapping *)
+Definition mmap {r c} f (m : mat r c) : mat r c := mmap f m.
+Definition mmap2 {r c} f (m1 m2 : mat r c) : mat r c := mmap2 f m1 m2.
+
+Lemma mmap2_comm : forall {r c} (m1 m2 : mat r c) f (fcomm : Commutative f),
+    mmap2 f m1 m2 == mmap2 f m2 m1.
+Proof. intros. apply mmap2_comm; auto. Qed.
+
+Lemma mmap2_assoc : forall {r c} f (m1 m2 m3 : mat r c) (fassoc : Associative f),
+    mmap2 f (mmap2 f m1 m2) m3 == mmap2 f m1 (mmap2 f m2 m3).
+Proof. intros. apply mmap2_assoc; auto. Qed.
+
+(** *** zero matrix *)
+Definition mat0 r c : mat r c := mat0 0 r c.
+
+(** *** unit matrix *)
+Definition matI n : mat n n := matI 0 1 n.
+
+(** *** matrix addition *)
+Definition madd {r c} (m1 m2 : mat r c) : mat r c := madd m1 m2 (Aadd:=Z.add).
+Infix "+" := madd : mat_scope.
+
+Lemma madd_comm : forall {r c} (m1 m2 : mat r c), m1 + m2 == m2 + m1.
+Proof. intros. apply madd_comm. Qed.
+
+Lemma madd_assoc : forall {r c} (m1 m2 m3 : mat r c), (m1 + m2) + m3 == m1 + (m2 + m3).
+Proof. intros. apply madd_assoc. Qed.
+
+Lemma madd_0_l : forall {r c} (m : mat r c), (mat0 r c) + m == m.
+Proof. intros. apply madd_0_l. Qed.
+
+(** *** matrix opposition *)
+Definition mopp {r c} (m : mat r c) : mat r c := mopp m (Aopp:=Z.opp).
+Notation "- m" := (mopp m) : mat_scope.
+
+Lemma madd_opp : forall {r c} (m : mat r c), m + (-m) == (mat0 r c).
+Proof. intros. apply madd_opp. Qed.
+
+Lemma mopp_opp : forall {r c} (m : mat r c), - - m == m.
+Proof. intros. apply mopp_opp. Qed.
+
+(** *** matrix subtraction *)
+Definition msub {r c} (m1 m2 : mat r c) : mat r c :=
+  msub m1 m2 (Aadd:=Z.add)(Aopp:=Z.opp).
+Infix "-" := msub : mat_scope.
+
+Lemma msub_comm : forall {r c} (m1 m2 : mat r c), m1 - m2 == - (m2 - m1).
+Proof. intros. apply msub_comm. Qed.
+
+Lemma msub_assoc : forall {r c} (m1 m2 m3 : mat r c), (m1 - m2) - m3 == m1 - (m2 + m3).
+Proof. intros. apply msub_assoc. Qed.
+
+Lemma msub_0_l : forall {r c} (m : mat r c), (mat0 r c) - m == - m.
+Proof. intros. apply msub_0_l. Qed.
+
+Lemma msub_0_r : forall {r c} (m : mat r c), m - (mat0 r c) == m.
+Proof. intros. apply msub_0_r. Qed.
+
+Lemma msub_self : forall {r c} (m : mat r c), m - m == (mat0 r c).
+Proof. intros. apply msub_self. Qed.
+
+(** *** matrix scalar multiplication *)
+Definition mcmul {r c} a (m : mat r c) : mat r c := mcmul a m (Amul:=Z.mul).
+Infix " 'c*' " := mcmul : mat_scope.
+
+Lemma mcmul_assoc : forall {r c} a b (m : mat r c), a c* (b c* m) == (a * b) c* m.
+Proof. intros. apply mcmul_assoc. Qed.
+
+Lemma mcmul_perm : forall {r c} a b (m : mat r c),  a c* (b c* m) == b c* (a c* m).
+Proof. intros. apply mcmul_perm. Qed.
+
+Lemma mcmul_add_distr_l : forall {r c} a (m1 m2 : mat r c),
+    a c* (m1 + m2) == (a c* m1) + (a c* m2).
+Proof. intros. apply mcmul_add_distr_l. Qed.
+
+Lemma mcmul_add_distr_r : forall {r c} a b (m : mat r c),
+    (a + b) c* m == (a c* m) + (b c* m).
+Proof. intros. apply mcmul_add_distr_r. Qed.
+
+Lemma mcmul_1_l : forall {r c} (m : mat r c), 1 c* m == m.
+Proof. intros. apply mcmul_1_l. Qed.
+
+Lemma mcmul_0_l : forall {r c} (m : mat r c), 0 c* m == mat0 r c.
+Proof. intros. apply mcmul_0_l. Qed.
+
+(** *** matrix multiplication *)
+Definition mmul {r c s} (m1 : mat r c) (m2 : mat c s) : mat r s :=
+  mmul m1 m2 (Aadd:=Z.add) (A0:=0) (Amul:=Z.mul).
+Infix "*" := mmul : mat_scope.
+
+Lemma mmul_add_distr_l : forall {r c s} (m1 : mat r c) (m2 m3 : mat c s),
+    m1 * (m2 + m3) == (m1 * m2) + (m1 * m3).
+Proof. intros. apply mmul_add_distr_l. Qed.
+
+Lemma mmul_add_distr_r : forall {r c s} (m1 m2 : mat r c) (m3 : mat c s),
+    (m1 + m2) * m3 == (m1 * m3) + (m2 * m3).
+Proof. intros. apply mmul_add_distr_r. Qed.
+
+Lemma mmul_assoc : forall {r c s t} (m1 : mat r c) (m2 : mat c s) (m3 : mat s t),
+    (m1 * m2) * m3 == m1 * (m2 * m3).
+Proof. intros. apply mmul_assoc. Qed.
+
+Lemma mmul_0_l : forall {r c s} (m : mat c s), (mat0 r c) * m == mat0 r s.
+Proof. intros. apply mmul_0_l. Qed.
+
+Lemma mmul_0_r : forall {r c s} (m : mat r c), m * (mat0 c s) == mat0 r s.
+Proof. intros. apply mmul_0_r. Qed.
+
+Lemma mmul_I_l : forall {r c} (m : mat r c), (matI r) * m == m.
+Proof. intros. apply mmul_I_l. Qed.
+
+Lemma mmul_I_r : forall {r c} (m : mat r c), m * (matI c) == m. 
+Proof. intros. apply mmul_I_r. Qed.
 
 
-(* ######################################################################### *)
-(** * Extended matrix theory *)
-
-(** Set a default model *)
-Export MatrixZ_SF.
+(* ======================================================================= *)
+(** ** Matrix theory applied to this type *)
 
 
-(** General usage, no need to select low-level model *)
-Section Test.
+(* ======================================================================= *)
+(** ** Usage demo *)
+Section test.
+  Let m1 := l2m 2 2 [[1;2];[3;4]].
+  (* Compute m2l m1.       (* = [[1; 2]; [3; 4]] *) *)
+  (* Compute m2l (mmap Z.opp m1).       (* = [[-1; -2]; [-3; -4]] *) *)
+  (* Compute m2l (m1 * m1).     (* = [[7; 10]; [15; 22]] *) *)
 
-  (* Import MatrixZ ZArith. *)
-  (* Open Scope Z. *)
-  (* Open Scope mat_scope. *)
-
-  Let m1 := @l2m 3 3 [[1;2;3];[4;5;6];[7;8;9]].
-  (* Compute m2l m1. *)
-  (*      = [[1; 2; 3]; [4; 5; 6]; [7; 8; 9]]
-     : list (list RingElementTypeZ.A) *)
-
-  (* Compute m2l (mmap Z.opp m1). *)
-  (*      = [[-1; -2; -3]; [-4; -5; -6]; [-7; -8; -9]]
-     : list (list RingElementTypeZ.A) *)
-
-  Variable a11 a12 a13 a21 a22 a23 a31 a32 a33 : Z.
-  Let m2 := @l2m 3 3 [[a11;a12;a13];[a21;a22;a23];[a31;a32;a33]].
-  (* Compute m2l m2. *)
-  (*      = [[a11; a12; a13]; [a21; a22; a23]; [a31; a32; a33]]
-     : list (list RingElementTypeZ.A) *)
-
-  (* Eval cbn in m2l (mmap Z.opp m2). *)
-  (*      = [[(- a11)%Z; (- a12)%Z; (- a13)%Z]; [(- a21)%Z; (- a22)%Z; (- a23)%Z];
-        [(- a31)%Z; (- a32)%Z; (- a33)%Z]]
-     : list (list RingElementTypeZ.A) *)
-
-  Let m3 := mk_mat_3_3 10 11 12 13 14 15 16 17 18.
+  Variable a11 a12 a21 a22 : Z.
+  Variable f : Z -> Z.
+  Let m2 := l2m 2 2 [[a11;a12];[a21;a22]].
+  (* Compute m2l m2.       (* = [[a11; a12]; [a21; a22]] *) *)
+  (* Compute m2l (mmap f m2).       (* = [[f a11; f a12]; [f a21; f a22]] *) *)
   (* Eval cbn in m2l (m2 * m2). *)
-  (*      = [[Aadd (Amul a11 a11) (Aadd (Amul a12 a21) (Aadd (Amul a13 a31) A0));
-         Aadd (Amul a11 a12) (Aadd (Amul a12 a22) (Aadd (Amul a13 a32) A0));
-         Aadd (Amul a11 a13) (Aadd (Amul a12 a23) (Aadd (Amul a13 a33) A0))];
-        [Aadd (Amul a21 a11) (Aadd (Amul a22 a21) (Aadd (Amul a23 a31) A0));
-         Aadd (Amul a21 a12) (Aadd (Amul a22 a22) (Aadd (Amul a23 a32) A0));
-         Aadd (Amul a21 a13) (Aadd (Amul a22 a23) (Aadd (Amul a23 a33) A0))];
-        [Aadd (Amul a31 a11) (Aadd (Amul a32 a21) (Aadd (Amul a33 a31) A0));
-         Aadd (Amul a31 a12) (Aadd (Amul a32 a22) (Aadd (Amul a33 a32) A0));
-         Aadd (Amul a31 a13) (Aadd (Amul a32 a23) (Aadd (Amul a33 a33) A0))]]
-     : list (list A) *)
-
-  (* Eval cbn in m2l (m1 * m3). *)
-  (*      = [[84; 90; 96]; [201; 216; 231]; [318; 342; 366]]
-     : list (list A) *)
-
-End Test.
-
-(** Advanced usage, user can select favorite model *)
-Section Test.
-  Import MatrixZ_SF.
-  Let m1 := @l2m 3 3 [[1;2;3];[4;5;6];[7;8;9]].
-  (* Compute m2l m1. *)
-  (* Compute m2l (mmap S m1). *)
   
-End Test.
+End test.

@@ -6,6 +6,7 @@
   purpose   : Matrix implemented with function (Safe version)
   author    : ZhengPu Shi
   date      : 2021.12
+
   remark    :
   1. This is the safe version of NatFun implementation, that means,
      we modified the definition of matrix type to improve the type safety.
@@ -41,7 +42,7 @@ Section def.
       and that is a function of "nat -> nat -> A" type.
       Meanwhile, we give two arguments r and c as the parts of mat type to represent 
       the rows and columns of a matrix. *)
-  Record mat {A} (r c : nat) :=
+  Record mat {A} (r c : nat) : Type :=
     mk_mat { matf : nat -> nat -> A }.
   
 End def.
@@ -80,7 +81,7 @@ Section meq.
   Qed.
   
   (** Meq is decidable *)
-  Lemma meq_dec {Dec_Aeq : Decidable (@eq A)} : forall {r c}, Decidable (@meq r c).
+  Global Instance meq_dec {Dec_Aeq : Decidable (@eq A)} : forall {r c}, Decidable (@meq r c).
   Proof. intros. constructor. intros. apply seq2eq_dec. Qed.
   
 End meq.
@@ -220,17 +221,93 @@ End mrow.
 
 
 (* ======================================================================= *)
-(** Convert between dlist and mat *)
+(** Convert between dlist and mat (version 1, l2m is strict) *)
+
+(* Section l2m_m2l. *)
+  
+(*   Context {A : Type} (A0 : A). *)
+(*   (* Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope. *) *)
+  
+(*   (** dlist to matrix with specified row and column numbers *) *)
+(*   Definition l2m {r c} (dl : dlist A) : mat r c := *)
+(*     mk_mat (fun i j => *)
+(*               if (i <? r) && (j <? c) *)
+(*               then nth j (nth i dl []) A0 *)
+(*               else A0). *)
+  
+(*   (** mat to dlist *) *)
+(*   Definition m2l {r c} (m : mat r c) : dlist A := *)
+(*     map (fun i => (map (fun j => m$i$j) (seq 0 c))) (seq 0 r). *)
+
+(*   Lemma m2l_length : forall {r c} (m : mat r c), length (m2l m) = r. *)
+(*   Proof. intros. unfold m2l. rewrite map_length, seq_length. auto. Qed. *)
+  
+(*   Lemma m2l_width : forall {r c} (m : mat r c), width (m2l m) c. *)
+(*   Proof. *)
+(*     intros. unfold width,m2l. apply Forall_map. *)
+(*     apply Forall_nth. intros. rewrite map_length, seq_length; auto. *)
+(*   Qed. *)
+
+(*   Lemma l2m_m2l_id : forall {r c} (m : mat r c), (@l2m r c (m2l m)) == m. *)
+(*   Proof. lma. unfold m2l. rewrite ?nth_map_seq; auto. Qed. *)
+
+(*   Lemma m2l_l2m_id : forall {r c} (dl : dlist A), *)
+(*       length dl = r -> width dl c -> m2l (@l2m r c dl) = dl. *)
+(*   Proof. *)
+(*     intros. unfold l2m,m2l. simpl. *)
+(*     rewrite (dlist_eq_iff_nth r c (A0:=A0)); auto. *)
+(*     - intros. rewrite ?nth_map_seq; auto. rewrite ?Nat.add_0_r. solve_mnth. *)
+(*     - rewrite map_length, seq_length; auto. *)
+(*     - apply width_map. intros. rewrite map_length, seq_length; auto. *)
+(*   Qed. *)
+
+(*   Lemma l2m_inj : forall {r c} (d1 d2 : dlist A), *)
+(*       length d1 = r -> width d1 c -> length d2 = r -> width d2 c -> *)
+(*       d1 <> d2 -> ~(@l2m r c d1 == l2m d2). *)
+(*   Proof. *)
+(*     intros. unfold l2m. intro. unfold meq in *. simpl in *. destruct H3. *)
+(*     rewrite (dlist_eq_iff_nth r c (A0:=A0)); auto. *)
+(*     intros. specialize (H4 i j H3 H5). solve_mnth. *)
+(*   Qed. *)
+  
+(*   Lemma l2m_surj : forall {r c} (m : mat r c), (exists d, l2m d == m). *)
+(*   Proof. intros. exists (@m2l r c m). apply l2m_m2l_id. Qed. *)
+  
+(*   Lemma m2l_inj : forall {r c} (m1 m2 : mat r c), ~(m1 == m2) -> m2l m1 <> m2l m2. *)
+(*   Proof. *)
+(*     intros. destruct m1 as [m1], m2 as [m2]. unfold meq in *; simpl in *. *)
+(*     unfold m2l. unfold mnth. simpl. intro. *)
+(*     destruct H. intros. *)
+(*     rewrite (dlist_eq_iff_nth r c (A0:=A0)) in H0; *)
+(*       autorewrite with list; auto. *)
+(*     - specialize (H0 i j H H1). *)
+(*       rewrite ?nth_map_seq in H0; auto. rewrite ?Nat.add_0_r in H0. solve_mnth. *)
+(*     - apply width_map. intros. autorewrite with list; auto. *)
+(*     - apply width_map. intros. autorewrite with list; auto. *)
+(*   Qed. *)
+  
+(*   Lemma m2l_surj : forall {r c} (d : dlist A), *)
+(*       length d = r -> width d c -> (exists m : mat r c, m2l m = d). *)
+(*   Proof. intros. exists (l2m d). apply m2l_l2m_id; auto. Qed. *)
+
+(* End l2m_m2l. *)
+
+(* Let m := @l2m _ 0 2 2 [[1;2;3;4];[10;11;12;13]]. *)
+(* Compute m2l m. *)
+
+(* Global Hint Resolve m2l_length : mat. *)
+(* Global Hint Resolve m2l_width : mat. *)
+
+(* ======================================================================= *)
+(** Convert between dlist and mat (version 2, l2m is efficient) *)
+
 Section l2m_m2l.
   Context {A : Type} (A0 : A).
   (* Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope. *)
   
   (** dlist to matrix with specified row and column numbers *)
   Definition l2m {r c} (dl : dlist A) : mat r c :=
-    mk_mat (fun i j =>
-              if (i <? r) && (j <? c)
-              then nth j (nth i dl []) A0
-              else A0).
+    mk_mat (fun i j => nth j (nth i dl []) A0).
   
   (** mat to dlist *)
   Definition m2l {r c} (m : mat r c) : dlist A :=
@@ -264,7 +341,6 @@ Section l2m_m2l.
   Proof.
     intros. unfold l2m. intro. unfold meq in *. simpl in *. destruct H3.
     rewrite (dlist_eq_iff_nth r c (A0:=A0)); auto.
-    intros. specialize (H4 i j H3 H5). solve_mnth.
   Qed.
   
   Lemma l2m_surj : forall {r c} (m : mat r c), (exists d, l2m d == m).
@@ -289,11 +365,18 @@ Section l2m_m2l.
 
 End l2m_m2l.
 
-(* Let m := @l2m _ 0 2 2 [[1;2;3;4];[10;11;12;13]]. *)
-(* Compute m2l m. *)
-
-(* Global Hint Resolve m2l_length : mat. *)
-(* Global Hint Resolve m2l_width : mat. *)
+(* Notation m2ln := (@m2l nat). *)
+(* Notation l2mn r c := (@l2m nat 0 r c). *)
+(* Let m1 := l2mn 2 2 [[1;2];[3;4]]. *)
+(* Let m2 := l2mn 2 2 [[1];[3;4]]. *)
+(* Let m3 := l2mn 2 2 [[1;2];[3]]. *)
+(* Let m4 := l2mn 2 2 [[1;2;3];[3;4]]. *)
+(* Let m5 := l2mn 2 2 [[1;2];[3;4;5]]. *)
+(* Compute m2ln m1. *)
+(* Compute m2ln m2. *)
+(* Compute m2ln m3. *)
+(* Compute m2ln m4. *)
+(* Compute m2ln m5. *)
 
 
 (* ======================================================================= *)
@@ -349,6 +432,43 @@ End mshift.
 (* Compute m2l (mcshr (A0:=0) m1 1). *)
 (* Compute m2l (mclshl m1 1). *)
 (* Compute m2l (mclshr m1 1). *)
+
+(* ======================================================================= *)
+(** ** Construct matrix with vector and matrix *)
+Section mcons.
+  Context {A : Type} {A0 : A}.
+  
+  Notation vecr n := (@mat A 1 n).
+  Notation vecc n := (@mat A n 1).
+
+  (** Construct a matrix by rows, i.e., a row vector and a matrix *)
+  Definition mconsr {r c} (v : vecr c) (m : mat r c) : mat (S r) c :=
+    mk_mat (fun i j => match i with
+                     | O => v $ 0 $ j
+                     | S i' => m $ i' $ j
+                     end).
+  
+  (** Construct a matrix by columns, i.e., a column vector and a matrix *)
+  Definition mconsc {r c} (v : vecc r) (m : mat r c) : mat r (S c) :=
+    mk_mat (fun i j => match j with
+                     | O => v $ i $ 0
+                     | S j' => m $ i $ j'
+                     end).
+
+      
+  (** mconsr rewrite *)
+  (* Lemma mconsr_eq {r c} (v : vecr c) (m : mat r c) : mconsr v m == (v, m). *)
+  (* Proof. unfold mconsr. auto. Qed. *)
+  
+  (** Construct a matrix by rows with the matrix which row number is 0 *)
+  Lemma mconsr_mr0 : forall {n} (v : vecr n) (m : mat 0 n), mconsr v m == v.
+  Proof. lma. Qed.
+  
+  (** Construct a matrix by columns with the matrix which column number is 0 *)
+  Lemma mconsc_mr0 : forall {n} (v : vecc n) (m : mat n 0), mconsc v m == v.
+  Proof. lma. Qed.
+
+End mcons.
 
 
 (* ======================================================================= *)
@@ -688,7 +808,7 @@ Section t2m_m2t.
   (* Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope. *)
   
   (** Tuples 3x3 -> mat_3x3 *)
-  Definition t2m_3x3 (t : @T_3x3 A) : @mat A 3 3.
+  Definition t2m_3_3 (t : @T_3_3 A) : @mat A 3 3.
   Proof.
     destruct t as ((t1,t2),t3).
     destruct t1 as ((a11,a12),a13).
@@ -698,13 +818,13 @@ Section t2m_m2t.
   Defined.
 
   (** mat_3x3 -> tuple 3x3. That is: ((a11,a12,a13),(a21,a22,a23),(a31,a32,a33)) *)
-  Definition m2t_3x3 (m : mat 3 3) : @T_3x3 A :=
+  Definition m2t_3_3 (m : mat 3 3) : @T_3_3 A :=
     ((m$0$0, m$0$1, m$0$2),
       (m$1$0, m$1$1, m$1$2),
       (m$2$0, m$2$1, m$2$2)).
 
   (** m[0,0]: mat_1x1 -> A *)
-  Definition scalar_of_mat (m : @mat A 1 1) := m$0$0.
+  Definition m2t_1_1 (m : @mat A 1 1) := m$0$0.
 
 End t2m_m2t.
 

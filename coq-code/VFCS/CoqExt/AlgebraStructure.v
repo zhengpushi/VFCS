@@ -1066,8 +1066,11 @@ End Theory.
 (** ** Instances *)
 Section Instances.
 
-  Import Qcanon Reals.
+  Import ZArith Qcanon Reals.
   
+  Global Instance AGroup_ZAdd : AGroup Z.add 0%Z Z.opp.
+  repeat constructor; intros; ring. Qed.
+
   Global Instance AGroup_QcAdd : AGroup Qcplus 0 Qcopp.
   repeat constructor; intros; ring. Qed.
 
@@ -1107,8 +1110,11 @@ Class Ring {A} Aadd A0 Aopp Amul A1 := {
 (** ** Instances *)
 Section Instances.
 
-  Import Qcanon Reals.
+  Import ZArith Qcanon Reals.
   
+  Global Instance Ring_Z : Ring Z.add 0%Z Z.opp Z.mul 1%Z.
+  repeat constructor; intros; ring. Qed.
+
   Global Instance Ring_Qc : Ring Qcplus 0 Qcopp Qcmult 1.
   repeat constructor; intros; ring. Qed.
 
