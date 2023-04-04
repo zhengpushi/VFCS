@@ -52,7 +52,7 @@ Proof. intros. apply v2l_l2v_id; auto. Qed.
 Lemma l2v_v2l_id : forall {n} (v : vec n), l2v n (v2l v) == v.
 Proof. intros. apply l2v_v2l_id; auto. Qed.
 
-(** *** Convert between tuples and vector *)
+(** *** convert between tuples and vector *)
 Definition t2v_2 (t : T2) : vec 2 := t2v_2 0 t.
 Definition t2v_3 (t : T3) : vec 3 := t2v_3 0 t.
 Definition t2v_4 (t : T4) : vec 4 := t2v_4 0 t.
@@ -63,6 +63,11 @@ Definition v2t_4 (v : vec 4) : T4 := v2t_4 v.
 
 (* Lemma t2v_v2t_id_2 : forall (v : vec 2), t2v_2 (v2t_2 v) == v. *)
 (* Lemma v2t_t2v_id_2 : forall (t : T2), v2t_2 (t2v_2 t) = t. *)
+
+(** *** make concrete vector *)
+Definition mk_vec2 a0 a1 : vec 2 := mk_vec2 0 a0 a1.
+Definition mk_vec3 a0 a1 a2 : vec 3 := mk_vec3 0 a0 a1 a2.
+Definition mk_vec4 a0 a1 a2 a3 : vec 4 := mk_vec4 0 a0 a1 a2 a3.
 
 (** *** vector mapping *)
 Definition vmap {n} f (v : vec n) : vec n := vmap v f.

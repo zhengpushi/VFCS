@@ -12,14 +12,13 @@
   
   remark    :
   1. do not use matrix theory in CoqMatrix, a fresh implementation.
-  2. only support leibniz equality
 
  *)
 
 Require Qcanon.
-Import List ListNotations.
-From CoqMatrix Require Import HierarchySetoid.
-From CoqMatrix Require Import Complex.
+Require Import List. Import ListNotations.
+Require Import AlgebraStructure.
+Require Import Complex.
 
 
 

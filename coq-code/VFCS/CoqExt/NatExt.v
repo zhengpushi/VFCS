@@ -9,7 +9,7 @@
  *)
 
 Require Export BasicConfig.
-(* Require Export Init.Nat. *)
+Require Export Init.Nat.
 Require Export Arith.
 Require Export PeanoNat.
 Require Export Lia.

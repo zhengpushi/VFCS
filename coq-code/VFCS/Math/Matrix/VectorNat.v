@@ -56,6 +56,11 @@ Definition v2t_4 (v : vec 4) : T4 := v2t_4 v.
 (* Lemma t2v_v2t_id_2 : forall (v : vec 2), t2v_2 (v2t_2 v) == v. *)
 (* Lemma v2t_t2v_id_2 : forall (t : T2), v2t_2 (t2v_2 t) = t. *)
 
+(** *** make concrete vector *)
+Definition mk_vec2 a0 a1 : vec 2 := mk_vec2 0 a0 a1.
+Definition mk_vec3 a0 a1 a2 : vec 3 := mk_vec3 0 a0 a1 a2.
+Definition mk_vec4 a0 a1 a2 a3 : vec 4 := mk_vec4 0 a0 a1 a2 a3.
+
 (** *** vector mapping *)
 Definition vmap {n} f (v : vec n) : vec n := vmap v f.
 Definition vmap2 {n} f (v1 v2 : vec n) : vec n := vmap2 v1 v2 f.
