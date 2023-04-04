@@ -8,8 +8,8 @@
   date      : 2021.12
 *)
 
-Require Export QcExt.
 Require Export Matrix.
+Require Export QcExt.
 
 
 (* ======================================================================= *)
@@ -20,16 +20,20 @@ Open Scope Qc_scope.
 Open Scope mat_scope.
 
 (** general notations *)
-Notation dlist := (dlist Qc).
+Notation dlistA := (dlist Qc).
 
 (** *** matrix type and basic operation *)
 Definition mat (r c : nat) : Type := @mat Qc r c.
 
 Notation "m ! i ! j " := (mnth 0 m i j) : mat_scope.
 
+Lemma meq_iff_mnth : forall {r c} (m1 m2 : mat r c),
+    m1 == m2 <-> (forall i j : nat, i < r -> j < c -> m1!i!j = m2!i!j)%nat.
+Proof. apply meq_iff_mnth. Qed.
+
 (** *** convert between list and matrix *)
-Definition l2m (r c : nat) (dl : dlist) : mat r c := l2m 0 dl.
-Definition m2l {r c : nat} (m : mat r c) : dlist := m2l m.
+Definition l2m (r c : nat) (dl : dlistA) : mat r c := l2m 0 dl.
+Definition m2l {r c : nat} (m : mat r c) : dlistA := m2l m.
 
 Lemma m2l_length : forall {r c} (m : mat r c), length (m2l m) = r.
 Proof. intros. apply m2l_length. Qed.
@@ -37,14 +41,14 @@ Proof. intros. apply m2l_length. Qed.
 Lemma m2l_width : forall {r c} (m : mat r c), width (m2l m) c.
 Proof. intros. apply m2l_width. Qed.
 
-Lemma m2l_l2m_id : forall {r c} (dl : dlist),
+Lemma m2l_l2m_id : forall {r c} (dl : dlistA),
     length dl = r -> width dl c -> m2l (l2m r c dl) = dl.
 Proof. intros. apply m2l_l2m_id; auto. Qed.
 
 Lemma l2m_m2l_id : forall {r c} (m : mat r c), l2m r c (m2l m) == m.
 Proof. intros. apply l2m_m2l_id; auto. Qed.
 
-Lemma l2m_inj : forall {r c} (d1 d2 : dlist),
+Lemma l2m_inj : forall {r c} (d1 d2 : dlistA),
     length d1 = r -> width d1 c -> length d2 = r -> width d2 c -> 
     d1 <> d2 -> ~(l2m r c d1 == l2m r c d2).
 Proof. intros. apply l2m_inj; auto. Qed.
@@ -55,7 +59,7 @@ Proof. intros. apply l2m_surj; auto. Qed.
 Lemma m2l_inj : forall {r c} (m1 m2 : mat r c), ~ (m1 == m2) -> m2l m1 <> m2l m2.
 Proof. intros. apply (m2l_inj 0); auto. Qed.
 
-Lemma m2l_surj : forall {r c} (d : dlist), length d = r -> width d c -> 
+Lemma m2l_surj : forall {r c} (d : dlistA), length d = r -> width d c -> 
     (exists m : mat r c, m2l m = d).
 Proof. intros. apply (m2l_surj 0); auto. Qed.
 
@@ -92,10 +96,10 @@ Lemma mmap2_assoc : forall {r c} f (m1 m2 m3 : mat r c) (fassoc : Associative f)
 Proof. intros. apply mmap2_assoc; auto. Qed.
 
 (** *** zero matrix *)
-Definition mat0 r c : mat r c := mat0 0 r c.
+Definition mat0 {r c} : mat r c := mat0 0 r c.
 
 (** *** unit matrix *)
-Definition matI n : mat n n := matI 0 1 n.
+Definition matI {n} : mat n n := matI 0 1 n.
 
 (** *** matrix addition *)
 Definition madd {r c} (m1 m2 : mat r c) : mat r c := madd m1 m2 (Aadd:=Qcplus).
@@ -107,15 +111,18 @@ Proof. intros. apply madd_comm. Qed.
 Lemma madd_assoc : forall {r c} (m1 m2 m3 : mat r c), (m1 + m2) + m3 == m1 + (m2 + m3).
 Proof. intros. apply madd_assoc. Qed.
 
-Lemma madd_0_l : forall {r c} (m : mat r c), (mat0 r c) + m == m.
+Lemma madd_0_l : forall {r c} (m : mat r c), mat0 + m == m.
 Proof. intros. apply madd_0_l. Qed.
 
 (** *** matrix opposition *)
 Definition mopp {r c} (m : mat r c) : mat r c := mopp m (Aopp:=Qcopp).
 Notation "- m" := (mopp m) : mat_scope.
 
-Lemma madd_opp : forall {r c} (m : mat r c), m + (-m) == (mat0 r c).
-Proof. intros. apply madd_opp. Qed.
+Lemma madd_opp_l : forall {r c} (m : mat r c), (-m) + m == mat0.
+Proof. intros. apply madd_opp_l. Qed.
+
+Lemma madd_opp_r : forall {r c} (m : mat r c), m + (-m) == mat0.
+Proof. intros. apply madd_opp_r. Qed.
 
 Lemma mopp_opp : forall {r c} (m : mat r c), - - m == m.
 Proof. intros. apply mopp_opp. Qed.
@@ -131,18 +138,21 @@ Proof. intros. apply msub_comm. Qed.
 Lemma msub_assoc : forall {r c} (m1 m2 m3 : mat r c), (m1 - m2) - m3 == m1 - (m2 + m3).
 Proof. intros. apply msub_assoc. Qed.
 
-Lemma msub_0_l : forall {r c} (m : mat r c), (mat0 r c) - m == - m.
+Lemma msub_0_l : forall {r c} (m : mat r c), mat0 - m == - m.
 Proof. intros. apply msub_0_l. Qed.
 
-Lemma msub_0_r : forall {r c} (m : mat r c), m - (mat0 r c) == m.
+Lemma msub_0_r : forall {r c} (m : mat r c), m - mat0 == m.
 Proof. intros. apply msub_0_r. Qed.
 
-Lemma msub_self : forall {r c} (m : mat r c), m - m == (mat0 r c).
+Lemma msub_self : forall {r c} (m : mat r c), m - m == mat0.
 Proof. intros. apply msub_self. Qed.
 
 (** *** matrix scalar multiplication *)
 Definition mcmul {r c} a (m : mat r c) : mat r c := mcmul a m (Amul:=Qcmult).
 Infix " 'c*' " := mcmul : mat_scope.
+
+Global Instance mcmul_mor : forall r c,  Proper (eq ==> meq ==> meq) (@mcmul r c).
+Proof. intros. apply (mcmul_mor (A0:=0)). Qed.
 
 Lemma mcmul_assoc : forall {r c} a b (m : mat r c), a c* (b c* m) == (a * b) c* m.
 Proof. intros. apply mcmul_assoc. Qed.
@@ -161,7 +171,7 @@ Proof. intros. apply mcmul_add_distr_r. Qed.
 Lemma mcmul_1_l : forall {r c} (m : mat r c), 1 c* m == m.
 Proof. intros. apply mcmul_1_l. Qed.
 
-Lemma mcmul_0_l : forall {r c} (m : mat r c), 0 c* m == mat0 r c.
+Lemma mcmul_0_l : forall {r c} (m : mat r c), 0 c* m == mat0.
 Proof. intros. apply mcmul_0_l. Qed.
 
 (** *** matrix multiplication *)
@@ -181,16 +191,16 @@ Lemma mmul_assoc : forall {r c s t} (m1 : mat r c) (m2 : mat c s) (m3 : mat s t)
     (m1 * m2) * m3 == m1 * (m2 * m3).
 Proof. intros. apply mmul_assoc. Qed.
 
-Lemma mmul_0_l : forall {r c s} (m : mat c s), (mat0 r c) * m == mat0 r s.
+Lemma mmul_0_l : forall {r c s} (m : mat c s), (@mat0 r c) * m == mat0.
 Proof. intros. apply mmul_0_l. Qed.
 
-Lemma mmul_0_r : forall {r c s} (m : mat r c), m * (mat0 c s) == mat0 r s.
+Lemma mmul_0_r : forall {r c s} (m : mat r c), m * (@mat0 c s) == mat0.
 Proof. intros. apply mmul_0_r. Qed.
 
-Lemma mmul_I_l : forall {r c} (m : mat r c), (matI r) * m == m.
+Lemma mmul_I_l : forall {r c} (m : mat r c), matI * m == m.
 Proof. intros. apply mmul_I_l. Qed.
 
-Lemma mmul_I_r : forall {r c} (m : mat r c), m * (matI c) == m. 
+Lemma mmul_I_r : forall {r c} (m : mat r c), m * matI == m. 
 Proof. intros. apply mmul_I_r. Qed.
 
 

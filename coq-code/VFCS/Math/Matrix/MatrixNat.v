@@ -6,10 +6,10 @@
   purpose   : Matrix on nat.
   author    : ZhengPu Shi
   date      : 2021.12
-*)
+ *)
 
-Require Export NatExt.
 Require Export Matrix.
+Require Export NatExt.
 
 
 (* ======================================================================= *)
@@ -19,16 +19,20 @@ Open Scope nat_scope.
 Open Scope mat_scope.
 
 (** general notations *)
-Notation dlist := (dlist nat).
+Notation dlistA := (dlist nat).
 
 (** *** matrix type and basic operation *)
 Definition mat (r c : nat) : Type := @mat nat r c.
 
 Notation "m ! i ! j " := (mnth 0 m i j) : mat_scope.
 
+Lemma meq_iff_mnth : forall {r c} (m1 m2 : mat r c),
+    m1 == m2 <-> (forall i j : nat, i < r -> j < c -> m1!i!j = m2!i!j)%nat.
+Proof. apply meq_iff_mnth. Qed.
+
 (** *** convert between list and matrix *)
-Definition l2m (r c : nat) (dl : dlist) : mat r c := l2m 0 dl.
-Definition m2l {r c : nat} (m : mat r c) : dlist := m2l m.
+Definition l2m (r c : nat) (dl : dlistA) : mat r c := l2m 0 dl.
+Definition m2l {r c : nat} (m : mat r c) : dlistA := m2l m.
 
 Lemma m2l_length : forall {r c} (m : mat r c), length (m2l m) = r.
 Proof. intros. apply m2l_length. Qed.
@@ -36,14 +40,14 @@ Proof. intros. apply m2l_length. Qed.
 Lemma m2l_width : forall {r c} (m : mat r c), width (m2l m) c.
 Proof. intros. apply m2l_width. Qed.
 
-Lemma m2l_l2m_id : forall {r c} (dl : dlist),
+Lemma m2l_l2m_id : forall {r c} (dl : dlistA),
     length dl = r -> width dl c -> m2l (l2m r c dl) = dl.
 Proof. intros. apply m2l_l2m_id; auto. Qed.
 
 Lemma l2m_m2l_id : forall {r c} (m : mat r c), l2m r c (m2l m) == m.
 Proof. intros. apply l2m_m2l_id; auto. Qed.
 
-Lemma l2m_inj : forall {r c} (d1 d2 : dlist),
+Lemma l2m_inj : forall {r c} (d1 d2 : dlistA),
     length d1 = r -> width d1 c -> length d2 = r -> width d2 c -> 
     d1 <> d2 -> ~(l2m r c d1 == l2m r c d2).
 Proof. intros. apply l2m_inj; auto. Qed.
@@ -54,7 +58,7 @@ Proof. intros. apply l2m_surj; auto. Qed.
 Lemma m2l_inj : forall {r c} (m1 m2 : mat r c), ~ (m1 == m2) -> m2l m1 <> m2l m2.
 Proof. intros. apply (m2l_inj 0); auto. Qed.
 
-Lemma m2l_surj : forall {r c} (d : dlist), length d = r -> width d c -> 
+Lemma m2l_surj : forall {r c} (d : dlistA), length d = r -> width d c -> 
     (exists m : mat r c, m2l m = d).
 Proof. intros. apply (m2l_surj 0); auto. Qed.
 
@@ -98,7 +102,8 @@ Proof. intros. apply mmap2_assoc; auto. Qed.
 (* ======================================================================= *)
 (** ** Usage demo *)
 Section test.
-  Let m1 := l2m 2 2 [[1;2];[3;4]].
+  Let l1 := [[1;2;3];[4;5;6]].
+  Let m1 := l2m 2 2 l1.
   (* Compute m2l m1.       (* = [[1; 2]; [3; 4]] *) *)
   (* Compute m2l (mmap S m1).       (* = [[2; 3]; [4; 5]] *) *)
 

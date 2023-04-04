@@ -1,71 +1,84 @@
 (*
   Copyright 2022 ZhengPu Shi
-  This file is part of CoqMatrix. It is distributed under the MIT
+  This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
-  purpose   : Vector theory on nat.
+  purpose   : Vector on nat.
   author    : ZhengPu Shi
   date      : 2021.12
  *)
 
-Require Import VectorAll.
+Require Export Vector.
+Require Export NatExt.
 
 
-(* ######################################################################### *)
-(** * Export vector theory on concrete elements *)
+(* ======================================================================= *)
+(** ** Vector theory come from common implementations *)
 
-Module VectorAllNat.
-  Include BasicVectorTheory ElementTypeNat.
-  Open Scope nat_scope.
-  Open Scope mat_scope.
-  Open Scope vec_scope.
-End VectorAllNat.
+Open Scope nat_scope.
+Open Scope mat_scope.
+Open Scope vec_scope.
+
+(** general notations *)
+Notation listA := (list nat).
+
+(** *** vector type and basic operation *)
+Definition vec (n : nat) : Type := @vec nat n.
+
+Notation "v ! i" := (vnth 0 v i) : vec_scope.
+
+Lemma veq_iff_vnth : forall {n : nat} (v1 v2 : vec n),
+    (v1 == v2) <-> (forall i, i < n -> v1!i = v2!i)%nat.
+Proof. apply veq_iff_vnth. Qed.
   
-Module VectorNat_DL.
-  Include VectorAllNat.DL.
-  Open Scope nat_scope.
-  Open Scope mat_scope.
-  Open Scope vec_scope.
-End VectorNat_DL.
+(** *** convert between list and vector *)
+Definition l2v n (l : listA) : vec n := l2v 0 n l.
+Definition v2l {n} (v : vec n) : listA := v2l v.
 
-Module VectorNat_DP.
-  Include VectorAllNat.DP.
-  Open Scope nat_scope.
-  Open Scope mat_scope.
-  Open Scope vec_scope.
-End VectorNat_DP.
+Lemma v2l_length : forall {n} (v : vec n), length (v2l v) = n.
+Proof. intros. apply v2l_length. Qed.
 
-Module VectorNat_DR.
-  Include VectorAllNat.DR.
-  Open Scope nat_scope.
-  Open Scope mat_scope.
-  Open Scope vec_scope.
-End VectorNat_DR.
+Lemma v2l_l2v_id : forall {n} (l : listA), length l = n -> v2l (l2v n l) = l.
+Proof. intros. apply v2l_l2v_id; auto. Qed.
 
-Module VectorNat_NF.
-  Include VectorAllNat.NF.
-  Open Scope nat_scope.
-  Open Scope mat_scope.
-  Open Scope vec_scope.
-End VectorNat_NF.
+Lemma l2v_v2l_id : forall {n} (v : vec n), l2v n (v2l v) == v.
+Proof. intros. apply l2v_v2l_id; auto. Qed.
 
-Module VectorNat_SF.
-  Include VectorAllNat.SF.
-  Open Scope nat_scope.
-  Open Scope mat_scope.
-  Open Scope vec_scope.
-End VectorNat_SF.
+(** *** Convert between tuples and vector *)
+Definition t2v_2 (t : T2) : vec 2 := t2v_2 0 t.
+Definition t2v_3 (t : T3) : vec 3 := t2v_3 0 t.
+Definition t2v_4 (t : T4) : vec 4 := t2v_4 0 t.
+
+Definition v2t_2 (v : vec 2) : T2 := v2t_2 v.
+Definition v2t_3 (v : vec 3) : T3 := v2t_3 v.
+Definition v2t_4 (v : vec 4) : T4 := v2t_4 v.
+
+(* Lemma t2v_v2t_id_2 : forall (v : vec 2), t2v_2 (v2t_2 v) == v. *)
+(* Lemma v2t_t2v_id_2 : forall (t : T2), v2t_2 (t2v_2 t) = t. *)
+
+(** *** vector mapping *)
+Definition vmap {n} f (v : vec n) : vec n := vmap v f.
+Definition vmap2 {n} f (v1 v2 : vec n) : vec n := vmap2 v1 v2 f.
+
+(** *** vector folding *)
+(* Definition vfold : forall {B : Type} {n} (v : vec n) (f : A -> B) (b : B), B. *)
 
 
-(* ######################################################################### *)
-(** * Extended vector theory *)
-
-(** Set a default model *)
-Export VectorNat_SF.
+(* ======================================================================= *)
+(** ** Vector theory applied to this type *)
 
 
-(** General usage, no need to select low-level model *)
-Section Test.
-  (* Compute v2l (@l2v 3 [1;2;3]). *)
+(* ======================================================================= *)
+(** ** Usage demo *)
+Section test.
+  Let l1 := [1;2;3].
+  Let v1 := l2v 2 l1.
+  (* Compute v2l v1. *)
+  (* Compute v2l (@l2v 3 l1). *)
+
+  Variable a1 a2 a3 : nat.
+  Let v2 := t2v_3 (a1,a2,a3).
+  (* Compute v2l v2. *)
+  (* Compute v2l (vmap S v2). *)
   
-End Test.
+End test.

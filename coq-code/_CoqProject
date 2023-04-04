@@ -34,6 +34,10 @@ VFCS/Math/Matrix/MatrixZ.v
 VFCS/Math/Matrix/MatrixQc.v
 VFCS/Math/Matrix/MatrixR.v
 VFCS/Math/Matrix/Vector.v
+VFCS/Math/Matrix/VectorNat.v
+VFCS/Math/Matrix/VectorZ.v
+VFCS/Math/Matrix/VectorQc.v
+VFCS/Math/Matrix/VectorR.v
 VFCS/Math/DifferenceEquation/DifferenceEquation.v
 #VFCS/Math/Quaternion/Quaternion.v
 VFCS/Math/LaplaceTransform/LaplaceTransform.v

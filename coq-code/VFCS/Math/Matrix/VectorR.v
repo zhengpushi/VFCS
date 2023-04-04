@@ -1,137 +1,191 @@
 (*
   Copyright 2022 ZhengPu Shi
-  This file is part of CoqMatrix. It is distributed under the MIT
+  This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
-  purpose   : Vector theory on R.
+  purpose   : Vector on R.
   author    : ZhengPu Shi
   date      : 2021.12
 
-  reference resources:
+  reference :
   1. 《高等数学学习手册》徐小湛，p173
   2. Vector Calculus - Michael Corral
   3. https://github.com/coq/coq/blob/master/test-suite/success/Nsatz.v
-     Note that, there are concepts related to geometry including 
-          point, parallel, colinear.
+     Note that, there are concepts related to geometry including point, parallel, 
+     colinear.
  *)
 
-Require Import VectorAll.
-Require MatrixR.
-Export HierarchySetoid.
-Export ListNotations.
-Export TupleExt.
+Require Export Vector.
+Require Export MatrixR.
+Require Export RExt.
 
-
-
-(* ######################################################################### *)
-(** * Export vector theory on concrete elements *)
-
-Module VectorAllR.
-  Include DecidableFieldVectorTheory DecidableFieldElementTypeR.
-  Open Scope R_scope.
-  Open Scope mat_scope.
-  Open Scope vec_scope.
-End VectorAllR.
-  
-Module VectorR_DL.
-  Include VectorAllR.DL.
-  Open Scope R_scope.
-  Open Scope mat_scope.
-  Open Scope vec_scope.
-End VectorR_DL.
-
-Module VectorR_DP.
-  Include VectorAllR.DP.
-  Open Scope R_scope.
-  Open Scope mat_scope.
-  Open Scope vec_scope.
-End VectorR_DP.
-
-Module VectorR_DR.
-  Include VectorAllR.DR.
-  Open Scope R_scope.
-  Open Scope mat_scope.
-  Open Scope vec_scope.
-End VectorR_DR.
-
-Module VectorR_NF.
-  Include VectorAllR.NF.
-  Open Scope R_scope.
-  Open Scope mat_scope.
-  Open Scope vec_scope.
-End VectorR_NF.
-
-Module VectorR_SF.
-  Include VectorAllR.SF.
-  Open Scope R_scope.
-  Open Scope mat_scope.
-  Open Scope vec_scope.
-End VectorR_SF.
-
-
-(* ######################################################################### *)
-(** * Extended matrix theory *)
-
-(* Export MatrixR.MatrixR. *)
-
-(** Export matrix theory on R type *)
-Export MatrixR.
-(* Check det3. *) (* we can use det3 now *)
-
-(** Set a default model *)
-Export VectorR_SF.
 
 (* ======================================================================= *)
-(** ** Vector with any dimension *)
-Section DimAny.
+(** ** Vector theory come from common implementations *)
+
+Open Scope R_scope.
+Open Scope mat_scope.
+Open Scope vec_scope.
+
+(** general notations *)
+Notation listA := (list R).
+
+(** *** vector type and basic operation *)
+Definition vec (n : nat) : Type := @vec R n.
+
+Notation "v ! i" := (vnth 0 v i) : vec_scope.
+
+Lemma veq_iff_vnth : forall {n : nat} (v1 v2 : vec n),
+    (v1 == v2) <-> (forall i, i < n -> v1!i = v2!i)%nat.
+Proof. apply veq_iff_vnth. Qed.
+
+(** *** convert between list and vector *)
+Definition l2v n (l : listA) : vec n := l2v 0 n l.
+Definition v2l {n} (v : vec n) : listA := v2l v.
+
+Lemma v2l_length : forall {n} (v : vec n), length (v2l v) = n.
+Proof. intros. apply v2l_length. Qed.
+
+Lemma v2l_l2v_id : forall {n} (l : listA), length l = n -> v2l (l2v n l) = l.
+Proof. intros. apply v2l_l2v_id; auto. Qed.
+
+Lemma l2v_v2l_id : forall {n} (v : vec n), l2v n (v2l v) == v.
+Proof. intros. apply l2v_v2l_id; auto. Qed.
+
+(** *** Convert between tuples and vector *)
+Definition t2v_2 (t : T2) : vec 2 := t2v_2 0 t.
+Definition t2v_3 (t : T3) : vec 3 := t2v_3 0 t.
+Definition t2v_4 (t : T4) : vec 4 := t2v_4 0 t.
+
+Definition v2t_2 (v : vec 2) : T2 := v2t_2 v.
+Definition v2t_3 (v : vec 3) : T3 := v2t_3 v.
+Definition v2t_4 (v : vec 4) : T4 := v2t_4 v.
+
+(* Lemma t2v_v2t_id_2 : forall (v : vec 2), t2v_2 (v2t_2 v) == v. *)
+(* Lemma v2t_t2v_id_2 : forall (t : T2), v2t_2 (t2v_2 t) = t. *)
+
+(** *** vector mapping *)
+Definition vmap {n} f (v : vec n) : vec n := vmap v f.
+Definition vmap2 {n} f (v1 v2 : vec n) : vec n := vmap2 v1 v2 f.
+
+(** *** vector folding *)
+(* Definition vfold : forall {B : Type} {n} (v : vec n) (f : A -> B) (b : B), B. *)
+
+(** *** zero vector *)
+Definition vec0 {n} : vec n := vec0 (A0:=0).
+
+(** *** vector addition *)
+Definition vadd {n} (v1 v2 : vec n) : vec n := vadd v1 v2 (Aadd:=Rplus).
+Infix "+" := vadd : vec_scope.
+
+Lemma vadd_comm : forall {n} (v1 v2 : vec n), (v1 + v2) == (v2 + v1).
+Proof. intros. apply vadd_comm. Qed.
+
+Lemma vadd_assoc : forall {n} (v1 v2 v3 : vec n), (v1 + v2) + v3 == v1 + (v2 + v3).
+Proof. intros. apply vadd_assoc. Qed.
+
+Lemma vadd_0_l : forall {n} (v : vec n), vec0 + v == v.
+Proof. intros. apply vadd_0_l. Qed.
+
+Lemma vadd_0_r : forall {n} (v : vec n), v + vec0 == v.
+Proof. intros. apply vadd_0_r. Qed.
+
+(** *** vector opposition *)
+Definition vopp {n} (v : vec n) : vec n := vopp v (Aopp:=Ropp).
+Notation "- v" := (vopp v) : vec_scope.
+
+Lemma vadd_opp_l : forall {n} (v : vec n), (- v) + v == vec0.
+Proof. intros. apply vadd_opp_l. Qed.
+
+Lemma vadd_opp_r : forall {n} (v : vec n), v + (- v) == vec0.
+Proof. intros. apply vadd_opp_r. Qed.
+
+(** *** vector subtraction *)
+Definition vsub {n} (v1 v2 : vec n) : vec n := vsub v1 v2 (Aadd:=Rplus) (Aopp:=Ropp).
+Infix "-" := vsub : vec_scope.
+
+(** *** vector scalar multiplication *)
+Definition vcmul {n} a (v : vec n) : vec n := vcmul a v (Amul:=Rmult).
+Infix "c*" := vcmul : vec_scope.
+
+(** vcmul is a proper morphism *)
+Global Instance vcmul_mor : forall n, Proper (eq ==> meq ==> meq) (vcmul (n:=n)).
+Proof. intros. apply (vcmul_mor (A0:=0)). Qed.
+
+Lemma vcmul_assoc : forall {n} a b (v : vec n), a c* (b c* v) == (a * b) c* v.
+Proof. intros. apply vcmul_assoc. Qed.
+
+Lemma vcmul_perm : forall {n} a b (v : vec n), a c* (b c* v) == b c* (a c* v).
+Proof. intros. apply vcmul_perm. Qed.
+
+Lemma vcmul_add_distr_l : forall {n} a b (v : vec n), (a + b) c* v == (a c* v) + (b c* v).
+Proof. intros. apply vcmul_add_distr_l. Qed.
+
+Lemma vcmul_add_distr_r : forall {n} a (v1 v2 : vec n),
+    a c* (v1 + v2) == (a c* v1) + (a c* v2).
+Proof. intros. apply vcmul_add_distr_r. Qed.
+
+Lemma vcmul_0_l : forall {n} (v : vec n), 0 c* v == vec0.
+Proof. intros. apply vcmul_0_l. Qed.
+
+Lemma vcmul_1_l : forall {n} (v : vec n), 1 c* v == v.
+Proof. intros. apply vcmul_1_l. Qed.
+
+(** *** vector dot product *)
+Definition vdot {n} (v1 v2 : vec n) := vdot v1 v2 (Aadd:=Rplus)(A0:=0)(Amul:=Rmult).
+
+
+(* ======================================================================= *)
+(** ** Vector theory applied to this type *)
+
+(** *** vector of any dimension *)
+Section vec_any_dim.
+
+  (** A vector is a zero vector. *)
+  Definition vzero {n} (v : vec n) : Prop := vzero v (A0:=0).
+
+  (** A vector is a non-zero vector. *)
+  Definition vnonzero {n} (v : vec n) : Prop := vnonzero v (A0:=0).
+
+  (** Any zero vector is vec0 *)
+  Lemma vzero_imply_vec0 : forall {n} (v : vec n), vzero v -> v == vec0.
+  Proof. intros. auto. Qed.
 
   (** Length (magnitude) of a vector *)
   Definition vlen {n} (v : vec n) : R := sqrt (vdot v v).
 
-  (** Length of a vector u is one, iff the dot product of u and u is one *)
-  Lemma vlen_eq1_iff_vdot_eq1 : forall n (u : vec n), (vlen u == A1 <-> vdot u u == A1)%A.
-  Proof.
-    intros. unfold vlen. remember (vdot u u) as r.
-    split; intros; hnf in *.
-    ra. rewrite H. ra.
-  Qed.
+  (** Length of a vector u is 1, iff the dot product of u and u is 1 *)
+  Lemma vlen_eq1_iff_vdot_eq1 : forall n (u : vec n), vlen u = 1 <-> vdot u u = 1.
+  Proof. intros. unfold vlen. split; intros; hnf in *. ra. rewrite H. ra. Qed.
 
   (** A unit vector u is a vector whose length equals one.
       Here, we use the square of length instead of length directly,
       but this is reasonable.
    *)
-  Definition vunit {n} (u : vec n) : Prop := (vdot u u == A1)%A.
+  Definition vunit {n} (u : vec n) : Prop := vdot u u = 1.
 
   (** Verify the definition is reasonable *)
-  Lemma vunit_ok : forall {n} (u : vec n), vunit u <-> (vlen u == A1)%A.
-  Proof.
-    intros. split; intros; apply vlen_eq1_iff_vdot_eq1; auto.
-  Qed.
+  Lemma vunit_ok : forall {n} (u : vec n), vunit u <-> vlen u = 1.
+  Proof. intros. split; intros; apply vlen_eq1_iff_vdot_eq1; auto. Qed.
 
   (** Normalization of a non-zero vector v.
       That is, get a unit vector in the same directin as v. *)
   Definition vnormalize {n} (v : vec n) : vec n :=
-    let k := 1 / (vlen v) in
-    vcmul k v.
+    let k := 1 / (vlen v) in vcmul k v.
   
-  (** Every vector of length zero all are zero-vector *)
+  (** Every vector of length zero all are zero-vector, i.e., it is unique *)
   Lemma vec_len0_is_vec0 : forall v : vec 0, v == vec0.
-  Proof. lma. Qed.
+  Proof. lva. Qed.
   
   (** If k times a non-zero vector equal to zero vector, then k must be not zero *)
   Lemma vcmul_vnonzero_neq0_imply_neq0 : forall {n} (v : vec n) k,
-      vnonzero v -> ~(k c* v == vec0) -> k <> A0.
-  Proof.
-    intros. intro. subst.
-    rewrite vcmul_0_l in H0. destruct H0. easy.
-  Qed.
+      vnonzero v -> ~(k c* v == vec0) -> k <> 0.
+  Proof. intros. intro. subst. rewrite vcmul_0_l in H0. destruct H0. easy. Qed.
 
   (** Two non-zero vectors has k-times relation, then k is not zero *)
   Lemma vec_eq_vcmul_imply_coef_neq0 : forall {n} (v1 v2 : vec n) k,
-      vnonzero v1 -> vnonzero v2 -> v1 == k c* v2 -> k <> A0.
-  Proof.
-    intros. intro. subst. rewrite vcmul_0_l in H1. destruct H. easy.
-  Qed.
+      vnonzero v1 -> vnonzero v2 -> v1 == k c* v2 -> k <> 0.
+  Proof. intros. intro. subst. rewrite vcmul_0_l in H1. easy. Qed.
   
   (** If k times a non-zero vector equal to zero, then k must be zero *)
   (*
@@ -148,7 +202,7 @@ Section DimAny.
     destruct (decidable k 0); auto.
     (* idea: from "~(∀ij(v i j = 0)" to "∃ij(v i j≠0)" *)
     (* Tips, a good practice of logic proposition *)
-    assert (exists (ij:nat*nat), let (i,j) := ij in (i<n)%nat /\ (j<1)%nat /\ ~(v i j == A0)%A).
+    assert (exists (ij:nat*nat), let (i,j) := ij in (i<n)%nat /\ (j<1)%nat /\ (v i j <> 0)).
     { clear k H0 n0.
       apply not_all_not_ex. intro.
       destruct H. intros. specialize (H0 (i,0)%nat). simpl in H0.
@@ -162,7 +216,7 @@ Section DimAny.
   Qed.
 
   (** If use k1 and k2 to left multiplicate a non-zero vector get same result, 
-        then k1 and k2 must be equal. *)
+      then k1 and k2 must be equal. *)
   Lemma vcmul_vnonzero_eq_iff_unique_k : forall {n} (v : vec n) k1 k2, 
       vnonzero v -> k1 c* v == k2 c* v -> k1 = k2.
   Proof.
@@ -188,7 +242,6 @@ Section DimAny.
     (* k * x = x /\  k <> 1 /\ x <> 0 -> x = 0 *)
     apply Rmult_eq_self_imply_0_or_k1 in H0. destruct H0; try easy.
   Qed.
-
   
   (** Two vectors are parallel (or said colinear) *)
   (* Note:
@@ -226,11 +279,11 @@ Section DimAny.
       + right. right. exists x. auto.
       + destruct (decidable v1 vec0); auto.
         destruct (decidable v2 (vec0)); auto.
-        right. right. exists (A1/x)%A. rewrite H.
+        right. right. exists (1/x). rewrite H.
         lma. apply vec_eq_vcmul_imply_coef_neq0 in H; auto.
     - destruct H as [H1 | [H2 | H3]].
-      + exists A0. left. rewrite H1. rewrite vcmul_0_l. easy.
-      + exists A0. right. rewrite H2. rewrite vcmul_0_l. easy.
+      + exists 0. left. rewrite H1. rewrite vcmul_0_l. easy.
+      + exists 0. right. rewrite H2. rewrite vcmul_0_l. easy.
       + destruct H3. exists x. left; auto.
   Qed.
 
@@ -240,10 +293,7 @@ Section DimAny.
 
   Notation "v0 // v1" := (vparallel (v0) (v1)) (at level 70) : vec_scope.
 
-
-  (** * Properties of vector parallel *)
-
-  (** This is an equivalence relation *)
+  (** vparallel is an equivalence relation *)
 
   Lemma vparallel_refl : forall {n} (v : vec n), v // v.
   Proof.
@@ -254,111 +304,94 @@ Section DimAny.
   Lemma vparallel_sym : forall {n} (v0 v1 : vec n), v0 // v1 -> v1 // v0.
   Proof.
     intros. unfold vparallel,vparallel_ver2 in *.
-    assert ({vzero v0} + {vnonzero v0}). apply meq_dec.
-    assert ({vzero v1} + {vnonzero v1}). apply meq_dec.
-    destruct H0.
-    - right; left; auto.
-    - destruct H1.
-      + left; auto.
-      + destruct H; auto. destruct H; auto. destruct H.
-        right; right. exists (A1/x)%A. rewrite H.
-        lma. apply vec_eq_vcmul_imply_coef_neq0 in H; auto.
+    destruct (decidable v0 vec0); auto.
+    destruct (decidable v1 vec0); auto.
+    destruct H; auto. destruct H; auto. destruct H.
+    right. right. exists (1/x). rewrite H.
+    lma. apply vec_eq_vcmul_imply_coef_neq0 in H; auto.
   Qed.
 
-  (* Additionally, v1 need to be a non-zero vector.
-       Because if v1 is zero vector, then v0//v1, v1//v2, but v0 and v2 needn't
-       to be parallel. *)
+  (* Additionally, v1 need to be a non-zero vector. Because if v1 is zero vector, 
+     then v0//v1, v1//v2, but v0 and v2 needn't to be parallel. *)
   Lemma vparallel_trans : forall {n} (v0 v1 v2 : vec n), 
       vnonzero v1 -> v0 // v1 -> v1 // v2 -> v0 // v2.
   Proof.
     intros. unfold vparallel, vparallel_ver2 in *.
-    assert ({vzero v0} + {vnonzero v0}). apply meq_dec.
-    assert ({vzero v1} + {vnonzero v1}). apply meq_dec.
-    assert ({vzero v2} + {vnonzero v2}). apply meq_dec.
-    destruct H2.
-    - left; auto.
-    - destruct H4.
-      + right; left; auto.
-      + right; right.
-        destruct H3.
-        * destruct H0; try contradiction.
-        * destruct H0,H1; try contradiction.
-          destruct H0,H1; try contradiction.
-          destruct H0,H1. unfold vcmul. 
-          exists (x*x0)%A. rewrite H0,H1. apply mcmul_assoc.
+    destruct (decidable v0 vec0), (decidable v1 vec0), (decidable v2 vec0);
+      auto; try easy.
+    destruct H0,H1; auto; try easy.
+    destruct H0,H1; auto; try easy.
+    destruct H0,H1. right. right.
+    exists (x*x0)%R. rewrite H0,H1. apply mcmul_assoc.
   Qed.
 
   (** If two non-zero vectors are parallel, then there is a unique k such that
-        they are k times relation *)
+      they are k times relation *)
   Lemma vparallel_vnonezero_imply_unique_k : forall {n} (v1 v2 : vec n),
       vnonzero v1 -> vnonzero v2 -> v1 // v2 -> (exists ! k, v1 == k c* v2).
   Proof.
     intros.
-    destruct H1; try contradiction.
-    destruct H1; try contradiction.
-    destruct H1. exists x. unfold unique. split; auto.
+    destruct H1; try easy. destruct H1; try easy. destruct H1.
+    exists x. split; auto.
     intros. apply vcmul_vnonzero_eq_iff_unique_k with (v:=v2); auto.
     rewrite <- H1,H2. easy.
   Qed.
 
   (** Given a non-zero vector v1 and another vector v2,
-        v1 is parallel to v2, iff, there is a unique k such that v2 is k times v1.
-        The left-to-right direction is a corollary of last lemma *)
+      v1 is parallel to v2, iff, there is a unique k such that v2 is k times v1. *)
   Lemma vparallel_iff1 : forall {n} (v1 v2 : vec n) (H : vnonzero v1),
       (v1 // v2) <-> (exists ! k, v2 == k c* v1).
   Proof.
     intros. split; intros.
     - destruct (decidable v2 vec0).
-      + destruct H0; try easy. clear H0.
-        exists 0. split.
+      + exists 0. split.
         * rewrite vcmul_0_l. auto.
-        * intros.
-          rewrite v in H0.
-          apply symmetry in H0. apply symmetry.
-          apply vcmul_nonzero_eq_zero_imply_k0 in H0; auto.
-      + apply vparallel_sym in H0.
-        apply vparallel_vnonezero_imply_unique_k in H0; auto.
-    - destruct H0. destruct H0. apply vparallel_sym.
-      right. right. exists x. auto.
+        * intros. rewrite m in H1.
+          apply symmetry in H1. apply vcmul_nonzero_eq_zero_imply_k0 in H1; auto.
+      + apply vparallel_vnonezero_imply_unique_k; auto. apply vparallel_sym; auto.
+    - destruct H0. destruct H0. apply vparallel_sym. right. right. exists x. auto.
   Qed.
   
-End DimAny.
+End vec_any_dim.
 
 
-(* ======================================================================= *)
-(** ** Vector of 3-dim *)
-Section Dim3.
+(** *** Vector of 3-dim *)
+Section vec_3d.
 
   (** skew symmetry matrix *)
   Definition skew_sym_mat_of_v3 (v : vec 3) : smat 3 :=
-    let '(x,y,z) := v2t_3 v in 
+    let '(x,y,z) := v2t_3 v in
     (mk_mat_3_3
-      A0    (-z)  y
-      z     A0    (-x)
-      (-y)  x     A0)%A.
+       0    (-z)  y
+       z     0    (-x)
+       (-y)  x     0)%R.
 
   (** dot product of two 3-dim vectors *)
-  Definition vdot3 (a b : vec 3) : A :=
+  Definition vdot3 (a b : vec 3) :=
     let '(a1,a2,a3) := v2t_3 a in 
     let '(b1,b2,b3) := v2t_3 b in
-    (a1*b1 + a2*b2 + a3*b3)%A.
+    (a1*b1 + a2*b2 + a3*b3)%R.
+
+  Lemma vdot3_eq_vdot : forall v1 v2 : vec 3, vdot3 v1 v2 = vdot v1 v2.
+  Proof. intros. cbv. ring. Qed.
 
   (** cross product (vector product) of two 3-dim vectors *)
   Definition vcross3 (v1 v2 : vec 3) : vec 3 := ((skew_sym_mat_of_v3 v1) * v2)%mat.
 
+  Definition det3 := det3 (Aadd:=Rplus)(Aopp:=Ropp)(Amul:=Rmult).
+  
   (** If a matrix is SO3? *)
   (* SO(n): special orthogonal group *)
   Definition so3 (m : smat 3) : Prop := 
-    let so3_mul_unit : Prop := ((m \T) * m == mat1 3)%mat in
-    let so3_det : Prop := (det3 m) = A1 in
+    let so3_mul_unit : Prop := ((m \T) * m == matI)%mat in
+    let so3_det : Prop := (det3 m) = 1 in
     so3_mul_unit /\ so3_det.
   
   (** Angle between two vectors *)
-  Definition vangle3 (v0 v1 : vec 3) : R := 
-    acos (scalar_of_mat (v0\T * v1)%mat).
+  Definition vangle3 (v0 v1 : vec 3) : R := acos (m2t_1_1 (v0\T * v1)%mat).
 
   (** The angle between (1,0,0) and (1,1,0) is 45 degree, i.e., π/4 *)
-  Example vangle3_ex1 : vangle3 (l2v [1;0;0]) (l2v [1;1;0]) = PI/4.
+  Example vangle3_ex1 : vangle3 (l2v 3 [1;0;0]) (l2v _ [1;1;0]) = PI/4.
   Proof.
     compute.
     (*     Search acos. *)
@@ -374,20 +407,25 @@ Section Dim3.
     v0 <> v1 /\ v0 <> (-v1)%M.
  *)
   
-End Dim3.
+End vec_3d.
 
 
-(** ** Test *)
-Section Test.
-  Open Scope R.
+(* ======================================================================= *)
+(** ** Usage demo *)
+Section test.
 
-  (* Compute v2l (@l2v 3 [1;2;3]). *)
-
-  Notation "0" := R0.
-  Notation "1" := R1.
-  
-  Let v1 := @l2v 5 (map nat2R (seq 0 5)).
+  Let l1 := [1;2;3].
+  Let v1 := l2v 2 l1.
   (* Compute v2l v1. *)
+  (* Compute v2l (@l2v 3 l1). *)
+
+  Variable a1 a2 a3 : R.
+  Let v2 := t2v_3 (a1,a2,a3).
+  (* Compute v2l v2. *)
+  (* Compute v2l (vmap Ropp v2). *)
+
+  Let v3 := @l2v 3 (map nat2R (seq 0 5)).
+  (* Compute v2l v3. *)
   (* Compute vdot v1 v1. *)
 
-End Test.
+End test.

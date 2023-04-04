@@ -109,7 +109,8 @@ Section mnth.
     intros. unfold mnth.
     destruct (Nat.ltb_spec0 i r), (Nat.ltb_spec0 j c); simpl; auto; easy.
   Qed.
-  
+
+  (** meq, iff mnth. Note: left side is unsafe, right side is safe *)
   Lemma meq_iff_mnth : forall {r c : nat} (m1 m2 : mat r c),
       m1 == m2 <-> (forall i j, i < r -> j < c -> m1!i!j = m2!i!j).
   Proof.
@@ -657,8 +658,12 @@ Section malg.
   Lemma msub_0_r : forall {r c} (m : mat r c), m - (mat0 A0 r c) == m.
   Proof. lma. rewrite (group_inv_id (G:=AG)). monoid_simp. Qed.
 
+  (** (-m) + m = mat0 *)
+  Lemma madd_opp_l : forall r c (m : mat r c), (-m) + m == mat0 A0 r c.
+  Proof. lma. group_simp. Qed.
+
   (** m + (-m) = mat0 *)
-  Lemma madd_opp : forall r c (m : mat r c), m + (-m) == mat0 A0 r c.
+  Lemma madd_opp_r : forall r c (m : mat r c), m + (-m) == mat0 A0 r c.
   Proof. lma. group_simp. Qed.
 
   (** m - m = mat0 *)
@@ -678,15 +683,13 @@ Section malg.
   Definition mcmul {r c} (a : A) (m : mat r c) : mat r c :=
     mk_mat (fun i j => (a * m$i$j)).
   Infix "c*" := mcmul : mat_scope.
-  
-  (* (** Right scalar multiplication of matrix *) *)
-  (* Definition mmulc {r c} (m : mat r c) (a : A) : mat r c := *)
-  (*   mk_mat (fun i j => (m$i$j * a)). *)
-  (* Infix "*c" := mmulc : mat_scope. *)
 
-  (* (** m *c a = a c* m *) *)
-  (* Lemma mmulc_eq_mcmul : forall {r c} (a : A) (m : mat r c), m *c a == a c* m. *)
-  (* Proof. lma. Qed. *)
+  (** mcmul is a proper morphism *)
+  Global Instance mcmul_mor : forall r c, Proper (eq ==> meq ==> meq) (mcmul (r:=r)(c:=c)).
+  Proof.
+    simp_proper. lma. rewrite (meq_iff_mnth A0) in H0.
+    specialize (H0 i j Hi Hj). solve_mnth. rewrite H,H0. easy.
+  Qed.
 
   (** 0 c* m = mat0 *)
   Lemma mcmul_0_l : forall {r c} (m : mat r c), A0 c* m == mat0 A0 r c.
@@ -1211,6 +1214,7 @@ Section test.
   Import QArith Qcanon.
   Open Scope Q.
   Open Scope Qc_scope.
+  Open Scope mat_scope.
 
   Coercion Q2Qc : Q >-> Qc.
 
@@ -1220,5 +1224,21 @@ Section test.
   Variable a11 a12 a13 a21 a22 a23 a31 a32 a33 : Qc.
   Definition m2 := mk_mat_3_3 (A0:=0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
   (* Compute mrow 1 m2. *)
+
+  (** *** rewrite support test *)
+  Notation mcmul := (mcmul (Amul:=Qcmult)).
+  Infix "c*" := mcmul : mat_scope.
+
+  (* We fined that, xxx_mor which proved in matrix cannot be used here. *)
+  Goal forall r c (m1 m2 : mat r c) (x : Qc), m1 == m2 -> x c* m1 == x c* m2.
+  Proof. intros. Fail rewrite H. Abort.
+  
+  (* we need to write declaration on Qc once again. *)
+  Instance mcmul_mor_Qc_demo : forall r c,  Proper (eq ==> meq ==> (@meq _ r c)) mcmul.
+  Proof. intros. apply (mcmul_mor (A0:=0)). Qed.
+      
+  (* Now, the rewrite is allowed. *)
+  Goal forall r c (m1 m2 : mat r c) (x : Qc), m1 == m2 -> x c* m1 == x c* m2.
+  Proof. intros. rewrite H. easy. Qed.
 
 End test.

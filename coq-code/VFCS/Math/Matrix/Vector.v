@@ -66,7 +66,7 @@ Section vec_basic.
   Lemma vnth_eq_vnth_raw : forall {n : nat} (v : vec n), (forall i, i < n -> v!i = v$i).
   Proof. intros. unfold vnth. apply mnth_eq_mnth_raw; auto. Qed.
 
-  (** veq, iff vnth *)
+  (** veq, iff vnth. Note: left side is unsafe, right side is safe *)
   Lemma veq_iff_vnth : forall {n : nat} (v1 v2 : vec n),
       v1 == v2 <-> (forall i, i < n -> v1!i = v2!i).
   Proof.
@@ -218,9 +218,13 @@ Section vec_ring.
   Definition vopp {n} (v : vec n) : vec n := mopp (Aopp:=Aopp) v.
   Notation "- v" := (vopp v) : vec_scope.
 
+  (** (- v) + v = vec0 *)
+  Lemma vadd_opp_l : forall {n} (v : vec n), (- v) + v == vec0.
+  Proof. intros. apply madd_opp_l. Qed.
+
   (** v + (- v) = vec0 *)
-  Lemma vadd_opp : forall {n} (v : vec n), v + (- v) == vec0.
-  Proof. intros. apply madd_opp. Qed.
+  Lemma vadd_opp_r : forall {n} (v : vec n), v + (- v) == vec0.
+  Proof. intros. apply madd_opp_r. Qed.
   
 
   (** *** Vector subtraction *)
@@ -239,6 +243,10 @@ Section vec_ring.
 
   Definition vcmul {n} a (v : vec n) : vec n := mcmul (Amul:=Amul) a v.
   Infix "c*" := vcmul : vec_scope.
+
+  (** vcmul is a proper morphism *)
+  Global Instance vcmul_mor : forall n, Proper (eq ==> meq ==> meq) (vcmul (n:=n)).
+  Proof. intros. apply (mcmul_mor (A0:=A0)). Qed.
 
   (** a c* (b c* v) = (a * b) c* v *)
   Lemma vcmul_assoc : forall {n} a b (v : vec n), a c* (b c* v) == (a * b) c* v.
@@ -349,6 +357,11 @@ End test.
 (** ** Vector theory on element of field type *)
 
 Section vec_field.
+
+  Context `{F : Field}.
+  Infix "*" := (fun x y => Amul x y) : A_scope.
+  Infix "/" := (fun x y => Amul x (Ainv y)) : A_scope.
+  Infix "c*" := (vcmul (Amul:=Amul)) : vec_scope.
 
   (* Lemma vec_eq_vcmul_imply_coef_neq0 : forall {n} (v1 v2 : V n) k, *)
   (*   vnonzero v1 -> vnonzero v2 -> v1 = k c* v2 -> k <> X0. *)
