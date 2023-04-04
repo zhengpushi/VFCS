@@ -1352,6 +1352,15 @@ Proof.
   intros. unfold Rleb. destruct (Rle_lt_dec y x); constructor; lra.
 Qed.
 
+(** These theorems are automatic used. *)
+Global Hint Resolve
+  Reqb_reflect
+  Rltb_reflect
+  Rleb_reflect
+  Rgtb_reflect
+  Rgeb_reflect
+  : bdestruct.
+
 
 (* ######################################################################### *)
 (** * Approximate of two real numbers *)

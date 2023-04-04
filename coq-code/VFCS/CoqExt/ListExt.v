@@ -27,7 +27,6 @@
 
 Require Export AlgebraStructure.
 Require Export NatExt.
-(* Require Export SetoidList. *)
 Require Export List. Export ListNotations.
 
 Open Scope nat_scope.
@@ -510,7 +509,7 @@ Section fold.
 
   (** fold_left of list nat and add operation with different initial value *)
   Lemma fold_left_nat_initial : forall (l : list nat) n,
-      fold_left add l n = fold_left add l 0 + n.
+      fold_left Nat.add l n = fold_left Nat.add l 0 + n.
   Proof.
     induction l; intros; auto.
     simpl. rewrite IHl. rewrite (IHl a). lia.
@@ -525,7 +524,7 @@ Section concat.
 
   (** Length of concat operation *)
   Lemma concat_length : forall A (l : dlist A),
-      length (concat l) = fold_left add (map (@length A) l) 0.
+      length (concat l) = fold_left Nat.add (map (@length A) l) 0.
   Proof.
     intros A l.
     induction l; simpl; auto.

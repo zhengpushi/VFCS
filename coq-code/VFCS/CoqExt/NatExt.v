@@ -8,14 +8,11 @@
   date      : 2021.05
  *)
 
-Require Export Bool.Bool.
-Require Export Init.Nat.
+Require Export BasicConfig.
+(* Require Export Init.Nat. *)
 Require Export Arith.
 Require Export PeanoNat.
 Require Export Lia.
-
-(* From Coq Require Export Lra. *)
-(* From Coq Require Export Setoid. (* R ==> R', Morphisms.respectful R R' *) *)
 
 
 (* ######################################################################### *)
@@ -133,8 +130,6 @@ Ltac is_nat_equality :=
 
 (* ######################################################################### *)
 (** * Useful bdestruct tactic with the help of reflection *)
-(** Use this tactic, the proposition of natural number comparision and the boolean
-    calculation of natural number comparison are connected. *)
 
 (** There havn't GT and GE in standard library. *)
 
@@ -164,21 +159,10 @@ Qed.
 (** These theorems are automatic used. *)
 Global Hint Resolve ltb_reflect leb_reflect eqb_reflect : bdestruct.
 
-(** bool-destruct，useful for boolean inequality of natural number *)
-Ltac bdestruct X :=
-  let H := fresh in let e := fresh "e" in
-   evar (e: Prop);
-   assert (H: reflect e X); subst e;
-    [eauto with bdestruct
-    | destruct H as [H|H];
-       [ | try first [apply not_lt in H | apply not_le in H]]].
-
 (** This tactic makes quick, easy-to-read work of our running example. *)
-Example reflect_example2: forall a,
-    (if a <? 5 then a else 2) < 6.
+Example reflect_example2: forall a, (if a <? 5 then a else 2) < 6.
 Proof.
-  intros.
-  bdestruct (a <? 5);  (* instead of: [destruct (ltb_reflect a 5)]. *)
+  intros. bdestruct (a <? 5);  (* instead of: [destruct (ltb_reflect a 5)]. *)
   lia.
 Qed.
 

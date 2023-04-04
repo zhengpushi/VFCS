@@ -880,8 +880,8 @@ Section det.
   Definition submat {n} (m : smat (S n)) (r c : nat) : smat n :=
     mk_mat
       (fun i j =>
-         let i' := (if ltb i r then i else S i) in
-         let j' := (if ltb j c then j else S j) in
+         let i' := (if i <? r then i else S i) in
+         let j' := (if j <? c then j else S j) in
          m $ i' $ j').
   
   (* Determinant of a square matrix (original definition) *)

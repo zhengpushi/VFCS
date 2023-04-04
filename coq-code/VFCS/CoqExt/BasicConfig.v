@@ -79,18 +79,45 @@ Reserved Notation "v $ i"      (at level 20, i at next level).
 
 Global Ltac gd k := generalize dependent k.
 
-(* repeat split *)
+(** repeat split *)
 Ltac ssplit := 
   repeat 
   match goal with
   | |- _ /\ _ => split
   end.
 
+(** inversion and subst *)
 Ltac inv H :=
   inversion H; clear H; subst.
 
+(** first step of the proof of Proper *)
 Ltac simp_proper :=
   unfold Proper; unfold respectful.
+
+(** Use this tactic, the proposition of a comparision relation and the sumbool 
+    comparison are connected. 
+    We must first register the desired reflection to "bdestruct" database to
+    take effect. *)
+
+(* (* original version, which has additional support for natural number *) *)
+(* Ltac bdestruct X := *)
+(*   let H := fresh in let e := fresh "e" in *)
+(*    evar (e: Prop); *)
+(*    assert (H: reflect e X); subst e; *)
+(*     [eauto with bdestruct *)
+(*     | destruct H as [H|H]; *)
+(*       [ | try first [apply not_lt in H | apply not_le in H]]]. *)
+
+(* modified version, support any data type which registered a reflection relation *)
+Ltac bdestruct X :=
+  let H := fresh in
+  let e := fresh "e" in
+  evar (e: Prop);
+  assert (H: reflect e X); subst e;
+  [eauto with bdestruct
+  | destruct H as [H|H]].
+(* [ | try first [apply not_lt in H | apply not_le in H]]]. *)
+
 
 
 (* ######################################################################### *)

@@ -217,6 +217,7 @@ Proof. intros. apply mmul_I_r. Qed.
 
 (* ======================================================================= *)
 (** ** Usage demo *)
+
 Section test.
   Let l1 := [[1;2];[3;4]].
   Let m1 := l2m 2 2 l1.
@@ -235,6 +236,23 @@ Section test.
   Proof. intros. apply madd_comm. Qed.
 
 End test.
+
+Section Example4CoordinateSystem.
+  Variable ψ θ φ: R.
+  Let Rx := mk_mat_3_3 1 0 0 0 (cos φ) (sin φ) 0 (-sin φ) (cos φ).
+  Let Ry := mk_mat_3_3 (cos θ) 0 (-sin θ) 0 1 0 (sin θ) 0 (cos θ).
+  Let Rz := mk_mat_3_3 (cos ψ) (sin ψ) 0 (-sin ψ) (cos ψ) 0 0 0 1.
+  Let Rbe := mk_mat_3_3
+    (cos θ * cos ψ) (cos ψ * sin θ * sin φ - sin ψ * cos φ)
+    (cos ψ * sin θ * cos φ + sin φ * sin ψ) (cos θ * sin ψ)
+    (sin ψ * sin θ * sin φ + cos ψ * cos φ)
+    (sin ψ * sin θ * cos φ - cos ψ * sin φ)
+    (-sin θ) (sin φ * cos θ) (cos φ * cos θ).
+  Lemma Rbe_ok : (Rbe == Rz\T * Ry\T * Rx\T)%mat.
+  Proof. lma. Qed.
+    
+End Example4CoordinateSystem.
+
 
 (** example for symbol matrix *)
 Module Exercise_Ch1_Symbol.
