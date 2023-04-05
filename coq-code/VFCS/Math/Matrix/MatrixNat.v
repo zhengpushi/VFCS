@@ -19,20 +19,22 @@ Open Scope nat_scope.
 Open Scope mat_scope.
 
 (** general notations *)
-Notation dlistA := (dlist nat).
+Notation A := nat.
+Notation A0 := 0.
+Notation Aadd := Nat.add.
 
 (** *** matrix type and basic operation *)
-Definition mat (r c : nat) : Type := @mat nat r c.
+Definition mat (r c : nat) : Type := @mat A r c.
 
-Notation "m ! i ! j " := (mnth 0 m i j) : mat_scope.
+Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope.
 
 Lemma meq_iff_mnth : forall {r c} (m1 m2 : mat r c),
     m1 == m2 <-> (forall i j : nat, i < r -> j < c -> m1!i!j = m2!i!j)%nat.
 Proof. apply meq_iff_mnth. Qed.
 
 (** *** convert between list and matrix *)
-Definition l2m (r c : nat) (dl : dlistA) : mat r c := l2m 0 dl.
-Definition m2l {r c : nat} (m : mat r c) : dlistA := m2l m.
+Definition l2m (r c : nat) (dl : dlist A) : mat r c := l2m A0 dl.
+Definition m2l {r c : nat} (m : mat r c) : dlist A := m2l m.
 
 Lemma m2l_length : forall {r c} (m : mat r c), length (m2l m) = r.
 Proof. intros. apply m2l_length. Qed.
@@ -40,14 +42,14 @@ Proof. intros. apply m2l_length. Qed.
 Lemma m2l_width : forall {r c} (m : mat r c), width (m2l m) c.
 Proof. intros. apply m2l_width. Qed.
 
-Lemma m2l_l2m_id : forall {r c} (dl : dlistA),
+Lemma m2l_l2m_id : forall {r c} (dl : dlist A),
     length dl = r -> width dl c -> m2l (l2m r c dl) = dl.
 Proof. intros. apply m2l_l2m_id; auto. Qed.
 
 Lemma l2m_m2l_id : forall {r c} (m : mat r c), l2m r c (m2l m) == m.
 Proof. intros. apply l2m_m2l_id; auto. Qed.
 
-Lemma l2m_inj : forall {r c} (d1 d2 : dlistA),
+Lemma l2m_inj : forall {r c} (d1 d2 : dlist A),
     length d1 = r -> width d1 c -> length d2 = r -> width d2 c -> 
     d1 <> d2 -> ~(l2m r c d1 == l2m r c d2).
 Proof. intros. apply l2m_inj; auto. Qed.
@@ -56,24 +58,24 @@ Lemma l2m_surj : forall {r c} (m : mat r c), (exists d, l2m r c d == m).
 Proof. intros. apply l2m_surj; auto. Qed.
 
 Lemma m2l_inj : forall {r c} (m1 m2 : mat r c), ~ (m1 == m2) -> m2l m1 <> m2l m2.
-Proof. intros. apply (m2l_inj 0); auto. Qed.
+Proof. intros. apply (m2l_inj A0); auto. Qed.
 
-Lemma m2l_surj : forall {r c} (d : dlistA), length d = r -> width d c -> 
+Lemma m2l_surj : forall {r c} (d : dlist A), length d = r -> width d c -> 
     (exists m : mat r c, m2l m = d).
-Proof. intros. apply (m2l_surj 0); auto. Qed.
+Proof. intros. apply (m2l_surj A0); auto. Qed.
 
 (** *** convert between tuple and matrix *)
-Definition t2m_3_3 (t : T_3_3) : mat 3 3 := t2m_3_3 0 t.
+Definition t2m_3_3 (t : T_3_3) : mat 3 3 := t2m_3_3 A0 t.
 Definition m2t_3_3 (m : mat 3 3) : T_3_3 := m2t_3_3 m.
 Definition m2t_1_1 (m : mat 1 1) := m2t_1_1 m.
 
 (** *** build matrix from elements *)
 Definition mk_mat_1_1 a11 : mat 1 1 :=
-  mk_mat_1_1 (A0:=0) a11.
+  mk_mat_1_1 (A0:=A0) a11.
 Definition mk_mat_3_1 a11 a12 a13 : mat 3 1 :=
-  mk_mat_3_1 (A0:=0) a11 a12 a13.
+  mk_mat_3_1 (A0:=A0) a11 a12 a13.
 Definition mk_mat_3_3 a11 a12 a13 a21 a22 a23 a31 a32 a33 : mat 3 3 :=
-  mk_mat_3_3 (A0:=0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
+  mk_mat_3_3 (A0:=A0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
 
 (** *** matrix transposition *)
 Definition mtrans {r c : nat} (m : mat r c) : mat c r := mtrans m.

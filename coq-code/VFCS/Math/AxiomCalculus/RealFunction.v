@@ -13,8 +13,9 @@
  *)
 
 
-Require Export FunctionalExtensionality.
-Require Export BasicConfig.
+(* Require Export FunctionalExtensionality. *)
+(* Require Export BasicConfig. *)
+Require Export AlgebraStructure.
 Require Export RExt.
 
 Open Scope R_scope.
@@ -575,12 +576,33 @@ Section fun_op_props.
   Lemma fadd_comm : forall (u v : tpRFun), u + v = v + u.
   Proof. intros. apply fun_eq. intros. rewrite !fadd_ok. ring. Qed.
 
+  Lemma fadd_0_l : forall (u : tpRFun), fzero + u = u.
+  Proof. intros. apply fun_eq. intros. rewrite !fadd_ok. unfold fzero,fconst. ring. Qed.
+
+  Lemma fadd_0_r : forall (u : tpRFun), u + fzero = u.
+  Proof. intros. apply fun_eq. intros. rewrite !fadd_ok. unfold fzero,fconst. ring. Qed.
+
+  (** Properties for real function opposition *)
+  Lemma fadd_opp_l : forall (u : tpRFun), - u + u = fzero.
+  Proof. intros. apply fun_eq. intros. rewrite !fadd_ok, !fopp_ok.
+         unfold fzero,fconst. ring. Qed.
+
+  Lemma fadd_opp_r : forall (u : tpRFun), u + - u = fzero.
+  Proof. intros. apply fun_eq. intros. rewrite !fadd_ok, !fopp_ok.
+         unfold fzero,fconst. ring. Qed.
+
   (** Properties for real function multiplication *)
   Lemma fmul_assoc : forall (u v w : tpRFun), (u * v) * w = u * (v * w).
   Proof. intros. apply fun_eq. intros. rewrite !fmul_ok. ring. Qed.
 
   Lemma fmul_comm : forall (u v : tpRFun), u * v = v * u.
   Proof. intros. apply fun_eq. intros. rewrite !fmul_ok. ring. Qed.
+
+  Lemma fmul_1_l : forall (u : tpRFun), fone * u = u.
+  Proof. intros. apply fun_eq. intros. rewrite !fmul_ok. unfold fone,fconst. ring. Qed.
+
+  Lemma fmul_1_r : forall (u : tpRFun), u * fone = u.
+  Proof. intros. apply fun_eq. intros. rewrite !fmul_ok. unfold fone,fconst. ring. Qed.
 
   (** Properties for real function scalar multiplication *)
   Lemma fcmul_assoc1 : forall (c d : R) (u : tpRFun), c c* (d c* u) = (c * d) c* u.
@@ -595,7 +617,41 @@ Section fun_op_props.
   Lemma fmul_add_distr_r : forall u v w, (u + v) * w = u * w + v * w.
   Proof. intros. apply fun_eq. intros. rewrite ?fmul_ok, ?fadd_ok, ?fmul_ok. ring. Qed.
 
+  Lemma fmul_inv_l : forall (u : tpRFun), u <> fzero -> /u * u = fone.
+  Proof. intros. apply fun_eq. intros. rewrite !fmul_ok,!finv_ok.
+         unfold fzero,fone,fconst in *. field. intro. Abort.
+
+  Lemma fmul_inv_r : forall (u : tpRFun), u <> fzero -> u * /u = fone.
+  Proof. intros. apply fun_eq. intros. rewrite !fmul_ok,!finv_ok.
+         unfold fzero,fone,fconst in *. field. intro. Abort.
+
+  (** Monoid structure over (Rfun,+,0) *)
+  Global Instance Monoid_RfunAdd : Monoid fadd fzero.
+  repeat constructor; intros. apply fadd_assoc. apply fadd_0_l. apply fadd_0_r. Qed.
+
+  (** Monoid structure over (Rfun,*,1) *)
+  Global Instance Monoid_RfunMul : Monoid fmul fone.
+  repeat constructor; intros. apply fmul_assoc. apply fmul_1_l. apply fmul_1_r. Qed.
+
+  (** Abelian group structure over (Rfun,+,0,-) *)
+  Global Instance AGroup_RfunAdd : AGroup fadd fzero fopp.
+  repeat constructor; intros; monoid_simp. apply fadd_opp_l. apply fadd_opp_r.
+  all: apply fadd_comm. Qed.
+
+  (* (** Abelian group structure over (Rfun,*,1,/) *) *)
+  (* Global Instance AGroup_RfunMul : AGroup fmul fone finv. *)
+  (* repeat constructor; intros; monoid_simp. apply fadd_opp_l. apply fadd_opp_r. *)
+  (* all: apply fadd_comm. Qed. *)
+
+  (** Ring structure *)
+  Global Instance Ring_Rfun : Ring fadd fzero fopp fmul fone.
+  repeat constructor; intros; agroup_simp.
+  apply fmul_comm. apply fmul_add_distr_l. apply fmul_add_distr_r.
+  Qed.
+
 End fun_op_props.
+
+Add Ring ring_inst : make_ring_theory.
 
 
 (** ** Parity of function *)

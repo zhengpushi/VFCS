@@ -30,20 +30,22 @@ VFCS/CoqExt/Sequence.v
 # ====== Math ========================================================
 VFCS/Math/Complex/Complex.v
 
+VFCS/Math/AxiomCalculus/RealFunction.v
+VFCS/Math/AxiomCalculus/Derivative.v
+VFCS/Math/AxiomCalculus/Calculus.v
+
 VFCS/Math/Matrix/Matrix.v
 VFCS/Math/Matrix/MatrixNat.v
 VFCS/Math/Matrix/MatrixZ.v
 VFCS/Math/Matrix/MatrixQc.v
 VFCS/Math/Matrix/MatrixR.v
+VFCS/Math/Matrix/MatrixRfun.v
 VFCS/Math/Matrix/Vector.v
 VFCS/Math/Matrix/VectorNat.v
 VFCS/Math/Matrix/VectorZ.v
 VFCS/Math/Matrix/VectorQc.v
 VFCS/Math/Matrix/VectorR.v
-
-VFCS/Math/AxiomCalculus/RealFunction.v
-VFCS/Math/AxiomCalculus/Derivative.v
-VFCS/Math/AxiomCalculus/Calculus.v
+VFCS/Math/Matrix/VectorRfun.v
 
 VFCS/Math/LinearAlgebra/PermutationExt.v
 

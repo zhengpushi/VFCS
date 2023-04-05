@@ -549,25 +549,25 @@ Notation "m \T" := (mtrans m) : mat_scope.
 
 (* ======================================================================= *)
 (** ** Zero matrirx and identity matrix *)
-Section mat0_matI.
+Section mat0_mat1.
   Context {A : Type} (A0 A1 : A).
 
   (** Zero matrix *)
   Definition mat0 (r c : nat) : mat r c := mk_mat (fun _ _ => A0).
 
   (** Identity matrix *)
-  Definition matI (n : nat) : mat n n :=
+  Definition mat1 (n : nat) : mat n n :=
     mk_mat (fun i j => if (i =? j)%nat then A1 else A0).
   
   (** mat0\T = mat0 *)
   Lemma mtrans_mat0_eq_mat0 : forall {r c : nat}, (mat0 r c)\T == mat0 c r.
   Proof. lma. Qed.
   
-  (** matI\T = matI *)
-  Lemma mtrans_matI_eq_matI : forall {n : nat}, (matI n)\T == (matI n).
+  (** mat1\T = mat1 *)
+  Lemma mtrans_mat1_eq_mat1 : forall {n : nat}, (mat1 n)\T == (mat1 n).
   Proof. lma. replace (j =? i) with (i =? j); auto. apply Nat.eqb_sym. Qed.
 
-End mat0_matI.
+End mat0_mat1.
 
 
 (* ======================================================================= *)
@@ -703,11 +703,11 @@ Section malg.
   Lemma mcmul_1_l : forall {r c} (m : mat r c), A1 c* m == m.
   Proof. lma. Qed.
 
-  (** a c* matI equal to a diagonal matrix which main diagonal elements all are a *)
+  (** a c* mat1 equal to a diagonal matrix which main diagonal elements all are a *)
   Lemma mcmul_1_r : forall {n} a,
-      a c* matI A0 A1 n == mk_mat (fun i j => if (i =? j)%nat then a else A0).
+      a c* mat1 A0 A1 n == mk_mat (fun i j => if (i =? j)%nat then a else A0).
   Proof.
-    lma. unfold mcmul,matI. destruct (i =? j); ring.
+    lma. unfold mcmul,mat1. destruct (i =? j); ring.
   Qed.
 
   (** a c* (b c* m) = (a * b) c* m *)
@@ -762,16 +762,16 @@ Section malg.
   Lemma mmul_0_r : forall {r c s} (m : mat r c), m * (mat0 A0 c s) == mat0 A0 r s.
   Proof. lma. apply seqsum_seq0. intros. ring. Qed.
 
-  (** matI * m = m *)
-  Lemma mmul_I_l : forall {r c : nat} (m : mat r c), matI A0 A1 r * m == m.
+  (** mat1 * m = m *)
+  Lemma mmul_1_l : forall {r c : nat} (m : mat r c), mat1 A0 A1 r * m == m.
   Proof.
     lma. apply (seqsum_unique _ _ _ i); auto.
     - rewrite Nat.eqb_refl. ring.
     - intros. bdestruct (i =? j0). easy. ring.
   Qed.
 
-  (** m * matI = m *)
-  Lemma mmul_I_r : forall {r c : nat} (m : mat r c), m * matI A0 A1 c == m.
+  (** m * mat1 = m *)
+  Lemma mmul_1_r : forall {r c : nat} (m : mat r c), m * mat1 A0 A1 c == m.
   Proof.
     lma. apply (seqsum_unique _ _ _ j); auto.
     - rewrite Nat.eqb_refl. ring.
@@ -997,7 +997,7 @@ Section matrix_inversion.
   Infix "c*" := (@mcmul A Amul _ _) : mat_scope.
   Infix "==" := meq : mat_scope.
   (* Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope. *)
-  Notation matI := (matI A0 A1).
+  Notation mat1 := (mat1 A0 A1).
   Notation l2m := (@l2m A A0 _ _).
   Notation smat n := (smat A n).
   Notation det := (det (Aadd:=Aadd)(A0:=A0)(Aopp:=Aopp)(Amul:=Amul)(A1:=A1)).
@@ -1050,7 +1050,7 @@ Section matrix_inversion.
 
     Definition minv {n} (m : smat n) := (A1 / det m) c* (madj m).
 
-    Lemma minv_correct_r : forall n (m : smat n), m * (minv m) == matI n.
+    Lemma minv_correct_r : forall n (m : smat n), m * (minv m) == mat1 n.
     Proof.
       induction n; intros.
       - lma.
@@ -1068,14 +1068,14 @@ Section matrix_inversion.
     Lemma inv_1_1_eq_inv : forall m, det m <> A0 -> inv_1_1 m == minv m.
     Proof. lma. reverse_neq0_neq0 A0. Qed.
 
-    (** inv_1_1 m * m = matI *)
+    (** inv_1_1 m * m = mat1 *)
     Lemma inv_1_1_correct_l : forall (m : smat 1),
-        det m <> A0 -> (inv_1_1 m) * m == matI 1.
+        det m <> A0 -> (inv_1_1 m) * m == mat1 1.
     Proof. lma. reverse_neq0_neq0 A0. Qed.
 
-    (** m * inv_1_1 m = matI *)
+    (** m * inv_1_1 m = mat1 *)
     Lemma inv_1_1_correct_r : forall (m : smat 1),
-        det m <> A0 -> m * (inv_1_1 m) == matI 1.
+        det m <> A0 -> m * (inv_1_1 m) == mat1 1.
     Proof. lma. reverse_neq0_neq0 A0. Qed.
 
     (* ======================================================================= *)
@@ -1092,14 +1092,14 @@ Section matrix_inversion.
     Lemma inv_2_2_eq_inv : forall m, det m <> A0 -> inv_2_2 m == minv m.
     Proof. lma; reverse_neq0_neq0 A0. Qed.
     
-    (** inv_2_2 m * m = matI *)
+    (** inv_2_2 m * m = mat1 *)
     Lemma inv_2_2_correct_l : forall (m : smat 2),
-        det m <> A0 -> (inv_2_2 m) * m == matI 2.
+        det m <> A0 -> (inv_2_2 m) * m == mat1 2.
     Proof. lma; reverse_neq0_neq0 A0. Qed.
     
-    (** m * inv_2_2 m = matI *)
+    (** m * inv_2_2 m = mat1 *)
     Lemma inv_2_2_correct_r : forall (m : smat 2),
-        det m <> A0 -> m * (inv_2_2 m) == matI 2.
+        det m <> A0 -> m * (inv_2_2 m) == mat1 2.
     Proof. lma; reverse_neq0_neq0 A0. Qed.
     
     (* ======================================================================= *)
@@ -1125,14 +1125,14 @@ Section matrix_inversion.
     Lemma inv_3_3_eq_inv : forall m, det m <> A0 -> inv_3_3 m == minv m.
     Proof. lma; reverse_neq0_neq0 A0. Qed.
     
-    (** inv_3_3 m * m = matI *)
+    (** inv_3_3 m * m = mat1 *)
     Lemma inv_3_3_correct_l : forall (m : smat 3),
-        det m <> A0 -> (inv_3_3 m) * m == matI 3.
+        det m <> A0 -> (inv_3_3 m) * m == mat1 3.
     Proof. lma; reverse_neq0_neq0 A0. Qed.
     
-    (** m * inv_3_3 m = matI *)
+    (** m * inv_3_3 m = mat1 *)
     Lemma inv_3_3_correct_r : forall (m : smat 3),
-        det m <> A0 -> m * (inv_3_3 m) == matI 3.
+        det m <> A0 -> m * (inv_3_3 m) == mat1 3.
     Proof. lma; reverse_neq0_neq0 A0. Qed.
   End concrete.
   

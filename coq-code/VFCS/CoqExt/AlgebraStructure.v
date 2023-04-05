@@ -37,9 +37,10 @@
 Require Export BasicConfig.   (* reserved notation *)
 Require Export Coq.Classes.RelationClasses. (* binary_relation *)
 Require Import Coq.Logic.Description. (* constructive_definite_description *)
-Require Export List SetoidList. Import ListNotations.
+Require Export List. Import ListNotations.
 Require Export Lia Lra.
 Require Export Ring Field.
+
 
 Require Arith ZArith QArith Qcanon Reals.
 
@@ -1027,6 +1028,10 @@ Class AGroup {A} Aadd A0 Aopp := {
 
 Global Coercion agroupGroup : AGroup >-> Group.
 
+Ltac agroup_simp :=
+  group_simp;
+  try apply commutative.
+
 Section Theory.
   
   Context `{AG : AGroup}.
@@ -1036,29 +1041,19 @@ Section Theory.
 
   (** a - b = - (b - a) *)
   Lemma agroup_sub_comm : forall a b, a - b = - (b - a).
-  Proof.
-    intros.
-    rewrite (group_inv_distr). rewrite (group_inv_inv). easy.
-  Qed.
+  Proof. intros. rewrite (group_inv_distr). rewrite (group_inv_inv). auto. Qed.
 
   (** (a - b) - c = (a - c) - b *)
   Lemma agroup_sub_perm : forall a b c, (a - b) - c = (a - c) - b.
-  Proof.
-    intros.
-    rewrite ?associative. rewrite (commutative (-b)). easy.
-  Qed.
+  Proof. intros. rewrite ?associative. rewrite (commutative (-b)). auto. Qed.
 
   (** - (a + b) = (-a) + (-b) *)
   Lemma agroup_sub_distr : forall a b, - (a + b) = -a + (-b).
-  Proof.
-    intros. rewrite (group_inv_distr). apply commutative.
-  Qed.
+  Proof. intros. rewrite (group_inv_distr). agroup_simp. Qed.
 
   (** (a - b) - c = a - (b + c) *)
   Lemma agroup_sub_assoc : forall a b c, (a - b) - c = a - (b + c).
-  Proof.
-    intros. rewrite ?associative. rewrite agroup_sub_distr. easy.
-  Qed.
+  Proof. intros. rewrite ?associative. rewrite agroup_sub_distr. auto. Qed.
   
 End Theory.
 
