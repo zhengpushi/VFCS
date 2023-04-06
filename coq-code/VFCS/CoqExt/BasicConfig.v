@@ -37,30 +37,31 @@ Require Export Coq.Logic.FunctionalExtensionality.
 (** * Reserved Notations *)
 
 (** Reserved Notations, to keep same precedence and associativity *)
-Reserved Infix    "=="      (at level 70, no associativity).
-Reserved Notation "a != b"  (at level 70, no associativity).
-Reserved Infix    "=?"      (at level 70, no associativity).
-Reserved Infix    "+"       (at level 50, left associativity).
-Reserved Infix    "-"       (at level 50, left associativity).
-Reserved Infix    "*"       (at level 40, left associativity).
-Reserved Infix    "/"       (at level 40, left associativity).
-Reserved Infix    "c*"      (at level 40, left associativity).
-Reserved Infix    "*c"      (at level 40, left associativity).
+Reserved Infix    "=="      (at level 70, no associativity).      (* equiv *)
+Reserved Notation "a != b"  (at level 70, no associativity).      (* not equiv *)
+Reserved Infix    "=?"      (at level 70, no associativity).      (* bool equal *)
+Reserved Infix    "+"       (at level 50, left associativity).    (* add *)
+Reserved Infix    "-"       (at level 50, left associativity).    (* sub *)
+Reserved Infix    "*"       (at level 40, left associativity).    (* mul *)
+Reserved Infix    "/"       (at level 40, left associativity).    (* div *)
+Reserved Infix    "c*"      (at level 40, left associativity).    (* scal left mul *)
+Reserved Infix    "*c"      (at level 40, left associativity).    (* scal right mul *)
 Reserved Infix    "\o"      (at level 50, no associativity).
-Reserved Infix    "⋅"       (at level 40, no associativity).
-Reserved Notation "- a"     (at level 35, right associativity).
-Reserved Notation "/ a"     (at level 35, right associativity).
-Reserved Notation "a \T"    (at level 34, left associativity).
-Reserved Notation "m1 @ m2" (at level 30, no associativity).
+Reserved Infix    "⋅"       (at level 40, no associativity).      (* dot product *)
+Reserved Infix    "∘"       (at level 40, left associativity).    (* compose *)
+Reserved Notation "- a"     (at level 35, right associativity).   (* opp *)
+Reserved Notation "/ a"     (at level 35, right associativity).   (* inv *)
+Reserved Notation "a \T"    (at level 34, left associativity).    (* transpose *)
+Reserved Notation "m1 @ m2" (at level 30, no associativity).      (* cons by col *)
 
 (* this level is consistent with Mathcomp.ssreflect.ssrnotations.v *)
 
 (* safe access (any index) *)
-Reserved Notation "m ! i ! j"  (at level 20, i at next level).
-Reserved Notation "v ! i"      (at level 20, i at next level).
+Reserved Notation "m ! i ! j"  (at level 20, i at next level).    (* nth of mat *)
+Reserved Notation "v ! i"      (at level 20, i at next level).    (* nth of vec *)
 (* unsafe access (developer must give valid index) *)
-Reserved Notation "m $ i $ j"  (at level 20, i at next level).
-Reserved Notation "v $ i"      (at level 20, i at next level).
+Reserved Notation "m $ i $ j"  (at level 20, i at next level).    (* nth of mat, raw *)
+Reserved Notation "v $ i"      (at level 20, i at next level).    (* nth of vec, raw *)
 
 (* this level is consistent with coq.ssr.ssrbool.v *)
 (* Notation "~~ b" := (negb b) (at level 35, right associativity) : bool_scope. *)

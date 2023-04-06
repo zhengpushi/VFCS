@@ -125,7 +125,7 @@ Section fun_comp.
 
   (** composition of real functions *)
   Definition fcomp(u v : tpRFun) : tpRFun := fun x => u (v x).
-  Infix "∘" := fcomp (at level 20, right associativity) : fun_scope.
+  Infix "∘" := fcomp : fun_scope.
 
   Fact fcomp_rw : forall u v, (fun x => u (v x)) = u ∘ v.
   Proof. auto. Qed.
@@ -149,7 +149,7 @@ Section fun_comp.
 
   End test.
 End fun_comp.
-Infix "∘" := fcomp (at level 20, right associativity) : fun_scope.
+Infix "∘" := fcomp : fun_scope.
 
 
 (** ** Commonly used functions *)
