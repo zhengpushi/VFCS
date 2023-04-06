@@ -46,13 +46,15 @@ Reserved Infix    "*"       (at level 40, left associativity).    (* mul *)
 Reserved Infix    "/"       (at level 40, left associativity).    (* div *)
 Reserved Infix    "c*"      (at level 40, left associativity).    (* scal left mul *)
 Reserved Infix    "*c"      (at level 40, left associativity).    (* scal right mul *)
+Reserved Infix    "⦿"      (at level 40, left associativity).    (* hardmard prod *)
 Reserved Infix    "\o"      (at level 50, no associativity).
 Reserved Infix    "⋅"       (at level 40, no associativity).      (* dot product *)
 Reserved Infix    "∘"       (at level 40, left associativity).    (* compose *)
 Reserved Notation "- a"     (at level 35, right associativity).   (* opp *)
 Reserved Notation "/ a"     (at level 35, right associativity).   (* inv *)
-Reserved Notation "a \T"    (at level 34, left associativity).    (* transpose *)
+Reserved Notation "a \T"    (at level 32, left associativity).    (* transpose *)
 Reserved Notation "m1 @ m2" (at level 30, no associativity).      (* cons by col *)
+Reserved Notation "'tr' m"  (at level 33, no associativity).
 
 (* this level is consistent with Mathcomp.ssreflect.ssrnotations.v *)
 

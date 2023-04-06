@@ -295,6 +295,18 @@ Section Sum.
     rewrite <- ?associative. f_equal. apply commutative.
   Qed.
 
+  (** Let's have a group structure *)
+  Context `{G : Group A Aadd A0 Aopp}.
+  Notation "- a" := (Aopp a) : A_scope.
+
+  (** Opposition of the sum of a sequence. *)
+  Lemma seqsum_opp : forall (f : nat -> A) (n : nat),
+      - (seqsum f n) = seqsum (fun i => - f i) n.
+  Proof.  
+    intros f n. induction n; simpl. apply group_inv_id.
+    rewrite <- IHn. rewrite group_inv_distr. apply commutative.
+  Qed.
+
   (** Let's have an ring structure *)
   Context `{R : Ring A Aadd A0 Aopp Amul A1}.
   Add Ring ring_inst : make_ring_theory.
@@ -394,6 +406,28 @@ Section Sum.
       repeat rewrite Nat.mod_small; auto. (* a < b -> a % b = 0 *)
       rewrite Nat.add_0_l, Nat.add_0_r.
       auto.
+  Qed.
+
+  (** The order of two nested summations can be exchanged.
+      ∑[i,0,r](∑[j,0,c] f_ij) = 
+      f00 + f01 + ... + f0c + 
+      f10 + f11 + ... + f1c + 
+      ...
+      fr0 + fr1 + ... + frc = ∑[j,0,c](∑[i,0,r] f_ij) *)
+  Lemma seqsum_seqsum_exchg : forall f r c,
+      seqsum (fun i => seqsum (fun j => f i j) c) r =
+        seqsum (fun j => seqsum (fun i => f i j) r) c.
+  Proof.
+    intros f.
+    induction r.
+    - induction c; simpl in *; auto. rewrite <- IHc. ring.
+    - induction c; simpl in *; auto. specialize (IHr 0). simpl in *. rewrite IHr. ring.
+      rewrite <- ?associative. f_equal.
+      replace (fun i : nat => seqsum (fun j : nat => f i j) c + f i c) with
+        (fun i => seqsum (fun j => f i j) (S c)); auto.
+      rewrite IHr. simpl.
+      rewrite associative. rewrite (commutative (seqsum _ r)). rewrite <- associative.
+      rewrite <- IHc. f_equal. f_equal. auto.
   Qed.
   
 End Sum.

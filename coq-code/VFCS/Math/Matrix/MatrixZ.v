@@ -183,6 +183,10 @@ Definition mmul {r c s} (m1 : mat r c) (m2 : mat c s) : mat r s :=
   mmul m1 m2 (Aadd:=Aadd) (A0:=A0) (Amul:=Amul).
 Infix "*" := mmul : mat_scope.
 
+Lemma mmul_assoc : forall {r c s t} (m1 : mat r c) (m2 : mat c s) (m3 : mat s t),
+    (m1 * m2) * m3 == m1 * (m2 * m3).
+Proof. intros. apply mmul_assoc. Qed.
+
 Lemma mmul_add_distr_l : forall {r c s} (m1 : mat r c) (m2 m3 : mat c s),
     m1 * (m2 + m3) == (m1 * m2) + (m1 * m3).
 Proof. intros. apply mmul_add_distr_l. Qed.
@@ -191,9 +195,13 @@ Lemma mmul_add_distr_r : forall {r c s} (m1 m2 : mat r c) (m3 : mat c s),
     (m1 + m2) * m3 == (m1 * m3) + (m2 * m3).
 Proof. intros. apply mmul_add_distr_r. Qed.
 
-Lemma mmul_assoc : forall {r c s t} (m1 : mat r c) (m2 : mat c s) (m3 : mat s t),
-    (m1 * m2) * m3 == m1 * (m2 * m3).
-Proof. intros. apply mmul_assoc. Qed.
+Lemma mmul_sub_distr_l : forall {r c s : nat} (m1 : mat r c) (m2 m3 : mat c s), 
+    m1 * (m2 - m3) == m1 * m2 - m1 * m3.
+Proof. intros. apply mmul_sub_distr_l. Qed.
+
+Lemma mmul_sub_distr_r : forall {r c s : nat} (m1 m2 : mat r c) (m3 : mat c s),
+    (m1 - m2) * m3 == m1 * m3 - m2 * m3.
+Proof. intros. apply mmul_sub_distr_r. Qed.
 
 Lemma mmul_0_l : forall {r c s} (m : mat c s), (@mat0 r c) * m == mat0.
 Proof. intros. apply mmul_0_l. Qed.

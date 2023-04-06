@@ -21,8 +21,8 @@
 
 
 Require Export TupleExt ListExt AlgebraStructure.
-Require Export AlgebraStructureSetoid.
-Module ASS := AlgebraStructureSetoid. (* a short name *)
+Require AlgebraStructureSetoid.
+Module Export ASS := AlgebraStructureSetoid. (* a short name *)
 Require Export Sequence.
 
 
@@ -98,6 +98,10 @@ Section mnth.
   (* Unsafe access (caller must assure the index manually) *)
   Notation "m $ i $ j " := (matf (A:=A) m i j) : mat_scope.
 
+  Lemma meq_iff_mnth_raw : forall {r c : nat} (m1 m2 : mat r c),
+      m1 == m2 <-> (forall i j, i < r -> j < c -> m1$i$j = m2$i$j).
+  Proof. auto. reflexivity. Qed.
+
   (* Safe access (any index is accepted, but only valid index is used) *)
   Definition mnth {r c} (m : mat r c) (i j : nat) : A :=
     if (i <? r) && (j <? c)
@@ -122,16 +126,6 @@ Section mnth.
       destruct (Nat.ltb_spec0 i r), (Nat.ltb_spec0 j c); simpl; auto; easy.
   Qed.
 
-  Lemma meq_iff_mnth_raw : forall {r c : nat} (m1 m2 : mat r c),
-      m1 == m2 <-> (forall i j, i < r -> j < c -> m1$i$j = m2$i$j).
-  Proof.
-    intros. rewrite meq_iff_mnth. unfold mnth. split; intros.
-    - specialize (H i j H0 H1).
-      destruct (Nat.ltb_spec0 i r), (Nat.ltb_spec0 j c); simpl; auto; easy.
-    - specialize (H i j H0 H1).
-      destruct (Nat.ltb_spec0 i r), (Nat.ltb_spec0 j c); simpl; auto; auto.
-  Qed.
-
 End mnth.
 
 Global Hint Unfold mnth : core.
@@ -151,7 +145,7 @@ Ltac solve_end :=
 
 (** Convert mat to function *)
 Ltac mat_to_fun :=
-  match goal with
+  repeat match goal with
   | m : mat ?r ?c |- _ => destruct m as [m]; simpl in *
   end.
 
@@ -180,7 +174,7 @@ Ltac by_cell :=
   let Hi := fresh "Hi" in
   let Hj := fresh "Hj" in
   intros i j Hi Hj; simpl; try solve_end;
-  repeat mat_to_fun; repeat solve_mnth;
+  mat_to_fun; repeat solve_mnth;
   repeat (destruct i as [|i]; simpl;
           [|apply NatExt.lt_S_n in Hi]; try solve_end);
   (* clear Hi; *)
@@ -541,6 +535,13 @@ Section mtrans.
   Definition mtrans {r c} (m : @mat A r c): mat c r := mk_mat (fun i j => m$j$i).
   Notation "m \T" := (mtrans m) : mat_scope.
 
+  (** show it is a proper morphism *)
+  Global Instance mtrans_mor : forall r c, Proper (meq ==> meq) (mtrans (r:=r)(c:=c)).
+  Proof.
+    simp_proper. lma. unfold meq in H; simpl in H.
+    specialize (H j i Hj Hi). solve_mnth.
+  Qed.
+
   (** Transpose twice keep unchanged. *)
   Lemma mtrans_trans : forall {r c} (m : @mat A r c), m \T \T == m.
   Proof. lma. Qed.
@@ -562,11 +563,11 @@ Section mat0_mat1.
     mk_mat (fun i j => if (i =? j)%nat then A1 else A0).
   
   (** mat0\T = mat0 *)
-  Lemma mtrans_mat0_eq_mat0 : forall {r c : nat}, (@mat0 r c)\T == mat0.
+  Lemma mtrans_0 : forall {r c : nat}, (@mat0 r c)\T == mat0.
   Proof. lma. Qed.
   
   (** mat1\T = mat1 *)
-  Lemma mtrans_mat1_eq_mat1 : forall {n : nat}, (@mat1 n)\T == mat1.
+  Lemma mtrans_1 : forall {n : nat}, (@mat1 n)\T == mat1.
   Proof. lma. replace (j =? i) with (i =? j); auto. apply Nat.eqb_sym. Qed.
 
 End mat0_mat1.
@@ -585,6 +586,24 @@ Section malg.
   Infix "+" := (ladd (Aadd:=Aadd)) : list_scope.
   (* Infix "==" := (eqlistA Aeq) : list_scope. *)
   Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope.
+  Notation smat n := (smat A n).
+  Notation seqsum := (seqsum (Aadd:=Aadd) (A0:=A0)).
+
+  (** *** Matrix trace *)
+  Definition mtrace {n : nat} (m : smat n) : A := seqsum (fun i => m$i$i) n.
+  Notation "'tr' m" := (mtrace m) : mat_scope.
+  
+  (** show it is a proper morphism *)
+  Global Instance mtrace_mor : forall n, Proper (meq ==> eq) (mtrace (n:=n)).
+  Proof.
+    simp_proper. intros. mat_to_fun. unfold meq in H; simpl in H.
+    unfold mtrace. simpl. apply seqsum_eq. auto.
+  Qed.
+
+  (** tr(m\T) = tr(m) *)
+  Lemma mtrace_trans : forall {n} (m : smat n), tr (m\T) = tr(m).
+  Proof. intros. unfold mtrace. apply seqsum_eq. easy. Qed.
+
 
   (** *** Matrix addition *)
 
@@ -593,7 +612,7 @@ Section malg.
     mk_mat (fun i j => m1$i$j + m2$i$j).
   Infix "+" := madd : mat_scope.
 
-  (** madd is a proper morphism *)
+  (** show it is a proper morphism *)
   Global Instance madd_mor : forall r c, Proper (meq ==> meq ==> meq) (madd (r:=r)(c:=c)).
   Proof.
     simp_proper. lma. rewrite (meq_iff_mnth A0) in H,H0.
@@ -636,14 +655,22 @@ Section malg.
       all: try rewrite map_length, seq_length; auto. monoid_simp.
   Qed.
 
-  (** *** Monoid structure over {madd,mat0,meq} *)
+  (** (m1 + m2)\T = m1\T + m2\T *)
+  Lemma mtrans_add : forall {r c} (m1 m2 : mat r c), (m1 + m2)\T == m1\T + m2\T.
+  Proof. lma. Qed.
+
+  (** tr(m1 + m2) = tr(m1) + tr(m2) *)
+  Lemma mtrace_add : forall {n} (m1 m2 : smat n), tr (m1 + m2) = (tr(m1) + tr(m2))%A.
+  Proof. intros. unfold mtrace. rewrite <- seqsum_add. apply seqsum_eq. easy. Qed.
+
+  (** Monoid structure over {madd,mat0,meq} *)
   Global Instance Monoid_MatAadd : forall r c, ASS.Monoid (@madd r c) (mat0 A0) meq.
   intros; constructor; try apply meq_equiv; try constructor; intros.
   apply madd_mor. apply madd_assoc. apply madd_0_l. apply madd_0_r. Qed.
 
   Section test.
-    (* Goal forall r c (m1 m2 : @mat A r c), mat0 A0 + m1 == m1. *)
-    (*   ASS.monoid_simp. Qed. *)
+    Goal forall r c (m1 m2 : @mat A r c), mat0 A0 + m1 == m1.
+      ASS.monoid_simp. Qed.
   End test.
   
   (** *** Matrix opposition *)
@@ -652,38 +679,16 @@ Section malg.
     mk_mat (fun i j => - (m$i$j)).
   Notation "- a" := (mopp a) : mat_scope.
 
-  (** mopp is a proper morphism *)
+  (** show it is a proper morphism *)
   Global Instance mopp_mor : forall r c, Proper (meq ==> meq) (mopp (r:=r)(c:=c)).
   Proof.
     simp_proper. lma. rewrite (meq_iff_mnth A0) in H.
     specialize (H i j Hi Hj). solve_mnth. rewrite H. auto.
   Qed.
 
-  (** - (- m) = m *)
-  Lemma mopp_opp : forall {r c} (m : mat r c), - (- m) == m.
-  Proof. lma. apply group_inv_inv. Qed.
-  
-  
-  (** *** Matrix subtraction *)
-  
-  Definition msub {r c} (m1 m2 : mat r c) : mat r c := m1 + (-m2).
-  Infix "-" := msub : mat_scope.
-
-  (** m1 - m2 = -(m2 - m1) *)
-  Lemma msub_comm : forall {r c} (m1 m2 : mat r c), m1 - m2 == - (m2 - m1).
-  Proof. lma. rewrite group_inv_distr,group_inv_inv; auto. Qed.
-
-  (** (m1 - m2) - m3 = m1 - (m2 + m3) *)
-  Lemma msub_assoc : forall {r c} (m1 m2 m3 : mat r c), (m1 - m2) - m3 == m1 - (m2 + m3).
-  Proof. lma. rewrite group_inv_distr. monoid_simp. f_equal. amonoid_simp. Qed.
-
-  (** mat0 - m = - m *)
-  Lemma msub_0_l : forall {r c} (m : mat r c), mat0 A0 - m == - m.
-  Proof. lma. monoid_simp. Qed.
-
-  (** m - mat0 = m *)
-  Lemma msub_0_r : forall {r c} (m : mat r c), m - mat0 A0 == m.
-  Proof. lma. rewrite (group_inv_id (G:=AG)). monoid_simp. Qed.
+  (** - (m1 + m2) = (-m1) + (-m2) *)
+  Lemma mopp_add : forall {r c : nat} (m1 m2 : mat r c), - (m1 + m2) == (-m1) + (-m2).
+  Proof. lma. rewrite group_inv_distr. apply commutative. Qed.
 
   (** (-m) + m = mat0 *)
   Lemma madd_opp_l : forall r c (m : mat r c), (-m) + m == mat0 A0.
@@ -693,9 +698,69 @@ Section malg.
   Lemma madd_opp_r : forall r c (m : mat r c), m + (-m) == mat0 A0.
   Proof. lma. group_simp. Qed.
 
+  (** - (- m) = m *)
+  Lemma mopp_opp : forall {r c} (m : mat r c), - (- m) == m.
+  Proof. lma. apply group_inv_inv. Qed.
+
+  (** - mat0 = mat0 *)
+  Lemma mopp_0 : forall {r c}, - (@mat0 _ A0 r c) == mat0 A0.
+  Proof. lma. apply group_inv_id. Qed.
+
+  (** (m1 + m2)\T = m1\T + m2\T *)
+  Lemma mtrans_opp : forall {r c} (m : mat r c), (- m)\T == - (m\T).
+  Proof. lma. Qed.
+
+  (** tr(- m) = - (tr(m)) *)
+  Lemma mtrace_opp : forall {n} (m : smat n), tr (- m) = (- (tr(m)))%A.
+  Proof. intros. unfold mtrace. rewrite seqsum_opp. apply seqsum_eq. easy. Qed.
+
+
+  (** *** Matrix subtraction *)
+  
+  Definition msub {r c} (m1 m2 : mat r c) : mat r c := m1 + (-m2).
+  Infix "-" := msub : mat_scope.
+
+  (** show it is a proper morphism *)
+  Global Instance msub_mor : forall r c, Proper (meq ==> meq ==> meq) (msub (r:=r)(c:=c)).
+  Proof. simp_proper. intros. unfold msub. rewrite H,H0. easy. Qed.
+
+  (** m1 - m2 = -(m2 - m1) *)
+  Lemma msub_comm : forall {r c} (m1 m2 : mat r c), m1 - m2 == - (m2 - m1).
+  Proof. lma. rewrite group_inv_distr,group_inv_inv; auto. Qed.
+
+  (** (m1 - m2) - m3 = m1 - (m2 + m3) *)
+  Lemma msub_assoc : forall {r c} (m1 m2 m3 : mat r c), (m1 - m2) - m3 == m1 - (m2 + m3).
+  Proof. lma. rewrite group_inv_distr. monoid_simp. f_equal. amonoid_simp. Qed.
+
+  (** (m1 + m2) - m3 = m1 + (m2 - m3) *)
+  Lemma msub_assoc1 : forall {r c} (m1 m2 m3 : mat r c), (m1 + m2) - m3 == m1 + (m2 - m3).
+  Proof. lma. monoid_simp. Qed.
+
+  (** (m1 - m2) - m3 = m1 - (m3 - m2) *)
+  Lemma msub_assoc2 : forall {r c} (m1 m2 m3 : mat r c), (m1 - m2) - m3 == (m1 - m3) - m2.
+  Proof. lma. rewrite ?associative; f_equiv. amonoid_simp. Qed.
+
+  (** mat0 - m = - m *)
+  Lemma msub_0_l : forall {r c} (m : mat r c), mat0 A0 - m == - m.
+  Proof. lma. monoid_simp. Qed.
+
+  (** m - mat0 = m *)
+  Lemma msub_0_r : forall {r c} (m : mat r c), m - mat0 A0 == m.
+  Proof. lma. rewrite (group_inv_id (G:=AG)). monoid_simp. Qed.
+
   (** m - m = mat0 *)
   Lemma msub_self : forall {r c} (m : mat r c), m - m == (mat0 A0).
   Proof. lma. group_simp. Qed.
+
+  (** (m1 - m2)\T = m1\T - m2\T *)
+  Lemma mtrans_sub : forall {r c} (m1 m2 : mat r c), (m1 - m2)\T == m1\T - m2\T.
+  Proof. lma. Qed.
+
+  (** tr(m1 - m2) = tr(m1) - tr(m2) *)
+  Lemma mtrace_sub : forall {n} (m1 m2 : smat n), tr (m1 - m2) = (tr(m1) - tr(m2))%A.
+  Proof. intros. unfold mtrace. rewrite seqsum_opp. rewrite <- seqsum_add.
+         apply seqsum_eq. easy. Qed.
+
 
   (** *** Group structure over {madd,mat0,mopp,meq} *)
   Global Instance Group_MatAadd : forall r c, ASS.Group (@madd r c) (mat0 A0) mopp meq.
@@ -715,13 +780,18 @@ Section malg.
     Qed.
   End test.
 
+  (** *** Abelian group structure over {madd,mat0,mopp,meq} *)
+  Global Instance AGroup_MatAadd : forall r c, ASS.AGroup (@madd r c) (mat0 A0) mopp meq.
+  intros; constructor; try apply meq_equiv. apply Group_MatAadd.
+  constructor. apply Group_MatAadd. all: constructor; apply madd_comm. Qed.
 
+  
   (** *** Below, we need a ring structure *)
   Context `{R : Ring A Aadd A0 Aopp Amul A1}.
   Infix "*" := Amul : A_scope.
   Add Ring ring_inst : make_ring_theory.
-  
-  
+
+
   (** *** Scalar multiplication of matrix *)
 
   (** Left scalar multiplication of matrix *)
@@ -729,7 +799,7 @@ Section malg.
     mk_mat (fun i j => (a * m$i$j)).
   Infix "c*" := mcmul : mat_scope.
 
-  (** mcmul is a proper morphism *)
+  (** show it is a proper morphism *)
   Global Instance mcmul_mor : forall r c, Proper (eq ==> meq ==> meq) (mcmul (r:=r)(c:=c)).
   Proof.
     simp_proper. lma. rewrite (meq_iff_mnth A0) in H0.
@@ -773,11 +843,32 @@ Section malg.
       (a + b)%A c* m == (a c* m) + (b c* m).
   Proof. lma. Qed.
 
+  (** (a c* m)\T = a c* (m\T) *)
+  Lemma mtrans_cmul : forall {r c} (a : A) (m : mat r c), (a c* m)\T == a c* (m\T).
+  Proof. lma. Qed.
 
+  (** tr (a c* m) = a * tr (m) *)
+  Lemma mtrace_cmul : forall {n} (a : A) (m : smat n), tr (a c* m) = a * tr (m).
+  Proof.
+    unfold mtrace,mcmul; intros. rewrite seqsum_cmul_l. apply seqsum_eq.
+    intros. simpl. ring.
+  Qed.
+
+  
   (** *** Matrix multiplication *)
-  Definition mmul {r c t : nat} (m1 : mat r c) (m2 : mat c t) : mat r t :=
-    mk_mat (fun i k => seqsum (Aadd:=Aadd)(A0:=A0) (fun j => m1$i$j * m2$j$k) c).
+  Definition mmul {r c s : nat} (m1 : mat r c) (m2 : mat c s) : mat r s :=
+    mk_mat (fun i k => seqsum (fun j => m1$i$j * m2$j$k) c).
   Infix "*" := mmul : mat_scope.
+
+  (** show it is a proper morphism *)
+  Global Instance mmul_mor : forall r c s,
+      Proper (meq ==> meq ==> meq) (mmul (r:=r)(c:=c)(s:=s)).
+  Proof.
+    simp_proper. lma. apply seqsum_eq. intros k Hk.
+    unfold meq in H,H0. simpl in H,H0.
+    specialize (H i k Hi Hk). specialize (H0 k j Hk Hj).
+    rewrite H,H0. ring.
+  Qed.
 
   (** (m1 * m2) * m3 = m1 * (m2 * m3) *)
   Lemma mmul_assoc : forall {r c s t : nat} (m1 : mat r c) (m2 : mat c s) (m3: mat s t), 
@@ -798,6 +889,28 @@ Section malg.
   Lemma mmul_add_distr_r : forall {r c s : nat} (m1 m2 : mat r c) (m3 : mat c s),
       (m1 + m2) * m3 == m1 * m3 + m2 * m3.
   Proof. lma. rewrite <- seqsum_add. apply seqsum_eq; intros. ring. Qed.
+
+  (** m1 * (m2 - m3) = m1 * m2 - m1 * m3 *)
+  Lemma mmul_sub_distr_l : forall {r c s : nat} (m1 : mat r c) (m2 m3 : mat c s), 
+      m1 * (m2 - m3) == m1 * m2 - m1 * m3.
+  Proof. lma. rewrite seqsum_opp. rewrite <- seqsum_add. apply seqsum_eq; intros.
+         ring. Qed.
+  
+  (** (m1 - m2) * m3 = m1 * m3 - m2 * m3 *)
+  Lemma mmul_sub_distr_r : forall {r c s : nat} (m1 m2 : mat r c) (m3 : mat c s),
+      (m1 - m2) * m3 == m1 * m3 - m2 * m3.
+  Proof. lma. rewrite seqsum_opp. rewrite <- seqsum_add. apply seqsum_eq; intros.
+         ring. Qed.
+
+  (** - (m1 * m2) = (-m1) * m2 *)
+  Lemma mopp_mul_l : forall {r c s : nat} (m1 : mat r c) (m2 : mat c s),
+      - (m1 * m2) == (-m1) * m2.
+  Proof. lma. rewrite seqsum_opp. apply seqsum_eq; intros. ring. Qed.
+
+  (** - (m1 * m2) = m1 * (-m2) *)
+  Lemma mopp_mul_r : forall {r c s : nat} (m1 : mat r c) (m2 : mat c s),
+      - (m1 * m2) == m1 * (-m2).
+  Proof. lma. rewrite seqsum_opp. apply seqsum_eq; intros. ring. Qed.
 
   (** mat0 * m = mat0 *)
   Lemma mmul_0_l : forall {r c s} (m : mat c s), (@mat0 _ A0 r c) * m == mat0 A0.
@@ -832,6 +945,36 @@ Section malg.
   Lemma mcmul_mul_perm : forall {r c s} (a : A) (m1 : mat r c) (m2 : mat c s), 
       a c* (m1 * m2) == m1 * (a c* m2).
   Proof. lma. rewrite seqsum_cmul_l. apply seqsum_eq; intros; ring. Qed.
+  
+  (** (a c* m)\T = a c* (m\T) *)
+  Lemma mtrans_mul : forall {r c s} (m1 : mat r c) (m2 : mat c s),
+      (m1 * m2)\T == m2\T * m1\T.
+  Proof. lma. apply seqsum_eq. intros. ring. Qed.
+
+  (** tr (m1 * m2) = tr (m2 * m1) *)
+  Lemma mtrace_mul : forall {r c} (m1 : mat r c) (m2 : mat c r),
+      tr (m1 * m2) = tr (m2 * m1).
+  Proof.
+    unfold mtrace; intros. unfold mmul. mat_to_fun.
+    rewrite seqsum_seqsum_exchg.
+    apply seqsum_eq. intros. apply seqsum_eq. intros. ring.
+  Qed.
+
+  
+  (** *** Hardmard product *)
+  
+  (** Hardmard product (also known as the element-wise product, entrywise product 
+      or Schur product).
+      It is a binary operation that takes two matrices of the same dimensions and 
+      produces another matrix of the same dimension as the operandds, where each 
+      element i,j is the product of elements i,j of the original two matrices.
+
+      The hardmard product is associative, distribute and commutative *)
+  Definition mhp {n : nat} (m1 m2 : smat n) : smat n :=
+    mk_mat (fun i j => (m1$i$j * m2$i$j)%A).
+  Infix "⦿" := mhp : mat_scope.
+
+  
   
 End malg.
 
@@ -1284,6 +1427,17 @@ Section test.
       
   (* Now, the rewrite is allowed. *)
   Goal forall r c (m1 m2 : mat r c) (x : Qc), m1 == m2 -> x c* m1 == x c* m2.
-  Proof. intros. rewrite H. easy. Qed.
+  Proof. intros. f_equiv. easy. Qed.
+
+  (** *** rewrite support test (cont.) *)
+  Notation msub := (msub (Aadd:=Qcplus)(Aopp:=Qcopp)).
+  Infix "-" := msub : mat_scope.
+
+  (* we need to write declaration on Qc once again. *)
+  Instance msub_mor_Qc_demo : forall r c,  Proper (meq ==> meq ==> (@meq _ r c)) msub.
+  Proof. intros. apply (msub_mor (A0:=0)). Qed.
+
+  Goal forall r c (m1 m2 m3 m4 : mat r c), m1 == m2 -> m3 == m4 -> m1 - m3 == m2 - m4.
+  Proof. clear. intros. f_equiv. easy. easy. Qed.
 
 End test.

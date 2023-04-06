@@ -486,10 +486,12 @@ Section fun_arith.
   (** Addition of real functions *)
   Definition fadd (u v : tpRFun) : tpRFun := fun x => u x + v x.
   Definition fopp (u : tpRFun) := fun x => - u x.
-  Definition fsub (u v : tpRFun) := fun x => u x - v x.
+  (* Definition fsub (u v : tpRFun) := fun x => u x - v x. *)
+  Definition fsub (u v : tpRFun) := fadd u (fopp v).
   Definition fmul (u v : tpRFun) := fun x => u x * v x.
   Definition finv (u : tpRFun) := fun x => / (u x).
-  Definition fdiv (u v : tpRFun) := fun x => u x / v x.
+  (* Definition fdiv (u v : tpRFun) := fun x => u x / v x. *)
+  Definition fdiv (u v : tpRFun) := fmul u (finv v).
   Definition fcmul (c : R) (u : tpRFun) := fun x => c * (u x).
 
 End fun_arith.
