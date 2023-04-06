@@ -14,5 +14,6 @@
  *)
 
 Require Export RealFunction.
-Require Export Derivative.
+Require Export Derivative_axiomized.
+Require Export Derivative_coquelicot.
 (* Require Export Integration. *)

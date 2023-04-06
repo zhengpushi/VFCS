@@ -241,6 +241,13 @@ Section test.
   Goal forall r c (m1 m2 : mat r c), m1 + m2 == m2 + m1.
   Proof. intros. apply madd_comm. Qed.
 
+  (** Outer/inner product of two vectors *)
+  Variables a1 a2 a3 b1 b2 b3 : A.
+  Let m10 := l2m 3 1 [[a1];[a2];[a3]].
+  Let m11 := l2m 1 3 [[b1;b2;b3]].
+  (* Compute m2l (m10 * m11). *)
+  (* Compute m2l (m11 * m10). *)
+
 End test.
 
 Section Example4CoordinateSystem.

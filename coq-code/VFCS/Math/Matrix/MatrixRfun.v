@@ -10,7 +10,8 @@
 
 Require Export Matrix.
 Require Export RExt.
-Require Export RealFunction.
+(* Require Export RealFunction. *)
+Require Export Calculus.
 
 
 (* ======================================================================= *)
@@ -221,6 +222,8 @@ Proof. intros. apply mmul_1_r. Qed.
 
 (* ======================================================================= *)
 (** ** Matrix theory applied to this type *)
+
+(** *** Derivate of matrix *)
 
 
 (* ======================================================================= *)
