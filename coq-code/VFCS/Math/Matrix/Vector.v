@@ -178,7 +178,7 @@ Section vec_ring.
   (** *** Zero vector *)
 
   (** Make a zero vector *)
-  Definition vec0 {n} : vec n := mat0 A0 n 1.
+  Definition vec0 {n} : vec n := mat0 A0.
 
   (** A vector is a zero vector. *)
   Definition vzero {n} (v : vec n) : Prop := v == vec0.
@@ -187,7 +187,7 @@ Section vec_ring.
   Definition vnonzero {n} (v : vec n) : Prop := ~(vzero v).
   
   (** vec0 is equal to mat0 with column 1 *)
-  Lemma vec0_eq_mat0 : forall n, vec0 == mat0 A0 n 1.
+  Lemma vec0_eq_mat0 : forall n, (vec0 : vec n) == mat0 A0.
   Proof. intros. easy. Qed.
   
   

@@ -100,10 +100,10 @@ Lemma mmap2_assoc : forall {r c} f (m1 m2 m3 : mat r c) (fassoc : Associative f)
 Proof. intros. apply mmap2_assoc; auto. Qed.
 
 (** *** zero matrix *)
-Definition mat0 {r c} : mat r c := mat0 A0 r c.
+Definition mat0 {r c} : mat r c := @mat0 _ A0 r c.
 
 (** *** unit matrix *)
-Definition mat1 {n} : mat n n := mat1 A0 A1 n.
+Definition mat1 {n} : mat n n := @mat1 _ A0 A1 n.
 
 (** *** matrix addition *)
 Definition madd {r c} (m1 m2 : mat r c) : mat r c := madd m1 m2 (Aadd:=Aadd).

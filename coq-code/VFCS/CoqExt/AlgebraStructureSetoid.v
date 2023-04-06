@@ -663,7 +663,7 @@ Ltac monoid_rw_old M :=
     rewrite (@identityLeft _ _ _ _ (@monoidIdL _ _ _ M)) ||
     rewrite (@identityRight _ _ _ _ (@monoidIdR _ _ _ M)).
 
-Ltac monoid_simpl_old M := intros; repeat monoid_rw_old M; auto.
+Ltac monoid_simp_old M := intros; repeat monoid_rw_old M; auto.
 
 (** monoid rewriting, automatic inference the Instance. But sometimes it will fail *)
 Ltac monoid_rw :=
@@ -671,7 +671,7 @@ Ltac monoid_rw :=
     rewrite identityRight ||
     rewrite associative.
 
-Ltac monoid_simpl := intros; repeat monoid_rw; try reflexivity; auto.
+Ltac monoid_simp := intros; repeat monoid_rw; try reflexivity; auto.
 
 (** This example shows that, if we give a theorem that its parameter of a instance 
     declaration in a section, then the application of this theorem will fail, and 
@@ -803,8 +803,8 @@ End Instances.
   
 (** ** Extra Theories *)
 
-Ltac amonoid_simpl :=
-  monoid_simpl;
+Ltac amonoid_simp :=
+  monoid_simp;
   apply commutative.
 
 (* Section Theory. *)
@@ -827,7 +827,7 @@ Section Examples.
   
   Goal forall a b : Qc, a * b = b * a.
   Proof.
-    amonoid_simpl.
+    amonoid_simp.
   Qed.
 
 End Examples.
@@ -868,7 +868,7 @@ Ltac group_rw :=
   rewrite inverseLeft ||
     rewrite inverseRight.
 
-Ltac group_simpl :=
+Ltac group_simp :=
   repeat (group_rw || monoid_rw || group_rw);
   try reflexivity;
   auto.
@@ -931,8 +931,8 @@ Section GroupTheory.
     intros.
     (* e = e + e' = e' *)
     assert (0 == 0 + e'). { rewrite H. easy. }
-    assert (0 + e' == e') by group_simpl.
-    apply transitivity with (0 + e'); auto. group_simpl.
+    assert (0 + e' == e') by group_simp.
+    apply transitivity with (0 + e'); auto. group_simp.
   Qed.
 
   (* Note that, I give two theorem rather than one. *)
@@ -941,9 +941,9 @@ Section GroupTheory.
   Proof.
     intros. destruct H as [Ha Hb].
     (* x1 == x1+e == x1+(y+x2) == (x1+y)+x2 == e+x2 == x2 *)
-    assert (x1 == x1 + 0) by group_simpl.
+    assert (x1 == x1 + 0) by group_simp.
     rewrite H. rewrite <- Hb. rewrite <- associative.
-    rewrite Ha. group_simpl.
+    rewrite Ha. group_simp.
   Qed.
 
   Theorem group_inv_uniq_r :
@@ -951,9 +951,9 @@ Section GroupTheory.
   Proof.
     intros. destruct H as [Ha Hb].
     (* y1 == e+y1 == (y2+x)+y1 == y2+(x+y1) == y2+e == y2 *)
-    assert (y1 == 0 + y1). group_simpl.
+    assert (y1 == 0 + y1). group_simp.
     rewrite H. rewrite <- Hb. rewrite associative.
-    rewrite Ha. group_simpl.
+    rewrite Ha. group_simp.
   Qed.
 
   (** Theorem 14.1 *)
@@ -963,9 +963,9 @@ Section GroupTheory.
     (* y1 == e+y1 == (-x+x)+y1 == (-x)+(x+y1) == (-x)+(x+y1) 
       == (-x+x)+y1 == e+y1 == y1*)
     rewrite <- identityLeft.
-    assert (0 == (-x) + x). group_simpl.
+    assert (0 == (-x) + x). group_simp.
     rewrite H0. rewrite associative. rewrite H.
-    rewrite <- associative. group_simpl.
+    rewrite <- associative. group_simp.
   Qed.
 
   Theorem group_cancel_r : forall x1 x2 y, x1 + y == x2 + y -> x1 == x2.
@@ -974,14 +974,14 @@ Section GroupTheory.
     (* x1 = x1+e = x1+(y+ -y) = (x1+y)+(-y) = (x2+y)+(-y)
       = x2+(y+ -y) = x2+e = x2 *)
     rewrite <- identityRight.
-    assert (0 == y + (-y)). group_simpl.
+    assert (0 == y + (-y)). group_simp.
     rewrite H0. rewrite <- associative. rewrite H.
-    rewrite associative. group_simpl.
+    rewrite associative. group_simp.
   Qed.
 
   Theorem group_inv_inv : forall x,  - - x == x.
   Proof.
-    intros. apply group_cancel_l with (- x). group_simpl.
+    intros. apply group_cancel_l with (- x). group_simp.
   Qed.
 
   Theorem group_inv_distr : forall x y, - (x + y) == (- y) + (- x).
@@ -991,7 +991,7 @@ Section GroupTheory.
       = (x+y)+(-y+ -x), by cancel_l, got it *)
     apply group_cancel_l with (x + y).
     rewrite inverseRight. rewrite <- associative. rewrite (associative x y).
-    group_simpl.
+    group_simp.
   Qed.
     
   (** Theorem 14.2 *)
@@ -1001,7 +1001,7 @@ Section GroupTheory.
     intros.
     (* left mult a *)
     apply group_cancel_l with (a).
-    rewrite <- associative. group_simpl.
+    rewrite <- associative. group_simp.
   Qed.
 
   (* a + x = b /\ a + y = b -> x = -a + b /\ y = -a + b *)
@@ -1018,7 +1018,7 @@ Section GroupTheory.
   Proof.
     intros.
     (* right mult a *)
-    apply group_cancel_r with (a). group_simpl.
+    apply group_cancel_r with (a). group_simp.
   Qed.
 
   (* (x + a = b /\ y + a = b) -> (x = b + -a /\ y = b + -a) *)
@@ -1063,8 +1063,8 @@ Section GroupTheory.
       (group_batch l1) + (group_batch l2) ==  group_batch (l1 ++ l2).
     Proof.
       (* reduct to fold_left *)
-      destruct l1,l2; simpl; group_simpl.
-      - rewrite app_nil_r. group_simpl.
+      destruct l1,l2; simpl; group_simp.
+      - rewrite app_nil_r. group_simp.
       - rename a into a1, a0 into a2.
         (* H1. forall a l1 l2, Σ a & (l1 ++ l2) = Σ (Σ a & l1) & l2
            H2. forall a b l, a + Σ b & l = Σ (a + b) & l
@@ -1084,7 +1084,7 @@ Section GroupTheory.
           assert (forall l a1 a2, a1 == a2 -> Σ a1 & l == Σ a2 & l).
           { induction l0; intros; simpl in *; auto.
             apply IHl0. rewrite H. easy. }
-          apply H. group_simpl. }
+          apply H. group_simp. }
         assert (forall a b l, Σ a & (b :: l) = Σ (a + b) & l) as H3.
         { intros. gd b. gd a. induction l; auto. }
         rewrite H1. rewrite H2. rewrite H3. easy.
@@ -1146,7 +1146,7 @@ Section GroupTheory.
   Proof.
     intros.
     (* -e = -e + e = e *)
-    rewrite <- identityRight. group_simpl.
+    rewrite <- identityRight. group_simp.
   Qed.
 
 End GroupTheory.
@@ -1445,11 +1445,11 @@ Section Theory.
 
   (** a <> 0 -> (1/a) * a = 1 *)
   Lemma field_mul_inv1_l : forall a : A, ~(a == 0)%A -> ((A1/a) * a == 1)%A.
-  Proof. intros. simpl. group_simpl. apply field_mul_inv_l. auto. Qed.
+  Proof. intros. simpl. group_simp. apply field_mul_inv_l. auto. Qed.
   
   (** a <> 0 -> a * (1/a) = 1 *)
   Lemma field_mul_inv1_r : forall a : A, ~(a == 0)%A -> (a * (A1/a) == 1)%A.
-  Proof. intros. simpl. group_simpl. apply field_mul_inv_r. auto. Qed.
+  Proof. intros. simpl. group_simp. apply field_mul_inv_r. auto. Qed.
   
   (** a <> 0 -> a * b = a * c -> b = c *)
   Lemma field_mul_cancel_l : forall a b c : A,

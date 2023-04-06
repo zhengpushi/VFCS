@@ -21,6 +21,8 @@
 
 
 Require Export TupleExt ListExt AlgebraStructure.
+Require Export AlgebraStructureSetoid.
+Module ASS := AlgebraStructureSetoid. (* a short name *)
 Require Export Sequence.
 
 
@@ -553,18 +555,18 @@ Section mat0_mat1.
   Context {A : Type} (A0 A1 : A).
 
   (** Zero matrix *)
-  Definition mat0 (r c : nat) : mat r c := mk_mat (fun _ _ => A0).
+  Definition mat0 {r c : nat} : mat r c := mk_mat (fun _ _ => A0).
 
   (** Identity matrix *)
-  Definition mat1 (n : nat) : mat n n :=
+  Definition mat1 {n : nat} : mat n n :=
     mk_mat (fun i j => if (i =? j)%nat then A1 else A0).
   
   (** mat0\T = mat0 *)
-  Lemma mtrans_mat0_eq_mat0 : forall {r c : nat}, (mat0 r c)\T == mat0 c r.
+  Lemma mtrans_mat0_eq_mat0 : forall {r c : nat}, (@mat0 r c)\T == mat0.
   Proof. lma. Qed.
   
   (** mat1\T = mat1 *)
-  Lemma mtrans_mat1_eq_mat1 : forall {n : nat}, (mat1 n)\T == (mat1 n).
+  Lemma mtrans_mat1_eq_mat1 : forall {n : nat}, (@mat1 n)\T == mat1.
   Proof. lma. replace (j =? i) with (i =? j); auto. apply Nat.eqb_sym. Qed.
 
 End mat0_mat1.
@@ -591,6 +593,14 @@ Section malg.
     mk_mat (fun i j => m1$i$j + m2$i$j).
   Infix "+" := madd : mat_scope.
 
+  (** madd is a proper morphism *)
+  Global Instance madd_mor : forall r c, Proper (meq ==> meq ==> meq) (madd (r:=r)(c:=c)).
+  Proof.
+    simp_proper. lma. rewrite (meq_iff_mnth A0) in H,H0.
+    specialize (H i j Hi Hj). specialize (H0 i j Hi Hj).
+    solve_mnth. rewrite H,H0. auto.
+  Qed.
+
   (** m1 + m2 = m2 + m1 *)
   Lemma madd_comm : forall {r c} (m1 m2 : mat r c), m1 + m2 == (m2 + m1).
   Proof. lma. amonoid_simp. Qed.
@@ -600,11 +610,11 @@ Section malg.
   Proof. lma. monoid_simp. Qed.
 
   (** mat0 + m = m *)
-  Lemma madd_0_l : forall {r c} (m : mat r c), mat0 A0 r c + m == m. 
+  Lemma madd_0_l : forall {r c} (m : mat r c), mat0 A0 + m == m. 
   Proof. lma. monoid_simp. Qed.
 
   (** m + mat0 = m *)
-  Lemma madd_0_r : forall {r c} (m : mat r c), m + mat0 A0 r c == m. 
+  Lemma madd_0_r : forall {r c} (m : mat r c), m + mat0 A0 == m. 
   Proof. lma. monoid_simp. Qed.
   
   (** Get element of addition with two matrics equal to additon of 
@@ -625,6 +635,15 @@ Section malg.
       rewrite !nth_map_seq; auto.
       all: try rewrite map_length, seq_length; auto. monoid_simp.
   Qed.
+
+  Global Instance Monoid_MatAadd : forall r c, ASS.Monoid (@madd r c) (mat0 A0) meq.
+  intros; constructor; try apply meq_equiv; try constructor; intros.
+  apply madd_mor. apply madd_assoc. apply madd_0_l. apply madd_0_r. Qed.
+
+  Section test_monoid.
+    (* Goal forall r c (m1 m2 : @mat A r c), mat0 A0 + m1 == m1. *)
+    (*   ASS.monoid_simp. Qed. *)
+  End test_monoid.
   
   (** *** Matrix opposition *)
   
@@ -651,23 +670,23 @@ Section malg.
   Proof. lma. rewrite group_inv_distr. monoid_simp. f_equal. amonoid_simp. Qed.
 
   (** mat0 - m = - m *)
-  Lemma msub_0_l : forall {r c} (m : mat r c), (mat0 A0 r c) - m == - m.
+  Lemma msub_0_l : forall {r c} (m : mat r c), mat0 A0 - m == - m.
   Proof. lma. monoid_simp. Qed.
 
   (** m - mat0 = m *)
-  Lemma msub_0_r : forall {r c} (m : mat r c), m - (mat0 A0 r c) == m.
+  Lemma msub_0_r : forall {r c} (m : mat r c), m - mat0 A0 == m.
   Proof. lma. rewrite (group_inv_id (G:=AG)). monoid_simp. Qed.
 
   (** (-m) + m = mat0 *)
-  Lemma madd_opp_l : forall r c (m : mat r c), (-m) + m == mat0 A0 r c.
+  Lemma madd_opp_l : forall r c (m : mat r c), (-m) + m == mat0 A0.
   Proof. lma. group_simp. Qed.
 
   (** m + (-m) = mat0 *)
-  Lemma madd_opp_r : forall r c (m : mat r c), m + (-m) == mat0 A0 r c.
+  Lemma madd_opp_r : forall r c (m : mat r c), m + (-m) == mat0 A0.
   Proof. lma. group_simp. Qed.
 
   (** m - m = mat0 *)
-  Lemma msub_self : forall {r c} (m : mat r c), m - m == (mat0 A0 r c).
+  Lemma msub_self : forall {r c} (m : mat r c), m - m == (mat0 A0).
   Proof. lma. group_simp. Qed.
 
 
@@ -692,11 +711,11 @@ Section malg.
   Qed.
 
   (** 0 c* m = mat0 *)
-  Lemma mcmul_0_l : forall {r c} (m : mat r c), A0 c* m == mat0 A0 r c.
+  Lemma mcmul_0_l : forall {r c} (m : mat r c), A0 c* m == mat0 A0.
   Proof. lma. Qed.
 
   (** a c* mat0 = mat0 *)
-  Lemma mcmul_0_r : forall {r c} a, a c* mat0 A0 r c == mat0 A0 r c.
+  Lemma mcmul_0_r : forall {r c} a, a c* (@mat0 _ A0 r c) == mat0 A0.
   Proof. lma. Qed.
 
   (** 1 c* m = m *)
@@ -705,7 +724,7 @@ Section malg.
 
   (** a c* mat1 equal to a diagonal matrix which main diagonal elements all are a *)
   Lemma mcmul_1_r : forall {n} a,
-      a c* mat1 A0 A1 n == mk_mat (fun i j => if (i =? j)%nat then a else A0).
+      a c* (@mat1 _ A0 A1 n) == mk_mat (fun i j => if (i =? j)%nat then a else A0).
   Proof.
     lma. unfold mcmul,mat1. destruct (i =? j); ring.
   Qed.
@@ -755,15 +774,15 @@ Section malg.
   Proof. lma. rewrite <- seqsum_add. apply seqsum_eq; intros. ring. Qed.
 
   (** mat0 * m = mat0 *)
-  Lemma mmul_0_l : forall {r c s} (m : mat c s), (mat0 A0 r c) * m == mat0 A0 r s.
+  Lemma mmul_0_l : forall {r c s} (m : mat c s), (@mat0 _ A0 r c) * m == mat0 A0.
   Proof. lma. apply seqsum_seq0. intros. ring. Qed.
 
   (** m * mat0 = mat0 *)
-  Lemma mmul_0_r : forall {r c s} (m : mat r c), m * (mat0 A0 c s) == mat0 A0 r s.
+  Lemma mmul_0_r : forall {r c s} (m : mat r c), m * (@mat0 _ A0 c s) == mat0 A0.
   Proof. lma. apply seqsum_seq0. intros. ring. Qed.
 
   (** mat1 * m = m *)
-  Lemma mmul_1_l : forall {r c : nat} (m : mat r c), mat1 A0 A1 r * m == m.
+  Lemma mmul_1_l : forall {r c : nat} (m : mat r c), mat1 A0 A1 * m == m.
   Proof.
     lma. apply (seqsum_unique _ _ _ i); auto.
     - rewrite Nat.eqb_refl. ring.
@@ -771,7 +790,7 @@ Section malg.
   Qed.
 
   (** m * mat1 = m *)
-  Lemma mmul_1_r : forall {r c : nat} (m : mat r c), m * mat1 A0 A1 c == m.
+  Lemma mmul_1_r : forall {r c : nat} (m : mat r c), m * mat1 A0 A1 == m.
   Proof.
     lma. apply (seqsum_unique _ _ _ j); auto.
     - rewrite Nat.eqb_refl. ring.
@@ -1050,7 +1069,7 @@ Section matrix_inversion.
 
     Definition minv {n} (m : smat n) := (A1 / det m) c* (madj m).
 
-    Lemma minv_correct_r : forall n (m : smat n), m * (minv m) == mat1 n.
+    Lemma minv_correct_r : forall n (m : smat n), m * (minv m) == mat1.
     Proof.
       induction n; intros.
       - lma.
@@ -1070,12 +1089,12 @@ Section matrix_inversion.
 
     (** inv_1_1 m * m = mat1 *)
     Lemma inv_1_1_correct_l : forall (m : smat 1),
-        det m <> A0 -> (inv_1_1 m) * m == mat1 1.
+        det m <> A0 -> (inv_1_1 m) * m == mat1.
     Proof. lma. reverse_neq0_neq0 A0. Qed.
 
     (** m * inv_1_1 m = mat1 *)
     Lemma inv_1_1_correct_r : forall (m : smat 1),
-        det m <> A0 -> m * (inv_1_1 m) == mat1 1.
+        det m <> A0 -> m * (inv_1_1 m) == mat1.
     Proof. lma. reverse_neq0_neq0 A0. Qed.
 
     (* ======================================================================= *)
@@ -1094,12 +1113,12 @@ Section matrix_inversion.
     
     (** inv_2_2 m * m = mat1 *)
     Lemma inv_2_2_correct_l : forall (m : smat 2),
-        det m <> A0 -> (inv_2_2 m) * m == mat1 2.
+        det m <> A0 -> (inv_2_2 m) * m == mat1.
     Proof. lma; reverse_neq0_neq0 A0. Qed.
     
     (** m * inv_2_2 m = mat1 *)
     Lemma inv_2_2_correct_r : forall (m : smat 2),
-        det m <> A0 -> m * (inv_2_2 m) == mat1 2.
+        det m <> A0 -> m * (inv_2_2 m) == mat1.
     Proof. lma; reverse_neq0_neq0 A0. Qed.
     
     (* ======================================================================= *)
@@ -1127,12 +1146,12 @@ Section matrix_inversion.
     
     (** inv_3_3 m * m = mat1 *)
     Lemma inv_3_3_correct_l : forall (m : smat 3),
-        det m <> A0 -> (inv_3_3 m) * m == mat1 3.
+        det m <> A0 -> (inv_3_3 m) * m == mat1.
     Proof. lma; reverse_neq0_neq0 A0. Qed.
     
     (** m * inv_3_3 m = mat1 *)
     Lemma inv_3_3_correct_r : forall (m : smat 3),
-        det m <> A0 -> m * (inv_3_3 m) == mat1 3.
+        det m <> A0 -> m * (inv_3_3 m) == mat1.
     Proof. lma; reverse_neq0_neq0 A0. Qed.
   End concrete.
   
