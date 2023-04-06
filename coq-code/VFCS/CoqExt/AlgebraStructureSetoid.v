@@ -655,23 +655,34 @@ End Instances.
 (** ** Extra Theories *)
 (* What' a theory? a group of properties related to this sturcture *)
 
-(* deprecated *)
-(** monoid rewriting, need manualy specify the name of a Instance.
-    It is strict, but less automated. *)
-Ltac monoid_rw_old M :=
-  rewrite (@associative _ _ _ (@monoidAssoc _ _ _ M)) ||
-    rewrite (@identityLeft _ _ _ _ (@monoidIdL _ _ _ M)) ||
-    rewrite (@identityRight _ _ _ _ (@monoidIdR _ _ _ M)).
-
-Ltac monoid_simp_old M := intros; repeat monoid_rw_old M; auto.
-
 (** monoid rewriting, automatic inference the Instance. But sometimes it will fail *)
 Ltac monoid_rw :=
-  rewrite identityLeft ||
-    rewrite identityRight ||
-    rewrite associative.
+  repeat (try rewrite identityLeft;
+          try rewrite identityRight;
+          try rewrite associative).
 
-Ltac monoid_simp := intros; repeat monoid_rw; try reflexivity; auto.
+Ltac monoid_simp := intros; monoid_rw; try reflexivity; auto.
+
+(** monoid rewriting with given monoid-instance-name.
+    It is strict and powerful (such as "a + (e + b)" could be solved), 
+    but less automated. *)
+Ltac monoid_rw_strict M :=
+  repeat (try rewrite (@identityLeft _ _ _ _ (@monoidIdL _ _ _ _ M));
+          try rewrite (@identityRight _ _ _ _ (@monoidIdR _ _ _ _ M));
+          try rewrite (@associative _ _ _ (@monoidAssoc _ _ _ _ M))).
+
+Ltac monoid_simp_strict M := intros; monoid_rw_strict M; auto.
+
+Section tac_example.
+  Import Reals.
+  Open Scope R.
+  Goal forall a b c : R, a + (0 + b + 0) = a + b.
+    intros.
+    (* monoid_rw. *)
+    monoid_rw_strict Monoid_RAdd. auto.
+  Qed.
+End tac_example.
+
 
 (** This example shows that, if we give a theorem that its parameter of a instance 
     declaration in a section, then the application of this theorem will fail, and 
@@ -864,14 +875,41 @@ End Instances.
 
 (** ** Extra Theories *)
 
+(** group rewriting, automatic inference the Instance. But sometimes it will fail *)
 Ltac group_rw :=
-  rewrite inverseLeft ||
-    rewrite inverseRight.
+  repeat (try rewrite inverseLeft;
+          try rewrite inverseRight).
+
+(** group rewriting with given group-instance-name.
+    It is strict and powerful (such as "a + (-b + b)" could be solved), 
+    but less automated. *)
+Ltac group_rw_strict G :=
+  repeat (try rewrite (@inverseLeft _ _ _ _ _ (@groupInvL _ _ _ _ _ G));
+          try rewrite (@inverseRight _ _ _ _ _ (@groupInvR _ _ _ _ _ G))).
 
 Ltac group_simp :=
+  intros;
   repeat (group_rw || monoid_rw || group_rw);
   try reflexivity;
   auto.
+
+Ltac group_simp_strict G :=
+  intros;
+  repeat (group_rw_strict G ||
+            monoid_simp_strict (@groupMonoid _ _ _ _ _ G) ||
+              group_rw_strict G);
+  try reflexivity;
+  auto.
+
+Section tac_example.
+  Import Reals.
+  Open Scope R_scope.
+  
+  Goal forall a b : R, a + (b + (a + (-a))) = a + b.
+    (* group_simp. (* a bit complex expression cannot be solved automatically *) *)
+    group_simp_strict Group_RAdd.
+  Qed.
+End tac_example.
 
 (*
   Group Theory

@@ -636,20 +636,28 @@ Section malg.
       all: try rewrite map_length, seq_length; auto. monoid_simp.
   Qed.
 
+  (** *** Monoid structure over {madd,mat0,meq} *)
   Global Instance Monoid_MatAadd : forall r c, ASS.Monoid (@madd r c) (mat0 A0) meq.
   intros; constructor; try apply meq_equiv; try constructor; intros.
   apply madd_mor. apply madd_assoc. apply madd_0_l. apply madd_0_r. Qed.
 
-  Section test_monoid.
+  Section test.
     (* Goal forall r c (m1 m2 : @mat A r c), mat0 A0 + m1 == m1. *)
     (*   ASS.monoid_simp. Qed. *)
-  End test_monoid.
+  End test.
   
   (** *** Matrix opposition *)
   
   Definition mopp {r c} (m : mat r c) : mat r c :=
     mk_mat (fun i j => - (m$i$j)).
   Notation "- a" := (mopp a) : mat_scope.
+
+  (** mopp is a proper morphism *)
+  Global Instance mopp_mor : forall r c, Proper (meq ==> meq) (mopp (r:=r)(c:=c)).
+  Proof.
+    simp_proper. lma. rewrite (meq_iff_mnth A0) in H.
+    specialize (H i j Hi Hj). solve_mnth. rewrite H. auto.
+  Qed.
 
   (** - (- m) = m *)
   Lemma mopp_opp : forall {r c} (m : mat r c), - (- m) == m.
@@ -688,6 +696,24 @@ Section malg.
   (** m - m = mat0 *)
   Lemma msub_self : forall {r c} (m : mat r c), m - m == (mat0 A0).
   Proof. lma. group_simp. Qed.
+
+  (** *** Group structure over {madd,mat0,mopp,meq} *)
+  Global Instance Group_MatAadd : forall r c, ASS.Group (@madd r c) (mat0 A0) mopp meq.
+  intros; constructor; try apply meq_equiv.
+  apply Monoid_MatAadd.
+  constructor. apply madd_opp_l.
+  constructor. apply madd_opp_r.
+  apply madd_mor. apply mopp_mor. Qed.
+
+  Section test.
+    Goal forall r c (m1 m2 : @mat A r c), mat0 A0 + m1 + (-m2) + m2 == m1.
+      intros.
+      (* rewrite ASS.identityLeft. *)
+      (* rewrite ASS.associative. *)
+      (* rewrite ASS.inverseLeft. *)
+      ASS.group_simp.
+    Qed.
+  End test.
 
 
   (** *** Below, we need a ring structure *)
