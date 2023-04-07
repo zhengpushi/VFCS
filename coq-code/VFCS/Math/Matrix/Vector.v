@@ -246,7 +246,7 @@ Section vec_ring.
 
   (** vcmul is a proper morphism *)
   Global Instance vcmul_mor : forall n, Proper (eq ==> meq ==> meq) (vcmul (n:=n)).
-  Proof. intros. apply (mcmul_mor (A0:=A0)). Qed.
+  Proof. intros. apply mcmul_mor. Qed.
 
   (** a c* (b c* v) = (a * b) c* v *)
   Lemma vcmul_assoc : forall {n} a b (v : vec n), a c* (b c* v) == (a * b) c* v.
@@ -273,6 +273,13 @@ Section vec_ring.
   (** 0 c* v = vec0 *)
   Lemma vcmul_0_l : forall {n} (v : vec n), A0 c* v == vec0.
   Proof. intros. apply mcmul_0_l. Qed.
+
+  Definition vmulc {n} (v : vec n) a : vec n := mmulc (Amul:=Amul) v a.
+  Infix "*c" := vmulc : vec_scope.
+
+  (** v *c a = a c* v *)
+  Lemma vmulc_eq_vcmul : forall {n} a (v : vec n), (v *c a) == (a c* v).
+  Proof. intros. apply mmulc_eq_mcmul. Qed.
 
   
   (** *** Vector dot product (version 1, by {fold_left,map,seq}) *)

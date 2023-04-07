@@ -27,6 +27,7 @@ VFCS/CoqExt/StrExt.v
 VFCS/CoqExt/TupleExt.v
 VFCS/CoqExt/ListExt.v
 VFCS/CoqExt/Sequence.v
+VFCS/CoqExt/MyExtrOCamlR.v
 
 # ====== Math ========================================================
 VFCS/Math/Complex/Complex.v
@@ -51,9 +52,9 @@ VFCS/Math/Matrix/VectorRfun.v
 
 VFCS/Math/LinearAlgebra/PermutationExt.v
 
+VFCS/Math/Quaternion/Quaternion.v
 
 VFCS/Math/DifferenceEquation/DifferenceEquation.v
-#VFCS/Math/Quaternion/Quaternion.v
 VFCS/Math/LaplaceTransform/LaplaceTransform.v
 
 # ====== Automatic Control System ====================================

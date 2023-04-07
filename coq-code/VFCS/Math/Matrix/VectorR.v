@@ -120,7 +120,7 @@ Infix "c*" := vcmul : vec_scope.
 
 (** vcmul is a proper morphism *)
 Global Instance vcmul_mor : forall n, Proper (eq ==> meq ==> meq) (vcmul (n:=n)).
-Proof. intros. apply (vcmul_mor (A0:=A0)). Qed.
+Proof. apply vcmul_mor. Qed.
 
 Lemma vcmul_assoc : forall {n} a b (v : vec n), a c* (b c* v) == (a * b) c* v.
 Proof. intros. apply vcmul_assoc. Qed.
@@ -140,6 +140,13 @@ Proof. intros. apply vcmul_0_l. Qed.
 
 Lemma vcmul_1_l : forall {n} (v : vec n), A1 c* v == v.
 Proof. intros. apply vcmul_1_l. Qed.
+
+Definition vmulc {n} (v : vec n) a : vec n := vmulc v a (Amul:=Amul).
+Infix "*c" := vmulc : vec_scope.
+
+Lemma vmulc_eq_vcmul : forall {n} a (v : vec n), (v *c a) == (a c* v).
+Proof. intros. apply vmulc_eq_vcmul. Qed.
+
 
 (** *** vector dot product *)
 Definition vdot {n} (v1 v2 : vec n) := vdot v1 v2 (Aadd:=Aadd)(A0:=A0)(Amul:=Amul).
@@ -371,7 +378,7 @@ Section vec_3d.
   (** skew symmetry matrix *)
   Definition skew_sym_mat_of_v3 (v : vec 3) : smat 3 :=
     let '(x,y,z) := v2t_3 v in
-    (mk_mat_3_3
+    (mat_3_3
        0    (-z)  y
        z     0    (-x)
        (-y)  x     0)%R.
@@ -386,19 +393,19 @@ Section vec_3d.
   Proof. intros. cbv. ring. Qed.
 
   (** cross product (vector product) of two 3-dim vectors *)
-  Definition vcross3 (v1 v2 : vec 3) : vec 3 := ((skew_sym_mat_of_v3 v1) * v2)%mat.
+  Definition vcross3 (v1 v2 : vec 3) : vec 3 := (skew_sym_mat_of_v3 v1) * v2.
 
   Definition det3 := det3 (Aadd:=Rplus)(Aopp:=Ropp)(Amul:=Rmult).
   
   (** If a matrix is SO3? *)
   (* SO(n): special orthogonal group *)
   Definition so3 (m : smat 3) : Prop := 
-    let so3_mul_unit : Prop := ((m \T) * m == mat1)%mat in
+    let so3_mul_unit : Prop := m\T * m == mat1 in
     let so3_det : Prop := (det3 m) = 1 in
     so3_mul_unit /\ so3_det.
   
   (** Angle between two vectors *)
-  Definition vangle3 (v0 v1 : vec 3) : R := acos (m2t_1_1 (v0\T * v1)%mat).
+  Definition vangle3 (v0 v1 : vec 3) : R := acos (m2t_1_1 (v0\T * v1)).
 
   (** The angle between (1,0,0) and (1,1,0) is 45 degree, i.e., π/4 *)
   Example vangle3_ex1 : vangle3 (l2v 3 [1;0;0]) (l2v _ [1;1;0]) = PI/4.
@@ -410,7 +417,7 @@ Section vec_3d.
   (** 根据两个向量来计算旋转轴 *)
   Definition rot_axis_by_twovec (v0 v1 : vec 3) : vec 3 :=
     let s : R := (vlen v0 * vlen v1)%R in
-    (s c* (vcross3 v0 v1))%mat.
+    s c* (vcross3 v0 v1).
 
   (* 谓词：两向量不共线（不平行的） *)
 (* Definition v3_non_colinear (v0 v1 : V3) : Prop :=

@@ -74,12 +74,10 @@ Definition m2t_3_3 (m : mat 3 3) : T_3_3 := m2t_3_3 m.
 Definition m2t_1_1 (m : mat 1 1) := m2t_1_1 m.
 
 (** *** build matrix from elements *)
-Definition mk_mat_1_1 a11 : mat 1 1 :=
-  mk_mat_1_1 (A0:=A0) a11.
-Definition mk_mat_3_1 a11 a12 a13 : mat 3 1 :=
-  mk_mat_3_1 (A0:=A0) a11 a12 a13.
-Definition mk_mat_3_3 a11 a12 a13 a21 a22 a23 a31 a32 a33 : mat 3 3 :=
-  mk_mat_3_3 (A0:=A0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
+Definition mat_1_1 a11 : mat 1 1 := mat_1_1 (A0:=A0) a11.
+Definition mat_3_1 a11 a12 a13 : mat 3 1 := mat_3_1 (A0:=A0) a11 a12 a13.
+Definition mat_3_3 a11 a12 a13 a21 a22 a23 a31 a32 a33 : mat 3 3 :=
+  mat_3_3 (A0:=A0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
 
 (** *** matrix transposition *)
 Definition mtrans {r c : nat} (m : mat r c) : mat c r := mtrans m.
@@ -157,7 +155,7 @@ Definition mcmul {r c} a (m : mat r c) : mat r c := mcmul a m (Amul:=Amul).
 Infix " 'c*' " := mcmul : mat_scope.
 
 Global Instance mcmul_mor : forall r c,  Proper (eq ==> meq ==> meq) (@mcmul r c).
-Proof. intros. apply (mcmul_mor (A0:=A0)). Qed.
+Proof. apply mcmul_mor. Qed.
 
 Lemma mcmul_assoc : forall {r c} a b (m : mat r c), a c* (b c* m) == (a * b) c* m.
 Proof. intros. apply mcmul_assoc. Qed.
@@ -178,6 +176,17 @@ Proof. intros. apply mcmul_1_l. Qed.
 
 Lemma mcmul_0_l : forall {r c} (m : mat r c), A0 c* m == mat0.
 Proof. intros. apply mcmul_0_l. Qed.
+
+(** Right scalar multiplication of matrix *)
+Definition mmulc {r c} (m : mat r c) (a : A) : mat r c := mmulc m a (Amul:=Amul).
+Infix "*c" := mmulc : mat_scope.
+
+Lemma mmulc_eq_mcmul : forall {r c} (a : A) (m : mat r c), m *c a == a c* m.
+Proof. intros. apply mmulc_eq_mcmul. Qed.
+
+Global Instance mmulc_mor : forall r c, Proper (meq ==> eq ==> meq) (mmulc (r:=r)(c:=c)).
+Proof. apply mmulc_mor. Qed.
+
 
 (** *** matrix multiplication *)
 Definition mmul {r c s} (m1 : mat r c) (m2 : mat c s) : mat r s :=

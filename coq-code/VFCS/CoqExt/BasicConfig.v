@@ -163,11 +163,11 @@ Open Scope dlist.
 
 (** Scope for matrix type *)
 Declare Scope mat_scope.
-Delimit Scope mat_scope with mat.
-Open Scope mat.
+Delimit Scope mat_scope with M.
+Open Scope mat_scope.
 
 (** Scope for vector type *)
 Declare Scope vec_scope.
-Delimit Scope vec_scope with vec.
+Delimit Scope vec_scope with V.
 Open Scope vec_scope.
 

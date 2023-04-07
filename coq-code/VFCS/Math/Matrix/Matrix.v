@@ -98,7 +98,7 @@ Section mnth.
   (* Unsafe access (caller must assure the index manually) *)
   Notation "m $ i $ j " := (matf (A:=A) m i j) : mat_scope.
 
-  Lemma meq_iff_mnth_raw : forall {r c : nat} (m1 m2 : mat r c),
+  Lemma meq_eta : forall {r c : nat} (m1 m2 : mat r c),
       m1 == m2 <-> (forall i j, i < r -> j < c -> m1$i$j = m2$i$j).
   Proof. auto. reflexivity. Qed.
 
@@ -474,30 +474,30 @@ Section mk_mat.
   Context {A : Type} {A0 : A}.
   Notation l2m := (l2m A0).
   
-  Definition mk_mat_0_c c : mat 0 c := l2m [].
+  Definition mat_0_c c : mat 0 c := l2m [].
 
-  Definition mk_mat_1_1 (a11 : A) : mat 1 1 := l2m [[a11]].
-  Definition mk_mat_1_2 (a11 a12 : A) : mat 1 2 := l2m [[a11;a12]].
-  Definition mk_mat_1_3 (a11 a12 a13 : A) : mat 1 3 := l2m [[a11;a12;a13]].
-  Definition mk_mat_1_4 (a11 a12 a13 a14 : A) : mat 1 4 := l2m [[a11;a12;a13;a14]].
-  Definition mk_mat_1_c c (l : list A) : mat 1 c := l2m [l].
+  Definition mat_1_1 (a11 : A) : mat 1 1 := l2m [[a11]].
+  Definition mat_1_2 (a11 a12 : A) : mat 1 2 := l2m [[a11;a12]].
+  Definition mat_1_3 (a11 a12 a13 : A) : mat 1 3 := l2m [[a11;a12;a13]].
+  Definition mat_1_4 (a11 a12 a13 a14 : A) : mat 1 4 := l2m [[a11;a12;a13;a14]].
+  Definition mat_1_c c (l : list A) : mat 1 c := l2m [l].
   
-  Definition mk_mat_r_0 r : mat r 0 := l2m [].
+  Definition mat_r_0 r : mat r 0 := l2m [].
 
-  Definition mk_mat_2_1 (a11 a21 : A) : mat 2 1 := l2m [[a11];[a21]].
-  Definition mk_mat_2_2 (a11 a12 a21 a22 : A) : mat 2 2 := l2m [[a11;a12];[a21;a22]].
+  Definition mat_2_1 (a11 a21 : A) : mat 2 1 := l2m [[a11];[a21]].
+  Definition mat_2_2 (a11 a12 a21 a22 : A) : mat 2 2 := l2m [[a11;a12];[a21;a22]].
   
-  Definition mk_mat_3_1 (a11 a21 a31 : A) : mat 3 1 := l2m [[a11];[a21];[a31]].
-  Definition mk_mat_3_3 (a11 a12 a13 a21 a22 a23 a31 a32 a33 : A) : mat 3 3 :=
+  Definition mat_3_1 (a11 a21 a31 : A) : mat 3 1 := l2m [[a11];[a21];[a31]].
+  Definition mat_3_3 (a11 a12 a13 a21 a22 a23 a31 a32 a33 : A) : mat 3 3 :=
     l2m [[a11;a12;a13]; [a21;a22;a23]; [a31;a32;a33]].
 
-  Definition mk_mat_4_1 (a11 a21 a31 a41 : A) : mat 4 1 :=
+  Definition mat_4_1 (a11 a21 a31 a41 : A) : mat 4 1 :=
     l2m [[a11];[a21];[a31];[a41]].
-  Definition mk_mat_4_4 (a11 a12 a13 a14 a21 a22 a23 a24
+  Definition mat_4_4 (a11 a12 a13 a14 a21 a22 a23 a24
                            a31 a32 a33 a34 a41 a42 a43 a44 : A) : mat 4 4 :=
     l2m [[a11;a12;a13;a14]; [a21;a22;a23;a24];[a31;a32;a33;a34]; [a41;a42;a43;a44]].
   
-  Definition mk_mat_r_1 r (l : list A) : mat r 1 :=
+  Definition mat_r_1 r (l : list A) : mat r 1 :=
     mk_mat (fun i j : nat => if (j =? 0)%nat then (nth i l A0) else A0).
 End mk_mat.
 
@@ -639,12 +639,12 @@ Section malg.
   (** Get element of addition with two matrics equal to additon of 
       corresponded elements. *)
   Lemma madd_nth : forall {r c} (m1 m2 : mat r c) i j,
-      (m1 + m2)%mat ! i ! j = ((m1!i!j) + (m2!i!j))%A.
+      (m1 + m2) ! i ! j = ((m1!i!j) + (m2!i!j))%A.
   Proof. intros. solve_mnth; monoid_simp. Qed.
 
   (** (m1 + m2)[i] = m1[i] + m2[i] *)
   Lemma mrow_madd : forall {r c} i (m1 m2 : mat r c),
-      i < r -> mrow i (m1 + m2)%mat = ((mrow i m1) + (mrow i m2))%list.
+      i < r -> mrow i (m1 + m2) = ((mrow i m1) + (mrow i m2))%list.
   Proof.
     intros. unfold mrow.
     apply nth_ext with (d:=A0) (d':=A0).
@@ -724,6 +724,10 @@ Section malg.
   Global Instance msub_mor : forall r c, Proper (meq ==> meq ==> meq) (msub (r:=r)(c:=c)).
   Proof. simp_proper. intros. unfold msub. rewrite H,H0. easy. Qed.
 
+  (** Rewrite msub: m1 - m2 = m1 + (-m2) *)
+  Lemma msub_rw : forall {r c} (m1 m2 : mat r c), m1 - m2 == m1 + (-m2).
+  Proof. intros. easy. Qed.
+
   (** m1 - m2 = -(m2 - m1) *)
   Lemma msub_comm : forall {r c} (m1 m2 : mat r c), m1 - m2 == - (m2 - m1).
   Proof. lma. rewrite group_inv_distr,group_inv_inv; auto. Qed.
@@ -802,7 +806,7 @@ Section malg.
   (** show it is a proper morphism *)
   Global Instance mcmul_mor : forall r c, Proper (eq ==> meq ==> meq) (mcmul (r:=r)(c:=c)).
   Proof.
-    simp_proper. lma. rewrite (meq_iff_mnth A0) in H0.
+    simp_proper. lma. rewrite meq_eta in H0.
     specialize (H0 i j Hi Hj). solve_mnth. rewrite H,H0. easy.
   Qed.
 
@@ -853,6 +857,19 @@ Section malg.
     unfold mtrace,mcmul; intros. rewrite seqsum_cmul_l. apply seqsum_eq.
     intros. simpl. ring.
   Qed.
+
+  (** Right scalar multiplication of matrix *)
+  Definition mmulc {r c} (m : mat r c) (a : A) : mat r c :=
+    mk_mat (fun i j => (m$i$j * a)).
+  Infix "*c" := mmulc : mat_scope.
+  
+  (** m *c a = a c* m *)
+  Lemma mmulc_eq_mcmul : forall {r c} (a : A) (m : mat r c), m *c a == a c* m.
+  Proof. lma. Qed.
+
+  (** show it is a proper morphism *)
+  Global Instance mmulc_mor : forall r c, Proper (meq ==> eq ==> meq) (mmulc (r:=r)(c:=c)).
+  Proof. simp_proper. intros. rewrite ?mmulc_eq_mcmul. rewrite H,H0. easy. Qed.
 
   
   (** *** Matrix multiplication *)
@@ -1005,7 +1022,7 @@ Section t2m_m2t.
     destruct t1 as ((a11,a12),a13).
     destruct t2 as ((a21,a22),a23).
     destruct t3 as ((a31,a32),a33).
-    exact (mk_mat_3_3 (A0:=A0) a11 a12 a13 a21 a22 a23 a31 a32 a33).
+    exact (mat_3_3 (A0:=A0) a11 a12 a13 a21 a22 a23 a31 a32 a33).
   Defined.
 
   (** mat_3x3 -> tuple 3x3. That is: ((a11,a12,a13),(a21,a22,a23),(a31,a32,a33)) *)
@@ -1082,7 +1099,7 @@ Section det.
   (* Compute map (fun l => map (fun i => (i, nth i l 0)) (seq 0 3)) dl. *)
   (* Let dl1 := map (fun l => map (fun i => (i, nth i l 0)) (seq 0 3)) dl. *)
   (* Variable a00 a01 a02 a10 a11 a12 a20 a21 a22 : A. *)
-  (* Definition m : smat 3 := mk_mat_3_3 a00 a01 a02 a10 a11 a12 a20 a21 a22. *)
+  (* Definition m : smat 3 := mat_3_3 a00 a01 a02 a10 a11 a12 a20 a21 a22. *)
   (* Compute map (fun l => map (fun (ij:nat * nat) => let (i,j) := ij in m!i!j) l) dl1. *)
 
   (* (** all items in a determinant *) *)
@@ -1328,9 +1345,9 @@ Section matrix_inversion.
   (** ** Direct compute inversion of a symbol matrix of 1/2/3rd order. *)
   Section FindFormula.
     Variable a11 a12 a13 a21 a22 a23 a31 a32 a33 : A.
-    Let m1 := mk_mat_1_1 (A0:=A0) a11.
-    Let m2 := mk_mat_2_2 (A0:=A0) a11 a12 a21 a22.
-    Let m3 := mk_mat_3_3 (A0:=A0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
+    Let m1 := mat_1_1 (A0:=A0) a11.
+    Let m2 := mat_2_2 (A0:=A0) a11 a12 a21 a22.
+    Let m3 := mat_3_3 (A0:=A0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
 
     (* Compute (m2l (minv m1)). *)
     (* Compute (m2l (minv m2)). *)
@@ -1406,26 +1423,17 @@ Section test.
 
   Coercion Q2Qc : Q >-> Qc.
 
-  Definition m1 := (mk_mat_3_3 (A0:=0) 1 2 3 4 5 6 7 8 9)%Qc.
+  Definition m1 := (mat_3_3 (A0:=0) 1 2 3 4 5 6 7 8 9)%Qc.
   (* Compute trace (Aadd:=Qcplus)(A0:=0)(n:=3) m1. *)
 
   Variable a11 a12 a13 a21 a22 a23 a31 a32 a33 : Qc.
-  Definition m2 := mk_mat_3_3 (A0:=0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
+  Definition m2 := mat_3_3 (A0:=0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
   (* Compute mrow 1 m2. *)
 
   (** *** rewrite support test *)
   Notation mcmul := (mcmul (Amul:=Qcmult)).
   Infix "c*" := mcmul : mat_scope.
 
-  (* We fined that, xxx_mor which proved in matrix cannot be used here. *)
-  Goal forall r c (m1 m2 : mat r c) (x : Qc), m1 == m2 -> x c* m1 == x c* m2.
-  Proof. intros. Fail rewrite H. Abort.
-  
-  (* we need to write declaration on Qc once again. *)
-  Instance mcmul_mor_Qc_demo : forall r c,  Proper (eq ==> meq ==> (@meq _ r c)) mcmul.
-  Proof. intros. apply (mcmul_mor (A0:=0)). Qed.
-      
-  (* Now, the rewrite is allowed. *)
   Goal forall r c (m1 m2 : mat r c) (x : Qc), m1 == m2 -> x c* m1 == x c* m2.
   Proof. intros. f_equiv. easy. Qed.
 

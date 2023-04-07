@@ -114,7 +114,7 @@ Infix "c*" := vcmul : vec_scope.
 
 (** vcmul is a proper morphism *)
 Global Instance vcmul_mor : forall n, Proper (eq ==> meq ==> meq) (vcmul (n:=n)).
-Proof. intros. apply (vcmul_mor (A0:=A0)). Qed.
+Proof. apply vcmul_mor. Qed.
 
 Lemma vcmul_assoc : forall {n} a b (v : vec n), a c* (b c* v) == (a * b)%F c* v.
 Proof. intros. apply vcmul_assoc. Qed.
@@ -134,6 +134,13 @@ Proof. intros. apply vcmul_0_l. Qed.
 
 Lemma vcmul_1_l : forall {n} (v : vec n), A1 c* v == v.
 Proof. intros. apply vcmul_1_l. Qed.
+
+Definition vmulc {n} (v : vec n) a : vec n := vmulc v a (Amul:=Amul).
+Infix "*c" := vmulc : vec_scope.
+
+Lemma vmulc_eq_vcmul : forall {n} a (v : vec n), (v *c a) == (a c* v).
+Proof. intros. apply vmulc_eq_vcmul. Qed.
+
 
 (** *** vector dot product *)
 Definition vdot {n} (v1 v2 : vec n) := vdot v1 v2 (Aadd:=Aadd)(A0:=A0)(Amul:=Amul).

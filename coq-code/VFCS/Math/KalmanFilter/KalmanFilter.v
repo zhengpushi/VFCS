@@ -221,8 +221,8 @@ Axiom ERxkk1_847 :ERxkk1 ==  xk - ESxkk1. *)
   (** 将矩阵表达式的多项式转换到单项式：去掉减法，括号，
       注意，所有 (-a1)*a2 和 a1*(-a2) 都转化为 -(a1*a2) *)
   Ltac mat_poly2mono :=
-    unfold msub;             (* a - b = a + (-b) *)
     repeat rewrite
+      ?msub_rw,              (* a - b = a + (-b) *)
       ?mmul_add_distr_l,     (* a * (b + c) = a * b + a * c *)
       ?mmul_add_distr_r,     (* (a + b) * c = a * c + b * c *)
       ?mopp_0,               (* - 0 = 0 *)
@@ -265,8 +265,7 @@ Axiom ERxkk1_847 :ERxkk1 ==  xk - ESxkk1. *)
     rewrite <- ?mmul_assoc.
     rewrite <- ?msub_assoc.
     rewrite <- ?msub_assoc1.
-    rewrite mmul_1_l.
-    unfold msub.
+    rewrite mmul_1_l. rewrite ?msub_rw.
     rewrite ?madd_assoc. rewrite (madd_comm (-(Kk * vk))). rewrite <- ?madd_assoc.
     f_equiv. f_equiv.
     rewrite ?madd_assoc. f_equiv.
@@ -298,7 +297,7 @@ Axiom ERxkk1_847 :ERxkk1 ==  xk - ESxkk1. *)
     remember Kk'' as j.
     remember vk as k.
     (* 去掉所有括号，减法等，变成单项式 *)
-    unfold msub.
+    rewrite ?msub_rw.
     rewrite ?mmul_add_distr_l.     (* a * (b + c) = a * b + a * c *)
     rewrite ?mmul_add_distr_r.     (* (a + b) * c = a * c + b * c *)
     rewrite ?mmul_1_l.             (* 1 * a = a *)
@@ -554,10 +553,10 @@ Axiom ERxkk1_847 :ERxkk1 ==  xk - ESxkk1. *)
 
 
   (*tr(Pkk) = tr(Pkk1) - tr(P*T_H*T_K) - tr(KHP) + tr(K(HPT_H)T_K) *)
-  Lemma tr_Pkk_867: Tr(Pkk)  = Tr(Pkk1) -f 
-                                           Tr(Pkk1 * T(Hk) * T(Kk))  -f
-                                                                        Tr(Kk * Hk * Pkk1)  +f
-                                                                                               Tr(Kk * ( Hk * Pkk1 * T(Hk) + Rk) * T(Kk)) .
+  Lemma tr_Pkk_867:
+    tr(Pkk)  =
+      (tr(Pkk1) - tr(Pkk1 * Hk\T * Kk\T)%mat  - tr(Kk * Hk * Pkk1)%mat  +
+        tr(Kk * ( Hk * Pkk1 * Hk\T + Rk) * Kk\T)%mat)%F.
   Proof.
     assert(Tr(Pkk) = Tr(Pkk1 - Pkk1 * T(Hk) * T(Kk) - 
                           Kk * Hk * Pkk1 + 
