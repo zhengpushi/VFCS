@@ -309,7 +309,7 @@ Section Sum.
 
   (** Let's have an ring structure *)
   Context `{R : Ring A Aadd A0 Aopp Amul A1}.
-  Add Ring ring_inst : make_ring_theory.
+  Add Ring ring_inst : (make_ring_theory R).
   
   Infix "*" := Amul : A_scope.
 

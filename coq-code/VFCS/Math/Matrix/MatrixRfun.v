@@ -369,6 +369,14 @@ Proof. intros. apply mtrace_mul. Qed.
 (** ** Matrix theory applied to this type *)
 
 (** *** Derivate of matrix *)
+(* ref: page 162, QuanQuan, 多旋翼设计与控制 *)
+
+(** 标量(函数)对矩阵(函数)的梯度 *)
+(* Variable f : R -> R. *)
+(* Set Printing All. *)
+(* Check f '. *)
+(* Definition mderiv {r c} (a : A) (X : mat r c) := *)
+  
 
 
 (* ======================================================================= *)
@@ -407,14 +415,13 @@ Section test.
 End test.
 
 Section Example4CoordinateSystem.
-  Add Ring ring_inst : (make_ring_theory (A:=(R->R))).
-
   Open Scope fun_scope.
   Notation "1" := A1 : fun_scope.
   Notation "0" := A0 : fun_scope.
   Infix "+" := Aadd : fun_scope.
   Notation "- a" := (Aopp a) : fun_scope.
   Infix "*" := Amul : fun_scope.
+
   
   Variable ψ θ ϕ : A.
   Let cθ : A := fun t => cos (θ t).

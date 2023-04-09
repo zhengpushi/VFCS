@@ -494,6 +494,20 @@ Section fun_arith.
   Definition fdiv (u v : tpRFun) := fmul u (finv v).
   Definition fcmul (c : R) (u : tpRFun) := fun x => c * (u x).
 
+  (** Multiply with a natural number, i.e., sum the function by n times:
+    fnmul f 0 := fun x => 0
+    fnmul f 1 := f
+    fnmul f 2 := f + f, i.e., fun x => f x + f x
+    ...
+    fnmul f (S n) := fun x => f x + (fnmul f n)
+   *)
+  Fixpoint fnmul (n : nat) (f : tpRFun) : tpRFun :=
+    match n with
+    | O => fun x => 0
+    | S O => f
+    | S n' => fadd f (fnmul n' f)
+    end.
+
 End fun_arith.
 
 Infix "+" := fadd : fun_scope.
@@ -503,6 +517,7 @@ Infix "*" := fmul : fun_scope.
 Notation "/ f" := (finv f) : fun_scope.
 Infix "/" := fdiv : fun_scope.
 Infix "c*" := fcmul : fun_scope.
+Infix "n*" := fnmul : fun_scope.
 
 
 (** ** 有界函数 *)
@@ -593,6 +608,11 @@ Section fun_op_props.
   Proof. intros. apply fun_eq. intros. rewrite !fadd_ok, !fopp_ok.
          unfold fzero,fconst. ring. Qed.
 
+  (** Properties for real function subtraction *)
+  Lemma fsub_add : forall (u v w : tpRFun), u - (v + w) = u - v - w.
+  Proof. intros. apply fun_eq. intros. rewrite !fsub_ok,!fadd_ok. ring. Qed.
+  
+
   (** Properties for real function multiplication *)
   Lemma fmul_assoc : forall (u v w : tpRFun), (u * v) * w = u * (v * w).
   Proof. intros. apply fun_eq. intros. rewrite !fmul_ok. ring. Qed.
@@ -653,7 +673,37 @@ Section fun_op_props.
 
 End fun_op_props.
 
-Add Ring ring_inst : make_ring_theory.
+Add Ring ring_inst : (make_ring_theory Ring_Rfun).
+
+Section test.
+  Goal forall u v w : tpRFun, u - v * (u - w) = w * v - u * v + u.
+    intros. unfold fsub. ring. Qed.
+End test.
+
+(** An example showed that "R->R" and "tpRfun" are different in Coq when using ring 
+    tactic. *)
+Section test.
+  (* If we use "tpRfun", then it success *)
+  Goal let f : tpRFun := fone in f = f.
+    simpl. ring. Qed.
+
+  (* If we use "R->R", then it fail *)
+  Goal let f : R -> R := fone in f = f.
+    simpl. Fail ring.
+    unfold fone. unfold fconst.
+    Fail ring. Abort.
+End test.
+
+(** add this declaration to enable ring support over "R->R" type *)
+Add Ring ring_inst : (make_ring_theory Ring_Rfun (A:=(R->R))).
+
+Section test.
+  Goal let f : R -> R := fone in f = f.
+    simpl. Fail ring. (* Todo: why still fail?? *)
+    unfold fone. unfold fconst.
+    ring.
+  Qed.
+End test.
 
 
 (** ** Parity of function *)

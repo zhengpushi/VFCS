@@ -1119,25 +1119,28 @@ Section Instances.
 End Instances.
 
 (** ** Extra Theories *)
+
+(** make a coq ring object from our Ring object *)
+Lemma make_ring_theory `(R : Ring) :
+  ring_theory A0 A1 Aadd Amul (fun a b => Aadd a (Aopp b)) Aopp eq.
+Proof.
+  constructor; intros;
+    try (rewrite ?identityLeft,?associative; reflexivity);
+    try (rewrite commutative; reflexivity).
+  rewrite distributiveRight; reflexivity.
+  rewrite inverseRight; reflexivity.
+Qed.
+
 Section Theory.
 
-  Context `{R:Ring}.
+  Context `(R:Ring).
 
   Infix "+" := Aadd : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
   Notation Asub := (fun a b => a + -b).
   Infix "*" := Amul : A_scope.
 
-  Lemma make_ring_theory : ring_theory A0 A1 Aadd Amul Asub Aopp eq.
-  Proof.
-    constructor; intros;
-      try (rewrite ?identityLeft,?associative; reflexivity);
-      try (rewrite commutative; reflexivity).
-    rewrite distributiveRight; reflexivity.
-    rewrite inverseRight; reflexivity.
-  Qed.
-
-  Add Ring ring_inst : make_ring_theory.
+  Add Ring ring_inst : (make_ring_theory R).
 
 End Theory.
 
@@ -1162,7 +1165,7 @@ Module Demo_AbsRing.
   Notation "0" := A0.
   Notation "1" := A1.
 
-  Add Ring ring_thy_inst : make_ring_theory.
+  Add Ring ring_thy_inst : (make_ring_theory R).
 
   Goal forall a b c : A, (a + b) * c = 0 + b * c * 1 + 0 + 1 * c * a.
   Proof. intros. ring. Qed.
@@ -1262,6 +1265,21 @@ End Instances.
 
 
 (** ** Extra Theories *)
+
+(** make a coq field object from our Field object *)
+Lemma make_field_theory `(F : Field):
+  field_theory A0 A1 Aadd Amul
+               (fun a b => Aadd a (Aopp b)) Aopp
+               (fun a b => Amul a (Ainv b)) Ainv eq.
+Proof.
+  constructor; intros;
+    try (rewrite ?identityLeft,?associative; reflexivity);
+    try (rewrite commutative; reflexivity).
+  apply (make_ring_theory fieldRing).
+  apply field_1_neq_0.
+  apply field_mulInvL. auto.
+Qed.
+
 Section Theory.
 
   Context `{F:Field}.
@@ -1275,18 +1293,7 @@ Section Theory.
   Notation Adiv := (fun a b => a * (/b)).
   Infix "/" := Adiv : A_scope.
 
-  Lemma make_field_theory :
-    field_theory A0 A1 Aadd Amul Asub Aopp Adiv Ainv eq.
-  Proof.
-    constructor; intros;
-      try (rewrite ?identityLeft,?associative; reflexivity);
-      try (rewrite commutative; reflexivity).
-    apply make_ring_theory.
-    apply field_1_neq_0.
-    apply field_mulInvL. auto.
-  Qed.
-
-  Add Field field_inst : make_field_theory.
+  Add Field field_inst : (make_field_theory F).
 
   (** a <> 0 -> /a * a = 1 *)
   Lemma field_mul_inv_l : forall a : A, a <> 0 -> /a * a = 1.

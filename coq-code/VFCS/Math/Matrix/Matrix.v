@@ -793,7 +793,7 @@ Section malg.
   (** *** Below, we need a ring structure *)
   Context `{R : Ring A Aadd A0 Aopp Amul A1}.
   Infix "*" := Amul : A_scope.
-  Add Ring ring_inst : make_ring_theory.
+  Add Ring ring_inst : (make_ring_theory R).
 
 
   (** *** Scalar multiplication of matrix *)
@@ -1071,7 +1071,7 @@ Ltac reverse_neq0_neq0 A0 :=
 
 Section det.
   Context `{R : Ring}.
-  Add Ring ring_inst : make_ring_theory.
+  Add Ring ring_inst : (make_ring_theory R).
   
   Infix "+" := Aadd : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
@@ -1190,7 +1190,7 @@ End det.
 (** ** Inverse matrix with the help of determinant and adjoint matrix. *)
 Section matrix_inversion.
   Context `{R:Ring}.
-  Add Ring ring_thy_inst : make_ring_theory.
+  Add Ring ring_thy_inst : (make_ring_theory R).
 
   Infix "+" := Aadd : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
@@ -1228,7 +1228,7 @@ Section matrix_inversion.
 
   (** *** We need a field structure *)
   Context `{F:@Field A Aadd A0 Aopp Amul A1 Ainv}.
-  Add Field field_thy_inst : make_field_theory.
+  Add Field field_thy_inst : (make_field_theory F).
 
   Notation "/ a" := (Ainv a) : A_scope.
   Notation Adiv := (fun x y => Amul x (Ainv y)).

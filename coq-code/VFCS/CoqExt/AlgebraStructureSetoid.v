@@ -1296,6 +1296,18 @@ Section Instances.
 End Instances.
 
 (** ** Extra Theories *)
+
+(** make a coq ring object from our Ring object *)
+Lemma make_ring_theory `(R : Ring) :
+  ring_theory A0 A1 Aadd Amul (fun a b => Aadd a (Aopp b)) Aopp Aeq.
+Proof.
+  constructor; intros;
+    try (rewrite ?identityLeft,?associative; reflexivity);
+    try (rewrite commutative; reflexivity).
+  rewrite distributiveRight; reflexivity.
+  rewrite inverseRight; reflexivity.
+Qed.
+
 Section Theory.
 
   Context `{R:Ring}.
@@ -1306,16 +1318,7 @@ Section Theory.
   Notation Asub := (fun a b => a + -b)%A.
   Infix "*" := Amul : A_scope.
 
-  Lemma make_ring_theory : ring_theory A0 A1 Aadd Amul Asub Aopp Aeq.
-  Proof.
-    constructor; intros;
-      try (rewrite ?identityLeft,?associative; reflexivity);
-      try (rewrite commutative; reflexivity).
-    rewrite distributiveRight; reflexivity.
-    rewrite inverseRight; reflexivity.
-  Qed.
-
-  Add Ring ring_inst : make_ring_theory.
+  Add Ring ring_inst : (make_ring_theory R).
 
 End Theory.
 
@@ -1335,13 +1338,10 @@ End Examples.
     to enable "ring" tactic. *)
 Module Demo_AbsRing.
   Context `{R:Ring}.
+  Add Ring ring_thy_inst : (make_ring_theory R).
+  
   Infix "+" := Aadd. Infix "*" := Amul. Infix "==" := Aeq.
   Notation "0" := A0. Notation "1" := A1.
-
-  Let ring_thy : ring_theory A0 A1 Aadd Amul (fun x y => Aadd x (Aopp y))
-                   Aopp Aeq := make_ring_theory.
-
-  Add Ring ring_thy_inst : ring_thy.
 
   Goal forall a b c : A, (a + b) * c == 0 + b * c * 1 + 0 + 1 * c * a.
   Proof. intros. ring. Qed.
@@ -1445,6 +1445,22 @@ End Instances.
 
 
 (** ** Extra Theories *)
+
+(** make a coq field object from our Field object *)
+Lemma make_field_theory `(F : Field):
+  field_theory A0 A1 Aadd Amul
+               (fun a b => Aadd a (Aopp b)) Aopp
+               (fun a b => Amul a (Ainv b)) Ainv Aeq.
+Proof.
+  constructor; intros;
+    try (rewrite ?identityLeft,?associative; reflexivity);
+    try (rewrite commutative; reflexivity).
+  apply (make_ring_theory fieldRing).
+  apply field_1_neq_0.
+  apply field_mulInvL. auto.
+Qed.
+
+
 Section Theory.
 
   Context `{F:Field}.
@@ -1460,18 +1476,7 @@ Section Theory.
   Notation Adiv := (fun a b => a * (/b))%A.
   Infix "/" := Adiv : A_scope.
 
-  Lemma make_field_theory :
-    field_theory A0 A1 Aadd Amul Asub Aopp Adiv Ainv Aeq.
-  Proof.
-    constructor; intros;
-      try (rewrite ?identityLeft,?associative; reflexivity);
-      try (rewrite commutative; reflexivity).
-    apply make_ring_theory.
-    apply field_1_neq_0.
-    apply field_mulInvL. auto.
-  Qed.
-
-  Add Field field_inst : make_field_theory.
+  Add Field field_inst : (make_field_theory F).
 
   (** a <> 0 -> /a * a = 1 *)
   Lemma field_mul_inv_l : forall a : A, ~(a == 0)%A -> (/a * a == 1)%A.

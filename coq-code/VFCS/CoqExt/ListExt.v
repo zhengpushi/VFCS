@@ -640,7 +640,7 @@ End ladd_opp_sub.
 Section lcmul_lmulc.
   (** Let's have a ring R *)
   Context `{R:Ring}.
-  Add Ring ring_inst : make_ring_theory.
+  Add Ring ring_inst : (make_ring_theory R).
 
   Infix "*" := Amul : A_scope.
   
@@ -713,7 +713,7 @@ End lcmul_lmulc.
 Section ldot.
   (** Let's have a ring R *)
   Context `{R:Ring}.
-  Add Ring ring_inst : make_ring_theory.
+  Add Ring ring_inst : (make_ring_theory R).
 
   Infix "+" := Aadd : A_scope.
   Infix "*" := Amul : A_scope.
@@ -1996,7 +1996,7 @@ End dladd_opp_sub.
 (** ** list dot dlist, and dlist dot dlist *)
 Section ldotdl_dldotdl.
   Context `{R:Ring}.
-  Add Ring ring_inst : make_ring_theory.
+  Add Ring ring_inst : (make_ring_theory R).
   
   Infix "+" := Aadd : A_scope.
   Infix "*" := Amul : A_scope.

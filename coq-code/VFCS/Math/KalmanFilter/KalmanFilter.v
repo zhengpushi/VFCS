@@ -35,6 +35,7 @@ Variable phik1 gammak1: mat n n.
 Variables Hk : mat m n.
 (**连续时间线性系统**)
 Section Chap8_2_3_Discrete_time_linear_system.
+  
 
 
   (*离散时间线性系统模型 8.38*)
@@ -186,8 +187,8 @@ Axiom ERxkk1_847 :ERxkk1 ==  xk - ESxkk1. *)
     Ltac solve_meq :=
       rewrite ?madd_assoc;
       repeat match goal with
-      | |- _ + _ == ?m + _ => move2h m; elimh
-      end.
+        | |- _ + _ == ?m + _ => move2h m; elimh
+        end.
       
     (** 更多测试 *)
     Goal m0 + (m1 + m2) + (m3 + m4) == m3 + (m1 + m4) + m0 + m2.
@@ -555,139 +556,175 @@ Axiom ERxkk1_847 :ERxkk1 ==  xk - ESxkk1. *)
   (*tr(Pkk) = tr(Pkk1) - tr(P*T_H*T_K) - tr(KHP) + tr(K(HPT_H)T_K) *)
   Lemma tr_Pkk_867:
     tr(Pkk)  =
-      (tr(Pkk1) - tr(Pkk1 * Hk\T * Kk\T)%mat  - tr(Kk * Hk * Pkk1)%mat  +
-        tr(Kk * ( Hk * Pkk1 * Hk\T + Rk) * Kk\T)%mat)%F.
+      (tr(Pkk1) - tr(Pkk1 * Hk\T * Kk\T)%M  - tr(Kk * Hk * Pkk1)%M  +
+        tr(Kk * ( Hk * Pkk1 * Hk\T + Rk) * Kk\T)%M)%F.
   Proof.
-    assert(Tr(Pkk) = Tr(Pkk1 - Pkk1 * T(Hk) * T(Kk) - 
+    assert(tr(Pkk) = tr(Pkk1 - Pkk1 * (Hk)\T * (Kk)\T - 
                           Kk * Hk * Pkk1 + 
-                          Kk * ( Hk * Pkk1 * T(Hk) + Rk) * T(Kk))).
-    { apply FMat_tr_compat.  apply Pkk_867. }
-    rewrite H.
-    rewrite FMat_tr_add.
-    rewrite ?FMat_tr_sub.
-    reflexivity.
+                          Kk * ( Hk * Pkk1 * (Hk)\T + Rk) * (Kk)\T)).
+    { f_equiv. apply Pkk_867. }
+    rewrite H. rewrite mtrace_add. rewrite ?mtrace_sub. solve_meq'.
   Qed.
 
   (* tr P*T_H*T_K = tr KHP*)
-  Lemma tr_KHP_eq: Tr(Pkk1 * T(Hk) * T(Kk)) = Tr(Kk * Hk * Pkk1) .
+  Lemma tr_KHP_eq: tr(Pkk1 * (Hk)\T * (Kk)\T) = tr(Kk * Hk * Pkk1) .
   Proof.
-    assert(Pkk1 * T( Hk) * T( Kk) == T(Kk * Hk * Pkk1)).
-    {
-      rewrite ?FMteq_mul. 
+    assert(Pkk1 * ( Hk)\T * ( Kk)\T == (Kk * Hk * Pkk1)\T).
+    { rewrite mtrans_mul.
       unfold Pkk1.
-      rewrite FMteq_mul.
-      rewrite FMtteq.
-      rewrite <-FMmul_assoc.
-      reflexivity.
-    }
-    unfold FMtr.
-    rewrite FMat_tr_trans with (Kk * Hk * Pkk1).
-    apply FMat_tr_compat.
-    apply H.
+      rewrite mtrans_mul. rewrite mtrans_trans. solve_meq'. }
+    rewrite H. rewrite mtrace_trans. auto.
   Qed.
-
 
   (*tr(Pkk) = tr(Pkk1) -2* tr(KHP) + tr(K(HPT_H)T_K) *)
-  Lemma tr_Pkk_867_1 :Tr(Pkk)  = Tr(Pkk1) -f 
-                                             kmul 2 (Tr(Kk * Hk * Pkk1)) +f
-                                                                                Tr(Kk * ( Hk * Pkk1 * T(Hk) + Rk) * T(Kk)) .
+  Lemma tr_Pkk_867_1 :
+    tr(Pkk)  =
+      (tr(Pkk1) - 
+        2 n* (tr(Kk * Hk * Pkk1)%M) +
+        tr(Kk * ( Hk * Pkk1 * (Hk)\T + Rk) * (Kk)\T)%M)%F.
   Proof.
     rewrite tr_Pkk_867.
-    rewrite tr_KHP_eq.
-    unfold kmul .
-    rewrite fun_minus_assoc.
-    reflexivity.
+    rewrite tr_KHP_eq. simpl.
+    unfold fsub. ring.
   Qed.
 
-  (*Deri(tr(Pkk))/Deri Kk = 2K(HPT(H)+R) -2*T(P)T(H)  *)
-  Lemma Deri_Pkk_867: Deri ( Tr(Pkk) ) Kk == 
-                        FMtwoMat (Kk * ( Hk * Pkk1 * T(Hk) + Rk)) - 
-                          FMtwoMat (T(Pkk1) * T(Hk)).
-  Proof.
-    rewrite FMat_Deri_compat with (mx':= (Pkk1 - Pkk1 * T(Hk) * T(Kk) - 
-                                            Kk * Hk * Pkk1 + Kk * ( Hk * Pkk1 * T(Hk) + Rk) * T(Kk))).
-    2:{ apply Pkk_867. }
-    rewrite ?FMat_Deri_add.
-    rewrite ?FMat_Deri_sub.
-    rewrite FMat_Deri_not_correlation.
-    rewrite FMat_Deri_compat' with (x':=Tr(Kk * Hk * Pkk1)). 
-    2:{ apply tr_KHP_eq. }
-    rewrite FMat_Deri_compat with (mx':= Kk * (Hk * Pkk1)).
-    rewrite FMat_Deri_mul.
-    2:{ apply FMmul_assoc. }
-    rewrite FMat_Deri_trans_eq.
-    2:{ 
-      unfold Rk.
-      unfold Pkk1.
-      rewrite FMteq_add.
-      rewrite ?FMteq_mul.
-      rewrite ?FMtteq.
-      rewrite <-FMmul_assoc.
-      reflexivity.
-    }
-    rewrite FMat_Deri_compat with (mx':= Kk * (Hk * Pkk1)).
-    2:{ apply FMmul_assoc. }
-    rewrite FMat_Deri_mul.
-    rewrite ?FMteq_mul.
-    rewrite FMadd_comm.
-    rewrite <- ?FMadd_assoc1.
-    rewrite FMadd_zero_r.
-    unfold FMtwoMat.
-    unfold FMatrix.twoMat.
-    unfold twoMat.
-    rewrite <- FMsub_assoc.
-    reflexivity.
-  Qed.
+  (* (*Deri(tr(Pkk))/Deri Kk = 2K(HPT(H)+R) -2*T(P)T(H)  *) *)
+  (* Lemma Deri_Pkk_867: Deri ( tr(Pkk) ) Kk ==  *)
+  (*                       FMtwoMat (Kk * ( Hk * Pkk1 * T(Hk) + Rk)) -  *)
+  (*                         FMtwoMat (T(Pkk1) * T(Hk)). *)
+  (* Proof. *)
+  (*   rewrite FMat_Deri_compat with (mx':= (Pkk1 - Pkk1 * T(Hk) * T(Kk) -  *)
+  (*                                           Kk * Hk * Pkk1 + Kk * ( Hk * Pkk1 * T(Hk) + Rk) * T(Kk))). *)
+  (*   2:{ apply Pkk_867. } *)
+  (*   rewrite ?FMat_Deri_add. *)
+  (*   rewrite ?FMat_Deri_sub. *)
+  (*   rewrite FMat_Deri_not_correlation. *)
+  (*   rewrite FMat_Deri_compat' with (x':=tr(Kk * Hk * Pkk1)).  *)
+  (*   2:{ apply tr_KHP_eq. } *)
+  (*   rewrite FMat_Deri_compat with (mx':= Kk * (Hk * Pkk1)). *)
+  (*   rewrite FMat_Deri_mul. *)
+  (*   2:{ apply FMmul_assoc. } *)
+  (*   rewrite FMat_Deri_trans_eq. *)
+  (*   2:{  *)
+  (*     unfold Rk. *)
+  (*     unfold Pkk1. *)
+  (*     rewrite FMteq_add. *)
+  (*     rewrite ?FMteq_mul. *)
+  (*     rewrite ?FMtteq. *)
+  (*     rewrite <-FMmul_assoc. *)
+  (*     reflexivity. *)
+  (*   } *)
+  (*   rewrite FMat_Deri_compat with (mx':= Kk * (Hk * Pkk1)). *)
+  (*   2:{ apply FMmul_assoc. } *)
+  (*   rewrite FMat_Deri_mul. *)
+  (*   rewrite ?FMteq_mul. *)
+  (*   rewrite FMadd_comm. *)
+  (*   rewrite <- ?FMadd_assoc1. *)
+  (*   rewrite FMadd_zero_r. *)
+  (*   unfold FMtwoMat. *)
+  (*   unfold FMatrix.twoMat. *)
+  (*   unfold twoMat. *)
+  (*   rewrite <- FMsub_assoc. *)
+  (*   reflexivity. *)
+  (* Qed. *)
 
 
 
 
 End Kalman_filtering.
 
-Require Import Matrix.inv.
+(* Require Import Matrix.inv. *)
 
 
-Section KF_implement.
 
-  Definition FMn1 := FMat n 1. (*x u w*)
-  Definition FMm1 := FMat m 1. (*v *)
-  Definition FMnn := FMat n n. (*phi gamma *)
-  Definition FMmn := FMat m n. (*H*)
-  Definition FMOn1 := FMO n 1.
-  Definition FMOm1 := FMO m 1.
-  Definition FMOnn := FMO n n.
-  Definition FMOmn := FMO m n.
-  Definition FMIn := FMI n.
+(** 学习一下这个函数的结构 *)
+Parameter inv : forall {n m :nat}, mat n m -> mat m n.
 
-  Parameter inv : forall {n m :nat}, @Mat (R->R) n m->@Mat (R->R) m n.
-
-  Fixpoint KF_k (k:nat) (u_l w_l: list FMn1) (v_l z_l: list FMm1) (phi_l gamma_l: list FMnn)
-    (H_l: list FMmn) (x0: FMn1) (P0: FMnn):= 
+(* 原始版本 *)
+Section KF_implement_v1.
+  Fixpoint KF_k_v1 (k:nat)
+    (u_l w_l: list (mat n 1))
+    (v_l z_l: list (mat m 1))
+    (phi_l gamma_l: list (mat n n))
+    (H_l: list (mat m n))
+    (x0: mat n 1) (P0: mat n n)
+    : mat n 1 * mat n n := 
     match k with
-    |O => (x0,P0)
-    |S n => let x' := fst (KF_k n u_l w_l v_l z_l phi_l gamma_l H_l x0 P0) in
-            let P' := snd (KF_k n u_l w_l v_l z_l phi_l gamma_l H_l x0 P0) in
-            let phi := nth n phi_l FMOnn in 
-            let u := nth n u_l FMOn1 in 
-            let gamma := nth n gamma_l FMOnn  in
-            let w := nth n w_l FMOn1 in
-            let H := nth (S n) H_l FMOmn in
-            let v := nth (S n) v_l FMOm1 in
-            let z := nth (S n) z_l FMOm1 in
-            let x_predict := gamma * x' + u in
-            let z_predict := H * x_predict in
-            let p_predict :=  phi * P' * T(phi) + gamma * w * T(w) * T(gamma) in
-            let K := p_predict * T(H) * inv(H * p_predict * T(H) + v * T(v)) in
-            let x := x_predict + K * (z - z_predict) in 
-            let P := (FMIn - K * H) * p_predict in 
-            (x,P)
+    | O => (x0,P0)
+    | S k' =>
+        let x' := fst (KF_k_v1 k' u_l w_l v_l z_l phi_l gamma_l H_l x0 P0) in
+        let P' := snd (KF_k_v1 k' u_l w_l v_l z_l phi_l gamma_l H_l x0 P0) in
+        let phi := nth k' phi_l (@mat0 n n) in 
+        let u := nth k' u_l (@mat0 n 1) in 
+        let gamma := nth k' gamma_l (@mat0 n n)  in
+        let w := nth k' w_l (@mat0 n 1) in
+        let H := nth k H_l (@mat0 m n) in
+        let v := nth k v_l (@mat0 m 1) in
+        let z := nth k z_l (@mat0 m 1) in
+        let x_predict := gamma * x' + u in
+        let z_predict := H * x_predict in
+        let p_predict :=  phi * P' * phi\T + gamma * w * w\T * gamma\T in
+        let K := p_predict * H\T * inv(H * p_predict * H\T + v * v\T) in
+        let x := x_predict + K * (z - z_predict) in 
+        let P := ((@mat1 n) - K * H) * p_predict in 
+        (x,P)
     end.
-End KF_implement.
+End KF_implement_v1.
 
+(* 使用局部变量的版本 *)
+Section KF_implement_v2.
+  (* 离散时间线性系统模型 :
+     xk = Φk' * xk' + uk' + Γk' * wk'
+     zk = Hk * xk + vk
+     其中，xk∈ ℝ a__b
+
+   *)
+
+  Variable u_l: list (mat n 1). (* 控制向量 *)
+  Variable w_l: list (mat n 1). (* 系统噪声 *)
+  Variable H_l: list (mat m n). (* 观测矩阵 *)
+  Variable z_l: list (mat m 1). (* 观测向量 *)
+  Variable v_l: list (mat m 1). (* 观测噪声 *)
+  Variable phi_l: list (mat n n). (* 不变的常数矩阵 *)
+  Variable gamma_l: list (mat n n). (* 系统噪声矩阵，各噪声分别影响各状态的程度 *)
+  Variable x0: mat n 1.
+  Variable P0: mat n n.
+  
+  Fixpoint KF_k_v2 (k:nat) : mat n 1 * mat n n := 
+    match k with
+    | O => (x0,P0)
+    | S k' =>
+        (* 递归计算 *)
+        let x' := fst (KF_k_v2 k') in (* 系统的上一个状态 *)
+        let P' := snd (KF_k_v2 k') in
+        let u := nth k' u_l (@mat0 n 1) in (* 系统的控制输入 *)
+        let v := nth k v_l (@mat0 m 1) in
+        let phi := nth k' phi_l (@mat0 n n) in 
+        let gamma := nth k' gamma_l (@mat0 n n)  in
+        let H := nth k H_l (@mat0 m n) in
+        let w := nth k' w_l (@mat0 n 1) in
+        let z := nth k z_l (@mat0 m 1) in (* k时刻的观测值 *)
+        (* 计算 *)
+        let x_predict := (* 状态估计预测 *)
+          gamma * x' + u in
+        let z_predict := H * x_predict in  (* ? *)
+        let p_predict :=  (* 误差协方差预测 *)
+          phi * P' * phi\T + gamma * w * w\T * gamma\T in
+        let K := (* 卡尔曼增益矩阵 *)
+          p_predict * H\T * inv(H * p_predict * H\T + v * v\T) in
+        let x := (* 系统的状态 *)
+          x_predict + K * (z - z_predict) in 
+        let P := (* 协方差阵 *)
+          ((@mat1 n) - K * H) * p_predict in 
+        (x,P)
+    end.
+  
+End KF_implement_v2.
 
 
 From Coq Require Extraction.
-Extraction "KF.ml" KF_k.
+(* Recursive Extraction KF_k_v2. *)
+Extraction "KF.ml" KF_k_v2.
 
 
 
