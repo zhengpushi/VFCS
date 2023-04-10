@@ -78,7 +78,7 @@ Section seqeq.
     induction n; constructor; intros.
     - left. unfold seqeq. easy.
     - unfold seqeq in *.
-      destruct (decidable a b), (decidable (a n) (b n)).
+      destruct (a ==? b), (a n ==? b n).
       + left. intros. destruct (eqb_reflect i n); subst; auto. apply e. lia.
       + right. intro. destruct n0. apply H. auto.
       + right. intro. destruct n0. intros. auto.
@@ -193,12 +193,12 @@ Section seq2eq.
       induction r; constructor; intros f g.
       - left. unfold seq2eq. intros. easy.
       - unfold seq2eq in *. specialize (IHr c).
-        destruct (decidable f g).
+        destruct (f ==? g).
         + (* Tips: need to construct a prop *)
           assert (Decidable (fun f g : nat -> nat -> A =>
                                forall ci, ci < c -> f r ci = g r ci)) as H.
           { constructor. intros. apply seqeq_dec. }
-          destruct (decidable f g).
+          destruct (f ==? g).
           * left. intros. destruct (Aeq_reflect ri r); subst; auto. apply e; auto. lia.
           * right. intro. destruct n. intros. apply H0; auto.
         + right. intro. destruct n. intros. auto.

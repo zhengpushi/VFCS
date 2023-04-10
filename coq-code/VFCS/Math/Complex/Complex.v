@@ -34,8 +34,8 @@ Section general_useful_props.
       z1 <> z2 <-> fst z1 <> fst z2 \/ snd z1 <> snd z2.
   Proof.
     intros A B HA HB (a1,b1) (a2,b2). split; intros H; simpl in *.
-    - destruct (decidable a1 a2), (decidable b1 b2); subst; auto.
-    - destruct (decidable a1 a2), (decidable b1 b2); subst; auto.
+    - destruct (a1 ==? a2), (b1 ==? b2); subst; auto.
+    - destruct (a1 ==? a2), (b1 ==? b2); subst; auto.
       all: intro H1; inv H1; destruct H; auto.
   Qed.
 
@@ -211,7 +211,7 @@ Section def.
   Global Instance Decidable_Ceq : Decidable (@eq C).
   Proof.
     constructor. intros (a1,b1) (a2,b2).
-    destruct (decidable a1 a2), (decidable b1 b2); subst.
+    destruct (a1 ==? a2), (b1 ==? b2); subst.
     - left; auto.
     - right; intro; inv H; easy.
     - right; intro; inv H; easy.
@@ -229,8 +229,8 @@ Section def.
   Proof.
     intros (a1,b1) (a2,b2); simpl.
     split; intros.
-    - destruct (decidable a1 a2), (decidable b1 b2); subst; auto.
-    - destruct (decidable a1 a2), (decidable b1 b2); subst; auto.
+    - destruct (a1 ==? a2), (b1 ==? b2); subst; auto.
+    - destruct (a1 ==? a2), (b1 ==? b2); subst; auto.
       + intro H1; inv H1. destruct H; auto.
       + intro H1; inv H1. destruct H; auto.
       + intro H1; inv H1. destruct H; auto.
@@ -414,7 +414,7 @@ Section Cnorm.
   (** |z| > 0 -> z <> 0 *)
   Lemma Cnorm_gt_not_eq : forall z, C|z| > R0 -> z <> 0.
   Proof.
-    intros. destruct (decidable z 0); auto.
+    intros. destruct (z ==? 0); auto.
     subst. rewrite Cnorm_C0 in H. lra.
   Qed.
 
@@ -447,7 +447,7 @@ Section Cnorm.
   Lemma Cre_le_Cnorm : forall z : C, R|z.a| <= C|z|.
   Proof.
     Csimpl. unfold Cnorm,Cnorm2; simpl.
-    destruct (decidable b R0).
+    destruct (b ==? R0).
     - subst. autorewrite with R. lra.
     - apply Rle_trans with (sqrt (a * a)).
       autorewrite with R. lra.
@@ -458,7 +458,7 @@ Section Cnorm.
   Lemma Cim_le_Cnorm : forall z : C, R|z.b| <= C|z|.
   Proof.
     Csimpl. unfold Cnorm,Cnorm2; simpl.
-    destruct (decidable a R0).
+    destruct (a ==? R0).
     - subst. autorewrite with R. lra.
     - apply Rle_trans with (sqrt (b * b)).
       autorewrite with R. lra.
@@ -714,7 +714,7 @@ Section Cpow.
   Lemma C0_pow : forall n, (0 < n)%nat -> 0 ^ n = 0.
   Proof.
     induction n; intros; auto. lia.
-    destruct (decidable n 0%nat).
+    destruct (n ==? 0%nat).
     - rewrite e. Ceq.
     - simpl. rewrite IHn. Ceq. lia.
   Qed.
@@ -1395,7 +1395,7 @@ Proof.
   unfold CmultTrigo, Ctrigo.
   rewrite cos_plus, sin_plus. unfold Ccmul.
   (* 是否为复数零来分类讨论 *)
-  destruct (decidable z1 0), (decidable z2 0); subst; Ceq;
+  destruct (z1 ==? 0), (z2 ==? 0); subst; Ceq;
     repeat rewrite Cnorm_C0_eq0; autorewrite with R; auto.
   (*   - autorewrite with R; auto. *)
 
@@ -1420,7 +1420,7 @@ Proof.
   intros. unfold CdivTrigo, Ctrigo.
   rewrite cos_minus, sin_minus. unfold Ccmul. simpl.
   (* 是否为复数零来分类讨论 *)
-  destruct (decidable z1 0), (decidable z2 0);
+  destruct (z1 ==? 0), (z2 ==? 0);
     subst; rewrite ?Cnorm_C0_eq0; unfold Cdiv.
   - destruct H. auto.
     (*   - rewrite Cmul_0_l. ring_simplify. unfold Rdiv, R_R_to_C.  *)

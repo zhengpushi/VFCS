@@ -38,6 +38,7 @@ Require Export Coq.Logic.FunctionalExtensionality.
 
 (** Reserved Notations, to keep same precedence and associativity *)
 Reserved Infix    "=="      (at level 70, no associativity).      (* equiv *)
+Reserved Infix    "==?"     (at level 65, no associativity).      (* decidable *)
 Reserved Notation "a != b"  (at level 70, no associativity).      (* not equiv *)
 Reserved Infix    "=?"      (at level 70, no associativity).      (* bool equal *)
 Reserved Infix    "+"       (at level 50, left associativity).    (* add *)

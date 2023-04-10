@@ -108,18 +108,34 @@ End test.
 Class Decidable {A : Type} (Aeq : A -> A -> Prop) := {
     decidable : forall (a b : A), {Aeq a b} + {~(Aeq a b)};
   }.
+Infix "==?" := (decidable) (at level 65, no associativity).
+
 (* Global Hint Constructors Decidable : core. *)
 
 (** ** Instances *)
 
 Section Instances.
-  Import Arith ZArith Reals.
+  Import Arith ZArith QArith Qcanon Reals.
 
   Global Instance Decidable_NatEq : Decidable (@eq nat).
   Proof. constructor. apply Nat.eq_dec. Defined.
 
+  Global Instance Decidable_Positive : Decidable (@eq positive).
+  Proof. constructor. apply Pos.eq_dec. Defined.
+
   Global Instance Decidable_Z : Decidable (@eq Z).
   Proof. constructor. apply Z.eq_dec. Defined.
+
+  Global Instance Decidable_Q : Decidable (@eq Q).
+  Proof.
+    constructor.
+    intros [a1 a2] [b1 b2].
+    destruct (a1 ==? b1), (a2 ==? b2); subst; auto.
+    all: right; intro H; inv H; auto.
+  Defined.
+
+  Global Instance Decidable_Qc : Decidable (@eq Qc).
+  Proof. constructor. apply Qc_eq_dec. Defined.
 
   Global Instance Decidable_R : Decidable (@eq R).
   Proof. constructor. apply Req_EM_T. Qed.
@@ -142,7 +158,7 @@ Section Dec_theory.
   (** Tips: these theories are useful for R type *)
   
   (** Calculate equality to boolean, with the help of equality decidability *)
-  Definition Aeqb (a b : A) : bool := if decidable a b then true else false.
+  Definition Aeqb (a b : A) : bool := if a ==? b then true else false.
   Infix "=?" := Aeqb.
 
   (** Aeqb is true iff equal. *)
@@ -1341,7 +1357,7 @@ Section Theory.
       a * b = 0 -> (a = 0) \/ (b = 0).
   Proof.
     intros.
-    destruct (decidable a 0), (decidable b 0);
+    destruct (a ==? 0), (b ==? 0);
       try (left; easy); try (right; easy).
     assert (/a * a * b = 0).
     { rewrite associative. rewrite H. field. auto. }
@@ -1353,7 +1369,7 @@ Section Theory.
   Lemma field_mul_eq_imply_a1_or_b0 : forall (a b : A) (HDec : Decidable (@eq A)),
       a * b = b -> (a = A1) \/ (b = A0).
   Proof.
-    intros. destruct (decidable b A0); auto. left.
+    intros. destruct (b ==? A0); auto. left.
     apply symmetry in H. rewrite <- (@identityLeft _ Amul A1) in H at 1 by apply F.
     apply field_mul_cancel_r in H; auto.
   Qed.

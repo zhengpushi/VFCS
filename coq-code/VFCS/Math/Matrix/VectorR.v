@@ -217,7 +217,7 @@ Section vec_any_dim.
       vnonzero v -> k c* v == vec0 -> k = 0.
   Proof.
     intros. destruct v as [v]. cbv in *.
-    destruct (decidable k 0); auto.
+    destruct (k ==? 0); auto.
     (* idea: from "~(∀ij(v i j = 0)" to "∃ij(v i j≠0)" *)
     (* Tips, a good practice of logic proposition *)
     assert (exists (ij:nat*nat), let (i,j) := ij in (i<n)%nat /\ (j<1)%nat /\ (v i j <> 0)).
@@ -240,7 +240,7 @@ Section vec_any_dim.
   Proof.
     intros. destruct v as [v]. cbv in H,H0.
     (* ∀i(f(i)=0 /\ k1*f(i) = k2*f(i)) -> k1 = k2 *)
-    destruct (decidable k1 k2); auto.
+    destruct (k1 ==? k2); auto.
     destruct H. intros. (* eliminated the universal quantifiers *)
     specialize (H0 i j H H1).
     (* k1 * x = k2 * x  /\  k1 <> k2  -> x = 0 *)
@@ -255,7 +255,7 @@ Section vec_any_dim.
     cbv in H,H0.
     (* To prove k = 1， first get a conclusion of k <> 1, then eliminate the 
          universal quantifiers *)
-    destruct (decidable k 1); auto.
+    destruct (k ==? 1); auto.
     destruct H. intros. specialize (H0 i j H H1).
     (* k * x = x /\  k <> 1 /\ x <> 0 -> x = 0 *)
     apply Rmult_eq_self_imply_0_or_k1 in H0. destruct H0; try easy.
@@ -295,8 +295,8 @@ Section vec_any_dim.
     unfold vzero, vnonzero, Vector.vzero. split; intros.
     - destruct H. destruct H.
       + right. right. exists x. auto.
-      + destruct (decidable v1 vec0); auto.
-        destruct (decidable v2 (vec0)); auto.
+      + destruct (v1 ==? vec0); auto.
+        destruct (v2 ==? vec0); auto.
         right. right. exists (1/x). rewrite H.
         lma. apply vec_eq_vcmul_imply_coef_neq0 in H; auto.
     - destruct H as [H1 | [H2 | H3]].
@@ -322,8 +322,8 @@ Section vec_any_dim.
   Lemma vparallel_sym : forall {n} (v0 v1 : vec n), v0 // v1 -> v1 // v0.
   Proof.
     intros. unfold vparallel,vparallel_ver2 in *.
-    destruct (decidable v0 vec0); auto.
-    destruct (decidable v1 vec0); auto.
+    destruct (v0 ==? vec0); auto.
+    destruct (v1 ==? vec0); auto.
     destruct H; auto. destruct H; auto. destruct H.
     right. right. exists (1/x). rewrite H.
     lma. apply vec_eq_vcmul_imply_coef_neq0 in H; auto.
@@ -335,7 +335,7 @@ Section vec_any_dim.
       vnonzero v1 -> v0 // v1 -> v1 // v2 -> v0 // v2.
   Proof.
     intros. unfold vparallel, vparallel_ver2 in *.
-    destruct (decidable v0 vec0), (decidable v1 vec0), (decidable v2 vec0);
+    destruct (v0 ==? vec0), (v1 ==? vec0), (v2 ==? vec0);
       auto; try easy.
     destruct H0,H1; auto; try easy.
     destruct H0,H1; auto; try easy.
@@ -361,7 +361,7 @@ Section vec_any_dim.
       (v1 // v2) <-> (exists ! k, v2 == k c* v1).
   Proof.
     intros. split; intros.
-    - destruct (decidable v2 vec0).
+    - destruct (v2 ==? vec0).
       + exists 0. split.
         * rewrite vcmul_0_l. auto.
         * intros. rewrite m in H1.

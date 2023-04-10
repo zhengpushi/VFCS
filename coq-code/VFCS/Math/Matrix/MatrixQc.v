@@ -26,6 +26,7 @@ Notation A1 := 1.
 Notation Aadd := Qcplus.
 Notation Aopp := Qcopp.
 Notation Amul := Qcmult.
+Notation Ainv := Qcinv.
 
 (** *** matrix type and basic operation *)
 Definition mat (r c : nat) : Type := @mat Qc r c.
@@ -225,6 +226,9 @@ Proof. intros. apply mmul_1_l. Qed.
 Lemma mmul_1_r : forall {r c} (m : mat r c), m * mat1 == m. 
 Proof. intros. apply mmul_1_r. Qed.
 
+(** inverse matrix by gauss elimination *)
+Definition minv_gauss {n} (m : mat n n) : option (mat n n) :=
+  @minv_gauss A Aadd A0 Aopp Amul A1 Ainv _ _ m.
 
 (* ======================================================================= *)
 (** ** Matrix theory applied to this type *)
@@ -233,8 +237,8 @@ Proof. intros. apply mmul_1_r. Qed.
 (* ======================================================================= *)
 (** ** Usage demo *)
 Section test.
-  Let l1 := Q2Qc_dlist [[1.5;2.3];[3.1;4.2]].
-  Let m1 := l2m 2 2 l1.
+  Let l1 := Q2Qc_dlist [[1;-3;-2];[-2;1;-4];[-1;4;-1]]%Q.
+  Let m1 := l2m 3 3 l1.
   (* Compute m2l m1. *)
   (* Compute m2l (mmap Qcopp m1). *)
   (* Compute m2l (m1 * m1). *)
@@ -245,5 +249,9 @@ Section test.
   (* Compute m2l m2.       (* = [[a11; a12]; [a21; a22]] *) *)
   (* Compute m2l (mmap f m2).       (* = [[f a11; f a12]; [f a21; f a22]] *) *)
   (* Eval cbn in m2l (m2 * m2). *)
+
+
+  (** matrix inversion by gauss elimnation *)
+  (* Eval cbn in minv_gauss (l2m 2 2 [[1;0];[0;1]]). *)
   
 End test.

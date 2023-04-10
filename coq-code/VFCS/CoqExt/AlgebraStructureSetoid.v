@@ -110,7 +110,7 @@ Proof. apply eqlistA_equiv. auto. Defined.
 Class Decidable {A:Type} (Aeq:A->A->Prop) := {
     decidable : forall (a b : A), {Aeq a b} + {~(Aeq a b)};
   }.
-(* Global Hint Constructors Decidable : core. *)
+Infix "==?" := (decidable) (at level 65, no associativity).
 
 (** ** Instances *)
 

@@ -361,6 +361,11 @@ Proof. intros. apply mtrans_mul. Qed.
 Lemma mtrace_mul : forall {r c} (m1 : mat r c) (m2 : mat c r), tr (m1 * m2) = tr (m2 * m1).
 Proof. intros. apply mtrace_mul. Qed.
 
+(** inverse matrix by gauss elimination *)
+Definition minv_gauss {n} (m : mat n n) : option (mat n n) :=
+  @minv_gauss A Aadd A0 Aopp Amul A1 Ainv _ _ m.
+
+
 
 (* ======================================================================= *)
 (** ** Matrix theory applied to this type *)
