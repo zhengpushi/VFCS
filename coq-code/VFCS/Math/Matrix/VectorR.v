@@ -9,8 +9,9 @@
 
   reference :
   1. 《高等数学学习手册》徐小湛，p173
-  2. Vector Calculus - Michael Corral
-  3. https://github.com/coq/coq/blob/master/test-suite/success/Nsatz.v
+  2. 《高等数学》 第七版，同济大学数学系，第八章，向量代数与空间解析几何
+  3. Vector Calculus - Michael Corral
+  4. https://github.com/coq/coq/blob/master/test-suite/success/Nsatz.v
      Note that, there are concepts related to geometry including point, parallel, 
      colinear.
  *)
@@ -375,10 +376,15 @@ End vec_any_dim.
 (** *** Vector of 3-dim *)
 Section vec_3d.
 
+  (** 空间直角坐标系的三个轴所在的单位向量 *)
+  Definition v3i : vec 3 := mk_vec3 1 0 0.
+  Definition v3j : vec 3 := mk_vec3 0 1 0.
+  Definition v3k : vec 3 := mk_vec3 0 0 1.
+
   (** skew symmetry matrix *)
   Definition skew_sym_mat_of_v3 (v : vec 3) : smat 3 :=
     let '(x,y,z) := v2t_3 v in
-    (mat_3_3
+    (mk_mat_3_3
        0    (-z)  y
        z     0    (-x)
        (-y)  x     0)%R.
@@ -389,7 +395,7 @@ Section vec_3d.
     let '(b1,b2,b3) := v2t_3 b in
     (a1*b1 + a2*b2 + a3*b3)%R.
 
-  Lemma vdot3_eq_vdot : forall v1 v2 : vec 3, vdot3 v1 v2 = vdot v1 v2.
+  Lemma vdot3_spec : forall v1 v2 : vec 3, vdot3 v1 v2 = vdot v1 v2.
   Proof. intros. cbv. ring. Qed.
 
   (** cross product (vector product) of two 3-dim vectors *)

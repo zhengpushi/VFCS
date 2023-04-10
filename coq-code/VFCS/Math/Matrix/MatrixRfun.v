@@ -91,24 +91,24 @@ Definition mconsc {r c} (v : mat r 1) (m : mat r c) : mat r (S c) := mconsc v m.
 
 
 (** *** build matrix from elements *)
-Definition mat_0_c c : mat 0 c := mat_0_c (A0:=A0) c.
-Definition mat_1_1 a11 : mat 1 1 := mat_1_1 (A0:=A0) a11.
-Definition mat_1_2 a11 a12 : mat 1 2 := mat_1_2 (A0:=A0) a11 a12.
-Definition mat_1_3 a11 a12 a13 : mat 1 3 := mat_1_3 (A0:=A0) a11 a12 a13.
-Definition mat_1_4 a11 a12 a13 a14 : mat 1 4 := mat_1_4 (A0:=A0) a11 a12 a13 a14.
-Definition mat_1_c c (l : list A) : mat 1 c := mat_1_c (A0:=A0) c l.
+Definition mk_mat_0_c c : mat 0 c := mk_mat_0_c (A0:=A0) c.
+Definition mk_mat_1_1 a11 : mat 1 1 := mk_mat_1_1 (A0:=A0) a11.
+Definition mk_mat_1_2 a11 a12 : mat 1 2 := mk_mat_1_2 (A0:=A0) a11 a12.
+Definition mk_mat_1_3 a11 a12 a13 : mat 1 3 := mk_mat_1_3 (A0:=A0) a11 a12 a13.
+Definition mk_mat_1_4 a11 a12 a13 a14 : mat 1 4 := mk_mat_1_4 (A0:=A0) a11 a12 a13 a14.
+Definition mk_mat_1_c c (l : list A) : mat 1 c := mk_mat_1_c (A0:=A0) c l.
                          
-Definition mat_r_0 r : mat r 0 := mat_r_0 (A0:=A0) r.
-Definition mat_2_1 a11 a21 : mat 2 1 := mat_2_1 (A0:=A0) a11 a21.
-Definition mat_2_2 a11 a12 a21 a22 : mat 2 2 := mat_2_2 (A0:=A0) a11 a12 a21 a22.
-Definition mat_3_1 a11 a12 a13 : mat 3 1 := mat_3_1 (A0:=A0) a11 a12 a13.
-Definition mat_3_3 a11 a12 a13 a21 a22 a23 a31 a32 a33 : mat 3 3 :=
-  mat_3_3 (A0:=A0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
-Definition mat_4_1 a11 a21 a31 a41 : mat 4 1 := mat_4_1 (A0:=A0) a11 a21 a31 a41.
-Definition mat_4_4 a11 a12 a13 a14 a21 a22 a23 a24 a31 a32 a33 a34 a41 a42 a43 a44
+Definition mk_mat_r_0 r : mat r 0 := mk_mat_r_0 (A0:=A0) r.
+Definition mk_mat_2_1 a11 a21 : mat 2 1 := mk_mat_2_1 (A0:=A0) a11 a21.
+Definition mk_mat_2_2 a11 a12 a21 a22 : mat 2 2 := mk_mat_2_2 (A0:=A0) a11 a12 a21 a22.
+Definition mk_mat_3_1 a11 a12 a13 : mat 3 1 := mk_mat_3_1 (A0:=A0) a11 a12 a13.
+Definition mk_mat_3_3 a11 a12 a13 a21 a22 a23 a31 a32 a33 : mat 3 3 :=
+  mk_mat_3_3 (A0:=A0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
+Definition mk_mat_4_1 a11 a21 a31 a41 : mat 4 1 := mk_mat_4_1 (A0:=A0) a11 a21 a31 a41.
+Definition mk_mat_4_4 a11 a12 a13 a14 a21 a22 a23 a24 a31 a32 a33 a34 a41 a42 a43 a44
   : mat 4 4 :=
-  mat_4_4 (A0:=A0) a11 a12 a13 a14 a21 a22 a23 a24 a31 a32 a33 a34 a41 a42 a43 a44.
-Definition mat_r_1 r (l : list A) : mat r 1 := mat_r_1 (A0:=A0) r l.
+  mk_mat_4_4 (A0:=A0) a11 a12 a13 a14 a21 a22 a23 a24 a31 a32 a33 a34 a41 a42 a43 a44.
+Definition mk_mat_r_1 r (l : list A) : mat r 1 := mk_mat_r_1 (A0:=A0) r l.
 
 
 (** *** matrix transposition *)
@@ -431,11 +431,11 @@ Section Example4CoordinateSystem.
   Let cϕ : A := fun t => cos (ϕ t).
   Let sϕ : A := fun t => sin (ϕ t).
   
-  Let Rx := mat_3_3 1 0 0 0 cϕ sϕ 0 (-sϕ) cϕ.
-  Let Ry := mat_3_3 cθ 0 (-sθ) 0 1 0 sθ 0 cθ.
-  Let Rz := mat_3_3 cψ sψ 0 (-sψ) cψ 0 0 0 1.
+  Let Rx := mk_mat_3_3 1 0 0 0 cϕ sϕ 0 (-sϕ) cϕ.
+  Let Ry := mk_mat_3_3 cθ 0 (-sθ) 0 1 0 sθ 0 cθ.
+  Let Rz := mk_mat_3_3 cψ sψ 0 (-sψ) cψ 0 0 0 1.
   Let Rbe :=
-        mat_3_3
+        mk_mat_3_3
           (cθ * cψ) (cψ * sθ * sϕ - sψ * cϕ)
           (cψ * sθ * cϕ + sϕ * sψ) (cθ * sψ)
           (sψ * sθ * sϕ + cψ * cϕ)

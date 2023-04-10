@@ -474,30 +474,30 @@ Section mk_mat.
   Context {A : Type} {A0 : A}.
   Notation l2m := (l2m A0).
   
-  Definition mat_0_c c : mat 0 c := l2m [].
+  Definition mk_mat_0_c c : mat 0 c := l2m [].
 
-  Definition mat_1_1 (a11 : A) : mat 1 1 := l2m [[a11]].
-  Definition mat_1_2 (a11 a12 : A) : mat 1 2 := l2m [[a11;a12]].
-  Definition mat_1_3 (a11 a12 a13 : A) : mat 1 3 := l2m [[a11;a12;a13]].
-  Definition mat_1_4 (a11 a12 a13 a14 : A) : mat 1 4 := l2m [[a11;a12;a13;a14]].
-  Definition mat_1_c c (l : list A) : mat 1 c := l2m [l].
+  Definition mk_mat_1_1 (a11 : A) : mat 1 1 := l2m [[a11]].
+  Definition mk_mat_1_2 (a11 a12 : A) : mat 1 2 := l2m [[a11;a12]].
+  Definition mk_mat_1_3 (a11 a12 a13 : A) : mat 1 3 := l2m [[a11;a12;a13]].
+  Definition mk_mat_1_4 (a11 a12 a13 a14 : A) : mat 1 4 := l2m [[a11;a12;a13;a14]].
+  Definition mk_mat_1_c c (l : list A) : mat 1 c := l2m [l].
   
-  Definition mat_r_0 r : mat r 0 := l2m [].
+  Definition mk_mat_r_0 r : mat r 0 := l2m [].
 
-  Definition mat_2_1 (a11 a21 : A) : mat 2 1 := l2m [[a11];[a21]].
-  Definition mat_2_2 (a11 a12 a21 a22 : A) : mat 2 2 := l2m [[a11;a12];[a21;a22]].
+  Definition mk_mat_2_1 (a11 a21 : A) : mat 2 1 := l2m [[a11];[a21]].
+  Definition mk_mat_2_2 (a11 a12 a21 a22 : A) : mat 2 2 := l2m [[a11;a12];[a21;a22]].
   
-  Definition mat_3_1 (a11 a21 a31 : A) : mat 3 1 := l2m [[a11];[a21];[a31]].
-  Definition mat_3_3 (a11 a12 a13 a21 a22 a23 a31 a32 a33 : A) : mat 3 3 :=
+  Definition mk_mat_3_1 (a11 a21 a31 : A) : mat 3 1 := l2m [[a11];[a21];[a31]].
+  Definition mk_mat_3_3 (a11 a12 a13 a21 a22 a23 a31 a32 a33 : A) : mat 3 3 :=
     l2m [[a11;a12;a13]; [a21;a22;a23]; [a31;a32;a33]].
 
-  Definition mat_4_1 (a11 a21 a31 a41 : A) : mat 4 1 :=
+  Definition mk_mat_4_1 (a11 a21 a31 a41 : A) : mat 4 1 :=
     l2m [[a11];[a21];[a31];[a41]].
-  Definition mat_4_4 (a11 a12 a13 a14 a21 a22 a23 a24
+  Definition mk_mat_4_4 (a11 a12 a13 a14 a21 a22 a23 a24
                            a31 a32 a33 a34 a41 a42 a43 a44 : A) : mat 4 4 :=
     l2m [[a11;a12;a13;a14]; [a21;a22;a23;a24];[a31;a32;a33;a34]; [a41;a42;a43;a44]].
   
-  Definition mat_r_1 r (l : list A) : mat r 1 :=
+  Definition mk_mat_r_1 r (l : list A) : mat r 1 :=
     mk_mat (fun i j : nat => if (j =? 0)%nat then (nth i l A0) else A0).
 End mk_mat.
 
@@ -1022,7 +1022,7 @@ Section t2m_m2t.
     destruct t1 as ((a11,a12),a13).
     destruct t2 as ((a21,a22),a23).
     destruct t3 as ((a31,a32),a33).
-    exact (mat_3_3 (A0:=A0) a11 a12 a13 a21 a22 a23 a31 a32 a33).
+    exact (mk_mat_3_3 (A0:=A0) a11 a12 a13 a21 a22 a23 a31 a32 a33).
   Defined.
 
   (** mat_3x3 -> tuple 3x3. That is: ((a11,a12,a13),(a21,a22,a23),(a31,a32,a33)) *)
@@ -1345,9 +1345,9 @@ Section matrix_inversion.
   (** ** Direct compute inversion of a symbol matrix of 1/2/3rd order. *)
   Section FindFormula.
     Variable a11 a12 a13 a21 a22 a23 a31 a32 a33 : A.
-    Let m1 := mat_1_1 (A0:=A0) a11.
-    Let m2 := mat_2_2 (A0:=A0) a11 a12 a21 a22.
-    Let m3 := mat_3_3 (A0:=A0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
+    Let m1 := mk_mat_1_1 (A0:=A0) a11.
+    Let m2 := mk_mat_2_2 (A0:=A0) a11 a12 a21 a22.
+    Let m3 := mk_mat_3_3 (A0:=A0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
 
     (* Compute (m2l (minv m1)). *)
     (* Compute (m2l (minv m2)). *)
@@ -1423,11 +1423,11 @@ Section test.
 
   Coercion Q2Qc : Q >-> Qc.
 
-  Definition m1 := (mat_3_3 (A0:=0) 1 2 3 4 5 6 7 8 9)%Qc.
+  Definition m1 := (mk_mat_3_3 (A0:=0) 1 2 3 4 5 6 7 8 9)%Qc.
   (* Compute trace (Aadd:=Qcplus)(A0:=0)(n:=3) m1. *)
 
   Variable a11 a12 a13 a21 a22 a23 a31 a32 a33 : Qc.
-  Definition m2 := mat_3_3 (A0:=0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
+  Definition m2 := mk_mat_3_3 (A0:=0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
   (* Compute mrow 1 m2. *)
 
   (** *** rewrite support test *)

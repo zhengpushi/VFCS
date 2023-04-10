@@ -40,7 +40,7 @@ Section quat_def.
   Definition Im2 (q : quat) : R := Y q.
   Definition Im3 (q : quat) : R := Z q.
   Definition v3_of_quat (q : quat) : vec 3 :=
-    mat_3_1 (X q) (Y q) (Z q).
+    mk_mat_3_1 (X q) (Y q) (Z q).
   
   (** Two quaternions are equal iff all of its components equal *)
   Lemma quat_eq_iff : forall (w0 x0 y0 z0 w1 x1 y1 z1 : R),
@@ -137,7 +137,7 @@ Section quat_def.
   (** Quaternion to vec4 *)
   Definition v4_of_quat (q : quat) : vec 4 :=
     let '(w,x,y,z) := (W q, X q, Y q, Z q) in
-      mat_4_1 w x y z.
+      mk_mat_4_1 w x y z.
   
   Lemma v4_of_quat_ok : forall q,
     let v := v4_of_quat q in
@@ -312,7 +312,7 @@ Definition qPLUS (q : quat) : mat 4 4 :=
   let p0 : R := Re q in
   let pv : vec 3 := t2v_3 (Im q) in
   let m1 : mat 4 4 := (p0 c* mat1)%M in
-  let m2a : mat 1 4 := mconsc (mat_1_1 0) (-(pv\T))%M in
+  let m2a : mat 1 4 := mconsc (mk_mat_1_1 0) (-(pv\T))%M in
   let m2b : mat 3 4 := mconsc pv (skew_sym_mat_of_v3 pv) in
   let m2 : mat 4 4 := mconsr m2a m2b in
     madd m1 m2.
@@ -329,7 +329,7 @@ Definition qMINUS (q : quat) : mat 4 4 :=
   let q0 : R := Re q in
   let qv : vec 3 := t2v_3 (Im q) in
   let m1 : mat 4 4 := (q0 c* mat1)%M in
-  let m2a : mat 1 4 := mconsc (mat_1_1 0) (-(qv\T))%M in
+  let m2a : mat 1 4 := mconsc (mk_mat_1_1 0) (-(qv\T))%M in
   let m2b : mat 3 4 := mconsc qv (-(skew_sym_mat_of_v3 qv))%M in
   let m2 : mat 4 4 := mconsr m2a m2b in
     madd m1 m2.
