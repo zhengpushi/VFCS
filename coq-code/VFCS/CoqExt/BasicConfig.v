@@ -50,7 +50,8 @@ Reserved Infix    "c*"      (at level 40, left associativity).    (* scal left m
 Reserved Infix    "*c"      (at level 40, left associativity).    (* scal right mul *)
 Reserved Infix    "⦿"      (at level 40, left associativity).    (* hardmard prod *)
 Reserved Infix    "\o"      (at level 50, no associativity).
-Reserved Infix    "⋅"       (at level 40, no associativity).      (* dot product *)
+Reserved Infix    "⋅"       (at level 40, no associativity).      (* dot prod *)
+Reserved Infix    "×"       (at level 40, no associativity).      (* cross prod *)
 Reserved Infix    "∘"       (at level 40, left associativity).    (* compose *)
 Reserved Notation "- a"     (at level 35, right associativity).   (* opp *)
 Reserved Notation "/ a"     (at level 35, right associativity).   (* inv *)

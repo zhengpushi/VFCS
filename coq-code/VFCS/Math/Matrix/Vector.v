@@ -39,12 +39,15 @@ End def.
 (* ======================================================================= *)
 (** ** Vector automation *)
 
-Ltac vec_to_mat :=
-  unfold vec, mk_vec in *.
+(** Convert vec to function *)
+Ltac vec_to_fun :=
+  repeat match goal with
+    | v:vec ?n |- _ => destruct v as [v]; simpl in *
+    end.
 
 (** Linear vector arithmetic *)
 Ltac lva :=
-  vec_to_mat;
+  vec_to_fun;
   lma.
 
 (* ======================================================================= *)
@@ -282,59 +285,55 @@ Section vec_ring.
   Proof. intros. apply mmulc_eq_mcmul. Qed.
 
   
-  (** *** Vector dot product (version 1, by {fold_left,map,seq}) *)
-  (* Section vdot_version1. *)
+  (** *** Vector dot product *)
+
+  (** version 1, by {fold_left,map,seq} *)
+  Definition vdot_old {n : nat} (v1 v2 : vec n) : A :=
+    fold_left Aadd (map (fun i => v1$i * v2$i) (seq 0 n)) A0.
+
+  (** dot production of two vectors. *)
+  Definition vdot {n : nat} (v1 v2 : vec n) : A :=
+    seqsum (fun i => v1$i * v2$i) n (Aadd:=Aadd) (A0:=A0).
   
-  (*   (** dot production of two vectors. *) *)
-  (*   Definition vdot {n : nat} (v1 v2 : vec n) : A := *)
-  (*     fold_left Aadd (map (fun i => v1$i * v2$i) (seq 0 n)) A0. *)
-    
-  (*   Infix "⋅" := vdot : vec_scope. *)
+  Infix "⋅" := vdot : vec_scope.
 
-  (*   (** dot production is commutative *) *)
-  (*   Lemma vdot_comm : forall {n} (v1 v2 : vec n), v1 ⋅ v2 = v2 ⋅ v1. *)
-  (*   Proof. intros. unfold vdot. f_equal. apply map_ext. intros. ring. Qed. *)
+  (** dot production is commutative *)
+  Lemma vdot_comm : forall {n} (v1 v2 : vec n), v1 ⋅ v2 = v2 ⋅ v1.
+  Proof. intros. apply seqsum_eq. intros. ring. Qed.
 
-  (*   (** 0 * v = 0 *) *)
-  (*   Lemma vdot_0_l : forall {n} (v : vec n), vec0 ⋅ v = A0. *)
-  (*   Proof. *)
-  (*     intros. *)
-  (*     unfold vdot. cbn. *)
-  (*     destruct v as [v]; simpl. *)
-  (*     assert (map (fun i => A0 * v i 0) (seq 0 n) = map (fun i => A0) (seq 0 n)). *)
-  (*     { apply map_ext. intros. ring. } *)
-  (*     rewrite H. clear H. *)
-  (*     induction n; simpl; try easy. *)
-  (*     rewrite <- seq_shift. rewrite map_map. monoid_rw. auto. *)
-  (*   Qed. *)
+  Lemma vdot_add_distr_l : forall {n} (v1 v2 v3 : vec n),
+      (v1 + v2) ⋅ v3 = (v1 ⋅ v3 + v2 ⋅ v3)%A.
+  Proof.
+    intros n [v1] [v2] [v3]. unfold vdot; simpl.
+    revert v1 v2 v3. induction n; intros; simpl; auto. ring. rewrite IHn. ring.
+  Qed.
 
-  (*   (** v * 0 = 0 *) *)
-  (*   Lemma vdot_0_r : forall {n} (v : vec n), v ⋅ vec0 = A0. *)
-  (*   Proof. intros. rewrite vdot_comm, vdot_0_l. auto. Qed. *)
+  Lemma vdot_add_distr_r : forall {n} (v1 v2 v3 : vec n),
+      v1 ⋅ (v2 + v3) = (v1 ⋅ v2 + v1 ⋅ v3)%A.
+  Proof.
+    intros n [v1] [v2] [v3]. unfold vdot; simpl.
+    revert v1 v2 v3. induction n; intros; simpl; auto. ring. rewrite IHn. ring.
+  Qed.
+
+  Lemma vdot_cmul_l : forall {n} (v1 v2 : vec n) (a : A), (a c* v1) ⋅ v2 = a * (v1 ⋅ v2).
+  Proof.
+    intros n [v1] [v2] a. unfold vdot; simpl.
+    rewrite seqsum_cmul_l. apply seqsum_eq; intros; ring.
+  Qed.
   
-  (* End vdot_version1. *)
+  Lemma vdot_cmul_r : forall {n} (v1 v2 : vec n) (a : A), v1 ⋅ (a c* v2) = a * (v1 ⋅ v2).
+  Proof.
+    intros n [v1] [v2] a. unfold vdot; simpl.
+    rewrite seqsum_cmul_l. apply seqsum_eq; intros; ring.
+  Qed.
 
-  (** *** Vector dot product (version 2, by {seqsum}) *)
-  Section vdot_version2.
-    
-    (** dot production of two vectors. *)
-    Definition vdot {n : nat} (v1 v2 : vec n) : A :=
-      seqsum (fun i => v1$i * v2$i) n (Aadd:=Aadd) (A0:=A0).
-    
-    Infix "⋅" := vdot : vec_scope.
+  (** 0 * v = 0 *)
+  Lemma vdot_0_l : forall {n} (v : vec n), vec0 ⋅ v = A0.
+  Proof. intros. apply seqsum_seq0. intros. cbv. ring. Qed.
 
-    (** dot production is commutative *)
-    Lemma vdot_comm : forall {n} (v1 v2 : vec n), v1 ⋅ v2 = v2 ⋅ v1.
-    Proof. intros. apply seqsum_eq. intros. ring. Qed.
-
-    (** 0 * v = 0 *)
-    Lemma vdot_0_l : forall {n} (v : vec n), vec0 ⋅ v = A0.
-    Proof. intros. apply seqsum_seq0. intros. cbv. ring. Qed.
-
-    (** v * 0 = 0 *)
-    Lemma vdot_0_r : forall {n} (v : vec n), v ⋅ vec0 = A0.
-    Proof. intros. rewrite vdot_comm, vdot_0_l. auto. Qed.
-  End vdot_version2.
+  (** v * 0 = 0 *)
+  Lemma vdot_0_r : forall {n} (v : vec n), v ⋅ vec0 = A0.
+  Proof. intros. rewrite vdot_comm, vdot_0_l. auto. Qed.
 
 End vec_ring.
 
