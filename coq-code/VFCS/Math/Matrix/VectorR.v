@@ -394,6 +394,23 @@ End vangle.
 (** ** Operations on vectors of 3-dimensional *)
 Section v3.
 
+  (** *** Frame and point *)
+  (** A point can be described by a coordinate vector, and the vector represents 
+      the displacement of the point with respect to some reference coordinate 
+      frame. We call it a bound vector since it cannot be freely moved. *)
+  Section frame.
+
+    (** A frame contains three orthogonal axes and a point known as the origin. *)
+    Record frame := {
+        Forigin : vec 3;
+        Fx : vec 3;
+        Fy : vec 3;
+        Fz : vec 3;
+      }.
+    
+    
+  End frame.
+
   (** 空间直角坐标系的三个轴所在的单位向量 *)
   Definition v3i : vec 3 := mk_vec3 1 0 0.
   Definition v3j : vec 3 := mk_vec3 0 1 0.
@@ -551,8 +568,6 @@ Section v3.
 
   End SO3.
 
-?  
-
 
   (* 
   
@@ -575,110 +590,106 @@ Section v3.
 (* Definition v3_non_colinear (v0 v1 : V3) : Prop :=
     v0 <> v1 /\ v0 <> (-v1)%M.
  *)
+*)
   
-End vec_3d.
+End v3.
 
 
+(** ** vector parallel (old implementation) *)
+Section vparallel_old.
 
+  (* (* Definition 1: v1 is k times to v2，or v2 is k times to v1 *) *)
+  (* Definition vparallel_ver1 {n} (v1 v2 : vec n) : Prop := *)
+  (*   exists k, (v1 == k c* v2 \/ v2 == k c* v1). *)
 
-  End v3cross3.
+  (* (* Definition 2: v1 is zero-vector, or v2 is zero-vector, or v1 is k times to v2 *) *)
+  (* Definition vparallel_ver2 {n} (v1 v2 : vec n) : Prop := *)
+  (*   (vzero v1) \/ (vzero v2) \/ (exists k, v1 == k c* v2). *)
 
+  (* (* These two definitions are same *) *)
+  (* Lemma vparallel_ver1_eq_ver2 : forall {n} (v1 v2 : vec n), *)
+  (*     vparallel_ver1 v1 v2 <-> vparallel_ver2 v1 v2. *)
+  (* Proof. *)
+  (*   intros. unfold vparallel_ver1, vparallel_ver2. *)
+  (*   unfold vzero, vnonzero, Vector.vzero. split; intros. *)
+  (*   - destruct H. destruct H. *)
+  (*     + right. right. exists x. auto. *)
+  (*     + destruct (v1 ==? vec0); auto. *)
+  (*       destruct (v2 ==? vec0); auto. *)
+  (*       right. right. exists (1/x). rewrite H. *)
+  (*       lma. apply vec_eq_vcmul_imply_coef_neq0 in H; auto. *)
+  (*   - destruct H as [H1 | [H2 | H3]]. *)
+  (*     + exists 0. left. rewrite H1. rewrite vcmul_0_l. easy. *)
+  (*     + exists 0. right. rewrite H2. rewrite vcmul_0_l. easy. *)
+  (*     + destruct H3. exists x. left; auto. *)
+  (* Qed. *)
 
-(** ** vector of any dimension *)
-Section vec_any_dim.
+  (* (** Vector parallel relation. Here, we use definition 2 *) *)
+  (* Definition vparallel {n} (v0 v1 : vec n) : Prop := *)
+  (*   vparallel_ver2 v0 v1. *)
 
-  (* Definition 1: v1 is k times to v2，or v2 is k times to v1 *)
-  Definition vparallel_ver1 {n} (v1 v2 : vec n) : Prop :=
-    exists k, (v1 == k c* v2 \/ v2 == k c* v1).
+  (* Notation "v0 // v1" := (vparallel (v0) (v1)) (at level 70) : vec_scope. *)
 
-  (* Definition 2: v1 is zero-vector, or v2 is zero-vector, or v1 is k times to v2 *)
-  Definition vparallel_ver2 {n} (v1 v2 : vec n) : Prop :=
-    (vzero v1) \/ (vzero v2) \/ (exists k, v1 == k c* v2).
+  (* (** vparallel is an equivalence relation *) *)
 
-  (* These two definitions are same *)
-  Lemma vparallel_ver1_eq_ver2 : forall {n} (v1 v2 : vec n),
-      vparallel_ver1 v1 v2 <-> vparallel_ver2 v1 v2.
-  Proof.
-    intros. unfold vparallel_ver1, vparallel_ver2.
-    unfold vzero, vnonzero, Vector.vzero. split; intros.
-    - destruct H. destruct H.
-      + right. right. exists x. auto.
-      + destruct (v1 ==? vec0); auto.
-        destruct (v2 ==? vec0); auto.
-        right. right. exists (1/x). rewrite H.
-        lma. apply vec_eq_vcmul_imply_coef_neq0 in H; auto.
-    - destruct H as [H1 | [H2 | H3]].
-      + exists 0. left. rewrite H1. rewrite vcmul_0_l. easy.
-      + exists 0. right. rewrite H2. rewrite vcmul_0_l. easy.
-      + destruct H3. exists x. left; auto.
-  Qed.
+  (* Lemma vparallel_refl : forall {n} (v : vec n), v // v. *)
+  (* Proof. *)
+  (*   intros. unfold vparallel,vparallel_ver2. right. right. exists 1. *)
+  (*   rewrite vcmul_1_l. easy. *)
+  (* Qed. *)
 
-  (** Vector parallel relation. Here, we use definition 2 *)
-  Definition vparallel {n} (v0 v1 : vec n) : Prop :=
-    vparallel_ver2 v0 v1.
+  (* Lemma vparallel_sym : forall {n} (v0 v1 : vec n), v0 // v1 -> v1 // v0. *)
+  (* Proof. *)
+  (*   intros. unfold vparallel,vparallel_ver2 in *. *)
+  (*   destruct (v0 ==? vec0); auto. *)
+  (*   destruct (v1 ==? vec0); auto. *)
+  (*   destruct H; auto. destruct H; auto. destruct H. *)
+  (*   right. right. exists (1/x). rewrite H. *)
+  (*   lma. apply vec_eq_vcmul_imply_coef_neq0 in H; auto. *)
+  (* Qed. *)
 
-  Notation "v0 // v1" := (vparallel (v0) (v1)) (at level 70) : vec_scope.
+  (* (* Additionally, v1 need to be a non-zero vector. Because if v1 is zero vector,  *)
+  (*    then v0//v1, v1//v2, but v0 and v2 needn't to be parallel. *) *)
+  (* Lemma vparallel_trans : forall {n} (v0 v1 v2 : vec n),  *)
+  (*     vnonzero v1 -> v0 // v1 -> v1 // v2 -> v0 // v2. *)
+  (* Proof. *)
+  (*   intros. unfold vparallel, vparallel_ver2 in *. *)
+  (*   destruct (v0 ==? vec0), (v1 ==? vec0), (v2 ==? vec0); *)
+  (*     auto; try easy. *)
+  (*   destruct H0,H1; auto; try easy. *)
+  (*   destruct H0,H1; auto; try easy. *)
+  (*   destruct H0,H1. right. right. *)
+  (*   exists (x*x0)%R. rewrite H0,H1. apply mcmul_assoc. *)
+  (* Qed. *)
 
-  (** vparallel is an equivalence relation *)
+  (* (** If two non-zero vectors are parallel, then there is a unique k such that *)
+  (*     they are k times relation *) *)
+  (* Lemma vparallel_vnonezero_imply_unique_k : forall {n} (v1 v2 : vec n), *)
+  (*     vnonzero v1 -> vnonzero v2 -> v1 // v2 -> (exists ! k, v1 == k c* v2). *)
+  (* Proof. *)
+  (*   intros. *)
+  (*   destruct H1; try easy. destruct H1; try easy. destruct H1. *)
+  (*   exists x. split; auto. *)
+  (*   intros. apply vcmul_vnonzero_eq_iff_unique_k with (v:=v2); auto. *)
+  (*   rewrite <- H1,H2. easy. *)
+  (* Qed. *)
 
-  Lemma vparallel_refl : forall {n} (v : vec n), v // v.
-  Proof.
-    intros. unfold vparallel,vparallel_ver2. right. right. exists 1.
-    rewrite vcmul_1_l. easy.
-  Qed.
-
-  Lemma vparallel_sym : forall {n} (v0 v1 : vec n), v0 // v1 -> v1 // v0.
-  Proof.
-    intros. unfold vparallel,vparallel_ver2 in *.
-    destruct (v0 ==? vec0); auto.
-    destruct (v1 ==? vec0); auto.
-    destruct H; auto. destruct H; auto. destruct H.
-    right. right. exists (1/x). rewrite H.
-    lma. apply vec_eq_vcmul_imply_coef_neq0 in H; auto.
-  Qed.
-
-  (* Additionally, v1 need to be a non-zero vector. Because if v1 is zero vector, 
-     then v0//v1, v1//v2, but v0 and v2 needn't to be parallel. *)
-  Lemma vparallel_trans : forall {n} (v0 v1 v2 : vec n), 
-      vnonzero v1 -> v0 // v1 -> v1 // v2 -> v0 // v2.
-  Proof.
-    intros. unfold vparallel, vparallel_ver2 in *.
-    destruct (v0 ==? vec0), (v1 ==? vec0), (v2 ==? vec0);
-      auto; try easy.
-    destruct H0,H1; auto; try easy.
-    destruct H0,H1; auto; try easy.
-    destruct H0,H1. right. right.
-    exists (x*x0)%R. rewrite H0,H1. apply mcmul_assoc.
-  Qed.
-
-  (** If two non-zero vectors are parallel, then there is a unique k such that
-      they are k times relation *)
-  Lemma vparallel_vnonezero_imply_unique_k : forall {n} (v1 v2 : vec n),
-      vnonzero v1 -> vnonzero v2 -> v1 // v2 -> (exists ! k, v1 == k c* v2).
-  Proof.
-    intros.
-    destruct H1; try easy. destruct H1; try easy. destruct H1.
-    exists x. split; auto.
-    intros. apply vcmul_vnonzero_eq_iff_unique_k with (v:=v2); auto.
-    rewrite <- H1,H2. easy.
-  Qed.
-
-  (** Given a non-zero vector v1 and another vector v2,
-      v1 is parallel to v2, iff, there is a unique k such that v2 is k times v1. *)
-  Lemma vparallel_iff1 : forall {n} (v1 v2 : vec n) (H : vnonzero v1),
-      (v1 // v2) <-> (exists ! k, v2 == k c* v1).
-  Proof.
-    intros. split; intros.
-    - destruct (v2 ==? vec0).
-      + exists 0. split.
-        * rewrite vcmul_0_l. auto.
-        * intros. rewrite m in H1.
-          apply symmetry in H1. apply vcmul_nonzero_eq_zero_imply_k0 in H1; auto.
-      + apply vparallel_vnonezero_imply_unique_k; auto. apply vparallel_sym; auto.
-    - destruct H0. destruct H0. apply vparallel_sym. right. right. exists x. auto.
-  Qed.
+  (* (** Given a non-zero vector v1 and another vector v2, *)
+  (*     v1 is parallel to v2, iff, there is a unique k such that v2 is k times v1. *) *)
+  (* Lemma vparallel_iff1 : forall {n} (v1 v2 : vec n) (H : vnonzero v1), *)
+  (*     (v1 // v2) <-> (exists ! k, v2 == k c* v1). *)
+  (* Proof. *)
+  (*   intros. split; intros. *)
+  (*   - destruct (v2 ==? vec0). *)
+  (*     + exists 0. split. *)
+  (*       * rewrite vcmul_0_l. auto. *)
+  (*       * intros. rewrite m in H1. *)
+  (*         apply symmetry in H1. apply vcmul_nonzero_eq_zero_imply_k0 in H1; auto. *)
+  (*     + apply vparallel_vnonezero_imply_unique_k; auto. apply vparallel_sym; auto. *)
+  (*   - destruct H0. destruct H0. apply vparallel_sym. right. right. exists x. auto. *)
+  (* Qed. *)
   
-End vec_any_dim.
+End vparallel_old.
 
 
 (* ======================================================================= *)

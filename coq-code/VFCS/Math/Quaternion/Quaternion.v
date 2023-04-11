@@ -301,7 +301,7 @@ Definition qmulVEC (p q : quat) : quat :=
   let pv : vec 3 := t2v_3 (Im p) in
   let qv : vec 3 := t2v_3 (Im q) in
   let w : R := (p0 * q0 - scalar_of_mat ((qv \T) * pv)%M)%R in
-  let v : vec 3 := (vcross3 pv qv + p0 c* qv + q0 c* pv)%M in
+  let v : vec 3 := (v3cross pv qv + p0 c* qv + q0 c* pv)%M in
     quat_of_s_v w v.
 
 Lemma qmulVEC_correct (p q : quat) : p * q = qmulVEC p q.
@@ -313,7 +313,7 @@ Definition qPLUS (q : quat) : mat 4 4 :=
   let pv : vec 3 := t2v_3 (Im q) in
   let m1 : mat 4 4 := (p0 c* mat1)%M in
   let m2a : mat 1 4 := mconsc (mk_mat_1_1 0) (-(pv\T))%M in
-  let m2b : mat 3 4 := mconsc pv (skew_sym_mat_of_v3 pv) in
+  let m2b : mat 3 4 := mconsc pv (v3_skew_sym_mat pv) in
   let m2 : mat 4 4 := mconsr m2a m2b in
     madd m1 m2.
 
@@ -330,7 +330,7 @@ Definition qMINUS (q : quat) : mat 4 4 :=
   let qv : vec 3 := t2v_3 (Im q) in
   let m1 : mat 4 4 := (q0 c* mat1)%M in
   let m2a : mat 1 4 := mconsc (mk_mat_1_1 0) (-(qv\T))%M in
-  let m2b : mat 3 4 := mconsc qv (-(skew_sym_mat_of_v3 qv))%M in
+  let m2b : mat 3 4 := mconsc qv (-(v3_skew_sym_mat qv))%M in
   let m2 : mat 4 4 := mconsr m2a m2b in
     madd m1 m2.
 
@@ -383,7 +383,7 @@ Lemma qmul_by_im (u v : vec 3) :
   let qv : quat := quat_of_v3 v in
   let q : quat := quat_of_s_v
                     (- (scalar_of_mat (u\T * v)%M))
-                    (vcross3 u v) in
+                    (v3cross u v) in
   qu * qv = q.
 Proof. lqa. Qed.
 
@@ -719,7 +719,7 @@ Definition rot_angle_by_twovec (v0 v1 : vec 3) : R :=
 (* 计算两个向量所决定的转轴（垂直与所在平面的法向量) *)
 Definition rot_axis_by_twovec (v0 v1 : vec 3) : vec 3 :=
   let s : R := (vlen v0 * vlen v1)%R in
-  (s c* (vcross3 v0 v1))%M.
+  (s c* (v3cross v0 v1))%M.
 
 (* 谓词：两向量不共线（不平行的） *)
 Definition v3_non_colinear (v0 v1 : vec 3) : Prop :=
@@ -740,7 +740,7 @@ Extraction "quat.ml"
 (* 按旋转轴和旋转角表示的四元数，等于，用旋转轴垂直平面上两个单位向量的运算来构造的
 四元数 *)
 Definition qrot_by_two_vec_ops (v0 v1 : vec 3) : quat :=
-  quat_of_s_v (scalar_of_mat (v0\T * v1)%M) (vcross3 v0 v1).
+  quat_of_s_v (scalar_of_mat (v0\T * v1)%M) (v3cross v0 v1).
 
 
 (* (* 若单位向量v0和v1的夹角是 θ/2，且不共线，则由它们生成的垂直方向的向量v有确定形式 *)

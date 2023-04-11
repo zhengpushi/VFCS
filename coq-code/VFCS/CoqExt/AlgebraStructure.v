@@ -1386,3 +1386,68 @@ Section Examples.
 
 End Examples.
 
+
+(* ######################################################################### *)
+(** * Linear Space *)
+
+(** ** Class *)
+Class LinearSpace `{F : Field} {V : Type}
+  (Vadd : V -> V -> V) (V0 : V) (Vopp : V -> V) (Vcmul : A -> V -> V) := {
+    ls_addC : Commutative Vadd;
+    ls_addA : Associative Vadd;
+    ls_add_0_r : IdentityRight Vadd V0;
+    ls_add_inv_r : InverseRight Vadd V0 Vopp;
+    (* 注意，这里有问题了，因为数学上的等号，在形式系统中可能是等价，
+       比如基于函数的向量实现，两个向量的相等是等价而不是语法全等。*)
+    ls_cmul_1_l : forall u : V, Vcmul A1 u = u;
+    lc_cmul_assoc : forall a b u, Vcmul (Amul a b) u = Vcmul a (Vcmul b u);
+    lc_cmul_aadd_distr : forall a b u, Vcmul (Aadd a b) u = Vadd (Vcmul a u) (Vcmul b u);
+    lc_cmul_vadd_distr : forall a u v, Vcmul a (Vadd u v) = Vadd (Vcmul a u) (Vcmul a v);
+  }.
+
+(* (** ** Instances *) *)
+(* Section Instances. *)
+
+(*   Import Reals. *)
+  
+(*   Global Instance Field_R : Field Rplus R0 Ropp Rmult R1 Rinv. *)
+(*   repeat constructor; intros; try field; auto. *)
+(*   apply R1_neq_R0. Qed. *)
+
+(* End Instances. *)
+
+
+(* (** ** Extra Theories *) *)
+
+(* Section Theory. *)
+
+(*   Context `{F:Field}. *)
+(*   Infix "+" := Aadd : A_scope. *)
+(*   Notation "- a" := (Aopp a) : A_scope. *)
+(*   Notation Asub := (fun a b => a + -b). *)
+(*   Notation "0" := A0 : A_scope. *)
+(*   Notation "1" := A1 : A_scope. *)
+(*   Infix "*" := Amul : A_scope. *)
+(*   Notation "/ a" := (Ainv a) : A_scope. *)
+(*   Notation Adiv := (fun a b => a * (/b)). *)
+(*   Infix "/" := Adiv : A_scope. *)
+
+(*   Add Field field_inst : (make_field_theory F). *)
+
+(*   (** a <> 0 -> /a * a = 1 *) *)
+(*   Lemma field_mul_inv_l : forall a : A, a <> 0 -> /a * a = 1. *)
+(*   Proof. intros. rewrite field_mulInvL; easy. Qed. *)
+
+
+(* End Theory. *)
+
+(* (** ** Examples *) *)
+(* Section Examples. *)
+
+(*   Import Reals. *)
+  
+(*   Goal forall a b : R, (a <> 0 -> /a * a = 1)%R. *)
+(*     intros. apply field_mulInvL. auto. Qed. *)
+
+(* End Examples. *)
+
