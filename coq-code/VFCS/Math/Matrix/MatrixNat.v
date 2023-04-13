@@ -26,11 +26,15 @@ Notation Aadd := Nat.add.
 (** *** matrix type and basic operation *)
 Definition mat (r c : nat) : Type := @mat A r c.
 
+Infix "==" := (eqlistA (eqlistA eq)) : dlist_scope.
+Infix "!=" := (fun d1 d2 => ~(d1 == d2)%dlist) : dlist_scope.
+Infix "==" := (meq (Aeq:=eq)) : mat_scope.
+Infix "!=" := (fun m1 m2 => ~(m1 == m2)%M) : mat_scope.
 Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope.
 
 Lemma meq_iff_mnth : forall {r c} (m1 m2 : mat r c),
     m1 == m2 <-> (forall i j : nat, i < r -> j < c -> m1!i!j = m2!i!j)%nat.
-Proof. apply meq_iff_mnth. Qed.
+Proof. intros. apply meq_iff_mnth. Qed.
 
 (** *** convert between list and matrix *)
 Definition l2m (r c : nat) (dl : dlist A) : mat r c := l2m A0 dl.
@@ -43,7 +47,7 @@ Lemma m2l_width : forall {r c} (m : mat r c), width (m2l m) c.
 Proof. intros. apply m2l_width. Qed.
 
 Lemma m2l_l2m_id : forall {r c} (dl : dlist A),
-    length dl = r -> width dl c -> m2l (l2m r c dl) = dl.
+    length dl = r -> width dl c -> (m2l (l2m r c dl) == dl)%dlist.
 Proof. intros. apply m2l_l2m_id; auto. Qed.
 
 Lemma l2m_m2l_id : forall {r c} (m : mat r c), l2m r c (m2l m) == m.
@@ -51,18 +55,18 @@ Proof. intros. apply l2m_m2l_id; auto. Qed.
 
 Lemma l2m_inj : forall {r c} (d1 d2 : dlist A),
     length d1 = r -> width d1 c -> length d2 = r -> width d2 c -> 
-    d1 <> d2 -> ~(l2m r c d1 == l2m r c d2).
+    (d1 != d2)%dlist -> l2m r c d1 != l2m r c d2.
 Proof. intros. apply l2m_inj; auto. Qed.
 
 Lemma l2m_surj : forall {r c} (m : mat r c), (exists d, l2m r c d == m). 
 Proof. intros. apply l2m_surj; auto. Qed.
 
-Lemma m2l_inj : forall {r c} (m1 m2 : mat r c), ~ (m1 == m2) -> m2l m1 <> m2l m2.
-Proof. intros. apply (m2l_inj A0); auto. Qed.
+Lemma m2l_inj : forall {r c} (m1 m2 : mat r c), m1 != m2 -> (m2l m1 != m2l m2)%dlist.
+Proof. intros. apply (m2l_inj (A0:=A0)); auto. Qed.
 
 Lemma m2l_surj : forall {r c} (d : dlist A), length d = r -> width d c -> 
-    (exists m : mat r c, m2l m = d).
-Proof. intros. apply (m2l_surj A0); auto. Qed.
+    (exists m : mat r c, (m2l m == d)%dlist).
+Proof. intros. apply (m2l_surj (A0:=A0)); auto. Qed.
 
 (** *** convert between tuple and matrix *)
 Definition t2m_3_3 (t : T_3_3) : mat 3 3 := t2m_3_3 A0 t.
@@ -86,11 +90,11 @@ Proof. intros. apply mtrans_trans. Qed.
 Definition mmap {r c} f (m : mat r c) : mat r c := mmap f m.
 Definition mmap2 {r c} f (m1 m2 : mat r c) : mat r c := mmap2 f m1 m2.
 
-Lemma mmap2_comm : forall {r c} (m1 m2 : mat r c) f (fcomm : Commutative f),
+Lemma mmap2_comm : forall {r c} (m1 m2 : mat r c) f (fcomm : Commutative f eq),
     mmap2 f m1 m2 == mmap2 f m2 m1.
 Proof. intros. apply mmap2_comm; auto. Qed.
 
-Lemma mmap2_assoc : forall {r c} f (m1 m2 m3 : mat r c) (fassoc : Associative f),
+Lemma mmap2_assoc : forall {r c} f (m1 m2 m3 : mat r c) (fassoc : Associative f eq),
     mmap2 f (mmap2 f m1 m2) m3 == mmap2 f m1 (mmap2 f m2 m3).
 Proof. intros. apply mmap2_assoc; auto. Qed.
 

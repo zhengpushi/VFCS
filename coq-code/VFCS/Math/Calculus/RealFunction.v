@@ -586,6 +586,16 @@ Section fun_op_props.
   Lemma fcmul_ok : forall (c : R) (u : tpRFun) (x : R), (c c* u) x = (c * u x)%R.
   Proof. auto. Qed.
 
+  (** These functions all are proper relation respect to eq *)
+  Global Instance fadd_eq_mor : Proper (eq ==> eq ==> eq) fadd.
+  Proof. simp_proper. intros; subst; auto. Qed.
+
+  Global Instance fopp_eq_mor : Proper (eq ==> eq) fopp.
+  Proof. simp_proper. intros; subst; auto. Qed.
+  
+  Global Instance fmul_eq_mor : Proper (eq ==> eq ==> eq) fmul.
+  Proof. simp_proper. intros; subst; auto. Qed.
+
   (** Properties for real function addition *)
   Lemma fadd_assoc : forall (u v w : tpRFun), (u + v) + w = u + (v + w).
   Proof. intros. apply fun_eq. intros. rewrite !fadd_ok. ring. Qed.
@@ -648,17 +658,34 @@ Section fun_op_props.
          unfold fzero,fone,fconst in *. field. intro. Abort.
 
   (** Monoid structure over (Rfun,+,0) *)
-  Global Instance Monoid_RfunAdd : Monoid fadd fzero.
-  repeat constructor; intros. apply fadd_assoc. apply fadd_0_l. apply fadd_0_r. Qed.
+  Global Instance AMonoid_RfunAdd : AMonoid fadd fzero eq.
+  Proof.
+    split_intro; intros; subst; auto.
+    apply fadd_assoc. apply fadd_0_l. apply fadd_0_r. apply fadd_comm.
+  Qed.
 
   (** Monoid structure over (Rfun,*,1) *)
-  Global Instance Monoid_RfunMul : Monoid fmul fone.
-  repeat constructor; intros. apply fmul_assoc. apply fmul_1_l. apply fmul_1_r. Qed.
+  Global Instance AMonoid_RfunMul : AMonoid fmul fone eq.
+  Proof.
+    split_intro; intros; subst; auto.
+    apply fmul_assoc. apply fmul_1_l. apply fmul_1_r. apply fmul_comm.
+  Qed.
+
+  (** Group structure over (Rfun,+,0,-) *)
+  Global Instance Group_RfunAdd : Group fadd fzero fopp eq.
+  Proof.
+    constructor. apply AMonoid_RfunAdd.
+    constructor. apply fadd_opp_l.
+    constructor. apply fadd_opp_r.
+    apply fadd_eq_mor. apply fopp_eq_mor.
+  Qed.
 
   (** Abelian group structure over (Rfun,+,0,-) *)
-  Global Instance AGroup_RfunAdd : AGroup fadd fzero fopp.
-  repeat constructor; intros; monoid_simp. apply fadd_opp_l. apply fadd_opp_r.
-  all: apply fadd_comm. Qed.
+  Global Instance AGroup_RfunAdd : AGroup fadd fzero fopp eq.
+  Proof.
+    constructor. apply Group_RfunAdd. apply AMonoid_RfunAdd.
+    constructor; apply fadd_comm.
+  Qed.
 
   (* (** Abelian group structure over (Rfun,*,1,/) *) *)
   (* Global Instance AGroup_RfunMul : AGroup fmul fone finv. *)
@@ -666,9 +693,10 @@ Section fun_op_props.
   (* all: apply fadd_comm. Qed. *)
 
   (** Ring structure *)
-  Global Instance Ring_Rfun : Ring fadd fzero fopp fmul fone.
-  repeat constructor; intros; agroup_simp.
-  apply fmul_comm. apply fmul_add_distr_l. apply fmul_add_distr_r.
+  Global Instance Ring_Rfun : Ring fadd fzero fopp fmul fone eq.
+  Proof.
+    constructor. apply AGroup_RfunAdd. apply AMonoid_RfunMul.
+    constructor; apply fmul_add_distr_l. constructor; apply fmul_add_distr_r.
   Qed.
 
 End fun_op_props.
@@ -700,8 +728,7 @@ Add Ring ring_inst : (make_ring_theory Ring_Rfun (A:=(R->R))).
 Section test.
   Goal let f : R -> R := fone in f = f.
     simpl. Fail ring. (* Todo: why still fail?? *)
-    unfold fone. unfold fconst.
-    ring.
+    auto.
   Qed.
 End test.
 

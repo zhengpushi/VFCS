@@ -37,7 +37,7 @@
 Require Export BasicConfig.   (* reserved notation *)
 Require Export Coq.Classes.RelationClasses. (* binary_relation *)
 Require Import Coq.Logic.Description. (* constructive_definite_description *)
-Require Export List. Import ListNotations.
+Require Export List SetoidList. Import ListNotations.
 Require Export Lia Lra.
 Require Export Ring Field.
 
@@ -48,11 +48,15 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 
 (* Meanwhile, like A0,A1,... also be availble *)
-Generalizable Variables A Aadd Aopp Amul Ainv Adiv.
+Generalizable Variables A Aeq Aadd Aopp Amul Ainv Adiv.
 
 
 (* ######################################################################### *)
 (** * Small utilities *)
+
+(** repeat split and intro *)
+Ltac split_intro :=
+  repeat (try split; try intro).
 
 (** Applicate a unary function for n-times, i.e. f ( .. (f a0) ...) *)
 Fixpoint iterate {A} (f : A -> A) (n : nat) (a0 : A) : A :=
@@ -90,10 +94,10 @@ End test.
 
 (** ** Instances *)
 
-(* (** eqlistA is a equivalence relation *) *)
-(* Global Instance Equivalence_eqlistA `{Equiv_Aeq:Equivalence A Aeq} *)
-(*   : Equivalence (eqlistA Aeq). *)
-(* Proof. apply eqlistA_equiv. auto. Defined. *)
+(** eqlistA is a equivalence relation *)
+Global Instance Equivalence_eqlistA `{Equiv_Aeq:Equivalence A Aeq}
+  : Equivalence (eqlistA Aeq).
+Proof. apply eqlistA_equiv. auto. Defined.
 
 (** ** Extra Theories *)
 
@@ -105,7 +109,7 @@ End test.
 
 (** ** Class *)
 
-Class Decidable {A : Type} (Aeq : A -> A -> Prop) := {
+Class Decidable {A : Type} (Aeq : relation A) := {
     decidable : forall (a b : A), {Aeq a b} + {~(Aeq a b)};
   }.
 Infix "==?" := (decidable) (at level 65, no associativity).
@@ -134,18 +138,40 @@ Section Instances.
     all: right; intro H; inv H; auto.
   Defined.
 
+  Global Instance Decidable_Q_Qeq : Decidable Qeq.
+  Proof. constructor. apply Qeq_dec. Defined.
+
   Global Instance Decidable_Qc : Decidable (@eq Qc).
   Proof. constructor. apply Qc_eq_dec. Defined.
 
   Global Instance Decidable_R : Decidable (@eq R).
   Proof. constructor. apply Req_EM_T. Qed.
 
-  Global Instance Decidable_list `{Dec:Decidable A eq} : Decidable (@eq (list A)).
-  Proof. constructor. apply list_eq_dec. apply decidable. Defined.
+  Global Instance Decidable_list `{Dec:Decidable} : Decidable (eqlistA Aeq).
+  Proof.
+    constructor. intros l1. induction l1.
+    - intros l2. destruct l2; auto.
+      right. intro. easy.
+    - intros l2. destruct l2.
+      + right. intro. easy.
+      + destruct (decidable a a0), (IHl1 l2); auto.
+        * right. intro. inversion H. easy.
+        * right. intro. inversion H. easy.
+        * right. intro. inversion H. easy.
+  Defined.
 
-  Global Instance Decidable_dlist `{Dec:Decidable A eq} :
-    Decidable (@eq (list (list A))).
-  Proof. constructor. apply decidable. Defined.
+  Global Instance Decidable_dlist `{Dec:Decidable} : Decidable (eqlistA (eqlistA Aeq)).
+  Proof.
+    constructor. intros l1. induction l1.
+    - intros l2. destruct l2; auto.
+      right. intro. easy.
+    - intros l2. destruct l2.
+      + right. intro. easy.
+      + destruct (decidable a l), (IHl1 l2); auto.
+        * right. intro. inversion H. easy.
+        * right. intro. inversion H. easy.
+        * right. intro. inversion H. easy.
+  Defined.
 
 End Instances.
 
@@ -217,12 +243,12 @@ Goal forall a b : nat, {a = b} + {a <> b}.
 (** * Associative *)
 
 (** ** Class *)
-Class Associative {A : Type} (Aop : A -> A -> A) := {
-    associative : forall a b c, Aop (Aop a b) c = Aop a (Aop b c);
+Class Associative {A : Type} (Aop : A -> A -> A) (Aeq : relation A) := {
+    associative : forall a b c, Aeq (Aop (Aop a b) c) (Aop a (Aop b c));
   }.
 
 (** ** Instances *)
-Global Instance Assoc_NatAdd : Associative Nat.add.
+Global Instance Assoc_NatAdd : Associative Nat.add eq.
 Proof. constructor. auto with arith. Qed.
 
 (** ** Extra Theories *)
@@ -242,15 +268,15 @@ Goal forall a b c : nat, (a + b) + c = a + (b + c).
 (** * Commutative *)
 
 (** ** Class *)
-Class Commutative {A : Type} (Aop : A -> A -> A) := {
-    commutative : forall a b, Aop a b = Aop b a
+Class Commutative {A : Type} (Aop : A -> A -> A) (Aeq : relation A) := {
+    commutative : forall a b, Aeq (Aop a b) (Aop b a)
   }.
 
 (** ** Instances *)
-Global Instance Comm_NatAdd : Commutative Nat.add.
+Global Instance Comm_NatAdd : Commutative Nat.add eq.
 constructor. auto with arith. Qed.
 
-Global Instance Comm_NatMul : Commutative Nat.mul.
+Global Instance Comm_NatMul : Commutative Nat.mul eq.
 constructor. auto with arith. Qed.
 
 (** ** Extra Theories *)
@@ -267,12 +293,12 @@ Goal forall a b : nat, a * b = b * a.
 (** * Identity Left/Right *)
 
 (** ** Class *)
-Class IdentityLeft {A : Type} (Aop : A -> A -> A) (Ae : A) := {
-    identityLeft : forall a, Aop Ae a = a
+Class IdentityLeft {A : Type} (Aop : A -> A -> A) (Ae : A) (Aeq : relation A) := {
+    identityLeft : forall a, Aeq (Aop Ae a) a
   }.
 
-Class IdentityRight {A : Type} (Aop : A -> A -> A) (Ae : A) := {
-    identityRight : forall a, Aop a Ae = a
+Class IdentityRight {A : Type} (Aop : A -> A -> A) (Ae : A) (Aeq : relation A) := {
+    identityRight : forall a, Aeq (Aop a Ae) a
   }.
 
 (** ** Instances *)
@@ -286,12 +312,14 @@ Class IdentityRight {A : Type} (Aop : A -> A -> A) (Ae : A) := {
 (** * Inverse Left/Right *)
 
 (** ** Class *)
-Class InverseLeft {A : Type} (Aop : A -> A -> A) (Ae : A) (Aopinv : A -> A) := {
-    inverseLeft : forall a, Aop (Aopinv a) a = Ae
+Class InverseLeft {A : Type} (Aop : A -> A -> A) (Ae : A) (Aopinv : A -> A)
+  (Aeq : relation A) := {
+    inverseLeft : forall a, Aeq (Aop (Aopinv a) a) Ae
   }.
 
-Class InverseRight {A : Type} (Aop : A -> A -> A) (Ae : A) (Aopinv : A -> A) := {
-    inverseRight : forall a, Aop a (Aopinv a) = Ae
+Class InverseRight {A : Type} (Aop : A -> A -> A) (Ae : A) (Aopinv : A -> A)
+  (Aeq : relation A) := {
+    inverseRight : forall a, Aeq (Aop a (Aopinv a)) Ae
   }.
 
 (** ** Instances *)
@@ -311,14 +339,14 @@ Class InverseRight {A : Type} (Aop : A -> A -> A) (Ae : A) (Aopinv : A -> A) := 
 (*       Aopp (Aadd a b) = Aadd (Aopp a) (Aopp b) *)
 (*   }. *)
 
-Class DistributiveLeft {A : Type} (Aadd Amul : A -> A -> A) := {
+Class DistributiveLeft {A : Type} (Aadd Amul : A -> A -> A) (Aeq : relation A) := {
     distributiveLeft : forall a b c,
-      Amul a (Aadd b c) = Aadd (Amul a b) (Amul a c)
+      Aeq (Amul a (Aadd b c)) (Aadd (Amul a b) (Amul a c))
   }.
 
-Class DistributiveRight {A : Type} (Aadd Amul : A -> A -> A) := {
+Class DistributiveRight {A : Type} (Aadd Amul : A -> A -> A) (Aeq : relation A) := {
     distributiveRight : forall a b c,
-      Amul (Aadd a b) c = Aadd (Amul a c) (Amul b c)
+      Aeq (Amul (Aadd a b) c) (Aadd (Amul a c) (Amul b c))
   }.
 
 (** ** Instances *)
@@ -351,34 +379,38 @@ Class DistributiveRight {A : Type} (Aadd Amul : A -> A -> A) := {
 
 (** ** Class *)
 
-Class Injective {A B : Type} (ϕ : A -> B) := {
-    injective : forall a1 a2 : A, a1 <> a2 -> ϕ a1 <> ϕ a2
+Class Injective {A B : Type} {Aeq: relation A} {Beq: relation B} (phi: A -> B) := {
+    injective : forall a1 a2 : A, ~(Aeq a1 a2) -> ~(Beq (phi a1) (phi a2))
   }.
   
 (** ** Instances *)
 
 (** ** Extra Theories *)
 Section theory.
-  Context {A B : Type}.
+
+  Context {A B : Type} {Aeq: relation A} {Beq: relation B}.
+
+  Notation Injective := (Injective (Aeq:=Aeq) (Beq:=Beq)).
   
   (** Second form of injective *)
-  Definition injective_form2 (ϕ : A -> B) :=
-    forall (a1 a2 : A), ϕ a1 = ϕ a2 -> a1 = a2.
+  Definition injective_form2 (phi: A -> B) :=
+    forall (a1 a2 : A), Beq (phi a1) (phi a2) -> Aeq a1 a2.
 
   (** These two forms are equal *)
-  Lemma injective_eq_injective_form2 (ϕ: A -> B) :
-    Injective ϕ <-> injective_form2 ϕ.
+  Lemma injective_eq_injective_form2 (phi: A -> B) :
+    Injective phi <-> injective_form2 phi.
   Proof.
     split; intros.
     - hnf. destruct H as [H]. intros.
-      specialize (H a1 a2). apply imply_to_or in H. destruct H; try easy.
-      apply NNPP in H. auto.
+      specialize (H a1 a2). apply imply_to_or in H. destruct H.
+      + apply NNPP in H. auto.
+      + easy.
     - hnf in H. constructor. intros. intro. apply H in H1. easy.
   Qed.
 
   (** Injective function preserve equal relation *)
-  Lemma inj_pres_eq : forall (ϕ : A -> B),
-      Injective ϕ -> (forall a1 a2 : A, ϕ a1 = ϕ a2 -> a1 = a2).
+  Lemma inj_pres_eq : forall (f : A -> B),
+      Injective f -> (forall a1 a2 : A, Beq (f a1) (f a2) -> Aeq a1 a2).
   Proof.
     intros. apply injective_eq_injective_form2 in H. apply H. auto.
   Qed.
@@ -394,8 +426,8 @@ End theory.
 
 (** ** Class *)
 
-Class Surjective {A B : Type} (ϕ: A -> B) := {
-    surjective : forall (b : B), (exists (a : A), ϕ a = b)
+Class Surjective {A B : Type} {Beq: relation B} (phi: A -> B) := {
+    surjective : forall (b : B), (exists (a : A), Beq (phi a) b)
   }.
 
 (** ** Instances *)
@@ -411,16 +443,20 @@ Class Surjective {A B : Type} (ϕ: A -> B) := {
 
 (** ** Class *)
 
-Class Bijective {A B : Type} (ϕ: A -> B) := {
-    bijInjective :> Injective ϕ;
-    bijSurjective :> Surjective ϕ
+Class Bijective {A B : Type} {Aeq: relation A} {Beq: relation B} (phi: A -> B) := {
+    bijInjective :> Injective (Aeq:=Aeq) (Beq:=Beq) phi;
+    bijSurjective :> Surjective (Beq:=Beq) phi
   }.
 
 (** ** Instances *)
 
 (** ** Extra Theories *)
 Section theory.
-  Context {A B: Type}.
+  Context {A B: Type} {Aeq:relation A} {Beq:relation B}.
+  Context {Equiv_Aeq:Equivalence Aeq} {Equiv_Beq:Equivalence Beq}.
+  Notation Bijective := (Bijective (Aeq:=Aeq) (Beq:=Beq)).
+  Infix "=A=" := Aeq (at level 70).
+  Infix "=B=" := Beq (at level 70).
   
   (** There exist inverse function from a bijective function.
 
@@ -434,31 +470,59 @@ Section theory.
       forall (A : Type) (P : A -> Prop), (exists ! x : A, P x) -> {x : A | P x} ]
    *)
 
-  Lemma bij_inverse_exist : forall (ϕ : A -> B) (Hbij: Bijective ϕ),
-    {ψ : B -> A | (forall a : A, (ψ (ϕ a)) = a) /\  (forall b : B, ϕ (ψ b) = b)}.
+  (** x is an unique element which holds by P. Setoid version *)
+  Local Definition unique_setoid {A: Type} {Aeq: relation A} (P: A -> Prop) (x: A) :=
+    P x /\ (forall x' : A, P x' -> Aeq x x').
+
+  (** constructive_definite_description, setoid version *)
+  Local Axiom constructive_definite_description_setoid :
+    forall (A : Type) (Aeq:relation A) (P : A -> Prop),
+      (exists x : A, (P x /\ unique_setoid (Aeq:=Aeq) P x)) -> {x : A | P x}.
+
+  (** functional_extensionality, setoid version *)
+  Local Axiom functional_extensionality_setoid :
+    forall {A B} {Beq: relation B} (feq: relation (A->B)) (f g : A -> B),
+      (forall a : A, Beq (f a) (g a)) -> feq f g.
+
+  Lemma bij_inverse_exist : forall (phi : A -> B) (Hbij: Bijective phi),
+    {psi : B -> A | (forall a : A, (psi (phi a)) =A= a) /\  (forall b : B, phi (psi b) =B= b)}.
   Proof.
     intros. destruct Hbij as [Hinj [Hsurj]].
     apply injective_eq_injective_form2 in Hinj. hnf in *.
-    apply constructive_definite_description.
-    assert (H : forall b, exists! a, ϕ a = b).
+    (* Tips, unique is eq version, we need setoid version *)
+    (* assert (H : forall b, exists! a, phi a =B= b). *)
+    assert (H: forall b, exists a, phi a =B= b /\ unique_setoid (Aeq:=Aeq) (fun x => phi x =B= b) a).
     { intros b.
-      destruct (Hsurj b) as [a Pa].
-      exists a; split; trivial.
-      intros a' Pa'. apply Hinj. rewrite Pa, Pa'. auto. }
-    exists (fun y => proj1_sig (constructive_definite_description _ (H y))).
+      destruct (Hsurj b) as [a Ha]. exists a. unfold unique_setoid. repeat split; auto.
+      intros a' Ha'. apply Hinj. rewrite Ha. rewrite Ha'. easy. }
+    eapply constructive_definite_description_setoid.
+    exists (fun b => proj1_sig (constructive_definite_description_setoid (H b))).
     split.
     - split.
-      + intros a.
-        destruct (constructive_definite_description _ _). simpl.
+      + intros a. destruct (constructive_definite_description_setoid). simpl.
         apply Hinj. auto.
-      + intros b.
-        destruct (constructive_definite_description _ _). simpl. auto.
-    - intros g' [H1 H2].
-      apply functional_extensionality.
-      intros b.
-      destruct (constructive_definite_description _ _) as [a Ha].
-      simpl. rewrite <- Ha, H1. auto.
-  Qed.    
+      + intros b. destruct (constructive_definite_description_setoid). simpl. auto.
+    - hnf. split.
+      + split.
+        * intros. destruct (constructive_definite_description_setoid). simpl.
+          apply Hinj. auto.
+        * intros. destruct (constructive_definite_description_setoid). simpl. auto.
+      + intros psi [H1 H2].
+        eapply functional_extensionality_setoid.
+        intros b. destruct (constructive_definite_description_setoid). simpl.
+        assert (phi (psi b) =B= b); auto using H2.
+        rewrite <- H0 in b0. apply Hinj in b0. exact b0.
+        Unshelve. exact eq.
+  Defined.
+
+  (** A bijective function preserve equal relation *)
+  (* Lemma bij_pres_eq_forward : forall (f : A -> B), *)
+  (*     Bijective f -> (forall (a1 a2 : A), Aeq a1 a2 -> Beq (f a1) (f a2)). *)
+  (* Proof. *)
+  (*   intros. destruct H as [H1 H2]. *)
+  (*   (* I can't prove now. *) *)
+  (*   Abort. *)
+    
 
 End theory.
 
@@ -471,8 +535,9 @@ End theory.
 
 (** ** Class *)
 
-Class Homomorphic {A B : Type} (fa : A -> A -> A) (fb : B -> B -> B) (ϕ : A -> B) := {
-    homomorphic : forall (a1 a2 : A), ϕ (fa a1 a2) = fb (ϕ a1) (ϕ a2)
+Class Homomorphic {A B : Type} {Beq: relation B}
+  (fa : A -> A -> A) (fb : B -> B -> B) (phi: A -> B) := {
+    homomorphic : forall (a1 a2 : A), Beq (phi (fa a1 a2)) (fb (phi a1) (phi a2))
   }.
 
 (** ** Instances *)
@@ -497,15 +562,25 @@ Class Homomorphic {A B : Type} (fa : A -> A -> A) (fb : B -> B -> B) (ϕ : A -> 
 
 (** If there exist a homomorphic and surjective mapping from <A,+> to <B,⊕>,
     then we said <A,+> and <B,⊕> is homomorphism *)
-Class Homomorphism {A B : Type} (fa : A -> A -> A) (fb : B -> B -> B) := {
-    homomorphism : exists (ϕ: A -> B), Homomorphic fa fb ϕ /\ Surjective ϕ
+Class Homomorphism {A B : Type} {Aeq: relation A} {Beq: relation B}
+  (fa : A -> A -> A) (fb : B -> B -> B) := {
+    homomorphism : exists (phi: A -> B),
+      Homomorphic fa fb phi (Beq:=Beq)
+      /\ Surjective phi (Beq:=Beq)
+      (* need this condition, although this is not explicit in math. *)
+      /\ Proper (Aeq ==> Beq) phi
   }.
 
 (** If there exist two homomorphic and surjective mapping from <A,+> to <B,⊕>
     and from <A,*> to <B,⊗>, then we said <A,+,*> and <B,⊕,⊗> is homomorphism *)
-Class Homomorphism2 {A B : Type} (fa ga : A -> A -> A) (fb gb : B -> B -> B) := {
-    homomorphism2 : exists (ϕ: A -> B),
-      Homomorphic fa fb ϕ /\ Homomorphic ga gb ϕ /\ Surjective ϕ
+Class Homomorphism2 {A B : Type} {Aeq: relation A} {Beq: relation B}
+  (fa ga : A -> A -> A) (fb gb : B -> B -> B) := {
+    homomorphism2 : exists (phi: A -> B),
+      Homomorphic fa fb phi (Beq:=Beq)
+      /\ Homomorphic ga gb phi (Beq:=Beq)
+      /\ Surjective phi (Beq:=Beq)
+      (* need this condition, although this is not explicit in math. *)
+      /\ Proper (Aeq ==> Beq) phi
   }.
 
 (** ** Instances *)
@@ -523,15 +598,25 @@ Class Homomorphism2 {A B : Type} (fa ga : A -> A -> A) (fb gb : B -> B -> B) := 
 
 (** If there exist a homomorphic and bijective mapping from <A,+> to <B,⊕>,
     then we said <A,+> and <B,⊕> is isomorphism *)
-Class Isomorphism {A B : Type} (fa : A -> A -> A) (fb : B -> B -> B) := {
-    isomorphism : exists (ϕ: A -> B), Homomorphic fa fb ϕ /\ Bijective ϕ
+Class Isomorphism {A B : Type} {Aeq: relation A} {Beq: relation B}
+  (fa : A -> A -> A) (fb : B -> B -> B) := {
+    isomorphism : exists (phi: A -> B),
+      Homomorphic fa fb phi (Beq:=Beq)
+      /\ Bijective phi (Aeq:=Aeq) (Beq:=Beq)
+      (* need this condition, although this is not explicit in math. *)
+      /\ Proper (Aeq ==> Beq) phi
   }.
 
 (** If there exist two homomorphic and bijective mapping from <A,+> to <B,⊕>
     and from <A,*> to <B,⊗>, then we said <A,+,*> and <B,⊕,⊗> is isomorphism *)
-Class Isomorphism2 {A B : Type} (fa ga : A -> A -> A) (fb gb : B -> B -> B) := {
-    isomorphism2 : exists (ϕ: A -> B),
-      Homomorphic fa fb ϕ /\ Homomorphic ga gb ϕ /\ Bijective ϕ
+Class Isomorphism2 {A B : Type} {Aeq: relation A} {Beq: relation B}
+  (fa ga : A -> A -> A) (fb gb : B -> B -> B) := {
+    isomorphism2 : exists (phi: A -> B),
+      Homomorphic fa fb phi (Beq:=Beq)
+      /\ Homomorphic ga gb phi (Beq:=Beq)
+      /\ Bijective phi (Aeq:=Aeq) (Beq:=Beq)
+      (* need this condition, although this is not explicit in math. *)
+      /\ Proper (Aeq ==> Beq) phi
   }.
 
 (** ** Instances *)
@@ -546,10 +631,12 @@ Class Isomorphism2 {A B : Type} (fa ga : A -> A -> A) (fb gb : B -> B -> B) := {
 (** * Monoid *)
 
 (** ** Class *)
-Class Monoid {A : Type} (Aadd : A -> A -> A) (A0 : A) := {
-    monoidAssoc :> Associative Aadd;
-    monoidIdL :> IdentityLeft Aadd A0;
-    monoidIdR :> IdentityRight Aadd A0;
+Class Monoid {A:Type} (Aadd : A -> A -> A) (A0 : A) (Aeq:A->A->Prop) := {
+    monoidAaddProper :> Proper (Aeq ==> Aeq ==> Aeq) Aadd;
+    monoidEquiv :> Equivalence Aeq;
+    monoidAssoc :> Associative Aadd Aeq;
+    monoidIdL :> IdentityLeft Aadd A0 Aeq;
+    monoidIdR :> IdentityRight Aadd A0 Aeq;
   }.
 
 (** Get parameter of a monoid *)
@@ -558,31 +645,48 @@ Definition monoidA0 `{M:Monoid} : A := A0.
 
 (** ** Instances *)
 Section Instances.
-  Import Arith ZArith Qcanon Reals.
+  Import Arith ZArith QArith Qcanon Reals.
   
-  Global Instance Monoid_NatAdd : Monoid Nat.add 0%nat.
-  repeat constructor; intros; auto with arith. Qed.
+  Global Instance Monoid_NatAdd : Monoid Nat.add 0%nat eq.
+  repeat constructor; intros; auto with arith.
+  simp_proper; intros; subst; auto. apply eq_equivalence. Qed.
 
-  Global Instance Monoid_NatMul : Monoid Nat.mul 1%nat.
-  repeat constructor; intros; auto with arith. Qed.
+  Global Instance Monoid_NatMul : Monoid Nat.mul 1%nat eq.
+  repeat constructor; intros; auto with arith.
+  simp_proper; intros; subst; auto. apply eq_equivalence. Qed.
 
-  Global Instance Monoid_ZAdd : Monoid Z.add 0%Z.
-  repeat constructor; intros; auto with zarith. Qed.
+  Global Instance Monoid_ZAdd : Monoid Z.add 0%Z eq.
+  repeat constructor; intros; auto with zarith.
+  simp_proper; intros; subst; auto. Qed.
 
-  Global Instance Monoid_ZMul : Monoid Z.mul 1%Z.
-  repeat constructor; intros; auto with zarith. Qed.
+  Global Instance Monoid_ZMul : Monoid Z.mul 1%Z eq.
+  repeat constructor; intros; auto with zarith.
+  simp_proper; intros; subst; auto. Qed.
 
-  Global Instance Monoid_QcAdd : Monoid Qcplus 0.
-  repeat constructor; intros; ring. Qed.
+  Global Instance Monoid_QAdd : Monoid Qplus 0 Qeq.
+  repeat constructor; intros; simpl; try ring.
+  simp_proper; intros. f_equiv; auto. all: apply Q_Setoid. Qed.
 
-  Global Instance Monoid_QcMul : Monoid Qcmult 1.
-  repeat constructor; intros; ring. Qed.
+  Global Instance Monoid_QMul : Monoid Qmult 1 Qeq.
+  repeat constructor; intros; simpl; try ring.
+  simp_proper; intros. f_equiv; auto. all: apply Q_Setoid. Qed.
 
-  Global Instance Monoid_RAdd : Monoid Rplus 0%R.
-  repeat constructor; intros; ring. Qed.
+  Global Instance Monoid_QcAdd : Monoid Qcplus 0 eq.
+  repeat constructor; intros; try ring.
+  simp_proper; intros; subst; auto. all: apply eq_equivalence. Qed.
 
-  Global Instance Monoid_RMul : Monoid Rmult 1%R.
-  repeat constructor; intros; ring. Qed.
+  Global Instance Monoid_QcMul : Monoid Qcmult 1 eq.
+  repeat constructor; intros; try ring.
+  simp_proper; intros; subst; auto. all: apply eq_equivalence. Qed.
+
+  Global Instance Monoid_RAdd : Monoid Rplus 0%R eq.
+  repeat constructor; intros; try ring.
+  simp_proper; intros; subst; auto. all: apply eq_equivalence. Qed.
+
+  Global Instance Monoid_RMul : Monoid Rmult 1%R eq.
+  repeat constructor; intros; try ring.
+  simp_proper; intros; subst; auto. all: apply eq_equivalence. Qed.
+  
 End Instances.
 
 (** ** Extra Theories *)
@@ -599,9 +703,9 @@ Ltac monoid_simp := intros; monoid_rw; try reflexivity; auto.
     It is strict and powerful (such as "a + (e + b)" could be solved), 
     but less automated. *)
 Ltac monoid_rw_strict M :=
-  repeat (try rewrite (@identityLeft _ _ _ (@monoidIdL _ _ _ M));
-          try rewrite (@identityRight _ _ _ (@monoidIdR _ _ _ M));
-          try rewrite (@associative _ _ (@monoidAssoc _ _ _ M))).
+  repeat (try rewrite (@identityLeft _ _ _ _ (@monoidIdL _ _ _ _ M));
+          try rewrite (@identityRight _ _ _ _ (@monoidIdR _ _ _ _ M));
+          try rewrite (@associative _ _ _ (@monoidAssoc _ _ _ _ M))).
 
 Ltac monoid_simp_strict M := intros; monoid_rw_strict M; auto.
 
@@ -629,10 +733,7 @@ Section Examples.
   
   Goal forall a b : R, a + ((b + 0) + 0) = a + b.
   Proof.
-    intros.
-    Fail rewrite identityRight. (* fail here *)
-    monoid_simp. (* no expected effect *)
-    monoid_simp_strict Monoid_RAdd. (* it succeed *)
+    intros. monoid_simp.
 Qed.
 
 End Examples.
@@ -642,26 +743,26 @@ End Examples.
 (** * Abelian monoid *)
 
 (** ** Class *)
-Class AMonoid {A} Aadd A0 := {
-    amonoidMonoid :> @Monoid A Aadd A0;
-    amonoidComm :> Commutative Aadd;
+Class AMonoid {A} Aadd A0 Aeq := {
+    amonoidMonoid :> @Monoid A Aadd A0 Aeq;
+    amonoidComm :> Commutative Aadd Aeq;
   }.
 
 (** ** Instances *)
 Section Instances.
   Import Qcanon Reals.
   
-  Global Instance AMonoid_QcAdd : AMonoid Qcplus 0.
-  repeat constructor; intros; ring. Qed.
+  Global Instance AMonoid_QcAdd : AMonoid Qcplus 0 eq.
+  split_intro; subst; ring. Defined.
 
-  Global Instance AMonoid_QcMul : AMonoid Qcmult 1.
-  repeat constructor; intros; ring. Qed.
+  Global Instance AMonoid_QcMul : AMonoid Qcmult 1 eq.
+  split_intro; subst; ring. Defined.
 
-  Global Instance AMonoid_RAdd : AMonoid Rplus 0%R.
-  repeat constructor; intros; ring. Qed.
+  Global Instance AMonoid_RAdd : AMonoid Rplus 0%R eq.
+  split_intro; subst; ring. Defined.
 
-  Global Instance AMonoid_RMul : AMonoid Rmult 1%R.
-  repeat constructor; intros; ring. Qed.
+  Global Instance AMonoid_RMul : AMonoid Rmult 1%R eq.
+  split_intro; subst; ring. Defined.
 
 End Instances.
 
@@ -703,10 +804,14 @@ End Examples.
 (** * Group *)
 
 (** ** Class *)
-Class Group {A} Aadd A0 (Aopp : A -> A) := {
-    groupMonoid :> @Monoid A Aadd A0;
-    groupInvL :> InverseLeft Aadd A0 Aopp;
-    groupInvR :> InverseRight Aadd A0 Aopp;
+Class Group {A} Aadd A0 (Aopp : A -> A) Aeq := {
+    groupMonoid :> @Monoid A Aadd A0 Aeq;
+    groupInvL :> InverseLeft Aadd A0 Aopp Aeq;
+    groupInvR :> InverseRight Aadd A0 Aopp Aeq;
+    groupAaddProper :> Proper (Aeq ==> Aeq ==> Aeq) Aadd;
+    groupAoppProper :> Proper (Aeq ==> Aeq) Aopp;
+    (* groupDistrAinv :> DistributiveUnary Aop Ainv Aeq; *)
+    (* groupInvoAinv :> Involution Ainv Aeq; *)
   }.
 
 (** ** Instances *)
@@ -714,34 +819,40 @@ Section Instances.
 
   Import Qcanon Reals.
   
-  Global Instance Group_QcAdd : Group Qcplus 0 Qcopp.
-  repeat constructor; intros; ring. Qed.
+  Global Instance Group_QcAdd : Group Qcplus 0 Qcopp eq.
+  split_intro; subst; ring. Defined.
 
-  Global Instance Group_RAdd : Group Rplus 0%R Ropp.
-  repeat constructor; intros; ring. Qed.
+  Global Instance Group_RAdd : Group Rplus 0%R Ropp eq.
+  split_intro; subst; ring. Defined.
 
 End Instances.
 
 
 (** ** Extra Theories *)
 
+(** group rewriting, automatic inference the Instance. But sometimes it will fail *)
 Ltac group_rw :=
-  rewrite inverseLeft ||
-    rewrite inverseRight.
+  repeat (try rewrite inverseLeft;
+          try rewrite inverseRight).
 
+(** group rewriting with given group-instance-name.
+    It is strict and powerful (such as "a + (-b + b)" could be solved), 
+    but less automated. *)
 Ltac group_rw_strict G :=
-  rewrite inverseLeft ||
-    rewrite inverseRight.
+  repeat (try rewrite (@inverseLeft _ _ _ _ _ (@groupInvL _ _ _ _ _ G));
+          try rewrite (@inverseRight _ _ _ _ _ (@groupInvR _ _ _ _ _ G))).
 
 Ltac group_simp :=
+  intros;
   repeat (group_rw || monoid_rw || group_rw);
   try reflexivity;
   auto.
 
 Ltac group_simp_strict G :=
-  repeat (group_rw ||
-            monoid_simp_strict (@groupMonoid _ _ _ _ G) ||
-              group_rw);
+  intros;
+  repeat (group_rw_strict G ||
+            monoid_simp_strict (@groupMonoid _ _ _ _ _ G) ||
+              group_rw_strict G);
   try reflexivity;
   auto.
 
@@ -751,7 +862,6 @@ Section tac_example.
   
   Goal forall a b : R, a + (b + (a + (-a))) = a + b.
     group_simp. (* a bit complex expression cannot be solved automatically *)
-    group_simp_strict Group_RAdd.
   Qed.
 End tac_example.
 
@@ -769,6 +879,7 @@ End tac_example.
 Section GroupTheory.
   
   Context `{G:Group}.
+  Infix "==" := Aeq.
   Infix "+" := Aadd.
   Notation "0" := A0.
   Notation "- a" := (Aopp a).
@@ -777,70 +888,70 @@ Section GroupTheory.
   
   (** Theorem 5.1 *)
   (* Note that, I give two theorem rather than one. *)
-  Theorem group_id_uniq_l : forall e', (forall a, e' + a = a) -> e' = 0.
+  Theorem group_id_uniq_l : forall e', (forall a, e' + a == a) -> e' == 0.
   Proof.
     intros.
     (* e = e' + e = e' *)
-    assert (e' = e' + 0) by monoid_simp.
-    assert (e' + 0 = 0); auto.
-    rewrite H0. rewrite <- H1 at 2. auto.
+    assert (e' == e' + 0) by monoid_simp.
+    assert (e' + 0 == 0); auto.
+    rewrite H0. rewrite <- H1 at 2. easy.
   Qed.
 
-  Theorem group_id_uniq_r : forall e', (forall a, a + e' = a) -> e' = 0.
+  Theorem group_id_uniq_r : forall e', (forall a, a + e' == a) -> e' == 0.
   Proof.
     intros.
     (* e = e + e' = e' *)
-    assert (0 = 0 + e'). { rewrite H. auto. }
-    assert (0 + e' = e') by group_simp.
-    apply transitivity with (0 + e'); auto.
+    assert (0 == 0 + e'). { rewrite H. easy. }
+    assert (0 + e' == e') by group_simp.
+    apply transitivity with (0 + e'); auto. group_simp.
   Qed.
 
   (* Note that, I give two theorem rather than one. *)
-  Theorem group_inv_uniq_l : forall x1 x2 y, x1 + y = 0 /\ y + x2 = 0 -> x1 = x2.
+  Theorem group_inv_uniq_l : forall x1 x2 y, x1 + y == 0 /\ y + x2 == 0 -> x1 == x2.
   Proof.
     intros. destruct H as [Ha Hb].
     (* x1 = x1+e = x1+(y+x2) = (x1+y)+x2 = e+x2 = x2 *)
-    assert (x1 = x1 + 0) by group_simp.
+    assert (x1 == x1 + 0) by group_simp.
     rewrite H. rewrite <- Hb. rewrite <- associative.
     rewrite Ha. group_simp.
   Qed.
 
-  Theorem group_inv_uniq_r : forall x y1 y2, x + y1 = 0 /\ y2 + x = 0 -> y1 = y2.
+  Theorem group_inv_uniq_r : forall x y1 y2, x + y1 == 0 /\ y2 + x == 0 -> y1 == y2.
   Proof.
     intros. destruct H as [Ha Hb].
     (* y1 = e+y1 = (y2+x)+y1 = y2+(x+y1) = y2+e = y2 *)
-    assert (y1 = 0 + y1) by group_simp.
+    assert (y1 == 0 + y1) by group_simp.
     rewrite H. rewrite <- Hb. rewrite associative.
     rewrite Ha. group_simp.
   Qed.
 
   (** Theorem 14.1 *)
-  Theorem group_cancel_l : forall x y1 y2, x + y1 = x + y2 -> y1 = y2.
+  Theorem group_cancel_l : forall x y1 y2, x + y1 == x + y2 -> y1 == y2.
   Proof.
     intros.
     (* y1 = e+y1 = (-x+x)+y1 = (-x)+(x+y1) = (-x) + (x+y2) = e+y2 = y2 *)
     rewrite <- identityLeft.
-    replace 0 with (-x + x) by group_simp.
-    rewrite associative. rewrite <- H. rewrite <- associative.
+    setoid_replace 0 with (-x + x) by group_simp.
+    rewrite associative. rewrite H. rewrite <- associative.
     group_simp.
   Qed.
 
-  Theorem group_cancel_r : forall x1 x2 y, x1 + y = x2 + y -> x1 = x2.
+  Theorem group_cancel_r : forall x1 x2 y, x1 + y == x2 + y -> x1 == x2.
   Proof.
     intros.
     (* x1 = x1+e = x1+(y+ -y) = (x1+y)+(-y) = (x2+y)+(-y) = x2+e = x2 *)
     rewrite <- identityRight.
-    replace 0 with (y + (-y)) by group_simp.
-    rewrite <- associative. rewrite <- H. rewrite associative.  
+    setoid_replace 0 with (y + (-y)) by group_simp.
+    rewrite <- associative. rewrite H. rewrite associative.
     group_simp.
   Qed.
 
-  Theorem group_inv_inv : forall x,  - - x = x.
+  Theorem group_inv_inv : forall x,  - - x == x.
   Proof.
     intros. apply group_cancel_l with (- x). group_simp.
   Qed.
 
-  Theorem group_inv_distr : forall x y, - (x + y) = (- y) + (- x).
+  Theorem group_inv_distr : forall x y, - (x + y) == (- y) + (- x).
   Proof.
     intros.
     (* (x+y)+ -(x+y) = e = x+ -x = x+e+ -x = x+(y+ -y)+ -x
@@ -853,7 +964,7 @@ Section GroupTheory.
     
   (** Theorem 14.2 *)
   (* a + x = b -> x = (-a) + b *)
-  Theorem group_equation_sol_l : forall a b x, a + x = b -> x = (- a) + b.
+  Theorem group_equation_sol_l : forall a b x, a + x == b -> x == (- a) + b.
   Proof.
     intros.
     (* left add a at two side *)
@@ -865,7 +976,7 @@ Section GroupTheory.
 
   (* a + x = b /\ a + y = b -> x = -a + b /\ y = -a + b *)
   Theorem group_equation_sol_l_uniq : 
-    forall a b x y, (a + x = b /\ a + y = b) -> (x = -a + b /\ y = -a + b).
+    forall a b x y, (a + x == b /\ a + y == b) -> (x == -a + b /\ y == -a + b).
   Proof.
     intros. destruct H. split.
     apply group_equation_sol_l; auto.
@@ -873,7 +984,7 @@ Section GroupTheory.
   Qed.
 
   (* x + a = b -> x = b + (-a) *)
-  Theorem group_equation_sol_r : forall a b x, x + a = b -> x = b + (- a).
+  Theorem group_equation_sol_r : forall a b x, x + a == b -> x == b + (- a).
   Proof.
     intros.
     (* right mult a *)
@@ -884,7 +995,7 @@ Section GroupTheory.
 
   (* (x + a = b /\ y + a = b) -> (x = b + -a /\ y = b + -a) *)
   Theorem group_equation_sol_r_uniq : 
-    forall a b x y, (x + a = b /\ y + a = b) -> (x = b + (- a) /\ y = b + (- a)).
+    forall a b x y, (x + a == b /\ y + a == b) -> (x == b + (- a) /\ y == b + (- a)).
   Proof.
     intros; destruct H. split.
     apply group_equation_sol_r; auto.
@@ -922,7 +1033,7 @@ Section GroupTheory.
 
     (** (a1+...+as) + (b1+...+bt) = a1+...+as + b1+...+bt *)
     Theorem group_assoc_general (l1 l2 : list A) :
-      (group_batch l1) + (group_batch l2) = group_batch (l1 ++ l2).
+      (group_batch l1) + (group_batch l2) == group_batch (l1 ++ l2).
     Proof.
       (* reduct to fold_left *)
       destruct l1,l2; simpl; group_simp.
@@ -936,14 +1047,19 @@ Section GroupTheory.
            remember (Σ a1 & l1) as c, then goal become to
               Σ (c + a2) & l2 = Σ c & (a2 :: l2)
            by H3, we got it. *)
-        assert (forall a l1 l2, Σ a & (l1 ++ l2) = Σ (Σ a & l1) & l2) as H1.
+        assert (forall a l1 l2, Σ a & (l1 ++ l2) == Σ (Σ a & l1) & l2) as H1.
         { intros a l0. gd a. induction l0; intros; try reflexivity.
           simpl. rewrite IHl0. reflexivity. }
-        assert (forall a b l, a + Σ b & l = Σ (a + b) & l) as H2.
+        assert (forall a b l, a + Σ b & l == Σ (a + b) & l) as H2.
         { intros. gd b. gd a. induction l; simpl; intros; try reflexivity.
-          simpl. rewrite IHl. group_simp. }
-        assert (forall a b l, Σ a & (b :: l) = Σ (a + b) & l) as H3.
-        { intros. gd b. gd a. induction l; auto. }
+          simpl. rewrite IHl.
+          (** fold_left preveres the aeq *)
+          assert (forall l a1 a2, a1 == a2 -> Σ a1 & l == Σ a2 & l).
+          { induction l0; intros; simpl in *; auto.
+            apply IHl0. rewrite H. easy. }
+          apply H. group_simp. }
+        assert (forall a b l, Σ a & (b :: l) == Σ (a + b) & l) as H3.
+        { intros. gd b. gd a. induction l; intros; auto. easy. easy. }
         rewrite H1. rewrite H2. rewrite H3. easy.
     Qed.
     
@@ -1000,7 +1116,7 @@ Section GroupTheory.
   (** *** Below, these properties are not in textbook *)
   Section additional_props.
   
-    Theorem group_inv_id : - 0 = 0.
+    Theorem group_inv_id : - 0 == 0.
     Proof.
       (* -e = -e + e = e *)
       rewrite <- identityRight at 1. group_simp.
@@ -1036,10 +1152,10 @@ End Examples.
 (* ======================================================================= *)
 (** ** Definition and theory *)
 
-Class AGroup {A} Aadd A0 Aopp := {
-    agroupGroup :> @Group A Aadd A0 Aopp;
-    agroupAM :> @AMonoid A Aadd A0;
-    agroupComm :> Commutative Aadd;
+Class AGroup {A} Aadd A0 Aopp Aeq := {
+    agroupGroup :> @Group A Aadd A0 Aopp Aeq;
+    agroupAM :> @AMonoid A Aadd A0 Aeq;
+    agroupComm :> Commutative Aadd Aeq;
   }.
 
 Global Coercion agroupGroup : AGroup >-> Group.
@@ -1051,25 +1167,26 @@ Ltac agroup_simp :=
 Section Theory.
   
   Context `{AG : AGroup}.
+  Infix "==" := Aeq.
   Infix "+" := Aadd.
   Notation "- a" := (Aopp a).
   Notation "a - b" := (a + (-b)).
 
   (** a - b = - (b - a) *)
-  Lemma agroup_sub_comm : forall a b, a - b = - (b - a).
-  Proof. intros. rewrite (group_inv_distr). rewrite (group_inv_inv). auto. Qed.
+  Lemma agroup_sub_comm : forall a b, a - b == - (b - a).
+  Proof. intros. rewrite (group_inv_distr). rewrite (group_inv_inv). easy. Qed.
 
   (** (a - b) - c = (a - c) - b *)
-  Lemma agroup_sub_perm : forall a b c, (a - b) - c = (a - c) - b.
-  Proof. intros. rewrite ?associative. rewrite (commutative (-b)). auto. Qed.
+  Lemma agroup_sub_perm : forall a b c, (a - b) - c == (a - c) - b.
+  Proof. intros. rewrite ?associative. rewrite (commutative (-b)). easy. Qed.
 
   (** - (a + b) = (-a) + (-b) *)
-  Lemma agroup_sub_distr : forall a b, - (a + b) = -a + (-b).
+  Lemma agroup_sub_distr : forall a b, - (a + b) == -a + (-b).
   Proof. intros. rewrite (group_inv_distr). agroup_simp. Qed.
 
   (** (a - b) - c = a - (b + c) *)
-  Lemma agroup_sub_assoc : forall a b c, (a - b) - c = a - (b + c).
-  Proof. intros. rewrite ?associative. rewrite agroup_sub_distr. auto. Qed.
+  Lemma agroup_sub_assoc : forall a b c, (a - b) - c == a - (b + c).
+  Proof. intros. rewrite ?associative. rewrite agroup_sub_distr. easy. Qed.
   
 End Theory.
 
@@ -1077,16 +1194,19 @@ End Theory.
 (** ** Instances *)
 Section Instances.
 
-  Import ZArith Qcanon Reals.
+  Import ZArith QArith Qcanon Reals.
   
-  Global Instance AGroup_ZAdd : AGroup Z.add 0%Z Z.opp.
-  repeat constructor; intros; ring. Qed.
+  Global Instance AGroup_ZAdd : AGroup Z.add 0%Z Z.opp eq.
+  split_intro; subst; ring. Qed.
 
-  Global Instance AGroup_QcAdd : AGroup Qcplus 0 Qcopp.
-  repeat constructor; intros; ring. Qed.
+  Global Instance AGroup_QAdd : AGroup Qplus 0 Qopp Qeq.
+  split_intro; try rewrite ?H,?H0; simpl; try easy; try ring. Qed.
 
-  Global Instance AGroup_RAdd : AGroup Rplus 0%R Ropp.
-  repeat constructor; intros; ring. Qed.
+  Global Instance AGroup_QcAdd : AGroup Qcplus 0 Qcopp eq.
+  split_intro; subst; ring. Qed.
+
+  Global Instance AGroup_RAdd : AGroup Rplus 0%R Ropp eq.
+  split_intro; subst; ring. Qed.
 
 End Instances.
 
@@ -1094,13 +1214,12 @@ Section example.
   Import Reals.
   Open Scope R.
   
-  Goal forall a , a + - 0 = a.
-    intros.
-    Fail rewrite group_inv_id.
-    rewrite (group_inv_id (A0:=0)). group_simp. Qed.
-  
   Goal forall a b c : R, ((a - b) - c = a - (b + c))%R.
     intros. apply agroup_sub_assoc. Qed.
+  
+  Goal forall a , a + - 0 = a.
+    intros. rewrite group_inv_id. group_simp. Qed.
+  
 End example.
 
 
@@ -1111,26 +1230,29 @@ End example.
 
 (* Note that, in mathematics, mul needn't commutative, but ring_theory in Coq 
    need it. Because we want use ring tactic, so add this properties. *)
-Class Ring {A} Aadd A0 Aopp Amul A1 := {
-    ringAddAG :> @AGroup A Aadd A0 Aopp;
-    ringMulAM :> @AMonoid A Amul A1;
-    ringDistrL :> DistributiveLeft Aadd Amul;
-    ringDistrR :> DistributiveRight Aadd Amul;
+Class Ring {A} Aadd A0 Aopp Amul A1 Aeq := {
+    ringAddAG :> @AGroup A Aadd A0 Aopp Aeq;
+    ringMulAM :> @AMonoid A Amul A1 Aeq;
+    ringDistrL :> DistributiveLeft Aadd Amul Aeq;
+    ringDistrR :> DistributiveRight Aadd Amul Aeq;
   }.
 
 (** ** Instances *)
 Section Instances.
 
-  Import ZArith Qcanon Reals.
+  Import ZArith QArith Qcanon Reals.
   
-  Global Instance Ring_Z : Ring Z.add 0%Z Z.opp Z.mul 1%Z.
-  repeat constructor; intros; ring. Qed.
+  Global Instance Ring_Z : Ring Z.add 0%Z Z.opp Z.mul 1%Z eq.
+  split_intro; subst; ring. Qed.
 
-  Global Instance Ring_Qc : Ring Qcplus 0 Qcopp Qcmult 1.
-  repeat constructor; intros; ring. Qed.
+  Global Instance Ring_Q : Ring Qplus 0 Qopp Qmult 1 Qeq.
+  split_intro; rewrite ?H, ?H0; simpl; try ring. Qed.
 
-  Global Instance Ring_R : Ring Rplus R0 Ropp Rmult R1.
-  repeat constructor; intros; ring. Qed.
+  Global Instance Ring_Qc : Ring Qcplus 0 Qcopp Qcmult 1 eq.
+  split_intro; subst; ring. Qed.
+
+  Global Instance Ring_R : Ring Rplus R0 Ropp Rmult R1 eq.
+  split_intro; subst; ring. Qed.
 
 End Instances.
 
@@ -1138,7 +1260,7 @@ End Instances.
 
 (** make a coq ring object from our Ring object *)
 Lemma make_ring_theory `(R : Ring) :
-  ring_theory A0 A1 Aadd Amul (fun a b => Aadd a (Aopp b)) Aopp eq.
+  ring_theory A0 A1 Aadd Amul (fun a b => Aadd a (Aopp b)) Aopp Aeq.
 Proof.
   constructor; intros;
     try (rewrite ?identityLeft,?associative; reflexivity);
@@ -1151,6 +1273,7 @@ Section Theory.
 
   Context `(R:Ring).
 
+  Infix "==" := Aeq : A_scope.
   Infix "+" := Aadd : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
   Notation Asub := (fun a b => a + -b).
@@ -1176,6 +1299,7 @@ End Examples.
     to enable "ring" tactic. *)
 Module Demo_AbsRing.
   Context `{R : Ring}.
+  Infix "==" := Aeq.
   Infix "+" := Aadd.
   Infix "*" := Amul.
   Notation "0" := A0.
@@ -1183,7 +1307,7 @@ Module Demo_AbsRing.
 
   Add Ring ring_thy_inst : (make_ring_theory R).
 
-  Goal forall a b c : A, (a + b) * c = 0 + b * c * 1 + 0 + 1 * c * a.
+  Goal forall a b c : A, (a + b) * c == 0 + b * c * 1 + 0 + 1 * c * a.
   Proof. intros. ring. Qed.
   
 End Demo_AbsRing.
@@ -1257,11 +1381,13 @@ End Demo_ConcrateRing.
 (** * Field *)
 
 (** ** Class *)
-Class Field {A} Aadd A0 Aopp Amul A1 Ainv := {
+Class Field {A} Aadd A0 Aopp Amul A1 Ainv Aeq := {
     (** Field: Ring + mult inversion + (1≠0) *)
-    fieldRing :> @Ring A Aadd A0 Aopp Amul A1;
-    field_mulInvL : forall a, a <> A0 -> Amul (Ainv a) a = A1;
-    field_1_neq_0 : A1 <> A0;
+    fieldRing :> @Ring A Aadd A0 Aopp Amul A1 Aeq;
+    field_mulInvL : forall a, ~(Aeq a A0) -> Aeq (Amul (Ainv a) a) A1;
+    field_1_neq_0 : ~(Aeq A1 A0);
+    (** additional: Ainv is proper morphism *)
+    fieldAinvProper :> Proper (Aeq ==> Aeq) Ainv
   }.
 
 (** ** Instances *)
@@ -1269,13 +1395,12 @@ Section Instances.
 
   Import Qcanon Reals.
   
-  Global Instance Field_Qc : Field Qcplus 0 Qcopp Qcmult 1 Qcinv.
-  repeat constructor; intros; try field; auto.
-  apply Q_apart_0_1. Qed.
+  Global Instance Field_Qc : Field Qcplus 0 Qcopp Qcmult 1 Qcinv eq.
+  split_intro; subst; (try (field; reflexivity)); try easy. field. auto. Qed.
 
-  Global Instance Field_R : Field Rplus R0 Ropp Rmult R1 Rinv.
-  repeat constructor; intros; try field; auto.
-  apply R1_neq_R0. Qed.
+  Global Instance Field_R : Field Rplus R0 Ropp Rmult R1 Rinv eq.
+  split_intro; subst; try (field; reflexivity); auto. field; auto.
+  auto with real. Qed.
 
 End Instances.
 
@@ -1286,7 +1411,7 @@ End Instances.
 Lemma make_field_theory `(F : Field):
   field_theory A0 A1 Aadd Amul
                (fun a b => Aadd a (Aopp b)) Aopp
-               (fun a b => Amul a (Ainv b)) Ainv eq.
+               (fun a b => Amul a (Ainv b)) Ainv Aeq.
 Proof.
   constructor; intros;
     try (rewrite ?identityLeft,?associative; reflexivity);
@@ -1299,6 +1424,8 @@ Qed.
 Section Theory.
 
   Context `{F:Field}.
+  Infix "==" := Aeq : A_scope.
+  Infix "!=" := (fun x y => ~ x == y)%A : A_scope.
   Infix "+" := Aadd : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
   Notation Asub := (fun a b => a + -b).
@@ -1312,29 +1439,26 @@ Section Theory.
   Add Field field_inst : (make_field_theory F).
 
   (** a <> 0 -> /a * a = 1 *)
-  Lemma field_mul_inv_l : forall a : A, a <> 0 -> /a * a = 1.
+  Lemma field_mul_inv_l : forall a : A, (a != 0) -> /a * a == 1.
   Proof. intros. rewrite field_mulInvL; easy. Qed.
 
   (** a <> 0 -> a * /a = 1 *)
-  Lemma field_mul_inv_r : forall a : A, a <> 0 -> a * /a = 1.
+  Lemma field_mul_inv_r : forall a : A, (a != 0) -> a * /a == 1.
   Proof. intros. rewrite commutative. rewrite field_mulInvL; easy. Qed.
 
   (** a <> 0 -> (1/a) * a = 1 *)
-  Lemma field_mul_inv1_l : forall a : A, a <> 0 -> (A1/a) * a = 1.
+  Lemma field_mul_inv1_l : forall a : A, (a != 0) -> (1/a) * a == 1.
   Proof. intros. simpl. group_simp. apply field_mul_inv_l. auto. Qed.
   
   (** a <> 0 -> a * (1/a) = 1 *)
-  Lemma field_mul_inv1_r : forall a : A, a <> 0 -> a * (A1/a) = 1.
-  Proof. intros. simpl. group_simp.
-         replace (1 * /a) with (/a) by monoid_simp. (* Tips: this manual work
-                                                       should be avoid in future *)
-         apply field_mul_inv_r. auto. Qed.
+  Lemma field_mul_inv1_r : forall a : A, (a != 0) -> a * (1/a) == 1.
+  Proof. intros. simpl. group_simp. apply field_mul_inv_r. auto. Qed.
   
   (** a <> 0 -> a * b = a * c -> b = c *)
-  Lemma field_mul_cancel_l : forall a b c : A, a <> 0 -> a * b = a * c -> b = c.
+  Lemma field_mul_cancel_l : forall a b c : A, (a != 0) -> a * b == a * c -> b == c.
   Proof.
     intros.
-    assert (/a * (a * b) = /a * (a * c)).
+    assert (/a * (a * b) == /a * (a * c)).
     { rewrite H0. easy. }
     rewrite <- ?associative in H1.
     rewrite field_mulInvL in H1; auto.
@@ -1342,10 +1466,10 @@ Section Theory.
   Qed.
 
   (** c <> 0 -> a * c = b * c -> a = b *)
-  Lemma field_mul_cancel_r : forall a b c : A, c <> 0 -> a * c = b * c -> a = b.
+  Lemma field_mul_cancel_r : forall a b c : A, (c != 0) -> a * c == b * c -> a == b.
   Proof.
     intros.
-    assert ((a * c) * /c = (b * c) * /c).
+    assert ((a * c) * /c == (b * c) * /c).
     { rewrite H0. easy. }
     rewrite ?associative in H1.
     rewrite field_mul_inv_r in H1; auto.
@@ -1353,25 +1477,26 @@ Section Theory.
   Qed.
 
   (** a * b = 0 -> a = 0 \/ b = 0 *)
-  Lemma field_mul_eq0_imply_a0_or_b0 : forall (a b : A) (HDec : Decidable (@eq A)),
-      a * b = 0 -> (a = 0) \/ (b = 0).
+  Lemma field_mul_eq0_imply_a0_or_b0 : forall (a b : A) (HDec : Decidable Aeq),
+      a * b == 0 -> (a == 0) \/ (b == 0).
   Proof.
     intros.
-    destruct (a ==? 0), (b ==? 0);
-      try (left; easy); try (right; easy).
-    assert (/a * a * b = 0).
+    destruct (a ==? 0), (b ==? 0); auto.
+    assert (/a * a * b == 0).
     { rewrite associative. rewrite H. field. auto. }
     rewrite field_mulInvL in H0; auto.
     rewrite identityLeft in H0. easy.
   Qed.
 
   (** a * b = b -> a = 1 \/ b = 0 *)
-  Lemma field_mul_eq_imply_a1_or_b0 : forall (a b : A) (HDec : Decidable (@eq A)),
-      a * b = b -> (a = A1) \/ (b = A0).
+  Lemma field_mul_eq_imply_a1_or_b0 : forall (a b : A) (HDec : Decidable Aeq),
+      a * b == b -> (a == 1) \/ (b == 0).
   Proof.
-    intros. destruct (b ==? A0); auto. left.
-    apply symmetry in H. rewrite <- (@identityLeft _ Amul A1) in H at 1 by apply F.
-    apply field_mul_cancel_r in H; auto.
+    intros. destruct (a ==? 1), (b ==? 0); auto.
+    (* auto. left; auto. *)
+    (* apply symmetry in H. *)
+    setoid_replace b with (1 * b) in H at 2 by group_simp.
+    apply field_mul_cancel_r in H; auto. 
   Qed.
 
 End Theory.
@@ -1381,7 +1506,7 @@ Section Examples.
 
   Import Reals.
   
-  Goal forall a b : R, (a <> 0 -> /a * a = 1)%R.
+  Goal forall a b : R, ((a <> 0) -> /a * a = 1)%R.
     intros. apply field_mulInvL. auto. Qed.
 
 End Examples.
@@ -1392,62 +1517,70 @@ End Examples.
 
 (** ** Class *)
 Class LinearSpace `{F : Field} {V : Type}
-  (Vadd : V -> V -> V) (V0 : V) (Vopp : V -> V) (Vcmul : A -> V -> V) := {
-    ls_addC : Commutative Vadd;
-    ls_addA : Associative Vadd;
-    ls_add_0_r : IdentityRight Vadd V0;
-    ls_add_inv_r : InverseRight Vadd V0 Vopp;
-    (* 注意，这里有问题了，因为数学上的等号，在形式系统中可能是等价，
-       比如基于函数的向量实现，两个向量的相等是等价而不是语法全等。*)
-    ls_cmul_1_l : forall u : V, Vcmul A1 u = u;
-    lc_cmul_assoc : forall a b u, Vcmul (Amul a b) u = Vcmul a (Vcmul b u);
-    lc_cmul_aadd_distr : forall a b u, Vcmul (Aadd a b) u = Vadd (Vcmul a u) (Vcmul b u);
-    lc_cmul_vadd_distr : forall a u v, Vcmul a (Vadd u v) = Vadd (Vcmul a u) (Vcmul a v);
+  (Vadd : V -> V -> V) (V0 : V) (Vopp : V -> V) (Vcmul : A -> V -> V)
+  (Veq : relation V) := {
+    ls_addC : Commutative Vadd Veq;
+    ls_addA : Associative Vadd Veq;
+    ls_add_0_r : IdentityRight Vadd V0 Veq;
+    ls_add_inv_r : InverseRight Vadd V0 Vopp Veq;
+    ls_cmul_1_l : forall u : V, Veq (Vcmul A1 u) u;
+    lc_cmul_assoc : forall a b u, Veq (Vcmul (Amul a b) u) (Vcmul a (Vcmul b u));
+    lc_cmul_aadd_distr : forall a b u,
+      Veq (Vcmul (Aadd a b) u) (Vadd (Vcmul a u) (Vcmul b u));
+    lc_cmul_vadd_distr : forall a u v,
+      Veq (Vcmul a (Vadd u v)) (Vadd (Vcmul a u) (Vcmul a v));
   }.
 
-(* (** ** Instances *) *)
-(* Section Instances. *)
+(** ** Instances *)
+Section Instances.
 
-(*   Import Reals. *)
+  (** A field itself is a liner space *)
+  Section field_is_linearspace.
+    Context `{F : Field}.
+    Add Field field_inst : (make_field_theory F).
+    
+    Global Instance LinearSpace_Field : LinearSpace Aadd A0 Aopp Amul Aeq.
+    split_intro; try field. Qed.
+    
+  End field_is_linearspace.
+
+End Instances.
+
+
+(** ** Extra Theories *)
+
+Section Theory.
+
+  Context `{LS : LinearSpace}.
+  Infix "==" := Aeq : A_scope.
+  Infix "+" := Aadd : A_scope.
+  Notation "- a" := (Aopp a) : A_scope.
+  Notation Asub := (fun a b => a + -b).
+  Infix "-" := Asub : A_scope.
+  Infix "*" := Amul : A_scope.
+  Notation "/ a" := (Ainv a) : A_scope.
+  Notation Adiv := (fun a b => a * (/b)).
+  Infix "/" := Adiv : A_scope.
+
+  Infix "==" := Veq : LinearSpace_scope.
+  Infix "+" := Vadd : LinearSpace_scope.
+  Notation "- a" := (Vopp a) : LinearSpace_scope.
+  Notation Vsub := (fun a b => a + -b).
+  Infix "-" := Vsub : LinearSpace_scope.
+  Infix "c*" := Vcmul : LinearSpace_scope.
+
+  (** V中零元是唯一的。已内置 *)
+
+  (** V中每个元素的负元是唯一的。已内置 *)
+
+  (** 0 * v = 0 *)
+  Theorem LS_cmul_0_l : forall v : V, A0 c* v == V0.
+  Proof. Abort.
   
-(*   Global Instance Field_R : Field Rplus R0 Ropp Rmult R1 Rinv. *)
-(*   repeat constructor; intros; try field; auto. *)
-(*   apply R1_neq_R0. Qed. *)
+End Theory.
 
-(* End Instances. *)
+(** ** Examples *)
+Section Examples.
 
-
-(* (** ** Extra Theories *) *)
-
-(* Section Theory. *)
-
-(*   Context `{F:Field}. *)
-(*   Infix "+" := Aadd : A_scope. *)
-(*   Notation "- a" := (Aopp a) : A_scope. *)
-(*   Notation Asub := (fun a b => a + -b). *)
-(*   Notation "0" := A0 : A_scope. *)
-(*   Notation "1" := A1 : A_scope. *)
-(*   Infix "*" := Amul : A_scope. *)
-(*   Notation "/ a" := (Ainv a) : A_scope. *)
-(*   Notation Adiv := (fun a b => a * (/b)). *)
-(*   Infix "/" := Adiv : A_scope. *)
-
-(*   Add Field field_inst : (make_field_theory F). *)
-
-(*   (** a <> 0 -> /a * a = 1 *) *)
-(*   Lemma field_mul_inv_l : forall a : A, a <> 0 -> /a * a = 1. *)
-(*   Proof. intros. rewrite field_mulInvL; easy. Qed. *)
-
-
-(* End Theory. *)
-
-(* (** ** Examples *) *)
-(* Section Examples. *)
-
-(*   Import Reals. *)
-  
-(*   Goal forall a b : R, (a <> 0 -> /a * a = 1)%R. *)
-(*     intros. apply field_mulInvL. auto. Qed. *)
-
-(* End Examples. *)
+End Examples.
 

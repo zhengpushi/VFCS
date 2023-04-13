@@ -174,3 +174,7 @@ Declare Scope vec_scope.
 Delimit Scope vec_scope with V.
 Open Scope vec_scope.
 
+(** Scope for linear-space type *)
+Declare Scope LinearSpace_scope.
+Delimit Scope LinearSpace_scope with LS.
+Open Scope LinearSpace_scope.

@@ -27,11 +27,15 @@ Notation Aadd := Nat.add.
 (** *** vector type and basic operation *)
 Definition vec (n : nat) : Type := @vec A n.
 
+Infix "==" := (eqlistA eq) : list_scope.
+Infix "!=" := (fun l1 l2 => ~(l1 == l2)%list) : list_scope.
+Infix "==" := (veq (Aeq:=eq)) : vec_scope.
+Infix "!=" := (fun v1 v2 => ~(v1 == v2)%V) : vec_scope.
 Notation "v ! i" := (vnth A0 v i) : vec_scope.
 
 Lemma veq_iff_vnth : forall {n : nat} (v1 v2 : vec n),
     (v1 == v2) <-> (forall i, i < n -> v1!i = v2!i)%nat.
-Proof. apply veq_iff_vnth. Qed.
+Proof. intros. apply veq_iff_vnth. Qed.
   
 (** *** convert between list and vector *)
 Definition l2v n (l : list A) : vec n := l2v A0 n l.
@@ -40,7 +44,7 @@ Definition v2l {n} (v : vec n) : list A := v2l v.
 Lemma v2l_length : forall {n} (v : vec n), length (v2l v) = n.
 Proof. intros. apply v2l_length. Qed.
 
-Lemma v2l_l2v_id : forall {n} (l : list A), length l = n -> v2l (l2v n l) = l.
+Lemma v2l_l2v_id : forall {n} (l : list A), length l = n -> (v2l (l2v n l) == l)%list.
 Proof. intros. apply v2l_l2v_id; auto. Qed.
 
 Lemma l2v_v2l_id : forall {n} (v : vec n), l2v n (v2l v) == v.

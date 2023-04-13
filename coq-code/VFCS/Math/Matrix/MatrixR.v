@@ -31,11 +31,16 @@ Notation Ainv := Rinv.
 Definition mat (r c : nat) : Type := @mat A r c.
 Notation smat n := (smat A n).
 
+Infix "==" := (eqlistA (eqlistA eq)) : dlist_scope.
+Infix "!=" := (fun d1 d2 => ~(d1 == d2)%dlist) : dlist_scope.
+Notation meq := (meq (Aeq:=eq)).
+Infix "==" := (meq) : mat_scope.
+Infix "!=" := (fun m1 m2 => ~(m1 == m2)%M) : mat_scope.
 Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope.
 
 Lemma meq_iff_mnth : forall {r c} (m1 m2 : mat r c),
     m1 == m2 <-> (forall i j : nat, i < r -> j < c -> m1!i!j = m2!i!j)%nat.
-Proof. apply meq_iff_mnth. Qed.
+Proof. intros. apply meq_iff_mnth. Qed.
 
 
 (** *** convert between list and matrix *)
@@ -49,7 +54,7 @@ Lemma m2l_width : forall {r c} (m : mat r c), width (m2l m) c.
 Proof. intros. apply m2l_width. Qed.
 
 Lemma m2l_l2m_id : forall {r c} (dl : dlist A),
-    length dl = r -> width dl c -> m2l (l2m r c dl) = dl.
+    length dl = r -> width dl c -> (m2l (l2m r c dl) == dl)%dlist.
 Proof. intros. apply m2l_l2m_id; auto. Qed.
 
 Lemma l2m_m2l_id : forall {r c} (m : mat r c), l2m r c (m2l m) == m.
@@ -57,18 +62,18 @@ Proof. intros. apply l2m_m2l_id; auto. Qed.
 
 Lemma l2m_inj : forall {r c} (d1 d2 : dlist A),
     length d1 = r -> width d1 c -> length d2 = r -> width d2 c -> 
-    d1 <> d2 -> ~(l2m r c d1 == l2m r c d2).
+    (d1 != d2)%dlist -> (l2m r c d1 != l2m r c d2).
 Proof. intros. apply l2m_inj; auto. Qed.
 
 Lemma l2m_surj : forall {r c} (m : mat r c), (exists d, l2m r c d == m). 
 Proof. intros. apply l2m_surj; auto. Qed.
 
-Lemma m2l_inj : forall {r c} (m1 m2 : mat r c), ~ (m1 == m2) -> m2l m1 <> m2l m2.
-Proof. intros. apply (m2l_inj A0); auto. Qed.
+Lemma m2l_inj : forall {r c} (m1 m2 : mat r c), (m1 != m2) -> (m2l m1 != m2l m2)%dlist.
+Proof. intros. apply (m2l_inj (A0:=A0)); auto. Qed.
 
 Lemma m2l_surj : forall {r c} (d : dlist A), length d = r -> width d c -> 
-    (exists m : mat r c, m2l m = d).
-Proof. intros. apply (m2l_surj A0); auto. Qed.
+    (exists m : mat r c, (m2l m == d)%dlist).
+Proof. intros. apply (m2l_surj (A0:=A0)); auto. Qed.
 
 
 (** *** convert between tuple and matrix *)
@@ -123,11 +128,11 @@ Proof. intros. apply mtrans_trans. Qed.
 Definition mmap {r c} f (m : mat r c) : mat r c := mmap f m.
 Definition mmap2 {r c} f (m1 m2 : mat r c) : mat r c := mmap2 f m1 m2.
 
-Lemma mmap2_comm : forall {r c} (m1 m2 : mat r c) f (fcomm : Commutative f),
+Lemma mmap2_comm : forall {r c} (m1 m2 : mat r c) f (fcomm : Commutative f eq),
     mmap2 f m1 m2 == mmap2 f m2 m1.
 Proof. intros. apply mmap2_comm; auto. Qed.
 
-Lemma mmap2_assoc : forall {r c} f (m1 m2 m3 : mat r c) (fassoc : Associative f),
+Lemma mmap2_assoc : forall {r c} f (m1 m2 m3 : mat r c) (fassoc : Associative f eq),
     mmap2 f (mmap2 f m1 m2) m3 == mmap2 f m1 (mmap2 f m2 m3).
 Proof. intros. apply mmap2_assoc; auto. Qed.
 
@@ -361,17 +366,31 @@ Proof. intros. apply mtrans_mul. Qed.
 Lemma mtrace_mul : forall {r c} (m1 : mat r c) (m2 : mat c r), tr (m1 * m2) = tr (m2 * m1).
 Proof. intros. apply mtrace_mul. Qed.
 
+Definition det {n} (m : smat n) : A := @det _ Aadd A0 Aopp Amul A1 _ m.
+
 (** Determinant of a matrix of dimension-3 *)
 Definition det3 (m : smat 3) : A := @det3 _ Aadd Aopp Amul m.
 
 (** inverse matrix by gauss elimination *)
 Definition minv_gauss {n} (m : mat n n) : option (mat n n) :=
-  @minv_gauss A Aadd A0 Aopp Amul A1 Ainv _ _ m.
+  @minv_gauss A Aadd A0 Aopp Amul A1 Ainv _ _ _ m.
 
 
 
 (* ======================================================================= *)
 (** ** Matrix theory applied to this type *)
+
+(** *** SO(n): special orthogonal group *)
+Section SO3.
+
+  (** If a matrix is SO3? *)
+  Definition so3 (m : smat 3) : Prop := 
+    let so3_mul_unit : Prop := m\T * m == mat1 in
+    let so3_det : Prop := (det3 m) = 1 in
+    so3_mul_unit /\ so3_det.
+
+End SO3.
+
 
 
 (* ======================================================================= *)
@@ -416,7 +435,7 @@ End test.
 
 Section test_monoid.
   Goal forall r c (m1 m2 : mat r c), mat0 + m1 == m1.
-    ASS.monoid_simp. Qed.
+    monoid_simp. Qed.
 End test_monoid.
 
 
@@ -447,45 +466,45 @@ Module Exercise_Ch1_Symbol.
   Notation "3" := (R1 + (R1 + R1))%R.
   Notation "4" := ((R1 + R1) * (R1 + R1))%R.
   
-  (* Example ex6_1 : forall a b : R, *)
-  (*     let m := (mk_mat_3_3 (a*a) (a*b) (b*b) (2*a) (a+b) (2*b) 1 1 1)%R in *)
-  (*     (det m == (a - b)^3)%A. *)
-  (* Proof. *)
-  (*   intros. cbv. ring. *)
-  (* Qed. *)
+  Example ex6_1 : forall a b : R,
+      let m := (mk_mat_3_3 (a*a) (a*b) (b*b) (2*a) (a+b) (2*b) 1 1 1)%R in
+      (det m = (a - b)^3)%R.
+  Proof.
+    intros. cbv. ring.
+  Qed.
   
-  (* Example ex6_2 : forall a b x y z : A, *)
-  (*     let m1 := (mk_mat_3_3 *)
-  (*                  (a*x+b*y) (a*y+b*z) (a*z+b*x) *)
-  (*                  (a*y+b*z) (a*z+b*x) (a*x+b*y) *)
-  (*                  (a*z+b*x) (a*x+b*y) (a*y+b*z))%A in *)
-  (*     let m2 := mk_mat_3_3 x y z y z x z x y in *)
-  (*     (det m1 == (a^3 + b^3) * det m2)%A. *)
-  (* Proof. *)
-  (*   intros. cbv. ring. *)
-  (* Qed. *)
+  Example ex6_2 : forall a b x y z : A,
+      let m1 := (mk_mat_3_3
+                   (a*x+b*y) (a*y+b*z) (a*z+b*x)
+                   (a*y+b*z) (a*z+b*x) (a*x+b*y)
+                   (a*z+b*x) (a*x+b*y) (a*y+b*z))%A in
+      let m2 := mk_mat_3_3 x y z y z x z x y in
+      (det m1 = (a^3 + b^3) * det m2)%R.
+  Proof.
+    intros. cbv. ring.
+  Qed.
   
-  (* Example ex6_3 : forall a b e d : A, *)
-  (*     let m := (mk_mat_4_4 *)
-  (*                 (a*a) ((a+1)^2) ((a+2)^2) ((a+3)^2) *)
-  (*                 (b*b) ((b+1)^2) ((b+2)^2) ((b+3)^2) *)
-  (*                 (e*e) ((e+1)^2) ((e+2)^2) ((e+3)^2) *)
-  (*                 (d*d) ((d+1)^2) ((d+2)^2) ((d+3)^2))%A in *)
-  (*     (det m == 0)%A. *)
-  (* Proof. *)
-  (*   intros. cbv. ring. *)
-  (* Qed. *)
+  Example ex6_3 : forall a b e d : A,
+      let m := (mk_mat_4_4
+                  (a*a) ((a+1)^2) ((a+2)^2) ((a+3)^2)
+                  (b*b) ((b+1)^2) ((b+2)^2) ((b+3)^2)
+                  (e*e) ((e+1)^2) ((e+2)^2) ((e+3)^2)
+                  (d*d) ((d+1)^2) ((d+2)^2) ((d+3)^2))%A in
+      det m = 0.
+  Proof.
+    intros. cbv. ring.
+  Qed.
   
-  (* Example ex6_4 : forall a b e d : A, *)
-  (*     let m := (mk_mat_4_4 *)
-  (*                 1 1 1 1 *)
-  (*                 a b e d *)
-  (*                 (a^2) (b^2) (e^2) (d^2) *)
-  (*                 (a^4) (b^4) (e^4) (d^4))%A in *)
-  (*     (det m == (a-b)*(a-e)*(a-d)*(b-e)*(b-d)*(e-d)*(a+b+e+d))%A. *)
-  (* Proof. *)
-  (*   intros. cbv. ring. *)
-  (* Qed. *)
+  Example ex6_4 : forall a b e d : A,
+      let m := (mk_mat_4_4
+                  1 1 1 1
+                  a b e d
+                  (a^2) (b^2) (e^2) (d^2)
+                  (a^4) (b^4) (e^4) (d^4))%A in
+      (det m = (a-b)*(a-e)*(a-d)*(b-e)*(b-d)*(e-d)*(a+b+e+d))%R.
+  Proof.
+    intros. cbv. ring.
+  Qed.
   
   (* (** 6.(5), it is an infinite structure, need more work, later... *) *)
 

@@ -12,7 +12,7 @@ Require Export NatExt.
 Require Export BasicConfig AlgebraStructure.
 Require RExt.
 
-Generalizable Variable A Aadd Aopp Amul Ainv.
+Generalizable Variable A Aeq Aadd Aopp Amul Ainv.
 
 
 (* ######################################################################### *)
@@ -32,23 +32,27 @@ Open Scope seq2_scope.
 (* ======================================================================= *)
 (** ** Equality of sequence *)
 Section seqeq.
-  Context {A : Type}.
+
+  Context `{Equiv_Aeq : Equivalence A Aeq}.
+  Infix "==" := Aeq : A_scope.
 
   (** Equality of two sequence which have one index *)
-  Definition seqeq n (f g : nat -> A) := forall i, i < n -> f i = g i.
+  Definition seqeq n (f g : nat -> A) := forall i, i < n -> f i == g i.
 
   (** seqeq is an equivalence relation *)
   Section seqeq_equiv.
+
     Context {n : nat}.
     Infix "==" := (seqeq n) : A_scope.
+    
     Lemma seqeq_refl : forall (f : nat -> A), f == f.
-    Proof. intros. hnf. auto. Qed.
+    Proof. intros. hnf. easy. Qed.
 
     Lemma seqeq_sym : forall (f g : nat -> A), f == g -> g == f.
-    Proof. intros. hnf in *. intros. rewrite <- H; auto. Qed.
+    Proof. intros. hnf in *. intros. rewrite <- H; easy. Qed.
 
     Lemma seqeq_trans : forall (f g h : nat -> A), f == g -> g == h -> f == h.
-    Proof. intros. hnf in *. intros. rewrite H, <- H0; auto. Qed.
+    Proof. intros. hnf in *. intros. rewrite H, <- H0; easy. Qed.
 
     Lemma seqeq_equiv : Equivalence (seqeq n).
     Proof.
@@ -63,7 +67,8 @@ Section seqeq.
 
 
   (** seqeq of S has a equivalent form. *)
-  Lemma seqeq_S : forall n (f g : nat -> A), seqeq (S n) f g <-> (seqeq n f g) /\ (f n = g n).
+  Lemma seqeq_S : forall n (f g : nat -> A),
+      seqeq (S n) f g <-> (seqeq n f g) /\ (f n == g n).
   Proof.
     split; intros.
     - split; auto. unfold seqeq in *. auto.
@@ -73,13 +78,13 @@ Section seqeq.
   Qed.
   
   (** seqeq is decidable  *)
-  Global Instance seqeq_dec {Dec_Aeq : Decidable (@eq A)} : forall n, Decidable (seqeq n).
+  Global Instance seqeq_dec {Dec_Aeq : Decidable Aeq} : forall n, Decidable (seqeq n).
   Proof.
     induction n; constructor; intros.
     - left. unfold seqeq. easy.
     - unfold seqeq in *.
       destruct (a ==? b), (a n ==? b n).
-      + left. intros. destruct (eqb_reflect i n); subst; auto. apply e. lia.
+      + left. intros. destruct (eqb_reflect i n); subst; auto. apply a0. lia.
       + right. intro. destruct n0. apply H. auto.
       + right. intro. destruct n0. intros. auto.
       + right. intro. destruct n0. intros. auto.
@@ -87,7 +92,7 @@ Section seqeq.
 
   (** *** seqeq is decidable with the help of bool equality *)
   Section seqeq_dec_with_eqb.
-    Context {Dec: Decidable (@eq A)}.
+    Context {Dec: Decidable Aeq}.
 
     (** Boolean equality of two sequence *)
     Fixpoint seqeqb n (f g : nat -> A) : bool :=
@@ -142,11 +147,14 @@ End seqeq.
 (* ======================================================================= *)
 (** ** Equality of sequence with two index *)
 Section seq2eq.
-  Context {A : Type}.
+
+  Context `{Equiv_Aeq : Equivalence A Aeq}.
+  Infix "==" := Aeq : A_scope.
+  Notation seqeq := (seqeq (Aeq:=Aeq)).
 
   (** Equality of two sequence which have two indexes *)
   Definition seq2eq r c (f g : nat -> nat -> A) := 
-    forall ri ci, ri < r -> ci < c -> f ri ci = g ri ci.
+    forall ri ci, ri < r -> ci < c -> f ri ci == g ri ci.
   
   (** seq2eq of Sr has a equivalent form. *)
   Lemma seq2eq_Sr : forall r c (f g : nat -> nat -> A), 
@@ -163,15 +171,15 @@ Section seq2eq.
   (** seq2eq is a equivalence relation *)
   Lemma seq2eq_refl : forall r c (f : nat -> nat -> A),
       let R := seq2eq r c in R f f.
-  Proof. intros. hnf. auto. Qed.
+  Proof. intros. hnf. easy. Qed.
 
   Lemma seq2eq_sym : forall r c (f g : nat -> nat -> A),
       let R := seq2eq r c in R f g -> R g f.
-  Proof. intros. hnf in *. intros. rewrite <- H; auto. Qed.
+  Proof. intros. hnf in *. intros. rewrite <- H; easy. Qed.
 
   Lemma seq2eq_trans : forall r c (f g h : nat -> nat -> A),
       let R := seq2eq r c in R f g -> R g h -> R f h.
-  Proof. intros. hnf in *. intros. rewrite H, <- H0; auto. Qed.
+  Proof. intros. hnf in *. intros. rewrite H, <- H0; easy. Qed.
 
   Lemma seq2eq_equiv : forall r c, Equivalence (seq2eq r c).
   Proof.
@@ -185,7 +193,7 @@ Section seq2eq.
   
   (** *** seq2eq is decidable with the help of bool equality *)
   Section seq2eq_dec_with_eqb.
-    Context {Dec: Decidable (@eq A)}.
+    Context {Dec: Decidable Aeq}.
 
     (** seq2eq is decidable  *)
     Lemma seq2eq_dec : forall r c, Decidable (seq2eq r c).
@@ -196,10 +204,11 @@ Section seq2eq.
         destruct (f ==? g).
         + (* Tips: need to construct a prop *)
           assert (Decidable (fun f g : nat -> nat -> A =>
-                               forall ci, ci < c -> f r ci = g r ci)) as H.
+                               forall ci, ci < c -> f r ci == g r ci)) as H.
           { constructor. intros. apply seqeq_dec. }
           destruct (f ==? g).
-          * left. intros. destruct (Aeq_reflect ri r); subst; auto. apply e; auto. lia.
+          * left. intros. destruct (Aeq_reflect ri r); subst; auto.
+            apply a; try easy. lia.
           * right. intro. destruct n. intros. apply H0; auto.
         + right. intro. destruct n. intros. auto.
     Qed.
@@ -255,10 +264,12 @@ End seq2eq.
 (* ======================================================================= *)
 (** ** Sum of a sequence *)
 Section Sum.
+
   (** Let's have a monoid structure *)
-  Context `{M : Monoid A Aadd A0}.
+  Context `{M : Monoid}.
+  Infix "==" := Aeq : A_scope.
   Infix "+" := Aadd : A_scope.
-  
+
   (** Sum of a sequence *)
   Fixpoint seqsum (f : nat -> A) (n : nat) : A := 
     match n with
@@ -268,7 +279,7 @@ Section Sum.
   
   (** Sum of a sequence which every element is zero get zero. *)
   Lemma seqsum_seq0 : forall (f : nat -> A) (n : nat), 
-      (forall i, i < n -> f i = A0) -> seqsum f n = A0.
+      (forall i, i < n -> f i == A0) -> seqsum f n == A0.
   Proof.
     intros f n H. induction n; simpl. easy.
     rewrite H; auto. rewrite IHn; auto. monoid_simp.
@@ -277,38 +288,38 @@ Section Sum.
   (** Corresponding elements of two sequences are equal, imply the sum are 
       equal. *)
   Lemma seqsum_eq : forall (f g : nat -> A) (n : nat),
-      (forall i, i < n -> f i = g i) -> seqsum f n = seqsum g n.
+      (forall i, i < n -> f i == g i) -> seqsum f n == seqsum g n.
   Proof. 
     intros f g n H. 
-    induction n; simpl; auto. rewrite !IHn; auto. rewrite H; auto.
+    induction n; simpl; auto. easy. rewrite !IHn; auto. rewrite H; auto. easy.
   Qed.
   
   (** Let's have an abelian monoid structure *)
-  Context {AM : AMonoid Aadd A0}.
+  Context {AM : AMonoid Aadd A0 Aeq}.
 
   (** Sum with plus of two sequence equal to plus with two sum. *)
   Lemma seqsum_add : forall (f g : nat -> A) (n : nat),
-      seqsum (fun i => f i + g i) n = seqsum f n + seqsum g n.  
+      seqsum (fun i => f i + g i) n == seqsum f n + seqsum g n.  
   Proof. 
     intros f g n. induction n; simpl. monoid_simp. rewrite IHn.
-    rewrite ?associative. f_equal.
-    rewrite <- ?associative. f_equal. apply commutative.
+    rewrite ?associative. f_equiv.
+    rewrite <- ?associative. f_equiv. apply commutative.
   Qed.
 
   (** Let's have a group structure *)
-  Context `{G : Group A Aadd A0 Aopp}.
+  Context `{G : Group A Aadd A0 Aopp Aeq}.
   Notation "- a" := (Aopp a) : A_scope.
 
   (** Opposition of the sum of a sequence. *)
   Lemma seqsum_opp : forall (f : nat -> A) (n : nat),
-      - (seqsum f n) = seqsum (fun i => - f i) n.
-  Proof.  
+      - (seqsum f n) == seqsum (fun i => - f i) n.
+  Proof.
     intros f n. induction n; simpl. apply group_inv_id.
     rewrite <- IHn. rewrite group_inv_distr. apply commutative.
   Qed.
 
   (** Let's have an ring structure *)
-  Context `{R : Ring A Aadd A0 Aopp Amul A1}.
+  Context `{R : Ring A Aadd A0 Aopp Amul A1 Aeq}.
   Add Ring ring_inst : (make_ring_theory R).
   
   Infix "*" := Amul : A_scope.
@@ -316,7 +327,7 @@ Section Sum.
   
   (** Constant left multiply to the sum of a sequence. *)
   Lemma seqsum_cmul_l : forall c (f : nat -> A) (n : nat),
-      c * seqsum f n = seqsum (fun i => c * f i) n.  
+      c * seqsum f n == seqsum (fun i => c * f i) n.  
   Proof.  
     intros c f n. induction n; simpl. ring.
     ring_simplify. rewrite IHn. ring.
@@ -324,7 +335,7 @@ Section Sum.
 
   (** Constant right multiply to the sum of a sequence. *)
   Lemma seqsum_cmul_r : forall c (f : nat -> A) (n : nat),
-      seqsum f n * c = seqsum (fun i => f i * c) n.  
+      seqsum f n * c == seqsum (fun i => f i * c) n.  
   Proof.
     intros c f n. induction n; simpl; try ring.
     ring_simplify. rewrite IHn. ring.
@@ -332,27 +343,28 @@ Section Sum.
 
   (** Sum a sequence which only one item in nonzero, then got this item. *)
   Lemma seqsum_unique : forall (f : nat -> A) (k : A) (n i : nat), 
-      i < n -> f i = k -> (forall j, i <> j -> f j = A0) -> seqsum f n = k.
+      i < n -> f i == k -> (forall j, i <> j -> f j == A0) -> seqsum f n == k.
   Proof.
     (* key idea: induction n, and case {x =? n} *)
     intros f k n. induction n; intros. easy. simpl.
     destruct (Aeq_reflect i n).
     - subst.
-      assert (seqsum f n = A0) as H2; [|rewrite H2; ring].
-      apply seqsum_seq0. intros. apply H1. lia.
-    - assert (f n = A0) as H2.
+      assert (seqsum f n == A0) as H2.
+      + apply seqsum_seq0. intros. apply H1. lia.
+      + rewrite H2. rewrite H0. ring.
+    - assert (f n == A0) as H2.
       + apply H1; auto.
       + rewrite H2. monoid_simp. apply IHn with i; auto. lia.
   Qed.
   
   (** Add the sum and a tail element *)
   Lemma seqsum_extend_r : forall n f, 
-      seqsum f n + f n = seqsum f (S n).
+      seqsum f n + f n == seqsum f (S n).
   Proof. reflexivity. Qed.
   
   (** Add a head element and the sum *)
   Lemma seqsum_extend_l : forall n f, 
-      f O + seqsum (fun i => f (S i)) n = seqsum f (S n).
+      f O + seqsum (fun i => f (S i)) n == seqsum f (S n).
   Proof.
     intros n f. induction n; simpl. ring.
     ring_simplify. rewrite IHn. simpl. ring.
@@ -361,7 +373,7 @@ Section Sum.
   (** Sum the m+n elements equal to plus of two parts.
       Σ[i,0,(m+n)] f(i) = Σ[i,0,m] f(i) + Σ[i,0,n] f(m + i). *)
   Lemma seqsum_plusIdx : forall m n f,
-      seqsum f (m + n) = seqsum f m + seqsum (fun i => f (m + i)%nat) n. 
+      seqsum f (m + n) == seqsum f m + seqsum (fun i => f (m + i)%nat) n. 
   Proof.
     intros m n f. induction m.
     - simpl. ring_simplify. easy.
@@ -371,7 +383,7 @@ Section Sum.
       replace (f m) with (g 0).
       replace (fun i => f (S (m + i))) with (fun i => g (S i)).
       rewrite seqsum_extend_l.
-      rewrite seqsum_extend_r. auto.
+      rewrite seqsum_extend_r. easy.
       all: rewrite Heqg; auto.
       extensionality i. f_equal. lia.
   Qed.
@@ -384,7 +396,7 @@ Section Sum.
    *)
   Lemma seqsum_product : forall m n f g,
       n <> O ->
-      seqsum f m * seqsum g n = seqsum (fun i => f (i / n) * g (i mod n)) (m * n). 
+      seqsum f m * seqsum g n == seqsum (fun i => f (i / n) * g (i mod n)) (m * n). 
   Proof.
     intros. induction m.
     - simpl. ring.
@@ -392,9 +404,9 @@ Section Sum.
       remember (fun i : nat => f (i / n) * g (i mod n)) as h.
       rewrite seqsum_cmul_l.
       (* Σ[i,0,n] f(m)*g(i) = Σ[i,0,n] f((m*n+i)/n)*g((m*n+i)%n) *)
-      replace (seqsum (fun i : nat => f m * g i) n)
+      setoid_replace (seqsum (fun i : nat => f m * g i) n)
         with (seqsum (fun i : nat => h (m * n + i)%nat) n).
-      rewrite <- seqsum_plusIdx. f_equal. ring.
+      rewrite <- seqsum_plusIdx. f_equiv. ring.
       apply seqsum_eq.
       intros. rewrite Heqh.
       (* (m * n + i) / n = m *)
@@ -404,8 +416,7 @@ Section Sum.
       rewrite Nat.add_mod; auto.  (* (a + b) % n = a % n + b % n) % n *)
       rewrite Nat.mod_mul; auto.  (* (a * b) mod b = 0 *)
       repeat rewrite Nat.mod_small; auto. (* a < b -> a % b = 0 *)
-      rewrite Nat.add_0_l, Nat.add_0_r.
-      auto.
+      rewrite Nat.add_0_l, Nat.add_0_r. easy.
   Qed.
 
   (** The order of two nested summations can be exchanged.
@@ -415,19 +426,19 @@ Section Sum.
       ...
       fr0 + fr1 + ... + frc = ∑[j,0,c](∑[i,0,r] f_ij) *)
   Lemma seqsum_seqsum_exchg : forall f r c,
-      seqsum (fun i => seqsum (fun j => f i j) c) r =
+      seqsum (fun i => seqsum (fun j => f i j) c) r ==
         seqsum (fun j => seqsum (fun i => f i j) r) c.
   Proof.
     intros f.
     induction r.
-    - induction c; simpl in *; auto. rewrite <- IHc. ring.
-    - induction c; simpl in *; auto. specialize (IHr 0). simpl in *. rewrite IHr. ring.
-      rewrite <- ?associative. f_equal.
-      replace (fun i : nat => seqsum (fun j : nat => f i j) c + f i c) with
-        (fun i => seqsum (fun j => f i j) (S c)); auto.
-      rewrite IHr. simpl.
-      rewrite associative. rewrite (commutative (seqsum _ r)). rewrite <- associative.
-      rewrite <- IHc. f_equal. f_equal. auto.
+    - induction c; simpl in *; try easy. rewrite <- IHc. ring.
+    - induction c; simpl in *; auto. specialize (IHr 0). simpl in *. rewrite IHr.
+      ring. rewrite <- ?associative. f_equiv.
+      rewrite <- IHc. rewrite associative.
+      rewrite (commutative (seqsum _ c)). rewrite <- associative. f_equiv.
+      setoid_replace (seqsum (fun i : nat => seqsum (fun j : nat => f i j) c + f i c) r) with
+        (seqsum (fun i => seqsum (fun j => f i j) (S c)) r); try easy.
+      rewrite IHr. simpl. f_equiv. rewrite IHr. easy.
   Qed.
   
 End Sum.

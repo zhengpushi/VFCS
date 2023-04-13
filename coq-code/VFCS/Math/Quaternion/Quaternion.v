@@ -632,7 +632,7 @@ Require Import MyExtrOCamlR.
 (* Extract Constant Rrepr => "__". *)
 (* Search quat. *)
 (* Recursive Extraction mk_quat quat_of_ssss quat_of_t4 qmul qconj qinv qnorm rot_by_quat. *)
-Extraction "quat.ml" mk_quat quat_of_ssss quat_of_t4  qmul qconj qinv qnorm rot_by_quat.
+(* Extraction "quat.ml" mk_quat quat_of_ssss quat_of_t4  qmul qconj qinv qnorm rot_by_quat. *)
 
 (** 四元数p经过单位四元数q作用后得到四元数p'，其标量部分保持不变。公式5.26 *)
 Lemma rot_by_unit_quat_keep_s : forall (q p : quat) (H1 : qunit q),

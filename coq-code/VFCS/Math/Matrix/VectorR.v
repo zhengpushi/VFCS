@@ -68,17 +68,23 @@ Notation Aopp := Ropp.
 Notation Amul := Rmult.
 Notation Ainv := Rinv.
 
+
+(** ** vector type *)
+Definition vec (n : nat) : Type := @vec A n.
+
+Infix "==" := (eqlistA eq) : list_scope.
+Infix "!=" := (fun l1 l2 => ~(l1 == l2)%list) : list_scope.
+Infix "==" := (veq (Aeq:=eq)) : vec_scope.
+Infix "!=" := (fun v1 v2 => ~(v1 == v2)%V) : vec_scope.
+Notation "v ! i" := (vnth A0 v i) : vec_scope.
+
+
 (** ** vector type and basic operation *)
 Section basic.
 
-  (** *** vector type *)
-  Definition vec (n : nat) : Type := @vec A n.
-
-  Notation "v ! i" := (vnth A0 v i) : vec_scope.
-
   Lemma veq_iff_vnth : forall {n : nat} (v1 v2 : vec n),
       (v1 == v2) <-> (forall i, i < n -> v1!i = v2!i)%nat.
-  Proof. apply veq_iff_vnth. Qed.
+  Proof. intros; apply veq_iff_vnth. Qed.
 
   (** *** convert between list and vector *)
   Definition l2v n (l : list A) : vec n := l2v A0 n l.
@@ -87,7 +93,7 @@ Section basic.
   Lemma v2l_length : forall {n} (v : vec n), length (v2l v) = n.
   Proof. intros. apply v2l_length. Qed.
 
-  Lemma v2l_l2v_id : forall {n} (l : list A), length l = n -> v2l (l2v n l) = l.
+  Lemma v2l_l2v_id : forall {n} (l : list A), length l = n -> (v2l (l2v n l) == l)%list.
   Proof. intros. apply v2l_l2v_id; auto. Qed.
 
   Lemma l2v_v2l_id : forall {n} (v : vec n), l2v n (v2l v) == v.
@@ -260,10 +266,10 @@ Infix "⋅" := vdot : vec_scope.
 Section vzero_vnonzero.
   
   (** A vector is a zero vector. *)
-  Definition vzero {n} (v : vec n) : Prop := vzero v (A0:=0).
+  Definition vzero {n} (v : vec n) : Prop := vzero v (A0:=0)(Aeq:=eq).
 
   (** A vector is a non-zero vector. *)
-  Definition vnonzero {n} (v : vec n) : Prop := vnonzero v (A0:=0).
+  Definition vnonzero {n} (v : vec n) : Prop := vnonzero v (A0:=0)(Aeq:=eq).
 
   (** Any zero vector is vec0 *)
   Lemma vzero_imply_vec0 : forall {n} (v : vec n), vzero v -> v == vec0.
@@ -555,18 +561,6 @@ Section v3.
       ((1/6) * (v3mixed AB AC AD))%R.
 
   End v3mixed.
-
-
-  (** *** SO(n): special orthogonal group *)
-  Section SO3.
-
-    (** If a matrix is SO3? *)
-    Definition so3 (m : smat 3) : Prop := 
-      let so3_mul_unit : Prop := m\T * m == mat1 in
-      let so3_det : Prop := (det3 m) = 1 in
-      so3_mul_unit /\ so3_det.
-
-  End SO3.
 
 
   (* 

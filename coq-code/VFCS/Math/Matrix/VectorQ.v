@@ -3,41 +3,41 @@
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
-  purpose   : Vector on Z.
+  purpose   : Vector on Qc.
   author    : ZhengPu Shi
   date      : 2021.12
  *)
 
 Require Export Vector.
-Require Export MatrixZ.
+Require Export MatrixQc.
 
 
 (* ======================================================================= *)
 (** ** Vector theory come from common implementations *)
 
-Open Scope Z_scope.
+Open Scope Q_scope.
 Open Scope mat_scope.
 Open Scope vec_scope.
 
 (** general notations *)
-Notation A := Z.
+Notation A := Q.
 Notation A0 := 0.
 Notation A1 := 1.
-Notation Aadd := Z.add.
-Notation Aopp := Z.opp.
-Notation Amul := Z.mul.
+Notation Aadd := Qplus.
+Notation Aopp := Qopp.
+Notation Amul := Qmult.
 
 (** *** vector type and basic operation *)
-Definition vec (n : nat) : Type := @vec Z n.
+Definition vec (n : nat) : Type := @vec A n.
 
-Infix "==" := (eqlistA eq) : list_scope.
+Infix "==" := (eqlistA Qeq) : list_scope.
 Infix "!=" := (fun l1 l2 => ~(l1 == l2)%list) : list_scope.
-Infix "==" := (veq (Aeq:=eq)) : vec_scope.
+Infix "==" := (veq (Aeq:=Qeq)) : vec_scope.
 Infix "!=" := (fun v1 v2 => ~(v1 == v2)%V) : vec_scope.
 Notation "v ! i" := (vnth A0 v i) : vec_scope.
 
 Lemma veq_iff_vnth : forall {n : nat} (v1 v2 : vec n),
-    (v1 == v2) <-> (forall i, i < n -> v1!i = v2!i)%nat.
+    (v1 == v2) <-> (forall i, i < n -> (v1!i == v2!i)%Q)%nat.
 Proof. intros; apply veq_iff_vnth. Qed.
   
 (** *** convert between list and vector *)
@@ -107,7 +107,7 @@ Lemma vadd_opp_r : forall {n} (v : vec n), v + (- v) == vec0.
 Proof. intros. apply vadd_opp_r. Qed.
 
 (** *** vector subtraction *)
-Definition vsub {n} (v1 v2 : vec n) : vec n := vsub v1 v2 (Aadd:=Aadd) (Aopp:=Aopp).
+Definition vsub {n} (v1 v2 : vec n) : vec n := vsub v1 v2 (Aadd:=Aadd)(Aopp:=Aopp).
 Infix "-" := vsub : vec_scope.
 
 (** *** vector scalar multiplication *)
@@ -150,10 +150,10 @@ Section test.
   (* Compute v2l v1. *)
   (* Compute v2l (@l2v 3 l1). *)
 
-  Variable a1 a2 a3 : Z.
+  Variable a1 a2 a3 : Q.
+  Variable f : Q -> Q.
   Let v2 := t2v_3 (a1,a2,a3).
   (* Compute v2l v2. *)
-  (* Eval cbn in v2l (vmap Z.opp v2). *)
+  (* Eval cbv in v2l (vmap f v2). *)
   
 End test.
-

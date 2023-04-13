@@ -3,43 +3,42 @@
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
-  purpose   : Matrix theory on Qc.
+  purpose   : Matrix theory on Q.
   author    : ZhengPu Shi
   date      : 2021.12
 *)
 
 Require Export Matrix.
-Require Export QcExt.
+Require Export QExt.
 
 
 (* ======================================================================= *)
 (** ** Matrix theory come from common implementations *)
 
 Open Scope Q_scope.
-Open Scope Qc_scope.
 Open Scope mat_scope.
 
 (** general notations *)
-Notation A := Qc.
+Notation A := Q.
 Notation A0 := 0.
 Notation A1 := 1.
-Notation Aadd := Qcplus.
-Notation Aopp := Qcopp.
-Notation Amul := Qcmult.
-Notation Ainv := Qcinv.
+Notation Aadd := Qplus.
+Notation Aopp := Qopp.
+Notation Amul := Qmult.
+Notation Ainv := Qinv.
 
 (** *** matrix type and basic operation *)
-Definition mat (r c : nat) : Type := @mat Qc r c.
+Definition mat (r c : nat) : Type := @mat Q r c.
 
-Infix "==" := (eqlistA (eqlistA eq)) : dlist_scope.
+Infix "==" := (eqlistA (eqlistA Qeq)) : dlist_scope.
 Infix "!=" := (fun d1 d2 => ~(d1 == d2)%dlist) : dlist_scope.
-Notation meq := (meq (Aeq:=eq)).
+Notation meq := (meq (Aeq:=Qeq)).
 Infix "==" := (meq) : mat_scope.
 Infix "!=" := (fun m1 m2 => ~(m1 == m2)%M) : mat_scope.
 Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope.
 
 Lemma meq_iff_mnth : forall {r c} (m1 m2 : mat r c),
-    m1 == m2 <-> (forall i j : nat, i < r -> j < c -> m1!i!j = m2!i!j)%nat.
+    m1 == m2 <-> (forall i j : nat, i < r -> j < c -> (m1!i!j == m2!i!j)%Q)%nat.
 Proof. intros. apply meq_iff_mnth. Qed.
 
 (** *** convert between list and matrix *)
@@ -96,11 +95,11 @@ Proof. intros. apply mtrans_trans. Qed.
 Definition mmap {r c} f (m : mat r c) : mat r c := mmap f m.
 Definition mmap2 {r c} f (m1 m2 : mat r c) : mat r c := mmap2 f m1 m2.
 
-Lemma mmap2_comm : forall {r c} (m1 m2 : mat r c) f (fcomm : Commutative f eq),
+Lemma mmap2_comm : forall {r c} (m1 m2 : mat r c) f (fcomm : Commutative f Qeq),
     mmap2 f m1 m2 == mmap2 f m2 m1.
 Proof. intros. apply mmap2_comm; auto. Qed.
 
-Lemma mmap2_assoc : forall {r c} f (m1 m2 m3 : mat r c) (fassoc : Associative f eq),
+Lemma mmap2_assoc : forall {r c} f (m1 m2 m3 : mat r c) (fassoc : Associative f Qeq),
     mmap2 f (mmap2 f m1 m2) m3 == mmap2 f m1 (mmap2 f m2 m3).
 Proof. intros. apply mmap2_assoc; auto. Qed.
 
@@ -160,7 +159,7 @@ Proof. intros. apply msub_self. Qed.
 Definition mcmul {r c} a (m : mat r c) : mat r c := mcmul a m (Amul:=Amul).
 Infix " 'c*' " := mcmul : mat_scope.
 
-Global Instance mcmul_mor : forall r c,  Proper (eq ==> meq ==> meq) (@mcmul r c).
+Global Instance mcmul_mor : forall r c,  Proper (Qeq ==> meq ==> meq) (@mcmul r c).
 Proof. apply mcmul_mor. Qed.
 
 Lemma mcmul_assoc : forall {r c} a b (m : mat r c), a c* (b c* m) == (a * b) c* m.
@@ -190,7 +189,7 @@ Infix "*c" := mmulc : mat_scope.
 Lemma mmulc_eq_mcmul : forall {r c} (a : A) (m : mat r c), m *c a == a c* m.
 Proof. intros. apply mmulc_eq_mcmul. Qed.
 
-Global Instance mmulc_mor : forall r c, Proper (meq ==> eq ==> meq) (mmulc (r:=r)(c:=c)).
+Global Instance mmulc_mor : forall r c, Proper (meq ==> Qeq ==> meq) (mmulc (r:=r)(c:=c)).
 Proof. apply mmulc_mor. Qed.
 
 
@@ -242,14 +241,14 @@ Definition minv_gauss {n} (m : mat n n) : option (mat n n) :=
 (* ======================================================================= *)
 (** ** Usage demo *)
 Section test.
-  Let l1 := Q2Qc_dlist [[1;-3;-2];[-2;1;-4];[-1;4;-1]]%Q.
+  Let l1 := [[1;-3;-2];[-2;1;-4];[-1;4;-1]]%Q.
   Let m1 := l2m 3 3 l1.
   (* Compute m2l m1. *)
-  (* Compute m2l (mmap Qcopp m1). *)
+  (* Compute m2l (mmap Qopp m1). *)
   (* Compute m2l (m1 * m1). *)
 
-  Variable a11 a12 a21 a22 : Qc.
-  Variable f : Qc -> Qc.
+  Variable a11 a12 a21 a22 : Q.
+  Variable f : Q -> Q.
   Let m2 := l2m 2 2 [[a11;a12];[a21;a22]].
   (* Compute m2l m2.       (* = [[a11; a12]; [a21; a22]] *) *)
   (* Compute m2l (mmap f m2).       (* = [[f a11; f a12]; [f a21; f a22]] *) *)
@@ -261,5 +260,6 @@ Section test.
   (* Eval cbn in minv_gauss (l2m 1 1 [[1]]). *)
   (* Eval cbv in minv_gauss (l2m 1 1 [[1]]). *)
   (* Eval cbn in minv_gauss (l2m 2 2 [[1;0];[0;1]]). *)
+  (* Eval cbv in minv_gauss (l2m 2 2 [[1;0];[0;1]]). *)
   
 End test.

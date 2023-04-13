@@ -855,17 +855,20 @@ Add Field Complex_field_inst : Complex_field.
 (*   intro; intros. rewrite H; easy. *)
 (* Qed. *)
 
-(* (** ( / a) is proper function about (==) *) *)
-(* Lemma Cinv_eq_proper : Proper (eq ==> eq) Cinv. *)
-(* Proof. *)
-(*   intro; intros. rewrite H; easy. *)
-(* Qed. *)
+(** ( / a) is proper function about (==) *)
+Lemma Cinv_eq_proper : Proper (eq ==> eq) Cinv.
+Proof.
+  intro; intros. rewrite H; easy.
+Qed.
 
-Global Instance Ring_C : Ring Cadd 0 Copp Cmul 1.
-Proof. repeat constructor; intros; try ring. Qed.
+Global Instance Ring_C : Ring Cadd 0 Copp Cmul 1 eq.
+Proof. split_intro; intros; subst; try ring. Qed.
 
-Global Instance Field_C : Field Cadd 0 Copp Cmul 1 Cinv.
-Proof. repeat constructor; intros; try field; auto. apply C1_neq_C0. Qed.
+Global Instance Field_C : Field Cadd 0 Copp Cmul 1 Cinv eq.
+Proof.
+  constructor. apply Ring_C.
+  intros. field. auto. apply C1_neq_C0. apply Cinv_eq_proper.
+Qed.
 
 
 (** *** Conjugate of complex numbers *)
