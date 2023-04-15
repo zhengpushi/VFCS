@@ -16,7 +16,7 @@ Require Import VectorR.
 
 Open Scope R.
 Open Scope mat_scope.
-Open Scope vec_scope.
+Open Scope cvec_scope.
 
 
 (* ######################################################################### *)
@@ -39,7 +39,7 @@ Section quat_def.
   Definition Im1 (q : quat) : R := X q.
   Definition Im2 (q : quat) : R := Y q.
   Definition Im3 (q : quat) : R := Z q.
-  Definition v3_of_quat (q : quat) : vec 3 :=
+  Definition v3_of_quat (q : quat) : cvec 3 :=
     mk_mat_3_1 (X q) (Y q) (Z q).
   
   (** Two quaternions are equal iff all of its components equal *)
@@ -88,8 +88,8 @@ Section quat_def.
   Proof. intros. split; auto. Qed.
 
   (** Construct a quaternion by a scalar number and a 3-dim vector *)
-  Definition quat_of_s_v (w : R) (v : vec 3) :=
-    let '(x,y,z) := v2t_3 v in
+  Definition quat_of_s_v (w : R) (v : cvec 3) :=
+    let '(x,y,z) := cv2t_3 v in
       mk_quat w x y z.
 
   Lemma quat_of_s_v_ok : forall w v,
@@ -106,7 +106,7 @@ Section quat_def.
   Proof. intros. compute. auto. Qed.
 
   (** Construct a quaternion by a 3-dim vector *)
-  Definition quat_of_v3 (v : vec 3) : quat := quat_of_s_v 0 v.
+  Definition quat_of_v3 (v : cvec 3) : quat := quat_of_s_v 0 v.
   
   Lemma quat_of_v3_ok : forall v,
     let q := quat_of_v3 v in
@@ -114,8 +114,8 @@ Section quat_def.
   Proof. apply quat_of_s_v_ok. Qed.
   
   (** Construct a quaternion by a vec4 *)
-  Definition quat_of_v4 (v : vec 4) : quat :=
-    let '(w,x,y,z) := v2t_4 v in
+  Definition quat_of_v4 (v : cvec 4) : quat :=
+    let '(w,x,y,z) := cv2t_4 v in
       mk_quat w x y z.
   
   Lemma quat_of_v4_ok : forall v,
@@ -135,7 +135,7 @@ Section quat_def.
   Proof. intros. destruct t as [[[a b] c] d]. compute. auto. Qed.
   
   (** Quaternion to vec4 *)
-  Definition v4_of_quat (q : quat) : vec 4 :=
+  Definition v4_of_quat (q : quat) : cvec 4 :=
     let '(w,x,y,z) := (W q, X q, Y q, Z q) in
       mk_mat_4_1 w x y z.
   
@@ -298,10 +298,10 @@ p ⊗ q = |pv| + |qv| = |pv x qv + p0 qv + q0 pv |
 Definition qmulVEC (p q : quat) : quat :=
   let p0 : R := Re p in
   let q0 : R := Re q in
-  let pv : vec 3 := t2v_3 (Im p) in
-  let qv : vec 3 := t2v_3 (Im q) in
+  let pv : cvec 3 := t2cv_3 (Im p) in
+  let qv : cvec 3 := t2cv_3 (Im q) in
   let w : R := (p0 * q0 - scalar_of_mat ((qv \T) * pv)%M)%R in
-  let v : vec 3 := (v3cross pv qv + p0 c* qv + q0 c* pv)%M in
+  let v : cvec 3 := (cv3cross pv qv + p0 c* qv + q0 c* pv)%M in
     quat_of_s_v w v.
 
 Lemma qmulVEC_correct (p q : quat) : p * q = qmulVEC p q.
@@ -310,10 +310,10 @@ Proof. destruct p, q. lqa. Qed.
 (** Quaternion multiplication with PLUS form. page96, p+ *)
 Definition qPLUS (q : quat) : mat 4 4 :=
   let p0 : R := Re q in
-  let pv : vec 3 := t2v_3 (Im q) in
+  let pv : cvec 3 := t2cv_3 (Im q) in
   let m1 : mat 4 4 := (p0 c* mat1)%M in
   let m2a : mat 1 4 := mconsc (mk_mat_1_1 0) (-(pv\T))%M in
-  let m2b : mat 3 4 := mconsc pv (v3_skew_sym_mat pv) in
+  let m2b : mat 3 4 := mconsc pv (cv3_skew_sym_mat pv) in
   let m2 : mat 4 4 := mconsr m2a m2b in
     madd m1 m2.
 
@@ -327,10 +327,10 @@ Proof. destruct p, q. lqa. Qed.
 (** Quaternion multiplication with MINUS form. page96, p- *)
 Definition qMINUS (q : quat) : mat 4 4 :=
   let q0 : R := Re q in
-  let qv : vec 3 := t2v_3 (Im q) in
+  let qv : cvec 3 := t2cv_3 (Im q) in
   let m1 : mat 4 4 := (q0 c* mat1)%M in
   let m2a : mat 1 4 := mconsc (mk_mat_1_1 0) (-(qv\T))%M in
-  let m2b : mat 3 4 := mconsc qv (-(v3_skew_sym_mat qv))%M in
+  let m2b : mat 3 4 := mconsc qv (-(cv3_skew_sym_mat qv))%M in
   let m2 : mat 4 4 := mconsr m2a m2b in
     madd m1 m2.
 
@@ -378,19 +378,19 @@ Proof. destruct q. lqa. Qed.
 (** <4> multplication by image part of two quaternions *)
 
 (* [0;u]^T * [0;v]^T = [(-u^T)*v; u×v]^T *)
-Lemma qmul_by_im (u v : vec 3) :
+Lemma qmul_by_im (u v : cvec 3) :
   let qu : quat := quat_of_v3 u in
   let qv : quat := quat_of_v3 v in
   let q : quat := quat_of_s_v
                     (- (scalar_of_mat (u\T * v)%M))
-                    (v3cross u v) in
+                    (cv3cross u v) in
   qu * qv = q.
 Proof. lqa. Qed.
 
 (** (3) Conjugate of quaternion *)
 Definition qconj (q : quat) : quat :=
   let w : R := Re q in
-  let v : vec 3 := - (t2v_3 (Im q)) in
+  let v : cvec 3 := - (t2cv_3 (Im q)) in
     quat_of_s_v w v.
 
 Notation "q ∗" := (qconj q) (at level 30) : quat_scope.
@@ -493,7 +493,7 @@ Proof. destruct q. lqa. apply Rsqr_inj; ra. lqa. ra. Qed.
 (** ‖ q ‖² = q0^2 + qv^T * qv *)
 Lemma qnorm2_eqation2 : forall (q : quat),
   let q0 := Re q in
-  let qv := t2v_3 (Im q) in
+  let qv := t2cv_3 (Im q) in
     qnorm2 q = (q0 * q0 + (scalar_of_mat (qv\T * qv)%M))%R.
 Proof. destruct q. lqa. Qed.
 
@@ -643,7 +643,7 @@ Proof.
 Qed.
 
 (** 利用四元数进行向量旋转的公式 5.24 *)
-Definition vec_rot_by_quat (q : quat) (v : vec 3) : quat :=
+Definition vec_rot_by_quat (q : quat) (v : cvec 3) : quat :=
   q * (quat_of_v3 v) * (qinv q).
 
 (** 四元数旋转向量后的四元数第一个分量为0 *)
@@ -658,16 +658,16 @@ Proof.
 Qed.
 
 (** 四元数旋转向量后的四元数取出虚部作为向量 *)
-Definition vec_rot_by_quat_IM (q : quat) (v : vec 3) : vec 3 :=
-  t2v_3 (Im (vec_rot_by_quat q v)).
+Definition vec_rot_by_quat_IM (q : quat) (v : cvec 3) : cvec 3 :=
+  t2cv_3 (Im (vec_rot_by_quat q v)).
 
 (** 单位四元数的另一种表示形式：由三维旋转轴和旋转角构成 5.25 *)
-Definition qrot_by_axis_angle (v : vec 3) (θ : R) : quat :=
+Definition qrot_by_axis_angle (v : cvec 3) (θ : R) : quat :=
   quat_of_s_v (cos (θ/2)) (v *c (sin (θ/2)))%M.
 
 (* 若旋转轴 v 是单位向量，则依转轴和转角生成的四元数是单位四元数 *)
 Lemma qrot_by_axis_angle_keep_unitary : forall v θ,
-  vlen v = 1 -> qunit (qrot_by_axis_angle v θ).
+  cvlen v = 1 -> qunit (qrot_by_axis_angle v θ).
 Proof.
   intros. destruct v as [v]. lqa. cbv in H.
   apply sqrt_eq1_imply_eq1 in H.
@@ -686,10 +686,10 @@ Qed.
 (** 四元数能表示三维旋转的定理 Th5.1 *)
 
 (* (1) 通过四元数进行向量旋转会保持向量范数不变 *)
-Lemma vec_rot_by_quat_keep_norm : forall (pv : vec 3) (q : quat) (H : qunit q),
+Lemma vec_rot_by_quat_keep_norm : forall (pv : cvec 3) (q : quat) (H : qunit q),
     let p' := vec_rot_by_quat q pv in
     let pv' := v3_of_quat p' in
-    vlen pv = vlen pv'.
+    cvlen pv = cvlen pv'.
 Proof.
   intros. destruct q as [w x y z]. destruct pv as [pv].
   cbv. apply Rsqr_inj; ra; rewrite !sqrt_sqrt; ra. field.
@@ -697,12 +697,12 @@ Proof.
 Qed.
 
 (* (2) 任意非零实数s与q相乘，结论仍然成立 *)
-Lemma vec_rot_by_quat_keep_norm_ext : forall (pv : vec 3) (s : R) (q : quat) 
+Lemma vec_rot_by_quat_keep_norm_ext : forall (pv : cvec 3) (s : R) (q : quat) 
   (H : qunit q) (H1 : s <> 0),
   let q' := s c* q in
   let p' := vec_rot_by_quat q' pv in
   let pv' := v3_of_quat p' in
-  vlen pv = vlen pv'.
+  cvlen pv = cvlen pv'.
 Proof.
   intros. destruct q as [w x y z]. destruct pv as [pv].
   cbv. apply Rsqr_inj; ra; rewrite !sqrt_sqrt; ra. field.
@@ -713,20 +713,22 @@ Qed.
  换言之，公式5.25是如何构造的？它为什么能表示旋转 *)
 
 (* 计算两个向量的夹角 *)
-Definition rot_angle_by_twovec (v0 v1 : vec 3) : R := 
+Definition rot_angle_by_twovec (v0 v1 : cvec 3) : R := 
   acos (scalar_of_mat (v0\T * v1)%M).
 
 (* 计算两个向量所决定的转轴（垂直与所在平面的法向量) *)
-Definition rot_axis_by_twovec (v0 v1 : vec 3) : vec 3 :=
-  let s : R := (vlen v0 * vlen v1)%R in
-  (s c* (v3cross v0 v1))%M.
+Definition rot_axis_by_twovec (v0 v1 : cvec 3) : cvec 3 :=
+  let s : R := (cvlen v0 * cvlen v1)%R in
+  (s c* (cv3cross v0 v1))%M.
 
 (* 谓词：两向量不共线（不平行的） *)
-Definition v3_non_colinear (v0 v1 : vec 3) : Prop :=
+Definition v3_non_colinear (v0 v1 : cvec 3) : Prop :=
   v0 <> v1 /\ v0 <> (-v1)%M.
 
-(* Let ex1 : (R*R*R) := Eval cbv in v2t_3 (rot_axis_by_twovec (t2v_3 (1,0.4,0)) (t2v_3 (0,0.5,0))). *)
-Let ex1 : (R*R*R) := Eval cbv in v2t_3 (rot_axis_by_twovec (t2v_3 (0.23,0.43,0)) (t2v_3 (1.25,3.1,4.7))).
+(* Let ex1 : (R*R*R) := Eval cbv in 
+   v2t_3 (rot_axis_by_twovec (t2v_3 (1,0.4,0)) (t2v_3 (0,0.5,0))). *)
+Let ex1 : (R*R*R) := Eval cbv in
+      cv2t_3 (rot_axis_by_twovec (t2cv_3 (0.23,0.43,0)) (t2cv_3 (1.25,3.1,4.7))).
 
 Extraction "quat.ml"
   mk_quat quat_of_ssss quat_of_t4
@@ -739,12 +741,12 @@ Extraction "quat.ml"
 
 (* 按旋转轴和旋转角表示的四元数，等于，用旋转轴垂直平面上两个单位向量的运算来构造的
 四元数 *)
-Definition qrot_by_two_vec_ops (v0 v1 : vec 3) : quat :=
-  quat_of_s_v (scalar_of_mat (v0\T * v1)%M) (v3cross v0 v1).
+Definition qrot_by_two_vec_ops (v0 v1 : cvec 3) : quat :=
+  quat_of_s_v (scalar_of_mat (v0\T * v1)%M) (cv3cross v0 v1).
 
 
 (* (* 若单位向量v0和v1的夹角是 θ/2，且不共线，则由它们生成的垂直方向的向量v有确定形式 *)
-Lemma gen_vec_by_v0_v1_eq : forall (v0 v1 : vec 3) (θ : R) (H1 : v3norm v0 = 1)
+Lemma gen_vec_by_v0_v1_eq : forall (v0 v1 : cvec 3) (θ : R) (H1 : v3norm v0 = 1)
   (H2 : v3norm v1 = 1) (H3 : v3_non_colinear v0 v1),
   v3cross v0 v1 =  *)
   

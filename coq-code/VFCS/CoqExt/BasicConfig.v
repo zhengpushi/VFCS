@@ -169,10 +169,19 @@ Declare Scope mat_scope.
 Delimit Scope mat_scope with M.
 Open Scope mat_scope.
 
-(** Scope for vector type *)
-Declare Scope vec_scope.
-Delimit Scope vec_scope with V.
-Open Scope vec_scope.
+(** Scope for column-vector type *)
+Declare Scope cvec_scope.
+Delimit Scope cvec_scope with CV.
+Open Scope cvec_scope.
+
+(** Scope for row-vector type *)
+Declare Scope rvec_scope.
+Delimit Scope rvec_scope with RV.
+Open Scope rvec_scope.
+
+(* Declare Scope vec_scope. *)
+(* Delimit Scope vec_scope with V. *)
+(* Open Scope vec_scope. *)
 
 (** Scope for linear-space type *)
 Declare Scope LinearSpace_scope.

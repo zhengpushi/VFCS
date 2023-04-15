@@ -22,24 +22,29 @@ Open Scope mat_scope.
 Notation A := R.
 Notation A0 := R0.
 Notation A1 := R1.
+Notation Aeq := eq.
 Notation Aadd := Rplus.
 Notation Aopp := Ropp.
 Notation Amul := Rmult.
 Notation Ainv := Rinv.
+Infix "==" := (Aeq) : A_scope.
+Infix "==" := (eqlistA Aeq) : list_scope.
+Infix "!=" := (fun l1 l2 => ~(l1 == l2)%list) : list_scope.
+Infix "==" := (eqlistA (eqlistA Aeq)) : dlist_scope.
+Infix "!=" := (fun d1 d2 => ~(d1 == d2)%dlist) : dlist_scope.
+
 
 (** *** matrix type and basic operation *)
 Definition mat (r c : nat) : Type := @mat A r c.
 Notation smat n := (smat A n).
 
-Infix "==" := (eqlistA (eqlistA eq)) : dlist_scope.
-Infix "!=" := (fun d1 d2 => ~(d1 == d2)%dlist) : dlist_scope.
 Notation meq := (meq (Aeq:=eq)).
 Infix "==" := (meq) : mat_scope.
 Infix "!=" := (fun m1 m2 => ~(m1 == m2)%M) : mat_scope.
 Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope.
 
 Lemma meq_iff_mnth : forall {r c} (m1 m2 : mat r c),
-    m1 == m2 <-> (forall i j : nat, i < r -> j < c -> m1!i!j = m2!i!j)%nat.
+    m1 == m2 <-> (forall i j : nat, i < r -> j < c -> (m1!i!j = m2!i!j)%A)%nat.
 Proof. intros. apply meq_iff_mnth. Qed.
 
 

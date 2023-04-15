@@ -1047,6 +1047,15 @@ Section t2m_m2t.
   Context {A : Type} (A0 : A).
   (* Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope. *)
   
+  (** Tuples 2x2 -> mat_2x2 *)
+  Definition t2m_2_2 (t : @T_2_2 A) : @mat A 2 2.
+  Proof.
+    destruct t as (t1,t2).
+    destruct t1 as (a11,a12).
+    destruct t2 as (a21,a22).
+    exact (mk_mat_2_2 (A0:=A0) a11 a12 a21 a22).
+  Defined.
+
   (** Tuples 3x3 -> mat_3x3 *)
   Definition t2m_3_3 (t : @T_3_3 A) : @mat A 3 3.
   Proof.
@@ -1057,14 +1066,19 @@ Section t2m_m2t.
     exact (mk_mat_3_3 (A0:=A0) a11 a12 a13 a21 a22 a23 a31 a32 a33).
   Defined.
 
+  (** m[0,0]: mat_1x1 -> A *)
+  Definition m2t_1_1 (m : @mat A 1 1) := m$0$0.
+
+  (** mat_2x2 -> tuple 2x2. That is: ((a11,a12),(a21,a22)) *)
+  Definition m2t_2_2 (m : mat 2 2) : @T_2_2 A :=
+    ((m$0$0, m$0$1),
+      (m$1$0, m$1$1)).
+
   (** mat_3x3 -> tuple 3x3. That is: ((a11,a12,a13),(a21,a22,a23),(a31,a32,a33)) *)
   Definition m2t_3_3 (m : mat 3 3) : @T_3_3 A :=
     ((m$0$0, m$0$1, m$0$2),
       (m$1$0, m$1$1, m$1$2),
       (m$2$0, m$2$1, m$2$2)).
-
-  (** m[0,0]: mat_1x1 -> A *)
-  Definition m2t_1_1 (m : @mat A 1 1) := m$0$0.
 
 End t2m_m2t.
 

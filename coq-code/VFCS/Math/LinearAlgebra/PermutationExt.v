@@ -161,50 +161,51 @@ Module Perm_with_vector.
 
   Context {A : Type} {A0 : A}.
   Context {Altb : A -> A -> bool}.
-  Infix "!" := (vnth A0) : vec_scope.
+  Open Scope cvec_scope.
+  Infix "!" := (cvnth A0) : cvec_scope.
   
   (** ** Permutation of a list of n elements *)
   Section perm.
     
     (** Get k-th element and remaining elements from a vector *)
-    Definition pick {n : nat} (v : @vec A (S n)) (k : nat) : A * (vec n) :=
-      (v ! k, vremove v k).
+    Definition pick {n : nat} (v : @cvec A (S n)) (k : nat) : A * (cvec n) :=
+      (v ! k, cvremove v k).
 
     Section test.
       Variable a0 a b c : A.
-      Let l := l2v a0 3 [a;b;c].
+      Let l := l2cv a0 3 [a;b;c].
       (* Compute pick l 0.     (* = (a, [b; c]) *) *)
       (* Compute pick l 1.     (* = (b, [a; c]) *) *)
       (* Compute pick l 2.     (* = (c, [a; b]) *) *)
       (* Compute pick l 3.     (* = (A0, [a; b; c]) *) *)
-      (* Compute v2l (vremove l 4). *)
+      (* Compute cv2l (cvremove l 4). *)
     End test.
 
     (** Get permutation of a vector *)
-    Fixpoint perm {n : nat} : @vec A n -> list (@vec A n) :=
+    Fixpoint perm {n : nat} : @cvec A n -> list (@cvec A n) :=
       match n with
-      | 0 => fun _ => [vec0 (A0:=A0)]
-      | S n' => fun (v : vec (S n')) =>
+      | 0 => fun _ => [cvec0 (A0:=A0)]
+      | S n' => fun (v : cvec (S n')) =>
           let d1 := map (fun i => pick v i) (seq 0 n) in
           let d2 :=
-            map (fun k : A * @vec A n' =>
+            map (fun k : A * @cvec A n' =>
                    let (x, v') := k in
                    let d3 := perm v' in
-                   map (fun v0 => vcons x v') d3) d1 in
+                   map (fun v0 => cvcons x v') d3) d1 in
           concat d2
       end.
 
     Section test.
       Variable a0 a b c : A.
-      (* Compute vl2dl (perm (l2v a0 0 [])). *)
-      (* Compute vl2dl (perm (l2v a0 1 [a])). *)
-      (* Compute vl2dl (perm (l2v a0 2 [a;b])). *)
-      (* Compute vl2dl (perm (l2v a0 3 [a;b;c])). *)
+      (* Compute cvl2dl (perm (l2cv a0 0 [])). *)
+      (* Compute cvl2dl (perm (l2cv a0 1 [a])). *)
+      (* Compute cvl2dl (perm (l2cv a0 2 [a;b])). *)
+      (* Compute cvl2dl (perm (l2cv a0 3 [a;b;c])). *)
       (* = [[a; b; c]; [a; b; c]; [b; a; c]; [b; a; c]; [c; a; b]; [c; a; b]] *)
     End test.
 
     (** Length of permutation *)
-    Definition Pn {n} (v : @vec A n) := length (perm v).
+    Definition Pn {n} (v : @cvec A n) := length (perm v).
 
     (** Pn of cons. 
       Example: Pn [a;b;c;d] = 4 * Pn [a;b;c] *)
@@ -218,7 +219,7 @@ Module Perm_with_vector.
     (* Admitted. *)
 
     (** Length of permutation equal to the factorial of the length *)
-    Lemma Pn_eq : forall n (v : @vec A n), Pn v = fact n.
+    Lemma Pn_eq : forall n (v : @cvec A n), Pn v = fact n.
     Proof.
     (*   induction l; simpl; auto. *)
     (*   rewrite Pn_cons. rewrite IHl. simpl. auto. *)
@@ -230,36 +231,32 @@ Module Perm_with_vector.
 
   End perm.
 
-  (* Compute vl2dl (perm (l2v 0 2 [1;2])). *)
-  (* Compute vl2dl (perm (l2v 0 3 [1;2;3])). *)
-  (* Compute vl2dl (perm (l2v 0 4 [1;2;3;4])). *)
-
   (** ** parity of a vector *)
-  Definition perm_parity {n} (v : @vec A n) : Parity :=
-    perm_parity (Altb:=Altb) (v2l v).
-  Definition perm_parity_diff {n} (v1 v2 : @vec A n) : Prop :=
-    perm_parity_diff (Altb:=Altb) (v2l v1) (v2l v2).
+  Definition perm_parity {n} (v : @cvec A n) : Parity :=
+    perm_parity (Altb:=Altb) (cv2l v).
+  Definition perm_parity_diff {n} (v1 v2 : @cvec A n) : Prop :=
+    perm_parity_diff (Altb:=Altb) (cv2l v1) (cv2l v2).
   
   (** ** transposition, exchange, swap 对换 *)
   Section exchange.
     
-    Definition vexchg {n} (v : @vec A n) (i0 i1 : nat) : @vec A n :=
-      mk_vec (fun i =>
+    Definition cvexchg {n} (v : @cvec A n) (i0 i1 : nat) : @cvec A n :=
+      mk_cvec (fun i =>
                 if i =? i0
                 then v!i1
                 else (if i =? i1 then v!i0 else v!i)).
 
     (** 对换相邻位置改变排列的奇偶性 *)
-    Theorem vexchg_swap2close_parity : forall {n} (v : @vec A n) i0 i1,
+    Theorem cvexchg_swap2close_parity : forall {n} (v : @cvec A n) i0 i1,
         i0 < n -> i1 < n -> (i0 = S i1 \/ i1 = S i0) ->
-        perm_parity_diff v (vexchg v i0 i1).
+        perm_parity_diff v (cvexchg v i0 i1).
     Proof.
       (* 教科书上的证明很巧妙，难以形式化的描述出来 *)
-      intros. unfold vexchg, perm_parity_diff.
+      intros. unfold cvexchg, perm_parity_diff.
       unfold PermutationExt.perm_parity_diff, PermutationExt.perm_parity.
-      unfold vnth,mnth. solve_mnth; try lia.
+      unfold cvnth,mnth. solve_mnth; try lia.
       clear l0 l l1.
-      unfold vec in *. mat_to_fun. simpl. unfold v2l. simpl.
+      unfold cvec in *. mat_to_fun. simpl. unfold cv2l. simpl.
       (* key part *)
       destruct H1; subst.
       - rename i1 into j.
@@ -272,17 +269,13 @@ Module Perm_with_vector.
     Abort.
     
     (** 对换改变排列的奇偶性 *)
-    Theorem vexchg_swap2_parity : forall {n} (v : @vec A n),
-        (forall i0 i1, i0 < n -> i1 < n -> i0 <> i1 -> perm_parity_diff v (vexchg v i0 i1)).
+    Theorem cvexchg_swap2_parity : forall {n} (v : @cvec A n),
+        (forall i0 i1, i0 < n -> i1 < n -> i0 <> i1 -> perm_parity_diff v (cvexchg v i0 i1)).
     Proof.
       (* 教科书上的证明很巧妙，难以形式化的描述出来 *)
       Admitted.
       
   End exchange.
-
-  (* Let v := l2v 0 3 [1;2;3]. *)
-  (* Compute v2l (vexchg v 0 1). *)
-  (* Compute v2l (vexchg v 0 2). *)
 
   (** ** odd/even permutation *)
   Section odd_even.
