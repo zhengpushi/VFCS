@@ -3,30 +3,30 @@
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
-  purpose   : Matrix theory on R.
+  purpose   : Matrix theory on Complex.
   author    : ZhengPu Shi
-  date      : 2021.12
+  date      : 2023.04
 *)
 
 Require Export Matrix.
-Require Export RExt.
+Require Export Complex.
 
 
 (* ======================================================================= *)
 (** ** Matrix theory come from common implementations *)
 
-Open Scope R_scope.
+Open Scope C_scope.
 Open Scope mat_scope.
 
 (** general notations *)
-Notation A := R.
-Notation A0 := R0.
-Notation A1 := R1.
+Notation A := C.
+Notation A0 := C0.
+Notation A1 := C1.
 Notation Aeq := eq.
-Notation Aadd := Rplus.
-Notation Aopp := Ropp.
-Notation Amul := Rmult.
-Notation Ainv := Rinv.
+Notation Aadd := Cadd.
+Notation Aopp := Copp.
+Notation Amul := Cmul.
+Notation Ainv := Cinv.
 Infix "+" := Aadd : A_scope.
 Infix "*" := Amul : A_scope.
 Notation "- a" := (Aopp a) : A_scope.
@@ -196,7 +196,7 @@ Proof. intros. apply madd_0_r. Qed.
 Lemma mtrans_add : forall {r c} (m1 m2 : mat r c), (m1 + m2)\T == m1\T + m2\T.
 Proof. intros. apply mtrans_add. Qed.
 
-Lemma mtrace_add : forall {n} (m1 m2 : smat n), tr (m1 + m2) = (tr(m1) + tr(m2))%R.
+Lemma mtrace_add : forall {n} (m1 m2 : smat n), tr (m1 + m2) = (tr(m1) + tr(m2))%C.
 Proof. intros. apply mtrace_add. Qed.
 
 
@@ -227,7 +227,7 @@ Lemma mtrans_opp : forall {r c} (m : mat r c), (- m)\T == - (m\T).
 Proof. intros. apply mtrans_opp. Qed.
 
 (** tr(- m) = - (tr(m)) *)
-Lemma mtrace_opp : forall {n} (m : smat n), tr (- m) = (- (tr(m)))%R.
+Lemma mtrace_opp : forall {n} (m : smat n), tr (- m) = (- (tr(m)))%C.
 Proof. intros. apply mtrace_opp. Qed.
 
 
@@ -267,7 +267,7 @@ Proof. intros. apply msub_self. Qed.
 Lemma mtrans_sub : forall {r c} (m1 m2 : mat r c), (m1 - m2)\T == m1\T - m2\T.
 Proof. intros. apply mtrans_sub. Qed.
 
-Lemma mtrace_sub : forall {n} (m1 m2 : smat n), tr (m1 - m2) = (tr(m1) - tr(m2))%R.
+Lemma mtrace_sub : forall {n} (m1 m2 : smat n), tr (m1 - m2) = (tr(m1) - tr(m2))%C.
 Proof. intros. apply mtrace_sub. Qed.
 
 
@@ -290,7 +290,7 @@ Lemma mcmul_add_distr_l : forall {r c} a (m1 m2 : mat r c),
 Proof. intros. apply mcmul_add_distr_l. Qed.
 
 Lemma mcmul_add_distr_r : forall {r c} a b (m : mat r c),
-    (a + b) c* m == (a c* m) + (b c* m).
+    (a + b)%C c* m == (a c* m) + (b c* m).
 Proof. intros. apply mcmul_add_distr_r. Qed.
 
 Lemma mcmul_1_l : forall {r c} (m : mat r c), A1 c* m == m.
@@ -394,31 +394,20 @@ Definition minv_gauss {n} (m : mat n n) : option (mat n n) :=
 (* ======================================================================= *)
 (** ** Matrix theory applied to this type *)
 
-(** *** SO(n): special orthogonal group *)
-Section SO3.
-
-  (** If a matrix is SO3? *)
-  Definition so3 (m : smat 3) : Prop := 
-    let so3_mul_unit : Prop := m\T * m == mat1 in
-    let so3_det : Prop := (det3 m) = 1 in
-    so3_mul_unit /\ so3_det.
-
-End SO3.
-
-
 
 (* ======================================================================= *)
 (** ** Usage demo *)
 
 Section test.
-  Let l1 := [[1;2];[3;4]].
+
+  Let l1 := [[1 +i 2; 3 +i 4];[5 +i 6; 7 +i 8]].
   Let m1 := l2m 2 2 l1.
   (* Compute m2l m1. *)
-  (* Compute m2l (mmap Ropp m1). *)
+  (* Compute m2l (mmap Copp m1). *)
   (* Compute m2l (m1 * m1). *)
 
-  Variable a11 a12 a21 a22 : R.
-  Variable f : R -> R.
+  Variable a11 a12 a21 a22 : C.
+  Variable f : C -> C.
   Let m2 := l2m 2 2 [[a11;a12];[a21;a22]].
   (* Compute m2l m2.       (* = [[a11; a12]; [a21; a22]] *) *)
   (* Compute m2l (mmap f m2).       (* = [[f a11; f a12]; [f a21; f a22]] *) *)
@@ -452,74 +441,3 @@ Section test_monoid.
     monoid_simp. Qed.
 End test_monoid.
 
-
-Section Example4CoordinateSystem.
-  Variable ψ θ φ: R.
-  Let Rx := mk_mat_3_3 1 0 0 0 (cos φ) (sin φ) 0 (-sin φ) (cos φ).
-  Let Ry := mk_mat_3_3 (cos θ) 0 (-sin θ) 0 1 0 (sin θ) 0 (cos θ).
-  Let Rz := mk_mat_3_3 (cos ψ) (sin ψ) 0 (-sin ψ) (cos ψ) 0 0 0 1.
-  Let Rbe := mk_mat_3_3
-    (cos θ * cos ψ) (cos ψ * sin θ * sin φ - sin ψ * cos φ)
-    (cos ψ * sin θ * cos φ + sin φ * sin ψ) (cos θ * sin ψ)
-    (sin ψ * sin θ * sin φ + cos ψ * cos φ)
-    (sin ψ * sin θ * cos φ - cos ψ * sin φ)
-    (-sin θ) (sin φ * cos θ) (cos φ * cos θ).
-  Lemma Rbe_ok : (Rbe == Rz\T * Ry\T * Rx\T).
-  Proof. lma. Qed.
-    
-End Example4CoordinateSystem.
-
-
-(** example for symbol matrix *)
-Module Exercise_Ch1_Symbol.
-
-  (* for better readibility *)
-  Notation "0" := R0.
-  Notation "1" := R1.
-  Notation "2" := (R1 + R1)%R.
-  Notation "3" := (R1 + (R1 + R1))%R.
-  Notation "4" := ((R1 + R1) * (R1 + R1))%R.
-  
-  Example ex6_1 : forall a b : R,
-      let m := (mk_mat_3_3 (a*a) (a*b) (b*b) (2*a) (a+b) (2*b) 1 1 1)%R in
-      (det m = (a - b)^3)%R.
-  Proof.
-    intros. cbv. ring.
-  Qed.
-  
-  Example ex6_2 : forall a b x y z : A,
-      let m1 := (mk_mat_3_3
-                   (a*x+b*y) (a*y+b*z) (a*z+b*x)
-                   (a*y+b*z) (a*z+b*x) (a*x+b*y)
-                   (a*z+b*x) (a*x+b*y) (a*y+b*z))%A in
-      let m2 := mk_mat_3_3 x y z y z x z x y in
-      (det m1 = (a^3 + b^3) * det m2)%R.
-  Proof.
-    intros. cbv. ring.
-  Qed.
-  
-  Example ex6_3 : forall a b e d : A,
-      let m := (mk_mat_4_4
-                  (a*a) ((a+1)^2) ((a+2)^2) ((a+3)^2)
-                  (b*b) ((b+1)^2) ((b+2)^2) ((b+3)^2)
-                  (e*e) ((e+1)^2) ((e+2)^2) ((e+3)^2)
-                  (d*d) ((d+1)^2) ((d+2)^2) ((d+3)^2))%A in
-      det m = 0.
-  Proof.
-    intros. cbv. ring.
-  Qed.
-  
-  Example ex6_4 : forall a b e d : A,
-      let m := (mk_mat_4_4
-                  1 1 1 1
-                  a b e d
-                  (a^2) (b^2) (e^2) (d^2)
-                  (a^4) (b^4) (e^4) (d^4))%A in
-      (det m = (a-b)*(a-e)*(a-d)*(b-e)*(b-d)*(e-d)*(a+b+e+d))%R.
-  Proof.
-    intros. cbv. ring.
-  Qed.
-  
-  (* (** 6.(5), it is an infinite structure, need more work, later... *) *)
-
-End Exercise_Ch1_Symbol.

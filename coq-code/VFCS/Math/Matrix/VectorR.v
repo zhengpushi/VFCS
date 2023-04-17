@@ -71,6 +71,8 @@ Module Export RowVectorR.
       (v1 == v2) <-> (forall i, i < n -> (v1!i == v2!i)%A)%nat.
   Proof. intros. apply veq_iff_rvnth. Qed.
 
+  Definition mat2row {r c} (m : mat r c) (ci : nat) : rvec c := mat2row m ci.
+
   
   (** *** convert between list and vector *)
   Definition l2rv n (l : list A) : rvec n := l2rv A0 n l.
@@ -228,6 +230,8 @@ Module Export ColVectorR.
   Lemma veq_iff_cvnth : forall {n : nat} (v1 v2 : cvec n),
       (v1 == v2) <-> (forall i, i < n -> (v1!i == v2!i)%A)%nat.
   Proof. intros. apply veq_iff_cvnth. Qed.
+
+  Definition mat2vec {r c} (m : mat r c) (ri : nat) : cvec r := mat2col m ri.
 
 
   (** *** convert between list and vector *)
@@ -463,6 +467,19 @@ Module Export ColVectorR.
     (** Verify the definition is reasonable *)
     Lemma cvunit_ok : forall {n} (u : cvec n), cvunit u <-> `|u| = 1.
     Proof. intros. split; intros; apply cvlen1_iff_vdot1; auto. Qed.
+
+    (** If column of a and column of b all are unit, 
+        then column of (a * b) is also unit *)
+    (*   a : mat 2 2 *)
+    (* a1 : cvunit (mat2col a 0) *)
+    (* a2 : cvunit (mat2col a 1) *)
+    (* a3 : cvorthogonal (mat2col a 0) (mat2col a 1) *)
+    (* b1 : cvunit (mat2col b 0) *)
+    (* b2 : cvunit (mat2col b 1) *)
+    (* b3 : cvorthogonal (mat2col b 0) (mat2col b 1) *)
+    (* ============================ *)
+    (* cvunit (mat2col (a * b) 0) *)
+
 
     (** Normalization of a non-zero vector v.
       That is, get a unit vector in the same directin as v. *)

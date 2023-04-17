@@ -82,6 +82,11 @@ Module Export RowVector.
         assert (i = 0) by lia. subst; auto.
     Qed.
 
+    (** --------------------------------------------------- *)
+    (** *** Convert matrix to row-vector *)
+    Definition mat2row {r c : nat} (m : @mat A r c) (ri : nat) : rvec c :=
+      mk_rvec (fun i => m $ ri $ i).
+
     
     (** --------------------------------------------------- *)
     (** *** List like operations for vector *)
@@ -473,6 +478,12 @@ Module Export ColVector.
       - rewrite (meq_iff_mnth (A0:=A0)). intros.
         assert (j = 0) by lia. subst; auto.
     Qed.
+
+    
+    (** --------------------------------------------------- *)
+    (** *** Convert matrix to column-vector *)
+    Definition mat2col {r c : nat} (m : @mat A r c) (ci : nat) : cvec r :=
+      mk_cvec (fun i => m $ i $ ci).
 
     
     (** --------------------------------------------------- *)

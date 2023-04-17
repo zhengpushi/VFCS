@@ -323,6 +323,25 @@ Proof.
 Qed.
 #[export] Hint Rewrite Rsub_opp : R.           (* r1 - (- r2) = r1 + r2 *)
 
+Lemma Rsqr_opp : forall r : R, (- r)² = r ².
+Proof. intros. rewrite <- Rsqr_neg. auto. Qed.
+
+Lemma Ropp_Rmul_Ropp_l : forall (r : R), - ((- r) * r) = r².
+Proof. intros. cbv. ring. Qed.
+
+Lemma Ropp_Rmul_Ropp_r : forall (r : R), - (r * (- r)) = r².
+Proof. intros. cbv. ring. Qed.
+
+#[export] Hint Rewrite
+  (* Ropp_Rmul_Ropp_l            (* - ((-r) * r) = r² *) *)
+  (* Ropp_Rmul_Ropp_r            (* - (r * (-r)) = r² *) *)
+  Rsqr_opp                    (* (-r)² = r² *)
+  Ropp_mult_distr_l_reverse   (* - r1 * r2 = - (r1 * r2) *)
+  Ropp_mult_distr_r_reverse   (* r1 * - r2 = - (r1 * r2) *)
+  Ropp_div                    (* - x / y = - (x / y) *)
+  Rdiv_opp_r                  (* x / - y = - (x / y) *)
+  : R.
+
 
 (* ======================================================================= *)
 (** ** About "square" *)
@@ -697,6 +716,10 @@ Qed.
   cos_sub_PI    (* cos (r - PI) = - (cos r) *)
   sin2_cos2     (* (sin x)² + (cos x)² = 1 *)
   cos2_sin2     (* (cos x)² + (sin x)² = 1 *)
+  cos_plus      (* cos (x + y) = cos x * cos y - sin x * sin y *)
+  cos_minus     (* cos (x - y) = cos x * cos y + sin x * sin y *)
+  sin_plus      (* sin (x + y) = sin x * cos y + cos x * sin y *)
+  sin_minus     (* sin (x - y) = sin x * cos y - cos x * sin y *)
   : R.
 
 #[export] Hint Resolve

@@ -457,18 +457,18 @@ Section mcons.
   Infix "==" := Aeq : A_scope.
   Infix "==" := (meq (Aeq:=Aeq)) : mat_scope.
   
-  Notation vecr n := (@mat A 1 n).
-  Notation vecc n := (@mat A n 1).
+  Notation rvec n := (@mat A 1 n).
+  Notation cvec n := (@mat A n 1).
 
   (** Construct a matrix by rows, i.e., a row vector and a matrix *)
-  Definition mconsr {r c} (v : vecr c) (m : mat r c) : mat (S r) c :=
+  Definition mconsr {r c} (v : rvec c) (m : mat r c) : mat (S r) c :=
     mk_mat (fun i j => match i with
                      | O => v $ 0 $ j
                      | S i' => m $ i' $ j
                      end).
   
   (** Construct a matrix by columns, i.e., a column vector and a matrix *)
-  Definition mconsc {r c} (v : vecc r) (m : mat r c) : mat r (S c) :=
+  Definition mconsc {r c} (v : cvec r) (m : mat r c) : mat r (S c) :=
     mk_mat (fun i j => match j with
                      | O => v $ i $ 0
                      | S j' => m $ i $ j'
@@ -480,14 +480,31 @@ Section mcons.
   (* Proof. unfold mconsr. auto. Qed. *)
   
   (** Construct a matrix by rows with the matrix which row number is 0 *)
-  Lemma mconsr_mr0 : forall {n} (v : vecr n) (m : mat 0 n), mconsr v m == v.
+  Lemma mconsr_mr0 : forall {n} (v : rvec n) (m : mat 0 n), mconsr v m == v.
   Proof. lma. Qed.
   
   (** Construct a matrix by columns with the matrix which column number is 0 *)
-  Lemma mconsc_mr0 : forall {n} (v : vecc n) (m : mat n 0), mconsc v m == v.
+  Lemma mconsc_mr0 : forall {n} (v : cvec n) (m : mat n 0), mconsc v m == v.
   Proof. lma. Qed.
 
 End mcons.
+
+
+(* ======================================================================= *)
+(** ** Construct matrix with two matrices *)
+Section mapp.
+  Context `{Equiv_Aeq : Equivalence A Aeq} {A0 : A}.
+  Infix "==" := Aeq : A_scope.
+  Infix "==" := (meq (Aeq:=Aeq)) : mat_scope.
+  
+  (** Append matrix by row *)
+  Definition mappr {r1 r2 c} (m1 : mat r1 c) (m2 : mat r2 c) : @mat A (r1 + r2) c :=
+    mk_mat (fun i j => if i <? r1 then m1 $ i $ j else m2 $ (i - r1) $ j).
+  
+  (** Append matrix by column *)
+  Definition mappc {r c1 c2} (m1 : mat r c1) (m2 : mat r c2) : @mat A r (c1 + c2) :=
+    mk_mat (fun i j => if j <? c1 then m1 $ i $ j else m2 $ i $ (j - c1)).
+End mapp.
 
 
 (* ======================================================================= *)
@@ -1325,27 +1342,27 @@ Section matrix_inversion.
 
   (** *** Inversion matrix of common finite dimension *)
   Section concrete.
-    Definition inv_1_1 (m : smat 1) : smat 1 :=
+    Definition minv1 (m : smat 1) : smat 1 :=
       let a00 := m$0$0 in
       l2m [[A1/a00]].
 
-    (** det m <> 0 -> inv_1_1 m = inv m *)
-    Lemma inv_1_1_eq_inv : forall m, det m != A0 -> inv_1_1 m == minv m.
+    (** det m <> 0 -> minv1 m = inv m *)
+    Lemma minv1_eq_inv : forall m, det m != A0 -> minv1 m == minv m.
     Proof. lma. reverse_neq0_neq0. Qed.
 
-    (** inv_1_1 m * m = mat1 *)
-    Lemma inv_1_1_correct_l : forall (m : smat 1),
-        det m != A0 -> (inv_1_1 m) * m == mat1.
+    (** minv1 m * m = mat1 *)
+    Lemma minv1_correct_l : forall (m : smat 1),
+        det m != A0 -> (minv1 m) * m == mat1.
     Proof. lma. reverse_neq0_neq0. Qed.
 
-    (** m * inv_1_1 m = mat1 *)
-    Lemma inv_1_1_correct_r : forall (m : smat 1),
-        det m != A0 -> m * (inv_1_1 m) == mat1.
+    (** m * minv1 m = mat1 *)
+    Lemma minv1_correct_r : forall (m : smat 1),
+        det m != A0 -> m * (minv1 m) == mat1.
     Proof. lma. reverse_neq0_neq0. Qed.
 
     (* ======================================================================= *)
     (** ** Inversion matrix of dimension-2 *)
-    Definition inv_2_2 (m : smat 2) : smat 2 :=
+    Definition minv2 (m : smat 2) : smat 2 :=
       let a00 := m$0$0 in
       let a01 := m$0$1 in
       let a10 := m$1$0 in
@@ -1353,24 +1370,24 @@ Section matrix_inversion.
       let d := det2 m in
       (l2m [[a11/d; -a01/d]; [-a10/d; a00/d]])%A.
 
-    (** det m <> 0 -> inv_2_2 m = inv m *)
-    Lemma inv_2_2_eq_inv : forall m, det m != A0 -> inv_2_2 m == minv m.
+    (** det m <> 0 -> minv2 m = inv m *)
+    Lemma minv2_eq_inv : forall m, det m != A0 -> minv2 m == minv m.
     Proof. lma; reverse_neq0_neq0. Qed.
     
-    (** inv_2_2 m * m = mat1 *)
-    Lemma inv_2_2_correct_l : forall (m : smat 2),
-        det m != A0 -> (inv_2_2 m) * m == mat1.
+    (** minv2 m * m = mat1 *)
+    Lemma minv2_correct_l : forall (m : smat 2),
+        det m != A0 -> (minv2 m) * m == mat1.
     Proof. lma; reverse_neq0_neq0. Qed.
     
-    (** m * inv_2_2 m = mat1 *)
-    Lemma inv_2_2_correct_r : forall (m : smat 2),
-        det m != A0 -> m * (inv_2_2 m) == mat1.
+    (** m * minv2 m = mat1 *)
+    Lemma minv2_correct_r : forall (m : smat 2),
+        det m != A0 -> m * (minv2 m) == mat1.
     Proof. lma; reverse_neq0_neq0. Qed.
     
     (* ======================================================================= *)
     (** ** Inversion matrix of dimension-3 *)
     (* Note, this formula could be provided from matlab, thus avoiding manual work *)
-    Definition inv_3_3 (m : smat 3) : smat 3 :=
+    Definition minv3 (m : smat 3) : smat 3 :=
       let a00 := m$0$0 in
       let a01 := m$0$1 in
       let a02 := m$0$2 in
@@ -1386,18 +1403,18 @@ Section matrix_inversion.
           [-(a10*a22 - a12*a20)/d; (a00*a22 - a02*a20)/d; -(a00*a12 - a02*a10)/d];
           [(a10*a21 - a11*a20)/d; -(a00*a21 - a01*a20)/d; (a00*a11 - a01*a10)/d]])%A.
     
-    (** det m <> 0 -> inv_3_3 m = inv m *)
-    Lemma inv_3_3_eq_inv : forall m, det m != A0 -> inv_3_3 m == minv m.
+    (** det m <> 0 -> minv3 m = inv m *)
+    Lemma minv3_eq_inv : forall m, det m != A0 -> minv3 m == minv m.
     Proof. lma; reverse_neq0_neq0. Qed.
     
-    (** inv_3_3 m * m = mat1 *)
-    Lemma inv_3_3_correct_l : forall (m : smat 3),
-        det m != A0 -> (inv_3_3 m) * m == mat1.
+    (** minv3 m * m = mat1 *)
+    Lemma minv3_correct_l : forall (m : smat 3),
+        det m != A0 -> (minv3 m) * m == mat1.
     Proof. lma; reverse_neq0_neq0. Qed.
     
-    (** m * inv_3_3 m = mat1 *)
-    Lemma inv_3_3_correct_r : forall (m : smat 3),
-        det m != A0 -> m * (inv_3_3 m) == mat1.
+    (** m * minv3 m = mat1 *)
+    Lemma minv3_correct_r : forall (m : smat 3),
+        det m != A0 -> m * (minv3 m) == mat1.
     Proof. lma; reverse_neq0_neq0. Qed.
   End concrete.
   
