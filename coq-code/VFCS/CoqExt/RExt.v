@@ -352,6 +352,23 @@ Proof. intros. lra. Qed.
 
 
 (* ======================================================================= *)
+(** ** About "/a" and "a/b" *)
+
+Lemma Rinv_ab_simpl_a : forall r1 r2 r3,
+    r1 <> 0 -> r3 <> 0 -> (r1 * r2) * / (r1 * r3) = r2 * / r3.
+Proof. intros. field; auto. Qed.
+
+Lemma Rinv_ab_simpl_b : forall r1 r2 r3,
+    r2 <> 0 -> r3 <> 0 -> (r1 * r2) * / (r3 * r2) = r1 * / r3.
+Proof. intros. field; auto. Qed.
+
+#[export] Hint Rewrite
+  Rinv_ab_simpl_a       (* (r1 * r2) * / (r1 * r3) = r2 * / r3 *)
+  Rinv_ab_simpl_b       (* (r1 * r2) * / (r3 * r2) = r1 * / r3 *)
+  : R.
+
+
+(* ======================================================================= *)
 (** ** About "square" *)
 
 Lemma Rle_0_xx : forall r, 0 <= r * r.
@@ -712,6 +729,14 @@ Proof.
   intros. rewrite Rplus_comm. apply sin2_cos2.
 Qed.
 
+(* sin r * / cos r = tan r *)
+Lemma Rtan_rw : forall r : R, sin r * / cos r = tan r.
+Proof. auto. Qed.
+
+(* - PI / 2 < r < PI / 2 -> cos r <> 0 *)
+Lemma cos_neg0 : forall r : R, - PI / 2 < r < PI / 2 -> cos r <> 0.
+Proof. intros. assert (0 < cos r). { apply cos_gt_0; ra. } ra. Qed.
+
 #[export] Hint Rewrite
   sin_0         (* sin 0 = 0 *)
   cos_0         (* cos 0 = 1 *)
@@ -731,6 +756,13 @@ Qed.
   sin_minus     (* sin (x - y) = sin x * cos y - cos x * sin y *)
   cos_neg       (* cos (- x) = cos x *)
   sin_neg       (* sin (- x) = - sin x *)
+  Rtan_rw       (* sin r * / cos r = tan r *)
+  atan_tan      (* atan (tan x) = x *)
+  asin_sin      (* asin (sin x) = x *)
+  acos_cos      (* acos (cos x) = x *)
+  asin_opp      (* asin (-x) = - asin x *)
+  acos_opp      (* acos (-x) = PI - acos x *)
+  atan_opp      (* atan (-x) = - atan x *)
   : R.
 
 #[export] Hint Resolve
@@ -746,6 +778,7 @@ Qed.
   cos_sub_PI    (* cos (r - PI) = - (cos r) *)
   sin2_cos2     (* (sin x)² + (cos x)² = 1 *)
   cos2_sin2     (* (cos x)² + (sin x)² = 1 *)
+  cos_neg0      (* - PI / 2 < r < PI / 2 -> cos r <> 0 *)
   : R.
 
 Section TEST_sin_cos_tan.

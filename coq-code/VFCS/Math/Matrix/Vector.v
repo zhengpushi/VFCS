@@ -63,6 +63,10 @@ Module Export RowVector.
 
     (** get element from raw data, unsafe *)
     Notation "v $ i " := (v $ 0 $ i) : rvec_scope.
+    Notation "v .1" := (v $ 0) : rvec_scope.
+    Notation "v .2" := (v $ 1) : rvec_scope.
+    Notation "v .3" := (v $ 2) : rvec_scope.
+    Notation "v .4" := (v $ 3) : rvec_scope.
     
     (** get element, safe *)
     Definition rvnth {n} (v : rvec n) i : A := v ! 0 ! i.
@@ -142,9 +146,9 @@ Module Export RowVector.
     Definition t2rv_3 (t : @T3 A) : rvec 3 := let '(a,b,c) := t in l2rv 3 [a;b;c].
     Definition t2rv_4 (t : @T4 A) : rvec 4 := let '(a,b,c,d) := t in l2rv 4 [a;b;c;d].
 
-    Definition rv2t_2 (v : rvec 2) : @T2 A := (v$0, v$1).
-    Definition rv2t_3 (v : rvec 3) : @T3 A := (v$0, v$1, v$2).
-    Definition rv2t_4 (v : rvec 4) : @T4 A := (v$0, v$1, v$2, v$3).
+    Definition rv2t_2 (v : rvec 2) : @T2 A := (v.1, v.2).
+    Definition rv2t_3 (v : rvec 3) : @T3 A := (v.1, v.2, v.3).
+    Definition rv2t_4 (v : rvec 4) : @T4 A := (v.1, v.2, v.3, v.4).
 
     (* Lemma rv2t_t2rv_id_2 : forall (t : A * A), rv2t_2 (t2rv_2 t) == t. *)
     (* Proof. intros. destruct t. simpl. unfold v2t_2. f_equal. Qed. *)
@@ -174,6 +178,10 @@ Module Export RowVector.
   Arguments t2rv_4 {A}.
 
   Notation "v $ i " := (v $ 0 $ i) : rvec_scope.
+  Notation "v .1" := (v $ 0) : rvec_scope.
+  Notation "v .2" := (v $ 1) : rvec_scope.
+  Notation "v .3" := (v $ 2) : rvec_scope.
+  Notation "v .4" := (v $ 3) : rvec_scope.
 
   Section test.
     Notation "v ! i " := (rvnth 0 v i) : rvec_scope.
@@ -460,6 +468,10 @@ Module Export ColVector.
 
     (** get element from raw data, unsafe *)
     Notation "v $ i " := (v $ i $ 0) : cvec_scope.
+    Notation "v .1" := (v $ 0) : cvec_scope.
+    Notation "v .2" := (v $ 1) : cvec_scope.
+    Notation "v .3" := (v $ 2) : cvec_scope.
+    Notation "v .4" := (v $ 3) : cvec_scope.
     
     (** get element, safe *)
     Definition cvnth {n} (v : cvec n) i : A := v ! i ! 0.
@@ -540,9 +552,9 @@ Module Export ColVector.
     Definition t2cv_3 (t : @T3 A) : cvec 3 := let '(a,b,c) := t in l2cv 3 [a;b;c].
     Definition t2cv_4 (t : @T4 A) : cvec 4 := let '(a,b,c,d) := t in l2cv 4 [a;b;c;d].
 
-    Definition cv2t_2 (v : cvec 2) : @T2 A := (v$0, v$1).
-    Definition cv2t_3 (v : cvec 3) : @T3 A := (v$0, v$1, v$2).
-    Definition cv2t_4 (v : cvec 4) : @T4 A := (v$0, v$1, v$2, v$3).
+    Definition cv2t_2 (v : cvec 2) : @T2 A := (v.1, v.2).
+    Definition cv2t_3 (v : cvec 3) : @T3 A := (v.1, v.2, v.3).
+    Definition cv2t_4 (v : cvec 4) : @T4 A := (v.1, v.2, v.3, v.4).
 
     (* Lemma cv2t_t2cv_id_2 : forall (t : A * A), cv2t_2 (t2cv_2 t) == t. *)
     (* Proof. intros. destruct t. simpl. unfold v2t_2. f_equal. Qed. *)
@@ -573,6 +585,10 @@ Module Export ColVector.
   Arguments t2cv_4 {A}.
 
   Notation "v $ i " := (v $ i $ 0) : cvec_scope.
+  Notation "v .1" := (v $ 0) : cvec_scope.
+  Notation "v .2" := (v $ 1) : cvec_scope.
+  Notation "v .3" := (v $ 2) : cvec_scope.
+  Notation "v .4" := (v $ 3) : cvec_scope.
 
   Section test.
     Notation "v ! i " := (cvnth 0 v i) : cvec_scope.

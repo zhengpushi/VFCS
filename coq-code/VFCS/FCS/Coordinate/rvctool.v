@@ -45,7 +45,7 @@ Parameter eig : forall {n : nat} (m : matR n n), matC n n * matC n n.
 (* Definition orthonormal {n} (m : smat n) :=?. *)
 
 (** Two vectors are orthogonal *)
-Definition cvorthogonal {n} (v1 v2 : cvec n) := (v1 ⋅ v2 == A0)%A.
+Definition cvorthogonal {n} (v1 v2 : cvec n) := (v1 ⋅ v2 = 0).
 
 (** * Convert a angle between degree and radian *)
 Module Export Angle.
@@ -129,7 +129,7 @@ Module SO2.
 
     Lemma is_skew_spec : forall m : mat 2 2,
         is_skew m -> let '((a11,a12),(a21,a22)) := m2t_2_2 m in
-                     (a11 = 0) /\ (a22 = 0) /\ (a12 = -a21)%A.
+                     (a11 = 0) /\ (a22 = 0) /\ (a12 = -a21)%R.
     Proof.
       intros. destruct m as [m]; simpl in *. cbv in H. split_intro.
       - epose proof (H 0 0 _ _)%nat. ra.
@@ -139,10 +139,10 @@ Module SO2.
     Qed.
 
     (** Convert a value to its corresponding skew-symmetric matrix *)
-    Definition skew (a : A) : mat 2 2 := l2m _ _ [[0; -a];[a; 0]]%R.
+    Definition skew (a : Real) : mat 2 2 := l2m _ _ [[0; -a];[a; 0]]%R.
 
     (** Convert a skew-symmetric matrix to its corresponding value *)
-    Definition vex (m : mat 2 2) : option A := Some (m $ 1 $ 0).
+    Definition vex (m : mat 2 2) : option Real := Some (m.21).
 
     Lemma skew_vex_id : forall (m : mat 2 2), is_skew m -> 
                                          match vex m with
@@ -151,7 +151,7 @@ Module SO2.
                                          end.
     Proof. intros [m]. simpl. intros. apply is_skew_spec in H. lma. Qed.
 
-    Lemma vex_skew_id : forall (a : A), vex (skew a) = Some a.
+    Lemma vex_skew_id : forall (a : Real), vex (skew a) = Some a.
     Proof. intros. cbv. auto. Qed.
   End skew.
 
@@ -178,7 +178,7 @@ Module SE2.
        [0; 0; 1]]%R.
 
   (** create a relative pose with a finite translation but zero rotation *)
-  Definition transl2 (P : cvec 2) : mat 3 3 := T 0 (P$0) (P$1).
+  Definition transl2 (P : cvec 2) : mat 3 3 := T 0 (P.1) (P.2).
 
   (** create a relative pose with a finite rotation but zero translation *)
   Definition trot2 (θ : angle) : mat 3 3 := T (angle_radian θ) 0 0.
@@ -295,12 +295,12 @@ Module SO3.
   Module ZYZ.
 
     Definition R (ϕ θ ψ : R) : mat 3 3 := Rz ϕ * Ry θ * Rz ψ.
-    
+
     (** Convert Euler angles to equivalent rotation matrix. *)
     Definition eul2r (Γ : cvec 3) : mat 3 3 :=
-      let ϕ := Γ$0 in
-      let θ := Γ$1 in
-      let ψ := Γ$2 in
+      let ϕ := Γ.1 in
+      let θ := Γ.2 in
+      let ψ := Γ.3 in
       R ϕ θ ψ.
 
     (** If θ = 0, then ϕ and ψ can not be uniquely decided *)
@@ -392,7 +392,7 @@ Module SO3.
         is_skew m ->
         let '((a11,a12,a13),(a21,a22,a23),(a31,a32,a33)) := m2t_3_3 m in
         (a11 = 0) /\ (a22 = 0) /\ (a33 = 0) /\
-          (a12 = -a21)%A /\ (a13 = -a31)%A /\ (a23 = -a32)%A.
+          (a12 = -a21 /\ a13 = -a31 /\ a23 = -a32)%R.
     Proof.
       intros. destruct m as [m]; simpl in *. cbv in H. split_intro.
       - epose proof (H 0 0 _ _)%nat. ra.
@@ -406,14 +406,14 @@ Module SO3.
 
     (** Convert a vector to its corresponding skew-symmetric matrix *)
     Definition skew (v : cvec 3) : mat 3 3 :=
-      let x := v$0 in
-      let y := v$1 in
-      let z := v$2 in
+      let x := v.1 in
+      let y := v.2 in
+      let z := v.3 in
       l2m _ _ [[0; -z; y]; [z; 0; -x]; [-y; x; 0]]%R.
 
     (** Convert a skew-symmetric matrix to its corresponding vector *)
     Definition vex (m : mat 3 3) : option (cvec 3) :=
-      Some (l2cv 3 [m$2$1; m$0$2; m$1$00]).
+      Some (l2cv 3 [m.32; m.13; m.21]).
 
     Lemma skew_vex_id : forall (m : mat 3 3), is_skew m -> 
                                          match vex m with
@@ -462,9 +462,9 @@ Module SO3.
       (* the idx-th column of x contain the needed vector, which is the real part *)
       let vec_of_idx (idx : nat) := cvecC_to_cvecR (mat2col x idx) (fun c => c.a) in
       (* find the angle and the vector *)
-      if x$0$0 ==? 1
+      if x.11 ==? 1
       then (theta_of_idx 1%nat, vec_of_idx 0%nat)
-      else (if x$1$1 ==? 1
+      else (if x.22 ==? 1
             then (theta_of_idx 2%nat, vec_of_idx 1%nat)
             else (theta_of_idx 1%nat, vec_of_idx 2%nat)).
 

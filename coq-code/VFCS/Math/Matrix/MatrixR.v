@@ -19,18 +19,23 @@ Open Scope R_scope.
 Open Scope mat_scope.
 
 (** general notations *)
-Notation A := R.
-Notation A0 := R0.
-Notation A1 := R1.
-Notation Aeq := eq.
-Notation Aadd := Rplus.
-Notation Aopp := Ropp.
-Notation Amul := Rmult.
-Notation Ainv := Rinv.
-Infix "+" := Aadd : A_scope.
-Infix "*" := Amul : A_scope.
-Notation "- a" := (Aopp a) : A_scope.
-Infix "-" := (fun a b => a + (-b)) : A_scope.
+Local Notation A := R.
+Local Notation A0 := R0.
+Local Notation A1 := R1.
+Local Notation Aeq := eq.
+Local Notation Aadd := Rplus.
+Local Notation Aopp := Ropp.
+Local Notation Amul := Rmult.
+Local Notation Ainv := Rinv.
+
+(* Infix "+" := Aadd : A_scope. *)
+(* Notation "- a" := (Aopp a) : A_scope. *)
+(* Infix "-" := (fun a b => a + (-b)) : A_scope. *)
+
+(* Infix "*" := Amul : A_scope. *)
+(* Notation "/ a" := (Ainv a) : A_scope. *)
+(* Infix "/" := (fun a b => a * (/b)) : A_scope. *)
+
 Infix "==" := (Aeq) : A_scope.
 Infix "==" := (eqlistA Aeq) : list_scope.
 Infix "!=" := (fun l1 l2 => ~(l1 == l2)%list) : list_scope.

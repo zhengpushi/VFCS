@@ -280,16 +280,11 @@ Open Scope quat_scope.
 Bind Scope quat_scope with quat.
 
 (** Useful notations *)
-Notation "p + q" := (qadd p q) 
-  (at level 50, left associativity) : quat_scope.
-Notation "p - q" := (qsub p q) 
-  (at level 50, left associativity) : quat_scope.
-Notation "a c* q" := (qcmul a q) 
-  (at level 40, left associativity) : quat_scope.
-Notation "q *c a" := (qmulc q a)
-  (at level 40, left associativity) : quat_scope.
-Notation "p * q" := (qmul p q) 
-  (at level 40, left associativity) : quat_scope.
+Notation "p + q" := (qadd p q) : quat_scope.
+Notation "p - q" := (qsub p q) : quat_scope.
+Notation "a c* q" := (qcmul a q) : quat_scope.
+Notation "q *c a" := (qmulc q a) : quat_scope.
+Notation "p * q" := (qmul p q) : quat_scope.
 
 (** Multiplication of two quaternions by vector form，(p96)
         |p0|   |q0|   |p0 q0 - qv^T pv         |
@@ -486,12 +481,12 @@ Ltac case_rsqrt_exists :=
   end.
 
 (* ‖ q ‖²  = ‖ q * q∗ ‖ *)
-Lemma qnorm2_eqation1 : forall (q : quat),
+Lemma qnorm2_eq1 : forall (q : quat),
   qnorm2 q = ‖ q * q∗ ‖.
 Proof. destruct q. lqa. apply Rsqr_inj; ra. lqa. ra. Qed.
 
 (** ‖ q ‖² = q0^2 + qv^T * qv *)
-Lemma qnorm2_eqation2 : forall (q : quat),
+Lemma qnorm2_eq2 : forall (q : quat),
   let q0 := Re q in
   let qv := t2cv_3 (Im q) in
     qnorm2 q = (q0 * q0 + (scalar_of_mat (qv\T * qv)%M))%R.
@@ -537,10 +532,12 @@ Definition qinv (q : quat) : quat := (/ (qnorm2 q)) c* q∗.
 
 (** Tips: a good example shows that Coq could find the hypthesis, 
     but the mathematical derivation maybe lost this promise. *)
-Lemma qmul_qinv_unitary : forall (q : quat), ‖ q ‖ <> R0 -> q * (qinv q) = quat_of_s 1.
+Lemma qmul_qinv_unitary : forall (q : quat),
+    ‖ q ‖ <> R0 -> q * (qinv q) = quat_of_s 1.
 Proof. intros. destruct q. rewrite qnorm_neq0_iff_qnorm2_neq0 in H. lqa; auto. Qed.
 
-Lemma qmul_qinv_unitary_rev : forall (q : quat), ‖ q ‖ <> R0 -> (qinv q) * q = quat_of_s 1.
+Lemma qmul_qinv_unitary_rev : forall (q : quat),
+    ‖ q ‖ <> R0 -> (qinv q) * q = quat_of_s 1.
 Proof. intros. destruct q. rewrite qnorm_neq0_iff_qnorm2_neq0 in H. lqa; auto. Qed.
 
 (** (6) Unit quaternion *)
@@ -604,20 +601,20 @@ Proof.
 Qed.
 
 
-(** Destruct v3 to theee element *)
-Ltac v3_to_three_ele  v :=
-  destruct v as [vdl vlen vwid];
-  destruct vdl as [|l1]; [simpl in *; lia | idtac];
-  destruct vdl as [|l2]; [simpl in *; lia | idtac];
-  destruct vdl as [|l3]; [simpl in *; lia | idtac];
-  (* width *)
-  destruct vwid as [w1 vwid];
-  destruct vwid as [w2 vwid];
-  destruct vwid as [w3 vwid];
-  (* list -> x *)
-  destruct l1; [simpl in *; lia |];
-  destruct l2; [simpl in *; lia |];
-  destruct l3; [simpl in *; lia |].
+(* (** Destruct v3 to theee element *) *)
+(* Ltac v3_to_three_ele  v := *)
+(*   destruct v as [vdl vlen vwid]; *)
+(*   destruct vdl as [|l1]; [simpl in *; lia | idtac]; *)
+(*   destruct vdl as [|l2]; [simpl in *; lia | idtac]; *)
+(*   destruct vdl as [|l3]; [simpl in *; lia | idtac]; *)
+(*   (* width *) *)
+(*   destruct vwid as [w1 vwid]; *)
+(*   destruct vwid as [w2 vwid]; *)
+(*   destruct vwid as [w3 vwid]; *)
+(*   (* list -> x *) *)
+(*   destruct l1; [simpl in *; lia |]; *)
+(*   destruct l2; [simpl in *; lia |]; *)
+(*   destruct l3; [simpl in *; lia |]. *)
 
 
 (** 3. quaterion can represent rotation *)
@@ -661,7 +658,7 @@ Qed.
 Definition vec_rot_by_quat_IM (q : quat) (v : cvec 3) : cvec 3 :=
   t2cv_3 (Im (vec_rot_by_quat q v)).
 
-(** 单位四元数的另一种表示形式：由三维旋转轴和旋转角构成 5.25 *)
+(** 单位四元数的另一种表示形式：由旋转轴(单位向量)和旋转角构成 5.25 *)
 Definition qrot_by_axis_angle (v : cvec 3) (θ : R) : quat :=
   quat_of_s_v (cos (θ/2)) (v *c (sin (θ/2)))%M.
 

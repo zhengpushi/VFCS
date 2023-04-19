@@ -25,6 +25,7 @@ Require Export Coq.Classes.Morphisms.     (* respectful, ==> *)
 Require Export Coq.Setoids.Setoid.        (*  *)
 Require Export Coq.Classes.SetoidTactics. (* add_morphism_tactic *)
 Require Export Coq.Relations.Relations.   (* equivalence *)
+Require Export Coq.Bool.Sumbool.          (* sumbool_not *)
 Require Export Coq.Bool.Bool.             (* reflect *)
 Require Export Ring.                      (* ring *)
 Require Export Field.                     (* field *)
@@ -39,6 +40,7 @@ Require Export Coq.Logic.FunctionalExtensionality.
 (** Reserved Notations, to keep same precedence and associativity *)
 Reserved Infix    "=="      (at level 70, no associativity).      (* equiv *)
 Reserved Infix    "==?"     (at level 65, no associativity).      (* decidable *)
+Reserved Infix    "<>?"     (at level 65, no associativity).      (* decidable right *)
 Reserved Notation "a != b"  (at level 70, no associativity).      (* not equiv *)
 Reserved Infix    "=?"      (at level 70, no associativity).      (* bool equal *)
 Reserved Infix    "+"       (at level 50, left associativity).    (* add *)
@@ -84,6 +86,10 @@ Reserved Notation "m .41"      (at level 20).
 Reserved Notation "m .42"      (at level 20).
 Reserved Notation "m .43"      (at level 20).
 Reserved Notation "m .44"      (at level 20).
+Reserved Notation "v .1"       (at level 20).
+Reserved Notation "v .2"       (at level 20).
+Reserved Notation "v .3"       (at level 20).
+Reserved Notation "v .4"       (at level 20).
 
 (* this level is consistent with coq.ssr.ssrbool.v *)
 (* Notation "~~ b" := (negb b) (at level 35, right associativity) : bool_scope. *)

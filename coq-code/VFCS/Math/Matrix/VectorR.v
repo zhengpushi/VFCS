@@ -54,6 +54,16 @@ Require Export MatrixR.
 Open Scope R_scope.
 Open Scope mat_scope.
 
+(** general notations *)
+Local Notation A := R.
+Local Notation A0 := R0.
+Local Notation A1 := R1.
+Local Notation Aeq := eq.
+Local Notation Aadd := Rplus.
+Local Notation Aopp := Ropp.
+Local Notation Amul := Rmult.
+Local Notation Ainv := Rinv.
+
 
 Module Export RowVectorR.
   Open Scope rvec_scope.
@@ -63,6 +73,8 @@ Module Export RowVectorR.
   
   (** *** vector type and basic operation *)
   Definition rvec (n : nat) : Type := @rvec A n.
+
+  Definition mk_rvec {n : nat} (f : nat -> A) : rvec n := mk_rvec f.
 
   Definition rvnth {n : nat} (v : rvec n) (i : nat) : A := rvnth A0 v i.
   Notation "v ! i" := (rvnth v i) : rvec_scope.
@@ -208,6 +220,7 @@ Module Export ColVectorR.
   (** *** vector type and basic operation *)
   Definition cvec (n : nat) : Type := @cvec A n.
 
+  Definition mk_cvec {n : nat} (f : nat -> A) : cvec n := mk_cvec f.
   
   (** *** vector automation *)
 

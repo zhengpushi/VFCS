@@ -112,7 +112,9 @@ Proof. apply eqlistA_equiv. auto. Defined.
 Class Decidable {A : Type} (Aeq : relation A) := {
     decidable : forall (a b : A), {Aeq a b} + {~(Aeq a b)};
   }.
-Infix "==?" := (decidable) (at level 65, no associativity).
+Infix "==?" := (decidable).
+Infix "<>?" := (fun a b => sumbool_not _ _ (a ==? b)).
+
 
 (* Global Hint Constructors Decidable : core. *)
 
