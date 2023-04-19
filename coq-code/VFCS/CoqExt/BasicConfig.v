@@ -68,6 +68,23 @@ Reserved Notation "v ! i"      (at level 20, i at next level).    (* nth of vec 
 Reserved Notation "m $ i $ j"  (at level 20, i at next level).    (* nth of mat, raw *)
 Reserved Notation "v $ i"      (at level 20, i at next level).    (* nth of vec, raw *)
 
+Reserved Notation "m .11"      (at level 20).
+Reserved Notation "m .12"      (at level 20).
+Reserved Notation "m .13"      (at level 20).
+Reserved Notation "m .14"      (at level 20).
+Reserved Notation "m .21"      (at level 20).
+Reserved Notation "m .22"      (at level 20).
+Reserved Notation "m .23"      (at level 20).
+Reserved Notation "m .24"      (at level 20).
+Reserved Notation "m .31"      (at level 20).
+Reserved Notation "m .32"      (at level 20).
+Reserved Notation "m .33"      (at level 20).
+Reserved Notation "m .34"      (at level 20).
+Reserved Notation "m .41"      (at level 20).
+Reserved Notation "m .42"      (at level 20).
+Reserved Notation "m .43"      (at level 20).
+Reserved Notation "m .44"      (at level 20).
+
 (* this level is consistent with coq.ssr.ssrbool.v *)
 (* Notation "~~ b" := (negb b) (at level 35, right associativity) : bool_scope. *)
 

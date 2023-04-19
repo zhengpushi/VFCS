@@ -139,6 +139,24 @@ Arguments mnth {A} A0 {r c}.
 Global Hint Unfold mnth : core.
 Notation "m $ i $ j " := (matf m i j) : mat_scope.
 
+Notation "m .11" := (m $ 0 $ 0).
+Notation "m .12" := (m $ 0 $ 1).
+Notation "m .13" := (m $ 0 $ 2).
+Notation "m .14" := (m $ 0 $ 3).
+Notation "m .21" := (m $ 1 $ 0).
+Notation "m .22" := (m $ 1 $ 1).
+Notation "m .23" := (m $ 1 $ 2).
+Notation "m .24" := (m $ 1 $ 3).
+Notation "m .31" := (m $ 2 $ 0).
+Notation "m .32" := (m $ 2 $ 1).
+Notation "m .33" := (m $ 2 $ 2).
+Notation "m .34" := (m $ 2 $ 3).
+Notation "m .41" := (m $ 3 $ 0).
+Notation "m .42" := (m $ 3 $ 1).
+Notation "m .43" := (m $ 3 $ 2).
+Notation "m .44" := (m $ 3 $ 3).
+
+
 
 (* ======================================================================= *)
 (** ** Matrix Automation *)
@@ -1084,18 +1102,15 @@ Section t2m_m2t.
   Defined.
 
   (** m[0,0]: mat_1x1 -> A *)
-  Definition m2t_1_1 (m : @mat A 1 1) := m$0$0.
+  Definition m2t_1_1 (m : @mat A 1 1) := m.11.
 
   (** mat_2x2 -> tuple 2x2. That is: ((a11,a12),(a21,a22)) *)
   Definition m2t_2_2 (m : mat 2 2) : @T_2_2 A :=
-    ((m$0$0, m$0$1),
-      (m$1$0, m$1$1)).
+    ((m.11, m.12), (m.21, m.22)).
 
   (** mat_3x3 -> tuple 3x3. That is: ((a11,a12,a13),(a21,a22,a23),(a31,a32,a33)) *)
   Definition m2t_3_3 (m : mat 3 3) : @T_3_3 A :=
-    ((m$0$0, m$0$1, m$0$2),
-      (m$1$0, m$1$1, m$1$2),
-      (m$2$0, m$2$1, m$2$2)).
+    ((m.11,m.12,m.13),(m.21,m.22,m.23),(m.31,m.32,m.33)).
 
 End t2m_m2t.
 
@@ -1204,7 +1219,7 @@ Section det.
   Section props.
 
     (** Determinant of a matrix of dimension-1 *)
-    Definition det1 (m : smat 1) := m$0$0.
+    Definition det1 (m : smat 1) := m.11.
 
     (** det1 m = det m *)
     Lemma det1_eq_det : forall m, (det1 m == det m)%A.
@@ -1212,11 +1227,11 @@ Section det.
     
     (** det m <> 0 <-> det_exp <> 0 *)
     Lemma det1_neq0_iff : forall (m : smat 1),
-        (det m != A0) <-> (m$0$0 != A0).
+        (det m != A0) <-> (m.11 != A0).
     Proof. intros. split; intros; mat_to_fun; reverse_neq0_neq0. Qed.
 
     (** Determinant of a matrix of dimension-2 *)
-    Definition det2 (m : smat 2) := (m$0$0 * m$1$1 - m$0$1 * m$1$0)%A.
+    Definition det2 (m : smat 2) := (m.11*m.22 - m.12*m.21)%A.
 
     (** det2 m = det m *)
     Lemma det2_eq_det : forall m, (det2 m == det m)%A.
@@ -1224,14 +1239,14 @@ Section det.
 
     (** det m <> 0 <-> det_exp <> 0 *)
     Lemma det2_neq0_iff : forall (m : smat 2),
-        det m != A0 <->  m$0$0 * m$1$1 - m$0$1 * m$1$0 != A0.
+        det m != A0 <->  m.11*m.22 - m.12*m.21 != A0.
     Proof. intros. split; intros; mat_to_fun; reverse_neq0_neq0. Qed.
 
     (** Determinant of a matrix of dimension-3 *)
     Definition det3 (m : smat 3) :=
-      (m$0$0 * m$1$1 * m$2$2 - m$0$0 * m$1$2 * m$2$1 - 
-         m$0$1 * m$1$0 * m$2$2 + m$0$1 * m$1$2 * m$2$0 + 
-         m$0$2 * m$1$0 * m$2$1 - m$0$2 * m$1$1 * m$2$0)%A.
+      (m.11 * m.22 * m.33 - m.11 * m.23 * m.32 - 
+         m.12 * m.21 * m.33 + m.12 * m.23 * m.31 + 
+         m.13 * m.21 * m.32 - m.13 * m.22 * m.31)%A.
 
     (** det3 m = det m *)
     Lemma det3_eq_det : forall m, (det3 m == det m)%A.
@@ -1240,9 +1255,9 @@ Section det.
     (** det m <> 0 <-> det_exp <> 0 *)
     Lemma det3_neq0_iff : forall (m : smat 3),
         det m != A0 <->
-          m$0$0 * m$1$1 * m$2$2 - m$0$0 * m$1$2 * m$2$1 - 
-            m$0$1 * m$1$0 * m$2$2 + m$0$1 * m$1$2 * m$2$0 + 
-            m$0$2 * m$1$0 * m$2$1 - m$0$2 * m$1$1 * m$2$0 != A0.
+          m.11 * m.22 * m.33 - m.11 * m.23 * m.32 - 
+            m.12 * m.21 * m.33 + m.12 * m.23 * m.31 + 
+            m.13 * m.21 * m.32 - m.13 * m.22 * m.31 != A0.
     Proof. intros. split; intros; mat_to_fun; reverse_neq0_neq0. Qed.
 
   End props.
@@ -1343,7 +1358,7 @@ Section matrix_inversion.
   (** *** Inversion matrix of common finite dimension *)
   Section concrete.
     Definition minv1 (m : smat 1) : smat 1 :=
-      let a00 := m$0$0 in
+      let a00 := m.11 in
       l2m [[A1/a00]].
 
     (** det m <> 0 -> minv1 m = inv m *)
@@ -1363,12 +1378,8 @@ Section matrix_inversion.
     (* ======================================================================= *)
     (** ** Inversion matrix of dimension-2 *)
     Definition minv2 (m : smat 2) : smat 2 :=
-      let a00 := m$0$0 in
-      let a01 := m$0$1 in
-      let a10 := m$1$0 in
-      let a11 := m$1$1 in
       let d := det2 m in
-      (l2m [[a11/d; -a01/d]; [-a10/d; a00/d]])%A.
+      (l2m [[m.22/d; -m.12/d]; [-m.21/d; m.11/d]])%A.
 
     (** det m <> 0 -> minv2 m = inv m *)
     Lemma minv2_eq_inv : forall m, det m != A0 -> minv2 m == minv m.
@@ -1388,20 +1399,11 @@ Section matrix_inversion.
     (** ** Inversion matrix of dimension-3 *)
     (* Note, this formula could be provided from matlab, thus avoiding manual work *)
     Definition minv3 (m : smat 3) : smat 3 :=
-      let a00 := m$0$0 in
-      let a01 := m$0$1 in
-      let a02 := m$0$2 in
-      let a10 := m$1$0 in
-      let a11 := m$1$1 in
-      let a12 := m$1$2 in
-      let a20 := m$2$0 in
-      let a21 := m$2$1 in
-      let a22 := m$2$2 in
       let d := det3 m in
       (l2m
-         [[(a11*a22 - a12*a21)/d; -(a01*a22 - a02*a21)/d; (a01*a12 - a02*a11)/d];
-          [-(a10*a22 - a12*a20)/d; (a00*a22 - a02*a20)/d; -(a00*a12 - a02*a10)/d];
-          [(a10*a21 - a11*a20)/d; -(a00*a21 - a01*a20)/d; (a00*a11 - a01*a10)/d]])%A.
+         [[(m.22*m.33-m.23*m.32)/d; -(m.12*m.33-m.13*m.32)/d; (m.12*m.23-m.13*m.22)/d];
+          [-(m.21*m.33-m.23*m.31)/d; (m.11*m.33-m.13*m.31)/d; -(m.11*m.23-m.13*m.21)/d];
+          [(m.21*m.32-m.22*m.31)/d; -(m.11*m.32-m.12*m.31)/d; (m.11*m.22-m.12*m.21)/d]])%A.
     
     (** det m <> 0 -> minv3 m = inv m *)
     Lemma minv3_eq_inv : forall m, det m != A0 -> minv3 m == minv m.

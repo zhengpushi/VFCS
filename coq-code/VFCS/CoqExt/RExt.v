@@ -280,12 +280,12 @@ Global Hint Resolve Rsqr_R0 : R.
 (* Qed. *)
 (* #[export] Hint Rewrite R1_eq_1 : R. *)
 
-Lemma Rsqr_1 : 1² = 1.
+Lemma Rsqr_R1 : (R1)² = 1.
 Proof.
   ra.
 Qed.
-#[export] Hint Rewrite Rsqr_1 : R.
-Global Hint Resolve Rsqr_1 : R.
+#[export] Hint Rewrite Rsqr_R1 : R.
+Global Hint Resolve Rsqr_R1 : R.
 
 (** /1 = 1 *)
 #[export] Hint Rewrite Rinv_1 : R.
@@ -332,6 +332,12 @@ Proof. intros. cbv. ring. Qed.
 Lemma Ropp_Rmul_Ropp_r : forall (r : R), - (r * (- r)) = r².
 Proof. intros. cbv. ring. Qed.
 
+Lemma Rmult_neg1_l : forall r : R, (- 1) * r = - r.
+Proof. intros. lra. Qed.
+
+Lemma Rmult_neg1_r : forall r : R, r * (- 1) = - r.
+Proof. intros. lra. Qed.
+
 #[export] Hint Rewrite
   (* Ropp_Rmul_Ropp_l            (* - ((-r) * r) = r² *) *)
   (* Ropp_Rmul_Ropp_r            (* - (r * (-r)) = r² *) *)
@@ -340,6 +346,8 @@ Proof. intros. cbv. ring. Qed.
   Ropp_mult_distr_r_reverse   (* r1 * - r2 = - (r1 * r2) *)
   Ropp_div                    (* - x / y = - (x / y) *)
   Rdiv_opp_r                  (* x / - y = - (x / y) *)
+  Rmult_neg1_l                (* (-1) * r = -r *)
+  Rmult_neg1_r                (* r * (-1) = -r *)
   : R.
 
 
@@ -698,6 +706,7 @@ Proof.
   rewrite cos_neg. apply Rtrigo_facts.cos_pi_minus.
 Qed.
 
+(* (cos x)² + (sin x)² = 1 *)
 Lemma cos2_sin2: forall x : R, (cos x)² + (sin x)² = 1.
 Proof.
   intros. rewrite Rplus_comm. apply sin2_cos2.
@@ -720,6 +729,8 @@ Qed.
   cos_minus     (* cos (x - y) = cos x * cos y + sin x * sin y *)
   sin_plus      (* sin (x + y) = sin x * cos y + cos x * sin y *)
   sin_minus     (* sin (x - y) = sin x * cos y - cos x * sin y *)
+  cos_neg       (* cos (- x) = cos x *)
+  sin_neg       (* sin (- x) = - sin x *)
   : R.
 
 #[export] Hint Resolve
