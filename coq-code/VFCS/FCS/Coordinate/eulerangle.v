@@ -417,6 +417,163 @@ Module R2Euler.
 
 End R2Euler.
 
+(** Skew-symmetric matrix of 3-dimensions *)
+Section skew3.
+
+  Open Scope R.
+  
+  (** Given matrix is skew-symmetric matrices *)
+  Definition is_skew3 (m : mat 3 3) : Prop := (- m)%M == m\T.
+
+  Lemma is_skew3_spec : forall m : mat 3 3,
+      is_skew3 m ->
+      m.11 = 0 /\ m.22 = 0 /\ m.33 = 0 /\ m.12 = -m.21 /\ m.13 = -m.31 /\ m.23 = -m.32.
+  Proof.
+    intros. destruct m as [m]; simpl in *. cbv in H. split_intro.
+    - epose proof (H 0 0 _ _)%nat. ra.
+    - epose proof (H 1 1 _ _)%nat. ra.
+    - epose proof (H 2 2 _ _)%nat. ra.
+    - epose proof (H 0 1 _ _)%nat. ra.
+    - epose proof (H 0 2 _ _)%nat. ra.
+    - epose proof (H 1 2 _ _)%nat. ra.
+      Unshelve. all: ra.
+  Qed.
+
+  (** Convert a vector to its corresponding skew-symmetric matrix *)
+  Definition skew3 (v : cvec 3) : mat 3 3 :=
+    let x := v.1 in
+    let y := v.2 in
+    let z := v.3 in
+    l2m _ _ [[0; -z; y]; [z; 0; -x]; [-y; x; 0]].
+
+  (** Convert a skew-symmetric matrix to its corresponding vector *)
+  Definition vex3 (m : mat 3 3) : cvec 3 := l2cv 3 [m.32; m.13; m.21].
+
+  Lemma skew3_vex3_id : forall (m : mat 3 3), is_skew3 m -> skew3 (vex3 m) == m.
+  Proof.
+    intros [m]. intros.
+    apply is_skew3_spec in H. simpl in *. do 5 destruct H as [? H].
+    lma. ra.
+  Qed.
+
+  Lemma vex3_skew3_id : forall (v : cvec 3), vex3 (skew3 v) == v.
+  Proof.
+    intros. cvec_to_fun. cbv. intros.
+    assert (j = 0%nat) by lia. rewrite H1.
+    destruct i; try easy.
+    destruct i; try easy.
+    destruct i; try easy. lia.
+  Qed.
+  
+End skew3.
+
+(** Eliminate tail expressions, which ring tactic may not work *)
+Ltac ring_tail :=
+  rewrite !associative;
+  repeat
+    match goal with
+    | |- (?a - ?b = ?c - ?b)%R => f_equal
+    | |- (?a + ?b = ?c + ?b)%R => f_equal
+    end;
+  rewrite <- !associative.
+
+
+(** * Axis-Angle *)
+Module AxisAngle.
+
+  Open Scope nat.
+  (* Open Scope R_scope. *)
+  Open Scope mat_scope.
+
+  (** Rodrigues' rotation formula *)
+  Section Rodrigues.
+
+    (** 最简的数学形式，要求 k 是单位向量，如不是则请先单位化 *)
+    Definition Rrod (θ : R) (k : cvec 3) : mat 3 3 :=
+      let K := skew3 k in
+      mat1 + sin θ c* K + (1 - cos θ) c* (K * K).
+
+    (** Three basic rotation matrix are the special case of Rrod. *)
+    Theorem Rrod_eq_Rx : forall θ : R, Rrod θ v3i == Rx θ.
+    Proof. lma. Qed.
+
+    Theorem Rrod_eq_Ry : forall θ : R, Rrod θ v3j == Ry θ.
+    Proof. lma. Qed.
+
+    Theorem Rrod_eq_Rz : forall θ : R, Rrod θ v3k == Rz θ.
+    Proof. lma. Qed.
+
+    (** 最初的一种带有向量作用效果的表达式，请确保 k 是单位向量 *)
+    Definition Rrodv (θ : R) (k : cvec 3) (v : cvec 3) : cvec 3 :=
+      v *c cos θ + (cv3cross k v) *c sin θ + k *c (k ⋅ v) *c (1 - cos θ).
+
+    (* Theorem Rrodv_eq : forall θ k v, cvunit k -> Rrodv θ k v == (Rrod θ k) * v. *)
+    (* Proof. *)
+    (*   lma; *)
+    (*     cvec_to_fun; cbv in *; autorewrite with R in *; ring_simplify; ring_tail; *)
+    (*     autorewrite with R in *; ring_simplify; *)
+    (*     replace (k`00 ²) with (1 - k`10² - k`20²)%R by lra; field. *)
+    (* Qed. *)
+
+    (** The matrix form of Rrod, so that the computer can directly calculate *)
+    Definition RrodM (θ : R) (k : cvec 3) : mat 3 3 :=
+      let x := k.1 in
+      let y := k.2 in
+      let z := k.3 in
+      let C := cos θ in
+      let S := sin θ in
+      l2m _ _
+        [[C + x * x * (1 - C); x * y * (1 - C) - z * S; x * z * (1 - C) + y * S];
+         [y * x * (1 - C) + z * S; C + y * y * (1 - C); y * z * (1 - C) - x * S];
+         [z * x * (1 - C) - y * S; z * y * (1 - C) + x * S; C + z * z * (1 - C)]]%R.
+
+    Theorem RrodM_eq : forall (θ : R) (k : cvec 3), cvunit k -> Rrod θ k == RrodM θ k.
+    Proof.
+      lma; cvec_to_fun; cbv in *; autorewrite with R in *;
+        replace (k`00 ²) with (1 - k`10² - k`20²)%R by lra; field.
+    Qed.
+
+    (** Derivation of Rrod *)
+    Section Rrod_derivation.
+
+      (* Let k be a unit vector defining a rotation axis *)
+      Variable k : cvec 3.
+      Hypotheses kunit : cvunit k.
+
+      (* , and let v be any vector to rotate about k by angle θ (right hand rule, 
+         anticlockwise) *)
+      Variable θ : R.
+      Variable v : cvec 3.
+
+      (** The scalar projection of a on b is a scalar defined here, where θ is
+          the angle between a and b *)
+      Definition vsproj {n} (a b : cvec n) := a ⋅ cvnormalize b.
+
+      (** The scalar projection of a on b is a simple triangle relation *) ?
+      Lemma vsproj_spec : forall {n} (a b : cvec n), vsproj a b = `|a| * cvangle.
+      
+      (** The vector projection of a on b is a vector whose magnitude is the scalar 
+          projection of a on b
+      Definition vproj {n} (a b : cvec n)
+
+      (** The component parallel to k is called the vector projection of v on k *)
+      Definition v1 := (v ⋅ k) c* k.
+      (** The component perpendicular to k is called the vector rejection of v on k *)
+      Definition v2 := v - v1 (v ⋅ k) c* k.
+                   
+      
+
+      
+      
+
+    End Rrod_derivation.
+    
+    
+  End Rodrigues.
+  
+
+End AxisAngle.
+
 
 
 (** * Convert a angle between degree and radian *)

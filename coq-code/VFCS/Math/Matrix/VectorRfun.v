@@ -29,7 +29,7 @@ Module Export RowVectorRfun.
   Notation "v ! i" := (rvnth v i) : rvec_scope.
 
   Lemma veq_iff_rvnth : forall {n : nat} (v1 v2 : rvec n),
-      (v1 == v2) <-> (forall i, i < n -> (v1!i == v2!i)%A)%nat.
+      (v1 == v2) <-> (forall i, i < n -> v1!i = v2!i)%nat.
   Proof. intros. apply veq_iff_rvnth. Qed.
 
   
@@ -184,7 +184,7 @@ Module Export ColVectorRfun.
   Notation "v ! i" := (cvnth v i) : cvec_scope.
 
   Lemma veq_iff_cvnth : forall {n : nat} (v1 v2 : cvec n),
-      (v1 == v2) <-> (forall i, i < n -> (v1!i == v2!i)%A)%nat.
+      (v1 == v2) <-> (forall i, i < n -> v1!i = v2!i)%nat.
   Proof. intros. apply veq_iff_cvnth. Qed.
 
 

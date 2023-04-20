@@ -25,15 +25,14 @@ Open Scope mat_scope.
 Notation A := tpRFun.
 Notation A0 := fzero.
 Notation A1 := fone.
-Notation Aeq := eq.
+(* Notation Aeq := eq. *)
 Notation Aadd := fadd.
 Notation Aopp := fopp.
 Notation Amul := fmul.
 Notation Ainv := finv.
-Infix "==" := (Aeq) : A_scope.
-Infix "==" := (eqlistA Aeq) : list_scope.
+Infix "==" := (eqlistA eq) : list_scope.
 Infix "!=" := (fun l1 l2 => ~(l1 == l2)%list) : list_scope.
-Infix "==" := (eqlistA (eqlistA Aeq)) : dlist_scope.
+Infix "==" := (eqlistA (eqlistA eq)) : dlist_scope.
 Infix "!=" := (fun d1 d2 => ~(d1 == d2)%dlist) : dlist_scope.
 
 
@@ -47,7 +46,7 @@ Infix "!=" := (fun m1 m2 => ~(m1 == m2)%M) : mat_scope.
 Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope.
 
 Lemma meq_iff_mnth : forall {r c} (m1 m2 : mat r c),
-    m1 == m2 <-> (forall i j : nat, i < r -> j < c -> (m1!i!j == m2!i!j)%A)%nat.
+    m1 == m2 <-> (forall i j : nat, i < r -> j < c -> (m1!i!j = m2!i!j))%nat.
 Proof. intros. apply meq_iff_mnth. Qed.
 
 

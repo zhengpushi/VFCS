@@ -12,7 +12,7 @@ Require Export NatExt.
 Require Export BasicConfig AlgebraStructure.
 Require RExt.
 
-Generalizable Variable A Aeq Aadd Aopp Amul Ainv.
+Generalizable Variable A B Aeq Beq Aadd Aopp Amul Ainv.
 
 
 (* ######################################################################### *)
@@ -28,6 +28,26 @@ Open Scope seq_scope.
 Declare Scope seq2_scope.
 Delimit Scope seq2_scope with seq2.
 Open Scope seq2_scope.
+
+(** Notations for concrete element of a double indexed sequence *)
+Notation "f `00" := (f 0 0).
+Notation "f `00" := (f 0 0).
+Notation "f `01" := (f 0 1).
+Notation "f `02" := (f 0 2).
+Notation "f `03" := (f 0 3).
+Notation "f `10" := (f 1 0).
+Notation "f `11" := (f 1 1).
+Notation "f `12" := (f 1 2).
+Notation "f `13" := (f 1 3).
+Notation "f `20" := (f 2 0).
+Notation "f `21" := (f 2 1).
+Notation "f `22" := (f 2 2).
+Notation "f `23" := (f 2 3).
+Notation "f `30" := (f 3 0).
+Notation "f `31" := (f 3 1).
+Notation "f `32" := (f 3 2).
+Notation "f `33" := (f 3 3).
+
 
 (* ======================================================================= *)
 (** ** Equality of sequence *)
@@ -262,6 +282,32 @@ End seq2eq.
 
 
 (* ======================================================================= *)
+(** ** Fold of a sequence *)
+Section Fold.
+
+  (* Context `{Equiv_Aeq : Equivalence A Aeq}. *)
+  (* Context `{Equiv_Beq : Equivalence B Beq}. *)
+  (* Variable g : A -> B -> B. *)
+  
+  (* Infix "==" := Beq : A_scope. *)
+  (* Infix "+" := g : A_scope. *)
+
+  Context {A : Type}.
+  Context {B : Type}.
+  (* Context `{Equiv_Beq : Equivalence B Beq}. *)
+  (* Infix "==" := Beq : A_scope. *)
+  
+  (** Fold of a sequence *)
+  Fixpoint seqfold (f : nat -> A) (n : nat) (g : B -> A -> B) (b0 : B) : B :=
+    match n with
+    | O => b0
+    | S n' => g (seqfold f n' g b0) (f n')
+    end.
+
+End Fold.
+
+
+(* ======================================================================= *)
 (** ** Sum of a sequence *)
 Section Sum.
 
@@ -276,7 +322,12 @@ Section Sum.
     | O => A0
     | S n' => seqsum f n' + f n'
     end.
-  
+
+  (** seqsum is equivalent to seqfold *)
+  Lemma seqsum_eq_seqfold : forall (f : nat -> A) (n : nat),
+      seqsum f n == seqfold f n Aadd A0.
+  Proof. induction n; simpl; try easy. f_equiv. auto. Qed.
+    
   (** Sum of a sequence which every element is zero get zero. *)
   Lemma seqsum_seq0 : forall (f : nat -> A) (n : nat), 
       (forall i, i < n -> f i == A0) -> seqsum f n == A0.

@@ -57,7 +57,8 @@ Reserved Infix    "×"       (at level 40, no associativity).      (* cross prod
 Reserved Infix    "∘"       (at level 40, left associativity).    (* compose *)
 Reserved Notation "- a"     (at level 35, right associativity).   (* opp *)
 Reserved Notation "/ a"     (at level 35, right associativity).   (* inv *)
-Reserved Notation "a \T"    (at level 32, left associativity).    (* transpose *)
+Reserved Notation "m \T"    (at level 32, left associativity).    (* transpose *)
+Reserved Notation "m ⁻¹"    (at level 20, format "m ⁻¹").         (* minv *)
 Reserved Notation "m1 @ m2" (at level 30, no associativity).      (* cons by col *)
 Reserved Notation "'tr' m"  (at level 33, no associativity).
 
@@ -70,26 +71,44 @@ Reserved Notation "v ! i"      (at level 20, i at next level).    (* nth of vec 
 Reserved Notation "m $ i $ j"  (at level 20, i at next level).    (* nth of mat, raw *)
 Reserved Notation "v $ i"      (at level 20, i at next level).    (* nth of vec, raw *)
 
-Reserved Notation "m .11"      (at level 20).
-Reserved Notation "m .12"      (at level 20).
-Reserved Notation "m .13"      (at level 20).
-Reserved Notation "m .14"      (at level 20).
-Reserved Notation "m .21"      (at level 20).
-Reserved Notation "m .22"      (at level 20).
-Reserved Notation "m .23"      (at level 20).
-Reserved Notation "m .24"      (at level 20).
-Reserved Notation "m .31"      (at level 20).
-Reserved Notation "m .32"      (at level 20).
-Reserved Notation "m .33"      (at level 20).
-Reserved Notation "m .34"      (at level 20).
-Reserved Notation "m .41"      (at level 20).
-Reserved Notation "m .42"      (at level 20).
-Reserved Notation "m .43"      (at level 20).
-Reserved Notation "m .44"      (at level 20).
-Reserved Notation "v .1"       (at level 20).
-Reserved Notation "v .2"       (at level 20).
-Reserved Notation "v .3"       (at level 20).
-Reserved Notation "v .4"       (at level 20).
+Reserved Notation "m .11"      (at level 20, format "m .11").     (* m $ 0 $ 0 *)
+Reserved Notation "m .12"      (at level 20, format "m .12").
+Reserved Notation "m .13"      (at level 20, format "m .13").
+Reserved Notation "m .14"      (at level 20, format "m .14").
+Reserved Notation "m .21"      (at level 20, format "m .21").
+Reserved Notation "m .22"      (at level 20, format "m .22").
+Reserved Notation "m .23"      (at level 20, format "m .23").
+Reserved Notation "m .24"      (at level 20, format "m .24").
+Reserved Notation "m .31"      (at level 20, format "m .31").
+Reserved Notation "m .32"      (at level 20, format "m .32").
+Reserved Notation "m .33"      (at level 20, format "m .33").
+Reserved Notation "m .34"      (at level 20, format "m .34").
+Reserved Notation "m .41"      (at level 20, format "m .41").
+Reserved Notation "m .42"      (at level 20, format "m .42").
+Reserved Notation "m .43"      (at level 20, format "m .43").
+Reserved Notation "m .44"      (at level 20, format "m .44").
+Reserved Notation "v .1"       (at level 20, format "v .1").      (* v $ 0 *)
+Reserved Notation "v .2"       (at level 20, format "v .2").
+Reserved Notation "v .3"       (at level 20, format "v .3").
+Reserved Notation "v .4"       (at level 20, format "v .4").
+
+Reserved Notation "f `00"      (at level 20, format "f `00").     (* f 0 0 *)
+Reserved Notation "f `01"      (at level 20, format "f `01").
+Reserved Notation "f `02"      (at level 20, format "f `02").
+Reserved Notation "f `03"      (at level 20, format "f `03").
+Reserved Notation "f `10"      (at level 20, format "f `10").
+Reserved Notation "f `11"      (at level 20, format "f `11").
+Reserved Notation "f `12"      (at level 20, format "f `12").
+Reserved Notation "f `13"      (at level 20, format "f `13").
+Reserved Notation "f `20"      (at level 20, format "f `20").
+Reserved Notation "f `21"      (at level 20, format "f `21").
+Reserved Notation "f `22"      (at level 20, format "f `22").
+Reserved Notation "f `23"      (at level 20, format "f `23").
+Reserved Notation "f `30"      (at level 20, format "f `30").
+Reserved Notation "f `31"      (at level 20, format "f `31").
+Reserved Notation "f `32"      (at level 20, format "f `32").
+Reserved Notation "f `33"      (at level 20, format "f `33").
+
 
 (* this level is consistent with coq.ssr.ssrbool.v *)
 (* Notation "~~ b" := (negb b) (at level 35, right associativity) : bool_scope. *)

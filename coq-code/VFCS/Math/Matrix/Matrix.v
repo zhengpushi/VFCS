@@ -90,6 +90,13 @@ Section meq.
   (** Meq is decidable *)
   Global Instance meq_dec {Dec_Aeq : Decidable Aeq} : forall {r c}, Decidable (@meq r c).
   Proof. intros. constructor. intros. apply seq2eq_dec. Qed.
+
+  (** matf is proper *)
+  Lemma matf_mor : forall r c (m p : @mat _ r c) i j,
+      i < r -> j < c -> m == p -> (matf m i j == matf p i j)%A.
+  Proof.
+    intros. destruct m as [m], p as [p]. simpl in *. subst. apply H1; auto.
+  Qed.
   
 End meq.
 
@@ -1132,7 +1139,6 @@ End trace.
 (* ======================================================================= *)
 (** ** Determinant of a matrix *)
 
-
 Section det.
   Context `{R : Ring}.
   Add Ring ring_inst : (make_ring_theory R).
@@ -1145,37 +1151,23 @@ Section det.
   Infix "-" := Asub : A_scope.
   Infix "*" := Amul : A_scope.
 
+  Infix "*" := (mmul (Aadd:=Aadd)(A0:=A0)(Amul:=Amul)) : mat_scope.
   Infix "==" := (@meq _ Aeq _ _) : mat_scope.
   Notation smat n := (smat A n).
 
-  (** Get the sub square matrix which remove r-th row and c-th column
-        from a square matrix. *)
-  Definition submat {n} (m : smat (S n)) (r c : nat) : smat n :=
-    mk_mat
-      (fun i j =>
-         let i' := (if i <? r then i else S i) in
-         let j' := (if j <? c then j else S j) in
-         m $ i' $ j').
+  (** *** Determinant of a square matrix (original definition) *)
+  Section det_def.
 
-  (** Try to prove a proposition such as:
-      "~(exp1 == 0) -> ~(exp2 == 0)" *)
-  Ltac reverse_neq0_neq0 :=
-    match goal with
-    | H: ~(?e1 == A0)%A |- ~(?e2 == A0)%A =>
-        let H1 := fresh "H1" in
-        intro H1; destruct H; ring_simplify; ring_simplify in H1;
-        try rewrite H1; try easy
-    end.
+    (* ? *)
+    (* Variable a b c : A. *)
+    (* Compute perm 0 (seq 0 3). *)
+    (* Let dl := perm 0 (seq 0 3). *)
+    (* Let l := [1;2;3]. *)
+    (* Compute nth 1 l 0. *)
+    (* Compute map (fun i => (i, nth i l 0)) (seq 0 3). *)
+    (* Compute map (fun l => map (fun i => (i, nth i l 0)) (seq 0 3)) dl. *)
 
-
-  (* Determinant of a square matrix (original definition) *)
-  (* Variable a b c : A. *)
-  (* Compute perm 0 (seq 0 3). *)
-  (* Let dl := perm 0 (seq 0 3). *)
-  (* Let l := [1;2;3]. *)
-  (* Compute nth 1 l 0. *)
-  (* Compute map (fun i => (i, nth i l 0)) (seq 0 3). *)
-  (* Compute map (fun l => map (fun i => (i, nth i l 0)) (seq 0 3)) dl. *)
+  End det_def.
   (* Let dl1 := map (fun l => map (fun i => (i, nth i l 0)) (seq 0 3)) dl. *)
   (* Variable a00 a01 a02 a10 a11 a12 a20 a21 a22 : A. *)
   (* Definition m : smat 3 := mat_3_3 a00 a01 a02 a10 a11 a12 a20 a21 a22. *)
@@ -1201,6 +1193,31 @@ Section det.
   
   (* Compute fold_left Amul [a00;a01;a02]. *)
   (* Compute fold_left Aadd. *)
+  
+
+  (** Get the sub square matrix which remove r-th row and c-th column
+        from a square matrix. *)
+  Definition submat {n} (m : smat (S n)) (r c : nat) : smat n :=
+    mk_mat
+      (fun i j =>
+         let i' := (if i <? r then i else S i) in
+         let j' := (if j <? c then j else S j) in
+         m $ i' $ j').
+
+  Global Instance submat_mor (n : nat) :
+    Proper (meq (Aeq:=Aeq) ==> eq ==> eq ==> meq (Aeq:=Aeq)) (@submat n).
+  Proof. simp_proper. lma. all: apply H; auto; lia. Qed.
+  
+
+  (** Try to prove a proposition such as:
+      "~(exp1 == 0) -> ~(exp2 == 0)" *)
+  Ltac reverse_neq0_neq0 :=
+    match goal with
+    | H: ~(?e1 == A0)%A |- ~(?e2 == A0)%A =>
+        let H1 := fresh "H1" in
+        intro H1; destruct H; ring_simplify; ring_simplify in H1;
+        try rewrite H1; try easy
+    end.
 
   (** Determinant of a square matrix, by expanding the first row *)
   Fixpoint det {n} : smat n -> A :=
@@ -1214,9 +1231,39 @@ Section det.
                     let d := det (submat m 0 i) in
                     (a * d)%A) (seq 0 n)) A0
     end.
-  
+
+  Global Instance det_mor (n : nat) : Proper (meq (Aeq:=Aeq) ==> Aeq) (@det n).
+  Proof.
+    simp_proper. induction n; intros; try easy. simpl.
+    apply fold_left_aeq_mor.
+    - apply map_seq_eq. intros. f_equiv.
+      + destruct (Nat.even i). apply H; lia. f_equiv. apply H; lia.
+      + apply IHn. rewrite H. easy.
+    - f_equiv. f_equiv.
+      + apply matf_mor; auto; lia.
+      + apply IHn. rewrite H. easy.
+  Qed.
+
   (** *** Properties of determinant *)
   Section props.
+
+    Lemma det_1 : forall {n}, (@det n (mat1 A0 A1) == A1)%A.
+    Proof.
+    Admitted.
+
+    Lemma det_trans : forall {n} (m : smat n), (det (m\T) == det m)%A.
+    Proof.
+    Admitted.
+
+    Lemma det_mul : forall {n} (m p : smat n), (det (m * p)%M == det m * det p)%A.
+    Proof.
+    Admitted.
+
+  End props.
+
+  
+  (** *** Determinant on 2-dim or 3-dim *)
+  Section det_2d_3d.
 
     (** Determinant of a matrix of dimension-1 *)
     Definition det1 (m : smat 1) := m.11.
@@ -1239,7 +1286,7 @@ Section det.
 
     (** det m <> 0 <-> det_exp <> 0 *)
     Lemma det2_neq0_iff : forall (m : smat 2),
-        det m != A0 <->  m.11*m.22 - m.12*m.21 != A0.
+        det m != A0 <->  (m.11*m.22 - m.12*m.21 != A0)%A.
     Proof. intros. split; intros; mat_to_fun; reverse_neq0_neq0. Qed.
 
     (** Determinant of a matrix of dimension-3 *)
@@ -1255,12 +1302,12 @@ Section det.
     (** det m <> 0 <-> det_exp <> 0 *)
     Lemma det3_neq0_iff : forall (m : smat 3),
         det m != A0 <->
-          m.11 * m.22 * m.33 - m.11 * m.23 * m.32 - 
+          (m.11 * m.22 * m.33 - m.11 * m.23 * m.32 - 
             m.12 * m.21 * m.33 + m.12 * m.23 * m.31 + 
-            m.13 * m.21 * m.32 - m.13 * m.22 * m.31 != A0.
+            m.13 * m.21 * m.32 - m.13 * m.22 * m.31 != A0)%A.
     Proof. intros. split; intros; mat_to_fun; reverse_neq0_neq0. Qed.
 
-  End props.
+  End det_2d_3d.
 
 End det.
 
@@ -1300,6 +1347,33 @@ Section matrix_inversion.
         try rewrite H1; try easy
     end.
 
+  (** A square matrix is invertible, if its determinant is nonzero *)
+  Definition minvertible {n} (m : smat n) : Prop :=
+    exists m' : smat n, (m * m' == mat1) \/ (m' * m == mat1).
+
+  (** invertible mat1 *)
+  Lemma minvertible_1 : forall n : nat, @minvertible n mat1.
+  Proof.
+  Admitted.
+
+  (** A square matrix is invertible, if its determinant is nonzero *)
+  Lemma minvertible_iff_det_n0 : forall {n} (m : smat n),
+      minvertible m <-> det m <> A0.
+  Proof.
+  Admitted.
+
+  (** invertible m -> invertible (m\T) *)
+  Lemma minvertible_trans : forall n (m : smat n),
+      minvertible m -> minvertible (m\T).
+  Proof.
+  Admitted.
+
+  (** invertible m -> invertible p -> invertible (m * p) *)
+  Lemma minvertible_mul : forall n (m p : smat n),
+      minvertible m -> minvertible p -> minvertible (m * p).
+  Proof.
+  Admitted.
+
   
   (** *** Adjoint matrix (Adjugate matrix, adj(A), A* ) *)
   (** That is: adj(A)[i,j] = algebraic remainder of A[j,i]. *)
@@ -1315,6 +1389,13 @@ Section matrix_inversion.
                       let d := det (submat m j i) in 
                       (s * d)%A)
       end.
+
+    Global Instance madj_mor (n:nat) :
+      Proper (meq (Aeq:=Aeq) ==> meq (Aeq:=Aeq)) (@madj n).
+    Proof.
+      simp_proper. intros. destruct n; auto. simpl.
+      unfold meq; intros; simpl. f_equiv. rewrite H. easy.
+    Qed.
 
   End adj.
 
@@ -1346,13 +1427,60 @@ Section matrix_inversion.
   Section inv.
 
     Definition minv {n} (m : smat n) := (A1 / det m) c* (madj m).
+    Notation "m ⁻¹" := (minv m) : mat_scope.
 
-    Lemma minv_correct_r : forall n (m : smat n), m * (minv m) == mat1.
+    Global Instance minv_mor (n : nat) :
+      Proper (meq (Aeq:=Aeq) ==> meq (Aeq:=Aeq)) (@minv n).
+    Proof. simp_proper. intros. unfold minv. rewrite H. easy. Qed.
+      
+    (** m * p = mat1 -> m ⁻¹ = p *)
+    Lemma mmul_eq1_imply_minv_l : forall {n} (m p : smat n),
+        m * p == mat1 -> minv m == p.
     Proof.
-      induction n; intros.
-      - lma.
-      - 
-    Abort.
+    Admitted.
+
+    (** m * p = mat1 -> p ⁻¹ = m *)
+    Lemma mmul_eq1_imply_minv_r : forall {n} (m p : smat n),
+        m * p == mat1 -> minv p == m.
+    Proof.
+    Admitted.
+
+    (** invertible m -> invertible (m⁻¹) *)
+    Lemma minvertible_inv : forall {n} (m : smat n), minvertible m -> minvertible (m⁻¹).
+    Proof.
+    Admitted.
+
+    (** m * m⁻¹ = mat1 *)
+    Lemma mmul_minv_r : forall n (m : smat n), m * m⁻¹ == mat1.
+    Proof.
+    Admitted.
+
+    (** m⁻¹ * m = mat1 *)
+    Lemma mmul_minv_l : forall n (m : smat n), (minv m) * m == mat1.
+    Proof.
+    Admitted.
+
+    (** mat1 ⁻¹ = mat1 *)
+    Lemma minv_1 : forall n, @minv n mat1 == mat1.
+    Proof.
+    Admitted.
+
+    (** m ⁻¹ ⁻¹ = m *)
+    Lemma minv_inv : forall n (m : smat n), minvertible m -> m ⁻¹ ⁻¹ == m.
+    Proof.
+    Admitted.
+
+    (** (m * m') ⁻¹ = m' ⁻¹ * m ⁻¹ *)
+    Lemma minv_mul : forall n (m m' : smat n),
+        minvertible m -> minvertible m' -> (m * m')⁻¹ == m' ⁻¹ * m ⁻¹.
+    Proof.
+    Admitted.
+
+    (** (m\T) ⁻¹ = (m ⁻¹)\T *)
+    Lemma minv_trans : forall n (m : smat n), minvertible m -> (m\T) ⁻¹ = (m ⁻¹)\T.
+    Proof.
+    Admitted.
+    
   End inv.
 
   (** *** Inversion matrix of common finite dimension *)

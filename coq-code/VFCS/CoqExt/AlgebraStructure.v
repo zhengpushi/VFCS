@@ -41,7 +41,6 @@ Require Export List SetoidList. Import ListNotations.
 Require Export Lia Lra.
 Require Export Ring Field.
 
-
 Require Arith ZArith QArith Qcanon Reals.
 
 Set Implicit Arguments.

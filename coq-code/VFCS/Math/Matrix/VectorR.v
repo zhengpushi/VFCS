@@ -58,7 +58,7 @@ Open Scope mat_scope.
 Local Notation A := R.
 Local Notation A0 := R0.
 Local Notation A1 := R1.
-Local Notation Aeq := eq.
+(* Local Notation Aeq := eq. *)
 Local Notation Aadd := Rplus.
 Local Notation Aopp := Ropp.
 Local Notation Amul := Rmult.
@@ -80,7 +80,7 @@ Module Export RowVectorR.
   Notation "v ! i" := (rvnth v i) : rvec_scope.
 
   Lemma veq_iff_rvnth : forall {n : nat} (v1 v2 : rvec n),
-      (v1 == v2) <-> (forall i, i < n -> (v1!i == v2!i)%A)%nat.
+      (v1 == v2) <-> (forall i, i < n -> v1!i = v2!i)%nat.
   Proof. intros. apply veq_iff_rvnth. Qed.
 
   Definition mat2row {r c} (m : mat r c) (ci : nat) : rvec c := mat2row m ci.
@@ -241,7 +241,7 @@ Module Export ColVectorR.
   Notation "v ! i" := (cvnth v i) : cvec_scope.
 
   Lemma veq_iff_cvnth : forall {n : nat} (v1 v2 : cvec n),
-      (v1 == v2) <-> (forall i, i < n -> (v1!i == v2!i)%A)%nat.
+      (v1 == v2) <-> (forall i, i < n -> v1!i = v2!i)%nat.
   Proof. intros. apply veq_iff_cvnth. Qed.
 
   Definition mat2vec {r c} (m : mat r c) (ri : nat) : cvec r := mat2col m ri.
@@ -370,10 +370,10 @@ Module Export ColVectorR.
   Section vzero_vnonzero.
     
     (** A vector is a zero vector. *)
-    Definition cvzero {n} (v : cvec n) : Prop := cvzero v (A0:=A0)(Aeq:=Aeq).
+    Definition cvzero {n} (v : cvec n) : Prop := cvzero v (A0:=A0)(Aeq:=eq).
 
     (** A vector is a non-zero vector. *)
-    Definition cvnonzero {n} (v : cvec n) : Prop := cvnonzero v (A0:=A0)(Aeq:=Aeq).
+    Definition cvnonzero {n} (v : cvec n) : Prop := cvnonzero v (A0:=A0)(Aeq:=eq).
 
     (** Any zero vector is vec0 *)
     Lemma cvzero_imply_vec0 : forall {n} (v : cvec n), cvzero v -> v == cvec0.
@@ -447,265 +447,67 @@ Module Export ColVectorR.
 
   End vzero_vnonzero.
 
-
-  (** ** length of a vector *)
-  Section vlen.
-
-    (** Length (magnitude) of a vector *)
-    Definition cvlen {n} (v : cvec n) : R := sqrt (v ⋅ v).
-
-    Notation "`| v |" := (cvlen v) : cvec_scope.
-
-    Lemma cvdot_same_eq : forall {n} (v : cvec n), v ⋅ v = (cvlen v)².
-    Proof. intros. unfold cvlen. rewrite Rsqr_sqrt; auto. apply cvdot_ge0. Qed.
+  (** *** Two vectors are parallel (or called collinear) *)
+  Section vparallel.
     
-    (** Length of a vector u is 1, iff the dot product of u and u is 1 *)
-    Lemma cvlen1_iff_vdot1 : forall n (u : cvec n), `|u| = 1 <-> u ⋅ u = 1.
-    Proof. intros. unfold cvlen. split; intros; hnf in *. ra. rewrite H. ra. Qed.
-
-  End vlen.
-
-  Notation "`| v |" := (cvlen v) : cvec_scope.
-
-
-  (** ** unit vector *)
-  Section vunit.
-
-    (** A unit vector u is a vector whose length equals one.
-      Here, we use the square of length instead of length directly,
-      but this is reasonable with the proof of vunit_ok.
-     *)
-    Definition cvunit {n} (u : cvec n) : Prop := u ⋅ u = 1.
-
-    (** Verify the definition is reasonable *)
-    Lemma cvunit_ok : forall {n} (u : cvec n), cvunit u <-> `|u| = 1.
-    Proof. intros. split; intros; apply cvlen1_iff_vdot1; auto. Qed.
-
-    (** If column of a and column of b all are unit, 
-        then column of (a * b) is also unit *)
-    (*   a : mat 2 2 *)
-    (* a1 : cvunit (mat2col a 0) *)
-    (* a2 : cvunit (mat2col a 1) *)
-    (* a3 : cvorthogonal (mat2col a 0) (mat2col a 1) *)
-    (* b1 : cvunit (mat2col b 0) *)
-    (* b2 : cvunit (mat2col b 1) *)
-    (* b3 : cvorthogonal (mat2col b 0) (mat2col b 1) *)
-    (* ============================ *)
-    (* cvunit (mat2col (a * b) 0) *)
-
-
-    (** Normalization of a non-zero vector v.
-      That is, get a unit vector in the same directin as v. *)
-    Definition cvnormalize {n} (v : cvec n) : cvec n := `|v| c* v.
-
-  End vunit.
-
-
-  (** ** Angle between two vectors *)
-  Section vangle.
-
-    (** Cosine of the angle between two vectors, only valid when both are nonzero *)
-    Definition cvangle_cos {n} (v1 v2 : cvec n) : R := (v1 ⋅ v2) / (`|v1| * `|v2|).
-
-    (** Two vectors are perpendicular. Note that zero vector is perp to any vectors *)
-    Definition cvperp {n} (v1 v2 : cvec n) : Prop := v1 ⋅ v2 = 0.
-    Infix "⟂" := cvperp ( at level 50).
+    (** Two vectors are parallel, iff their components have k-times relation *)
+    Definition cvparallel {n} (v1 v2 : cvec n) : Prop :=
+      exists k : R, k <> 0 /\ k c* v1 == v2.
     
-  End vangle.
+    Infix "∥" := cvparallel (at level 50) : cvec_scope.
 
+    (** vparallel is an equivalence relation *)
 
-  (** ** Operations on vectors of 3-dimensional *)
-  Section v3.
+    Lemma vparallel_refl : forall {n} (v : cvec n), v ∥ v.
+    Proof. intros. exists 1. split; auto. apply cvcmul_1_l. Qed.
 
-    (** *** Frame and point *)
-    (** A point can be described by a coordinate vector, and the vector represents 
-      the displacement of the point with respect to some reference coordinate 
-      frame. We call it a bound vector since it cannot be freely moved. *)
-    Section frame.
+    Lemma vparallel_sym : forall {n} (v0 v1 : cvec n), v0 ∥ v1 -> v1 ∥ v0.
+    Proof.
+      intros. destruct H as [k [H1 H2]]. exists (1/k). split.
+      (* ToDo: 提高R的自动化程度 *)
+      - apply Rinv_neq_0_compat in H1. ra.
+      - rewrite <- H2. rewrite cvcmul_assoc.
+        unfold Rdiv. autorewrite with R. rewrite Rinv_l; auto. apply cvcmul_1_l.
+    Qed.
 
-      (** A frame contains three orthogonal axes and a point known as the origin. *)
-      Record frame := {
-          Forigin : cvec 3;
-          Fx : cvec 3;
-          Fy : cvec 3;
-          Fz : cvec 3;
-        }.
-      
-      
-    End frame.
+    Lemma vparallel_trans : forall {n} (v0 v1 v2 : cvec n), v0 ∥ v1 -> v1 ∥ v2 -> v0 ∥ v2.
+    Proof.
+      intros. destruct H as [k1 [H1 H2]], H0 as [k2 [H3 H4]].
+      exists (k2 * k1)%R. split; auto.
+      rewrite <- cvcmul_assoc. rewrite H2. auto.
+    Qed.
 
-    (** 空间直角坐标系的三个轴所在的单位向量 *)
-    Definition v3i : cvec 3 := mk_cvec3 1 0 0.
-    Definition v3j : cvec 3 := mk_cvec3 0 1 0.
-    Definition v3k : cvec 3 := mk_cvec3 0 0 1.
+    (** If two non-zero vectors are parallel, then there is a unique k such that *)
+    (*     they are k times relation *)
+    (* Lemma vparallel_vnonezero_imply_unique_k : forall {n} (v1 v2 : cvec n), *)
+    (*     vnonzero v1 -> vnonzero v2 -> v1 // v2 -> (exists ! k, v1 == k c* v2). *)
+    (* Proof. *)
+    (*   intros. *)
+    (*   destruct H1; try easy. destruct H1; try easy. destruct H1. *)
+    (*   exists x. split; auto. *)
+    (*   intros. apply vcmul_vnonzero_eq_iff_unique_k with (v:=v2); auto. *)
+    (*   rewrite <- H1,H2. easy. *)
+    (* Qed. *)
 
-    (** *** Dot product of two 3-dim vectors *)
-    Section v3dot.
-      
-      Definition cv3dot (a b : cvec 3) :=
-        let '(a1,a2,a3) := cv2t_3 a in 
-        let '(b1,b2,b3) := cv2t_3 b in
-        (a1*b1 + a2*b2 + a3*b3)%R.
-
-      Lemma cvdot3_spec : forall v1 v2 : cvec 3, cv3dot v1 v2 = v1 ⋅ v2.
-      Proof. intros. cbv. ring. Qed.
-
-      (** 习题8.2第12题, page 23, 高等数学，第七版 *)
-      (** 利用向量来证明不等式，并指出等号成立的条件 *)
-      Theorem Rineq3 : forall a1 a2 a3 b1 b2 b3 : R,
-          sqrt (a1² + a2² + a3²) * sqrt (b1² + b2² + b3²) >= Rabs (a1*b1 + a2*b2 + a3*b3).
-      Proof.
-        intros.
-        pose (a := t2cv_3 (a1,a2,a3)).
-        pose (b := t2cv_3 (b1,b2,b3)).
-        pose (alen := cvlen a).
-        pose (blen := cvlen b).
-        replace (sqrt _) with alen; [| unfold alen; cbv; f_equal; ring].
-        replace (sqrt _) with blen; [| unfold blen; cbv; f_equal; ring].
-        replace (Rabs _) with (Rabs (a ⋅ b)); [| cbv; autorewrite with R; auto].
-      Abort.
-
-    End v3dot.
-
-
-    (** *** Cross product (vector product) of two 3-dim vectors *)
-    Section v3cross.
-
-      Definition cv3cross (v1 v2 : cvec 3) : cvec 3 :=
-        let '(a0,a1,a2) := cv2t_3 v1 in
-        let '(b0,b1,b2) := cv2t_3 v2 in
-        t2cv_3 (a1 * b2 - a2 * b1, a2 * b0 - a0 * b2, a0 * b1 - a1 * b0)%R.
-
-      Infix "×" := cv3cross : cvec_scope.
-
-      (** Example 4, page 19, 高等数学，第七版 *)
-      Goal let a := t2cv_3 (2,1,-1) in
-           let b := t2cv_3 (1,-1,2) in
-           a × b == t2cv_3 (1,-5,-3).
-      Proof. lva. Qed.
-
-      (** Example 5, page 19, 高等数学，第七版 *)
-      (** 根据三点坐标求三角形面积 *)
-      Definition cv3_area_of_triangle (A B C : cvec 3) :=
-        let AB := B - A in
-        let AC := C - A in
-        ((1/2) * `|AB × AC|)%R.
-
-      (** Example 6, page 20, 高等数学，第七版 *)
-      (** 刚体绕轴以角速度 ω 旋转，某点M（OM为向量r⃗）处的线速度v⃗，三者之间的关系*)
-      Definition cv3_rotation_model (ω r v : cvec 3) := v = ω × r.
-      
-      Lemma cv3cross_self : forall v : cvec 3, v × v == cvec0.
-      Proof. lva. Qed.
-
-      Lemma cv3cross_anticomm : forall v1 v2 : cvec 3, v1 × v2 == -(v2 × v1).
-      Proof. lva. Qed.
-
-      Lemma cv3cross_add_distr_l : forall v1 v2 v3 : cvec 3,
-          (v1 + v2) × v3 == (v1 × v3) + (v2 × v3).
-      Proof. lva. Qed.
-      
-      Lemma cv3cross_add_distr_r : forall v1 v2 v3 : cvec 3,
-          v1 × (v2 + v3) == (v1 × v2) + (v1 × v3).
-      Proof. lva. Qed.
-
-      Lemma cv3cross_cmul_assoc_l : forall (a : R) (v1 v2 : cvec 3),
-          (a c* v1) × v2 == a c* (v1 × v2).
-      Proof. lva. Qed.
-      
-      Lemma cv3cross_cmul_assoc_r : forall (a : R) (v1 v2 : cvec 3),
-          v1 × (a c* v2) == a c* (v1 × v2).
-      Proof. lva. Qed.
-
-    End v3cross.
-    Infix "×" := cv3cross : cvec_scope.
-
-    (** *** skew symmetry matrix *)
-    Section v3ssm.
-      
-      Definition cv3_skew_sym_mat (v : cvec 3) : smat 3 :=
-        let '(x,y,z) := cv2t_3 v in
-        (mk_mat_3_3
-           0    (-z)  y
-           z     0    (-x)
-           (-y)  x     0)%R.
-      Notation "`| v |ₓ" := (cv3_skew_sym_mat v).
-
-      Lemma cv3cross_eq_ssm : forall (v1 v2 : cvec 3), v1 × v2 == `|v1|ₓ * v2.
-      Proof. lva. Qed.
-      
-    End v3ssm.
-    Notation "`| v |ₓ" := (cv3_skew_sym_mat v).
-
+    (** Given a non-zero vector v1 and another vector v2, *)
+    (*     v1 is parallel to v2, iff, there is a unique k such that v2 is k times v1. *)
+    (* Lemma vparallel_iff1 : forall {n} (v1 v2 : cvec n) (H : vnonzero v1), *)
+    (*     (v1 // v2) <-> (exists ! k, v2 == k c* v1). *)
+    (* Proof. *)
+    (*   intros. split; intros. *)
+    (*   - destruct (v2 ==? cvec0). *)
+    (*     + exists 0. split. *)
+    (*       * rewrite vcmul_0_l. auto. *)
+    (*       * intros. rewrite m in H1. *)
+    (*         apply symmetry in H1. apply vcmul_nonzero_eq_zero_imply_k0 in H1; auto. *)
+    (*     + apply vparallel_vnonezero_imply_unique_k; auto. apply vparallel_sym; auto. *)
+    (*   - destruct H0. destruct H0. apply vparallel_sym. right. right. exists x. auto. *)
+    (* Qed. *)
     
-    (** *** Two vectors are parallel (or called coliner) *)
-    Section vparallel.
-      
-      (** Note that zero vector is perp to any vectors *)
-      Definition cvparallel (v1 v2 : cvec 3) : Prop := cvzero (v1 × v2).
-      Infix "∥" := cvparallel ( at level 50).
 
-    End vparallel.
-    Infix "∥" := cvparallel ( at level 50).
-
-
-    (** *** The triple scalar product (or called Mixed products of vectors) *)
-    Section v3mixed.
-
-      (** 几何意义：绝对值表示以向量a,b,c为棱的平行六面体的体积，另外若a,b,c组成右手系，
-        则混合积的符号为正；若组成左手系，则符号为负。*)
-      Definition cv3mixed (a b c : cvec 3) :=
-        let m :=
-          l2m 3 3 [[a$0; a$1; a$2]; [b$0; b$1; b$2]; [c$0; c$1; c$2]] in
-        det3 m.
-
-      (** A equivalent form *)
-      Lemma cv3mixed_eq : forall a b c : cvec 3, cv3mixed a b c = (a × b) ⋅ c.
-      Proof. intros [a] [b] [c]. cbv. ring. Qed.
-      
-
-      (** 若混合积≠0，则三向量可构成平行六面体，即三向量不共面，反之也成立。
-        所以有如下结论：三向量共面的充要条件是混合积为零。*)
-      Definition cv3coplanar (a b c : cvec 3) := cv3mixed a b c = 0.
-
-      (** Example 7, page 22, 高等数学，第七版 *)
-      (** 根据四顶点的坐标，求四面体的体积：四面体ABCD的体积等于AB,AC,AD为棱的平行六面体
-        的体积的六分之一 *)
-      Definition cv3_volume_of_tetrahedron (A B C D : cvec 3) :=
-        let AB := B - A in
-        let AC := C - A in
-        let AD := D - A in
-        ((1/6) * (cv3mixed AB AC AD))%R.
-
-    End v3mixed.
-
-
-  (* 
+  End vparallel.
+  Infix "∥" := cvparallel ( at level 50) : cvec_scope.
   
-  (** Angle between two vectors *)
-  Definition vangle3 (v0 v1 : cvec 3) : R := acos (m2t_1_1 (v0\T * v1)).
-
-  (** The angle between (1,0,0) and (1,1,0) is 45 degree, i.e., π/4 *)
-  Example vangle3_ex1 : vangle3 (l2v 3 [1;0;0]) (l2v _ [1;1;0]) = PI/4.
-  Proof.
-    compute.
-    (*     Search acos. *)
-  Abort. (* 暂不知哪里错了，要去查叉乘的意义 *)
-  
-  (** 根据两个向量来计算旋转轴 *)
-  Definition rot_axis_by_twovec (v0 v1 : cvec 3) : cvec 3 :=
-    let s : R := (vlen v0 * vlen v1)%R in
-    s c* (vcross3 v0 v1).
-
- (* 谓词：两向量不共线（不平行的） *)
- (* Definition v3_non_colinear (v0 v1 : V3) : Prop :=
-    v0 <> v1 /\ v0 <> (-v1)%M.
-   *)
-   *)
-    
-  End v3.
-
-
   (** ** vector parallel (old implementation) *)
   Section vparallel_old.
 
@@ -801,6 +603,280 @@ Module Export ColVectorR.
     (* Qed. *)
     
   End vparallel_old.
+
+
+  (** *** Standard unit vector in Euclidean space of 3-dimensions *)
+  Definition v3i : cvec 3 := mk_cvec3 1 0 0.
+  Definition v3j : cvec 3 := mk_cvec3 0 1 0.
+  Definition v3k : cvec 3 := mk_cvec3 0 0 1.
+  
+
+  (** *** Dot product (inner-product) of two 3-dim vectors *)
+  Section v3dot.
+    
+    Definition cv3dot (a b : cvec 3) :=
+      let '(a1,a2,a3) := cv2t_3 a in 
+      let '(b1,b2,b3) := cv2t_3 b in
+      (a1*b1 + a2*b2 + a3*b3)%R.
+
+    Lemma cvdot3_spec : forall v1 v2 : cvec 3, cv3dot v1 v2 = v1 ⋅ v2.
+    Proof. intros. cbv. ring. Qed.
+
+  End v3dot.
+
+
+  (** *** Length of a vector *)
+  Section vlen.
+
+    (** Length (magnitude) of a vector, is derived by inner-product *)
+    Definition cvlen {n} (v : cvec n) : R := sqrt (v ⋅ v).
+
+    Notation "`| v |" := (cvlen v) : cvec_scope.
+
+    Lemma cvdot_same_eq : forall {n} (v : cvec n), v ⋅ v = (cvlen v)².
+    Proof. intros. unfold cvlen. rewrite Rsqr_sqrt; auto. apply cvdot_ge0. Qed.
+    
+    (** Length of a vector u is 1, iff the dot product of u and u is 1 *)
+    Lemma cvlen1_iff_vdot1 : forall n (u : cvec n), `|u| = 1 <-> u ⋅ u = 1.
+    Proof. intros. unfold cvlen. split; intros; hnf in *. ra. rewrite H. ra. Qed.
+
+  End vlen.
+  Notation "`| v |" := (cvlen v) : cvec_scope.
+
+
+  (** *** Unit vector *)
+  Section vunit.
+
+    (** A unit vector u is a vector whose length equals one.
+      Here, we use the square of length instead of length directly,
+      but this is reasonable with the proof of vunit_ok.
+     *)
+    Definition cvunit {n} (u : cvec n) : Prop := u ⋅ u = 1.
+
+    (** Verify the definition is reasonable *)
+    Lemma cvunit_spec : forall {n} (u : cvec n), cvunit u <-> `|u| = 1.
+    Proof. intros. split; intros; apply cvlen1_iff_vdot1; auto. Qed.
+
+  (** If column of a and column of b all are unit, 
+        then column of (a * b) is also unit *)
+    (*   a : mat 2 2 *)
+    (* a1 : cvunit (mat2col a 0) *)
+    (* a2 : cvunit (mat2col a 1) *)
+    (* a3 : cvorthogonal (mat2col a 0) (mat2col a 1) *)
+    (* b1 : cvunit (mat2col b 0) *)
+    (* b2 : cvunit (mat2col b 1) *)
+    (* b3 : cvorthogonal (mat2col b 0) (mat2col b 1) *)
+    (* ============================ *)
+    (* cvunit (mat2col (a * b) 0) *)
+
+  End vunit.
+
+
+  (** *** Cross product (vector product) of two 3-dim vectors *)
+  Section v3cross.
+
+    Definition cv3cross (v1 v2 : cvec 3) : cvec 3 :=
+      let '(a0,a1,a2) := cv2t_3 v1 in
+      let '(b0,b1,b2) := cv2t_3 v2 in
+      t2cv_3 (a1 * b2 - a2 * b1, a2 * b0 - a0 * b2, a0 * b1 - a1 * b0)%R.
+
+    Infix "×" := cv3cross : cvec_scope.
+
+    Lemma cv3cross_self : forall v : cvec 3, v × v == cvec0.
+    Proof. lva. Qed.
+
+    Lemma cv3cross_anticomm : forall v1 v2 : cvec 3, v1 × v2 == -(v2 × v1).
+    Proof. lva. Qed.
+
+    Lemma cv3cross_add_distr_l : forall v1 v2 v3 : cvec 3,
+        (v1 + v2) × v3 == (v1 × v3) + (v2 × v3).
+    Proof. lva. Qed.
+    
+    Lemma cv3cross_add_distr_r : forall v1 v2 v3 : cvec 3,
+        v1 × (v2 + v3) == (v1 × v2) + (v1 × v3).
+    Proof. lva. Qed.
+
+    Lemma cv3cross_cmul_assoc_l : forall (a : R) (v1 v2 : cvec 3),
+        (a c* v1) × v2 == a c* (v1 × v2).
+    Proof. lva. Qed.
+    
+    Lemma cv3cross_cmul_assoc_r : forall (a : R) (v1 v2 : cvec 3),
+        v1 × (a c* v2) == a c* (v1 × v2).
+    Proof. lva. Qed.
+
+  End v3cross.
+  Infix "×" := cv3cross : cvec_scope.
+
+
+  (** *** Two 3-dim vectors are parallel *)
+  Section v3parallel.
+    
+    (** Two 3-dim vectors are parallel, can be quickly checked by cross-product. *)
+    Lemma cv3parallel : forall (v1 v2 : cvec 3), v1 ∥ v2 <-> cvzero (v1 × v2).
+    Proof.
+    Admitted.
+
+  End v3parallel.
+
+
+  (** *** vector normalization *)
+  Section vnormalize.
+    
+    (** Normalization of a non-zero vector v.
+      That is, get a unit vector in the same directin as v. *)
+    Definition cvnormalize {n} (v : cvec n) : cvec n := `|v| c* v.
+
+    Lemma cvnormalize_spec : forall {n} (v : cvec n),
+        let v' := cvnormalize v in
+        cvlen v' = 1 /\ v ∥ v'.
+    Proof.
+    Admitted.
+    
+  End vnormalize.
+
+  
+  (** *** Angle between two vectors *)
+  Section vangle.
+
+    (** The angle between two vectors, is derived from the inner-product *)
+    Definition cvangle {n} (v1 v2 : cvec n) : R :=
+      let v1' := cvnormalize v1 in
+      let v2' := cvnormalize v2 in
+      acos (v1' ⋅ v2').
+
+    (** Two vectors are perpendicular. Note that zero vector is perp to any vectors *)
+    Definition cvperp {n} (v1 v2 : cvec n) : Prop := v1 ⋅ v2 = 0.
+    Infix "⟂" := cvperp ( at level 50).
+    
+  End vangle.
+
+
+  (** ** Operations on vectors of 3-dimensional *)
+  Section v3.
+
+    (** *** Frame and point *)
+    (** A point can be described by a coordinate vector, and the vector represents 
+      the displacement of the point with respect to some reference coordinate 
+      frame. We call it a bound vector since it cannot be freely moved. *)
+    Section frame.
+
+      (** A frame contains three orthogonal axes and a point known as the origin. *)
+      Record frame := {
+          Forigin : cvec 3;
+          Fx : cvec 3;
+          Fy : cvec 3;
+          Fz : cvec 3;
+        }.
+      
+    End frame.
+
+    (** *** skew symmetry matrix *)
+    Section v3ssm.
+      
+      Definition cv3_skew_sym_mat (v : cvec 3) : smat 3 :=
+        let '(x,y,z) := cv2t_3 v in
+        (mk_mat_3_3
+           0    (-z)  y
+           z     0    (-x)
+           (-y)  x     0)%R.
+      Notation "`| v |ₓ" := (cv3_skew_sym_mat v).
+
+      Lemma cv3cross_eq_ssm : forall (v1 v2 : cvec 3), v1 × v2 == `|v1|ₓ * v2.
+      Proof. lva. Qed.
+      
+    End v3ssm.
+    Notation "`| v |ₓ" := (cv3_skew_sym_mat v).
+
+
+    (** *** The triple scalar product (or called Mixed products of vectors) *)
+    Section v3mixed.
+
+      (** 几何意义：绝对值表示以向量a,b,c为棱的平行六面体的体积，另外若a,b,c组成右手系，
+        则混合积的符号为正；若组成左手系，则符号为负。*)
+      Definition cv3mixed (a b c : cvec 3) :=
+        let m :=
+          l2m 3 3 [[a$0; a$1; a$2]; [b$0; b$1; b$2]; [c$0; c$1; c$2]] in
+        det3 m.
+
+      (** A equivalent form *)
+      Lemma cv3mixed_eq : forall a b c : cvec 3, cv3mixed a b c = (a × b) ⋅ c.
+      Proof. intros [a] [b] [c]. cbv. ring. Qed.
+      
+
+      (** 若混合积≠0，则三向量可构成平行六面体，即三向量不共面，反之也成立。
+        所以有如下结论：三向量共面的充要条件是混合积为零。*)
+      Definition cv3coplanar (a b c : cvec 3) := cv3mixed a b c = 0.
+
+      (** Example 7, page 22, 高等数学，第七版 *)
+      (** 根据四顶点的坐标，求四面体的体积：四面体ABCD的体积等于AB,AC,AD为棱的平行六面体
+        的体积的六分之一 *)
+      Definition cv3_volume_of_tetrahedron (A B C D : cvec 3) :=
+        let AB := B - A in
+        let AC := C - A in
+        let AD := D - A in
+        ((1/6) * (cv3mixed AB AC AD))%R.
+
+    End v3mixed.
+
+    (** 习题8.2第12题, page 23, 高等数学，第七版 *)
+    (** 利用向量来证明不等式，并指出等号成立的条件 *)
+    Theorem Rineq3 : forall a1 a2 a3 b1 b2 b3 : R,
+        sqrt (a1² + a2² + a3²) * sqrt (b1² + b2² + b3²) >= Rabs (a1*b1 + a2*b2 + a3*b3).
+    Proof.
+      intros.
+      pose (a := t2cv_3 (a1,a2,a3)).
+      pose (b := t2cv_3 (b1,b2,b3)).
+      pose (alen := cvlen a).
+      pose (blen := cvlen b).
+      replace (sqrt _) with alen; [| unfold alen; cbv; f_equal; ring].
+      replace (sqrt _) with blen; [| unfold blen; cbv; f_equal; ring].
+      replace (Rabs _) with (Rabs (a ⋅ b)); [| cbv; autorewrite with R; auto].
+    Abort.
+
+
+    (** Example 4, page 19, 高等数学，第七版 *)
+    Goal let a := t2cv_3 (2,1,-1) in
+         let b := t2cv_3 (1,-1,2) in
+         a × b == t2cv_3 (1,-5,-3).
+    Proof. lva. Qed.
+
+    (** Example 5, page 19, 高等数学，第七版 *)
+    (** 根据三点坐标求三角形面积 *)
+    Definition cv3_area_of_triangle (A B C : cvec 3) :=
+      let AB := B - A in
+      let AC := C - A in
+      ((1/2) * `|AB × AC|)%R.
+
+    (** Example 6, page 20, 高等数学，第七版 *)
+    (** 刚体绕轴以角速度 ω 旋转，某点M（OM为向量r⃗）处的线速度v⃗，三者之间的关系*)
+    Definition cv3_rotation_model (ω r v : cvec 3) := v = ω × r.
+    
+
+  (* 
+  
+  (** Angle between two vectors *)
+  Definition vangle3 (v0 v1 : cvec 3) : R := acos (m2t_1_1 (v0\T * v1)).
+
+  (** The angle between (1,0,0) and (1,1,0) is 45 degree, i.e., π/4 *)
+  Example vangle3_ex1 : vangle3 (l2v 3 [1;0;0]) (l2v _ [1;1;0]) = PI/4.
+  Proof.
+    compute.
+    (*     Search acos. *)
+  Abort. (* 暂不知哪里错了，要去查叉乘的意义 *)
+  
+  (** 根据两个向量来计算旋转轴 *)
+  Definition rot_axis_by_twovec (v0 v1 : cvec 3) : cvec 3 :=
+    let s : R := (vlen v0 * vlen v1)%R in
+    s c* (vcross3 v0 v1).
+
+   (* 谓词：两向量不共线（不平行的） *)
+   (* Definition v3_non_colinear (v0 v1 : V3) : Prop :=
+    v0 <> v1 /\ v0 <> (-v1)%M.
+   *)
+   *)
+    
+  End v3.
+
 
   (* ======================================================================= *)
   (** ** Usage demo *)

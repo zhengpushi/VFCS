@@ -210,6 +210,81 @@ Ltac ra :=
 
 
 (* ######################################################################### *)
+(** * Reqb,Rleb,Rltb: Boolean comparison of R *)
+
+Definition Reqb (r1 r2 : R) : bool := AlgebraStructure.Aeqb r1 r2.
+Definition Rleb (r1 r2 : R) : bool := if Rle_lt_dec r1 r2 then true else false.
+Definition Rltb (r1 r2 : R) : bool := if Rlt_le_dec r1 r2 then true else false.
+Infix "=?"  := Reqb : R_scope.
+Infix "<=?" := Rleb : R_scope.
+Infix "<?"  := Rltb : R_scope.
+Infix ">?"  := (fun x y => y <? x) : R_scope.
+Infix ">=?" := (fun x y => y <=? x) : R_scope.
+
+(** Reflection of (=) and (=?) *)
+(* Lemma Reqb_true : forall x y, x =? y = true <-> x = y. *)
+(* Proof. *)
+(*   apply Aeqb_true. *)
+(* Qed. *)
+
+(* Lemma Reqb_false : forall x y, x =? y = false <-> x <> y. *)
+(* Proof. *)
+(*   apply Aeqb_false. *)
+(* Qed. *)
+Lemma Reqb_reflect : forall x y, reflect (x = y) (x =? y).
+Proof.
+  intros. unfold Reqb,Aeqb. destruct (decidable); constructor; auto.
+Qed.
+
+Lemma Reqb_refl : forall r, r =? r = true.
+Proof.
+  intros. destruct (Reqb_reflect r r); auto.
+Qed.
+
+Lemma Reqb_comm : forall r1 r2, (r1 =? r2) = (r2 =? r1).
+Proof.
+  intros. destruct (Reqb_reflect r1 r2),(Reqb_reflect r2 r1); auto. subst. easy.
+Qed.
+
+Lemma Reqb_trans : forall r1 r2 r3, r1 =? r2 = true -> 
+  r2 =? r3 = true -> r1 =? r3 = true.
+Proof.
+  intros.
+  destruct (Reqb_reflect r1 r2),(Reqb_reflect r2 r3),(Reqb_reflect r1 r3); auto.
+  subst. easy.
+Qed.
+
+Lemma Rltb_reflect : forall x y, reflect (x < y) (x <? y).
+Proof.
+  intros. unfold Rltb. destruct (Rlt_le_dec x y); constructor; lra.
+Qed.
+
+Lemma Rleb_reflect : forall x y, reflect (x <= y) (x <=? y).
+Proof.
+  intros. unfold Rleb. destruct (Rle_lt_dec x y); constructor; lra.
+Qed.
+
+Lemma Rgtb_reflect : forall x y, reflect (x > y) (x >? y).
+Proof.
+  intros. unfold Rltb. destruct (Rlt_le_dec y x); constructor; lra.
+Qed.
+
+Lemma Rgeb_reflect : forall x y, reflect (x >= y) (x >=? y).
+Proof.
+  intros. unfold Rleb. destruct (Rle_lt_dec y x); constructor; lra.
+Qed.
+
+(** These theorems are automatic used. *)
+Global Hint Resolve
+  Reqb_reflect
+  Rltb_reflect
+  Rleb_reflect
+  Rgtb_reflect
+  Rgeb_reflect
+  : bdestruct.
+
+
+(* ######################################################################### *)
 (** * Suplymentary properties about "real number R" *)
 
 (* ======================================================================= *)
@@ -250,6 +325,16 @@ Proof.
   ra.
 Qed.
 #[export] Hint Rewrite Rpow2_Rsqr : R.
+
+(** r² = 1 -> r = 1 \/ r = -1 *)
+Lemma Rsqr_eq1 : forall r : R, r² = 1 -> r = 1 \/ r = -1.
+Proof.
+  intros. replace 1 with 1² in H; [|cbv;ring].
+  apply Rsqr_eq_abs_0 in H. rewrite Rabs_R1 in H.
+  bdestruct (r <? 0).
+  - apply Rabs_left in H0. lra.
+  - rewrite Rabs_right in H; auto. lra.
+Qed.
 
 
 (* ======================================================================= *)
@@ -1352,81 +1437,6 @@ Qed.
 Definition nat2R (n : nat) : R := Z2R (nat2Z n).
 Definition R2nat_floor (r : R) : nat := Z2nat (R2Z_floor r).
 Definition R2nat_ceiling (r : R) : nat := Z2nat (R2Z_ceiling r).
-
-
-(* ######################################################################### *)
-(** * Reqb,Rleb,Rltb: Boolean comparison of R *)
-
-Definition Reqb (r1 r2 : R) : bool := AlgebraStructure.Aeqb r1 r2.
-Definition Rleb (r1 r2 : R) : bool := if Rle_lt_dec r1 r2 then true else false.
-Definition Rltb (r1 r2 : R) : bool := if Rlt_le_dec r1 r2 then true else false.
-Infix "=?"  := Reqb : R_scope.
-Infix "<=?" := Rleb : R_scope.
-Infix "<?"  := Rltb : R_scope.
-Infix ">?"  := (fun x y => y <? x) : R_scope.
-Infix ">=?" := (fun x y => y <=? x) : R_scope.
-
-(** Reflection of (=) and (=?) *)
-(* Lemma Reqb_true : forall x y, x =? y = true <-> x = y. *)
-(* Proof. *)
-(*   apply Aeqb_true. *)
-(* Qed. *)
-
-(* Lemma Reqb_false : forall x y, x =? y = false <-> x <> y. *)
-(* Proof. *)
-(*   apply Aeqb_false. *)
-(* Qed. *)
-Lemma Reqb_reflect : forall x y, reflect (x = y) (x =? y).
-Proof.
-  intros. unfold Reqb,Aeqb. destruct (decidable); constructor; auto.
-Qed.
-
-Lemma Reqb_refl : forall r, r =? r = true.
-Proof.
-  intros. destruct (Reqb_reflect r r); auto.
-Qed.
-
-Lemma Reqb_comm : forall r1 r2, (r1 =? r2) = (r2 =? r1).
-Proof.
-  intros. destruct (Reqb_reflect r1 r2),(Reqb_reflect r2 r1); auto. subst. easy.
-Qed.
-
-Lemma Reqb_trans : forall r1 r2 r3, r1 =? r2 = true -> 
-  r2 =? r3 = true -> r1 =? r3 = true.
-Proof.
-  intros.
-  destruct (Reqb_reflect r1 r2),(Reqb_reflect r2 r3),(Reqb_reflect r1 r3); auto.
-  subst. easy.
-Qed.
-
-Lemma Rltb_reflect : forall x y, reflect (x < y) (x <? y).
-Proof.
-  intros. unfold Rltb. destruct (Rlt_le_dec x y); constructor; lra.
-Qed.
-
-Lemma Rleb_reflect : forall x y, reflect (x <= y) (x <=? y).
-Proof.
-  intros. unfold Rleb. destruct (Rle_lt_dec x y); constructor; lra.
-Qed.
-
-Lemma Rgtb_reflect : forall x y, reflect (x > y) (x >? y).
-Proof.
-  intros. unfold Rltb. destruct (Rlt_le_dec y x); constructor; lra.
-Qed.
-
-Lemma Rgeb_reflect : forall x y, reflect (x >= y) (x >=? y).
-Proof.
-  intros. unfold Rleb. destruct (Rle_lt_dec y x); constructor; lra.
-Qed.
-
-(** These theorems are automatic used. *)
-Global Hint Resolve
-  Reqb_reflect
-  Rltb_reflect
-  Rleb_reflect
-  Rgtb_reflect
-  Rgeb_reflect
-  : bdestruct.
 
 
 (* ######################################################################### *)

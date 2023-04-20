@@ -37,14 +37,14 @@ Module Export RowVector.
   (** ** Vector automation *)
 
   (** Convert vec to function *)
-  Ltac vec_to_fun :=
+  Ltac rvec_to_fun :=
     repeat match goal with
       | v : rvec ?n |- _ => destruct v as [v]; simpl in *
       end.
 
   (** Linear vector arithmetic *)
   Ltac lva :=
-    vec_to_fun;
+    rvec_to_fun;
     lma.
 
   
@@ -164,7 +164,7 @@ Module Export RowVector.
 
     (** --------------------------------------------------- *)
     (** *** vector folding *)
-    (* Definition cvfold : forall {B : Type} {n} (v : rvec n) (f : A -> B) (b : B), B. *)
+    (* Definition rvfold {B : Type} {n} (v : @rvec A n) (f : A -> B) (b0 : B) : B := b0. *)
 
   End basic.
 
@@ -443,14 +443,14 @@ Module Export ColVector.
   (** ** Vector automation *)
 
   (** Convert vec to function *)
-  Ltac vec_to_fun :=
+  Ltac cvec_to_fun :=
     repeat match goal with
       | v : cvec ?n |- _ => destruct v as [v]; simpl in *
       end.
 
   (** Linear vector arithmetic *)
   Ltac lva :=
-    vec_to_fun;
+    cvec_to_fun;
     lma.
 
   (* ======================================================================= *)
@@ -514,6 +514,10 @@ Module Export ColVector.
     Definition cvremove {n : nat} (v : @cvec A (S n)) (k : nat) : cvec n :=
       mk_cvec (fun i => if i <? k then v $ i else v $ (S i)).
 
+    (** cons v.0 v.remove(0) = v *)
+    Lemma cvcons_remove : forall {n} (v : @cvec A (S n)),
+        cvcons (v$0) (cvremove v 0) == v.
+    Proof. lva. Qed.
     
     (** --------------------------------------------------- *)
     (** *** Convert between list and vector *)
@@ -571,7 +575,8 @@ Module Export ColVector.
 
     (** --------------------------------------------------- *)
     (** *** vector folding *)
-    (* Definition cvfold : forall {B : Type} {n} (v : cvec n) (f : A -> B) (b : B), B. *)
+    Definition cvfold {n} {B:Type} (v : @cvec A n) (f : B -> A -> B) (b0 : B) : B :=
+      seqfold (fun i => v$i) n f b0.
 
   End basic.
 

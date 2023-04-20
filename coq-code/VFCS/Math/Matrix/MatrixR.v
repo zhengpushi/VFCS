@@ -22,24 +22,22 @@ Open Scope mat_scope.
 Local Notation A := R.
 Local Notation A0 := R0.
 Local Notation A1 := R1.
-Local Notation Aeq := eq.
+(* Local Notation Aeq := eq. *)
 Local Notation Aadd := Rplus.
 Local Notation Aopp := Ropp.
 Local Notation Amul := Rmult.
 Local Notation Ainv := Rinv.
 
-(* Infix "+" := Aadd : A_scope. *)
-(* Notation "- a" := (Aopp a) : A_scope. *)
-(* Infix "-" := (fun a b => a + (-b)) : A_scope. *)
+Infix "+" := Aadd : A_scope.
+Notation "- a" := (Aopp a) : A_scope.
+Infix "-" := (fun a b => a + (-b)) : A_scope.
+Infix "*" := Amul : A_scope.
+Notation "/ a" := (Ainv a) : A_scope.
+Infix "/" := (fun a b => a * (/b)) : A_scope.
 
-(* Infix "*" := Amul : A_scope. *)
-(* Notation "/ a" := (Ainv a) : A_scope. *)
-(* Infix "/" := (fun a b => a * (/b)) : A_scope. *)
-
-Infix "==" := (Aeq) : A_scope.
-Infix "==" := (eqlistA Aeq) : list_scope.
+Infix "==" := (eqlistA eq) : list_scope.
 Infix "!=" := (fun l1 l2 => ~(l1 == l2)%list) : list_scope.
-Infix "==" := (eqlistA (eqlistA Aeq)) : dlist_scope.
+Infix "==" := (eqlistA (eqlistA eq)) : dlist_scope.
 Infix "!=" := (fun d1 d2 => ~(d1 == d2)%dlist) : dlist_scope.
 
 
@@ -53,7 +51,7 @@ Infix "!=" := (fun m1 m2 => ~(m1 == m2)%M) : mat_scope.
 Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope.
 
 Lemma meq_iff_mnth : forall {r c} (m1 m2 : mat r c),
-    m1 == m2 <-> (forall i j : nat, i < r -> j < c -> (m1!i!j = m2!i!j)%A)%nat.
+    m1 == m2 <-> (forall i j : nat, i < r -> j < c -> m1!i!j = m2!i!j)%nat.
 Proof. intros. apply meq_iff_mnth. Qed.
 
 
@@ -382,22 +380,101 @@ Proof. intros. apply mtrace_mul. Qed.
 
 Definition det {n} (m : smat n) : A := @det _ Aadd A0 Aopp Amul A1 _ m.
 
+Global Instance det_mor (n : nat) : Proper (meq ==> eq) (@det n).
+Proof. apply det_mor. Qed.
+
+Lemma det_1 : forall {n}, @det n mat1 = 1.
+Proof. intros. apply det_1. Qed.
+
+Lemma det_trans : forall {n} (m : smat n), det (m\T) = det m.
+Proof. intros. apply det_trans. Qed.
+  
+Lemma det_mul : forall {n} (m p : smat n), det (m * p) = (det m * det p)%R.
+Proof. intros. apply det_mul. Qed.
+
+
 (** Determinant of a matrix of dimension-3 *)
 Definition det3 (m : smat 3) : A := @det3 _ Aadd Aopp Amul m.
 
 (** inverse matrix by adjoint matrix *)
 Definition minv {n} (m : smat n) : smat n := @minv _ Aadd A0 Aopp Amul A1 Ainv _ m.
+Notation "m ⁻¹" := (minv m) : mat_scope.
+
 Definition minv2 (m : smat 2) : smat 2 := @minv2 _ Aadd A0 Aopp Amul Ainv m.
 Definition minv3 (m : smat 3) : smat 3 := @minv3 _ Aadd A0 Aopp Amul Ainv m.
+
+Definition minvertible {n} (m : smat n) : Prop :=
+  @minvertible _ Aadd A0 Amul A1 eq _ m.
 
 (** inverse matrix by gauss elimination *)
 Definition minv_gauss {n} (m : mat n n) : option (mat n n) :=
   @minv_gauss A Aadd A0 Aopp Amul A1 Ainv _ _ _ m.
 
 
-
 (* ======================================================================= *)
 (** ** Matrix theory applied to this type *)
+
+(** *** Orthogonal matrix *)
+Section OrthogonalMatrix.
+
+  (** A real square matrix m is an orthogonal matrix *)
+  Definition morthogonal {n} (m : smat n) : Prop := m\T * m == mat1.
+
+  (** orthogonal m -> invertible m *)
+  Lemma morthogonal_invertible : forall {n} (m : smat n),
+      morthogonal m -> minvertible m.
+  Proof. intros. hnf in *. exists (m\T). auto. Qed.
+
+  (** orthogonal m -> m⁻¹ = m\T *)
+  Lemma morthogonal_inv_eq_trans : forall {n} (m : smat n),
+      morthogonal m -> m⁻¹ == m\T.
+  Proof. intros. red in H. apply mmul_eq1_imply_minv_r in H. auto. Qed.
+
+  (** orthogonal m -> m * m\T = mat1 *)
+  Lemma morthogonal_mul_trans_r : forall {n} (m : smat n),
+      morthogonal m -> m * m\T == mat1.
+  Proof.
+    intros. red in H. apply mmul_eq1_imply_minv_r in H.
+    rewrite <- H. apply mmul_minv_r.
+  Qed.
+
+  (** orthogonal mat1 *)
+  Lemma morthogonal_1 : forall {n}, morthogonal (@mat1 n).
+  Proof. intros. red. rewrite mtrans_1, mmul_1_r. easy. Qed.
+
+  (** orthogonal m -> orthogonal p -> orthogonal (m * p) *)
+  Lemma morthogonal_mul : forall {n} (m p : smat n),
+      morthogonal m -> morthogonal p -> morthogonal (m * p).
+  Proof.
+    intros. red. red in H, H0. rewrite mtrans_mul.
+    rewrite mmul_assoc. rewrite <- (mmul_assoc _ m).
+    rewrite H. rewrite mmul_1_l. rewrite H0. easy.
+  Qed.
+
+  (** orthogonal m -> orthogonal m\T *)
+  Lemma morthogonal_trans : forall {n} (m : smat n), morthogonal m -> morthogonal (m\T).
+  Proof.
+    intros. red. rewrite mtrans_trans. apply morthogonal_mul_trans_r in H. auto.
+  Qed.
+
+  (** orthogonal m -> orthogonal m⁻¹ *)
+  Lemma morthogonal_inv : forall {n} (m : smat n), morthogonal m -> morthogonal (m⁻¹).
+  Proof.
+    intros. red. rewrite morthogonal_inv_eq_trans; auto.
+    rewrite mtrans_trans. apply morthogonal_mul_trans_r in H. auto.
+  Qed.
+
+  (** orthogonal m -> |m| = ± 1 *)
+  Lemma morthogonal_det : forall {n} (m : smat n),
+      morthogonal m -> (det m = 1 \/ det m = -1).
+  Proof.
+    intros. red in H.
+    assert (det (m\T * m) = @det n mat1). { rewrite H. auto. }
+    rewrite det_mul in H0. rewrite det_trans, det_1 in H0.
+    apply Rsqr_eq1 in H0. auto.
+  Qed.
+
+End OrthogonalMatrix.
 
 (** *** SO(n): special orthogonal group *)
 Section SO3.
@@ -486,17 +563,17 @@ Module Exercise_Ch1_Symbol.
   Notation "4" := ((R1 + R1) * (R1 + R1))%R.
   
   Example ex6_1 : forall a b : R,
-      let m := (mk_mat_3_3 (a*a) (a*b) (b*b) (2*a) (a+b) (2*b) 1 1 1)%R in
+      let m := mk_mat_3_3 (a*a) (a*b) (b*b) (2*a) (a+b) (2*b) 1 1 1 in
       (det m = (a - b)^3)%R.
   Proof.
     intros. cbv. ring.
   Qed.
   
   Example ex6_2 : forall a b x y z : A,
-      let m1 := (mk_mat_3_3
-                   (a*x+b*y) (a*y+b*z) (a*z+b*x)
-                   (a*y+b*z) (a*z+b*x) (a*x+b*y)
-                   (a*z+b*x) (a*x+b*y) (a*y+b*z))%A in
+      let m1 := mk_mat_3_3
+                  (a*x+b*y) (a*y+b*z) (a*z+b*x)
+                  (a*y+b*z) (a*z+b*x) (a*x+b*y)
+                  (a*z+b*x) (a*x+b*y) (a*y+b*z) in
       let m2 := mk_mat_3_3 x y z y z x z x y in
       (det m1 = (a^3 + b^3) * det m2)%R.
   Proof.
@@ -504,22 +581,22 @@ Module Exercise_Ch1_Symbol.
   Qed.
   
   Example ex6_3 : forall a b e d : A,
-      let m := (mk_mat_4_4
-                  (a*a) ((a+1)^2) ((a+2)^2) ((a+3)^2)
-                  (b*b) ((b+1)^2) ((b+2)^2) ((b+3)^2)
-                  (e*e) ((e+1)^2) ((e+2)^2) ((e+3)^2)
-                  (d*d) ((d+1)^2) ((d+2)^2) ((d+3)^2))%A in
+      let m := mk_mat_4_4
+                 (a*a) ((a+1)^2) ((a+2)^2) ((a+3)^2)
+                 (b*b) ((b+1)^2) ((b+2)^2) ((b+3)^2)
+                 (e*e) ((e+1)^2) ((e+2)^2) ((e+3)^2)
+                 (d*d) ((d+1)^2) ((d+2)^2) ((d+3)^2) in
       det m = 0.
   Proof.
     intros. cbv. ring.
   Qed.
   
   Example ex6_4 : forall a b e d : A,
-      let m := (mk_mat_4_4
-                  1 1 1 1
-                  a b e d
-                  (a^2) (b^2) (e^2) (d^2)
-                  (a^4) (b^4) (e^4) (d^4))%A in
+      let m := mk_mat_4_4
+                 1 1 1 1
+                 a b e d
+                 (a^2) (b^2) (e^2) (d^2)
+                 (a^4) (b^4) (e^4) (d^4) in
       (det m = (a-b)*(a-e)*(a-d)*(b-e)*(b-d)*(e-d)*(a+b+e+d))%R.
   Proof.
     intros. cbv. ring.

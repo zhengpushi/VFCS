@@ -30,8 +30,8 @@ Require Export NatExt.
 Require Export List SetoidList. Export ListNotations.
 
 Open Scope nat_scope.
-Open Scope A.
-Open Scope list.
+Open Scope A_scope.
+Open Scope list_scope.
 
 Generalizable Variables A B C Aeq Beq Ceq.
 Generalizable Variables Aadd Aopp Amul Ainv.
@@ -52,6 +52,7 @@ Section cons.
   (** cons is a proper morphism *)
   Lemma cons_aeq_mor : Proper (Aeq ==> eqlistA Aeq ==> eqlistA Aeq) (@cons A).
   Proof.
+    simp_proper.
     intros x y H1 l1 l2 H2. destruct l1,l2; auto.
   Qed.
 
@@ -124,6 +125,14 @@ Section Props_listA.
     - right. intro. inv H0. easy.
     - right. intro. inv H0. easy.
   Qed.
+
+  (** cons is a proper morphism *)
+  Global Instance length_aeq_mor : Proper (eqlistA Aeq ==> eq) (@length A).
+  Proof.
+    simp_proper.
+    intros l1; induction l1; intros l2 H; try easy. inv H; auto.
+    destruct l2; try easy. inv H. simpl. f_equal. auto.
+  Qed.
   
 End Props_listA.
 
@@ -140,7 +149,7 @@ Section hd_tl.
   (** hd is a proper morphism *)
   Lemma hd_aeq_mor : Proper (Aeq ==> eqlistA Aeq ==> Aeq) (@hd A).
   Proof.
-    unfold Proper, respectful.
+    simp_proper.
     intros. destruct x0, y0; simpl; try easy. inv H0. auto.
   Qed.
   Global Existing Instance hd_aeq_mor.
@@ -148,7 +157,7 @@ Section hd_tl.
   (** tl is a proper morphism *)
   Lemma tl_aeq_mor : Proper (eqlistA Aeq ==> eqlistA Aeq) (@tl A).
   Proof.
-    unfold Proper, respectful.
+    simp_proper.
     intros. destruct x, y; simpl; try easy. inv H. auto.
   Qed.
   Global Existing Instance tl_aeq_mor.
@@ -173,7 +182,7 @@ Section nth.
     (** nth is a proper morphism *)
   Lemma nth_aeq_mor : Proper (eq ==> eqlistA Aeq ==> Aeq ==> Aeq) (@nth A).
   Proof.
-    unfold Proper, respectful.
+    simp_proper.
     intros i j H; inv H. rename j into i.
     intros l1 l2. revert l2 i.
     induction l1; destruct l2,i; intros; simpl in *; try easy.
@@ -404,7 +413,7 @@ Section repeat.
 
   Lemma repeat_aeq_mor : Proper (Aeq ==> eq ==> (eqlistA Aeq)) (@repeat A).
   Proof.
-    unfold Proper, respectful.
+    simp_proper.
     intros a b Hab i j. revert j.
     induction i; intros.
     - subst; simpl. easy.
@@ -479,7 +488,7 @@ Section map_A_B.
   (** map is a proper morphism *)
   Lemma map_aeq_mor : Proper ((Aeq ==> Beq) ==> eqlistA Aeq ==> eqlistA Beq) (@map A B).
   Proof.
-    unfold Proper, respectful.
+    simp_proper.
     intros f1 f2 Hf l1.
     induction l1.
     - intros [|l2]; intros; simpl in *; auto. inv H.
@@ -496,7 +505,7 @@ Section map_A_B.
     intros f g H l. induction l; intros; try easy.
     simpl. rewrite H,IHl. easy.
   Qed.
-  
+
   (** map is equal, imply the list is equal *)
   Lemma map_eq_imply_eq : forall (f : A -> B) (l1 l2 : list A),
       map f l1 == map f l2 ->
@@ -600,8 +609,17 @@ Section map_A.
   Qed.
 
   (** Equality of map+seq, iff corresponding elements are equal *)
-  Lemma map_seq_eq : forall n (f g : nat -> A),
-      map f (seq 0 n) == map g (seq 0 n) <-> (forall i, i < n -> (f i == g i)%A).
+  (* Lemma map_seq_eq : forall n (f g : nat -> A), *)
+  (*     map f (seq 0 n) == map g (seq 0 n) <-> (forall i, i < n -> (f i == g i)%A). *)
+  (* Proof. *)
+  (*   intros; split; intros. *)
+  (*   - rewrite map_ext_in_iff in H. apply H. apply in_seq. lia. *)
+  (*   - apply map_ext_in_iff. intros. apply H. apply in_seq in H0. lia. *)
+  (* Qed. *)
+
+  Lemma map_seq_eq : forall a n (f g : nat -> A),
+      map f (seq a n) == map g (seq a n) <->
+        (forall i, a <= i < (a + n) -> (f i == g i)%A).
   Proof.
     intros; split; intros.
     - rewrite map_ext_in_iff in H. apply H. apply in_seq. lia.
@@ -640,6 +658,7 @@ Section map2.
     Lemma map2_aeq_mor :
       Proper (eqlistA Aeq ==> eqlistA Beq ==> eqlistA Ceq) (map2 f).
     Proof.
+      simp_proper.
       intros a1. induction a1.
       - intros a2 Ha b1 b2 Hb. destruct b1,a2,b2; try easy.
       - intros a2 Ha b1 b2 Hb. destruct b1,a2,b2; try easy.
@@ -836,6 +855,7 @@ Section fold.
   (** fold_right is a Proper morphism *)
   Lemma fold_right_aeq_mor : Proper (Aeq ==> eqlistA Aeq ==> Aeq) (fold_right Aadd).
   Proof.
+    simp_proper.
     intros x y H l1. induction l1; intros l2 H2; destruct l2; try easy.
     inv H2. simpl. apply monoidAaddProper; try easy.
     apply IHl1. easy.
@@ -846,6 +866,7 @@ Section fold.
   Lemma fold_left_aeq_mor :
     Proper (eqlistA Aeq ==> Aeq ==> Aeq) (fold_left Aadd).
   Proof.
+    simp_proper.
     intros l1. induction l1; intros l2 Hl a1 a2 Ha.
     - inv Hl. simpl. auto.
     - destruct l2. easy. inv Hl.
@@ -948,7 +969,7 @@ Section ladd_opp_sub.
   Lemma lsub_aeq_mor : Proper (eqlistA Aeq ==> eqlistA Aeq ==> eqlistA Aeq) lsub.
   Proof.
     apply map2_aeq_mor.
-    unfold Proper, respectful.
+    simp_proper.
     intros. apply monoidAaddProper; try easy. apply groupAoppProper. auto.
   Qed.
 
@@ -1108,7 +1129,7 @@ Section ldot.
   (** map is respect to aeq *)
   Lemma ldot_aeq_mor : Proper (eqlistA Aeq ==> eqlistA Aeq ==> Aeq) ldot.
   Proof.
-    unfold Proper, respectful.
+    simp_proper.
     intros. unfold ldot. rewrite H,H0. easy.
   Qed.
 
@@ -1838,7 +1859,7 @@ Section consc.
   Lemma consc_aeq_mor :
     Proper (eqlistA Aeq ==> eqlistA (eqlistA Aeq) ==> eqlistA (eqlistA Aeq)) consc.
   Proof.
-    unfold Proper, respectful.
+    simp_proper.
     induction x; intros.
     - destruct x,y0,y; simpl; try easy.
     - destruct x0,y0,y; simpl; try easy.
@@ -2014,7 +2035,7 @@ Section dltrans.
   Lemma dltrans_aeq_mor :
     Proper (eqlistA (eqlistA Aeq) ==> eq ==> eqlistA (eqlistA Aeq)) dltrans.
   Proof.
-    unfold Proper, respectful.
+    simp_proper.
     induction x; intros.
     - destruct y; subst; easy.
     - destruct y. easy. inv H. simpl. rewrite H4. rewrite (IHx y); easy.
@@ -2170,7 +2191,7 @@ Section dmap.
     Lemma dmap_aeq_mor :
       Proper (eqlistA (eqlistA Aeq) ==> eqlistA (eqlistA Beq)) (dmap f).
     Proof.
-      unfold Proper, respectful.
+      simp_proper.
       induction x; destruct y; intros; simpl; try easy. inv H.
       rewrite H3, (IHx y); easy.
     Qed.
@@ -2536,7 +2557,7 @@ Section ldotdl_dldotdl.
   Lemma ldotdl_aeq_mor :
     Proper (eqlistA Aeq ==> eqlistA (eqlistA Aeq) ==> eqlistA Aeq) ldotdl.
   Proof.
-    unfold Proper, respectful.
+    simp_proper.
     intros l1 l2 H dl1. revert l1 l2 H. induction dl1; simpl; intros.
     - destruct y; try easy.
     - destruct y; try easy. simpl. inv H0. apply cons_eq_iff; split; auto.
@@ -2688,7 +2709,7 @@ Section ldotdl_dldotdl.
     let deq := eqlistA (eqlistA Aeq) in
     Proper (deq ==> deq ==> deq) dldotdl.
   Proof.
-    unfold Proper, respectful.
+    simp_proper.
     induction x; intros.
     - destruct y; easy.
     - destruct y; try easy. simpl. inv H. apply cons_eq_iff; split; auto.
