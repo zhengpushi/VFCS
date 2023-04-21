@@ -498,8 +498,97 @@ Section OrthogonalMatrix.
 
 End OrthogonalMatrix.
 
+(** *** SO(n): Special Orthogonal Group *)
+Section SOn.
 
-(** *** SO(n): special orthogonal group *)
+  (** The set of SOn *)
+  Record SOn (n: nat) := {
+      SOn_mat :> smat n;
+      SOn_props : morthogonal SOn_mat /\ det SOn_mat = 1
+    }.
+
+  Definition SOn_eq {n} (s1 s2 : SOn n) : Prop := SOn_mat _ s1 == SOn_mat _ s2.
+
+  Definition SOn_mul {n} (s1 s2 : SOn n) : SOn n.
+    refine (Build_SOn n (s1 * s2) _).
+    destruct s1 as [s1 [H1 H1']], s2 as [s2 [H2 H2']]. simpl. split.
+    - apply morthogonal_mul; auto.
+    - rewrite det_mul. rewrite H1', H2'. ring.
+  Defined.
+
+  Definition SOn_1 {n} : SOn n.
+    refine (Build_SOn n mat1 _). split.
+    apply morthogonal_1. apply det_1.
+  Defined.
+
+  Definition SOn_inv {n} (s : SOn n) : SOn n.
+    refine (Build_SOn n (s\T) _). destruct s as [s [H1 H2]]. simpl. split.
+    apply morthogonal_trans; auto. rewrite det_trans. auto.
+  Defined.
+
+  (** SOn_eq is equivalence relation *)
+  Lemma SOn_eq_equiv : forall n, Equivalence (@SOn_eq n).
+  Proof.
+    intros. unfold SOn_eq. constructor; hnf; intros; try easy.
+    rewrite H; easy.
+  Qed.
+
+  (** SOn_mul is a proper morphism respect to SOn_eq *)
+  Lemma SOn_mul_proper : forall n, Proper (SOn_eq ==> SOn_eq ==> SOn_eq) (@SOn_mul n).
+  Proof. unfold SOn_eq in *. simp_proper. intros. simpl. rewrite H,H0. easy. Qed.
+
+  (** SOn_inv is a proper morphism respect to SOn_eq *)
+  Lemma SOn_inv_proper : forall n, Proper (SOn_eq ==> SOn_eq) (@SOn_inv n).
+  Proof. unfold SOn_eq in *. simp_proper. intros. simpl. rewrite H. easy. Qed.
+
+  (** SOn_mul is associative *)
+  Lemma SOn_mul_assoc : forall n, Associative SOn_mul (@SOn_eq n).
+  Proof. unfold SOn_eq. intros. constructor. intros; simpl. apply mmul_assoc. Qed.
+
+  (** SOn_1 is left-identity-element of SOn_mul operation *)
+  Lemma SOn_mul_id_l : forall n, IdentityLeft SOn_mul SOn_1 (@SOn_eq n).
+  Proof. unfold SOn_eq. intros. constructor. intros; simpl. apply mmul_1_l. Qed.
+    
+  (** SOn_1 is right-identity-element of SOn_mul operation *)
+  Lemma SOn_mul_id_r : forall n, IdentityRight SOn_mul SOn_1 (@SOn_eq n).
+  Proof. unfold SOn_eq. intros. constructor. intros; simpl. apply mmul_1_r. Qed.
+
+  (** SOn_inv is left-inversion of <SOn_mul,SOn_1> *)
+  Lemma SOn_mul_inv_l : forall n, InverseLeft SOn_mul SOn_1 SOn_inv (@SOn_eq n).
+  Proof. unfold SOn_eq. intros. constructor. intros; simpl. apply a. Qed.
+
+  (** SOn_inv is right-inversion of <SOn_mul,SOn_1> *)
+  Lemma SOn_mul_inv_r : forall n, InverseRight SOn_mul SOn_1 SOn_inv (@SOn_eq n).
+  Proof.
+    unfold SOn_eq. intros. constructor. intros; simpl.
+    apply morthogonal_iff_mul_trans_r. apply a.
+  Qed.
+    
+  (** <SOn, +, 1> is a monoid *)
+  Lemma Monoid_SOn : forall n, Monoid (@SOn_mul n) SOn_1 SOn_eq.
+  Proof.
+    intros. constructor.
+    - apply SOn_mul_proper.
+    - apply SOn_eq_equiv.
+    - apply SOn_mul_assoc.
+    - apply SOn_mul_id_l.
+    - apply SOn_mul_id_r.
+  Qed.
+
+  (** <SOn, +, 1, /s> is a group *)
+  Theorem Group_SOn : forall n, Group (@SOn_mul n) SOn_1 SOn_inv SOn_eq.
+  Proof.
+    intros. constructor.
+    - apply Monoid_SOn.
+    - apply SOn_mul_inv_l.
+    - apply SOn_mul_inv_r.
+    - apply SOn_mul_proper.
+    - apply SOn_inv_proper.
+  Qed.
+
+End SOn.
+
+(** *** SO(3): special orthogonal group *)
 Section SO3.
 
   (** If a matrix is SO3? *)
