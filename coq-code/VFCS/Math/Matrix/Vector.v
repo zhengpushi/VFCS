@@ -87,8 +87,8 @@ Module Export RowVector.
     Qed.
 
     (** --------------------------------------------------- *)
-    (** *** Convert matrix to row-vector *)
-    Definition mat2row {r c : nat} (m : @mat A r c) (ri : nat) : rvec c :=
+    (** *** Get row-vector of a matrix *)
+    Definition mrow {r c : nat} (m : @mat A r c) (ri : nat) : rvec c :=
       mk_rvec (fun i => m $ ri $ i).
 
     
@@ -327,9 +327,11 @@ Module Export RowVector.
     
     Infix "⋅" := rvdot : rvec_scope.
 
+    (** v1 ⋅ v2 = v2 ⋅ v1 *)
     Lemma rvdot_comm : forall {n} (v1 v2 : rvec n), (v1 ⋅ v2 == v2 ⋅ v1)%A.
     Proof. intros. apply seqsum_eq. intros. ring. Qed.
 
+    (** (v1 + v2) ⋅ v3 = v1 ⋅ v3 + v2 ⋅ v3 *)
     Lemma rvdot_add_distr_l : forall {n} (v1 v2 v3 : rvec n),
         ((v1 + v2)%RV ⋅ v3 == v1 ⋅ v3 + v2 ⋅ v3)%A.
     Proof.
@@ -337,6 +339,7 @@ Module Export RowVector.
       revert v1 v2 v3. induction n; intros; simpl; auto. ring. rewrite IHn. ring.
     Qed.
 
+    (** v1 ⋅ (v2 + v3) = v1 ⋅ v2 + v1 ⋅ v3 *)
     Lemma rvdot_add_distr_r : forall {n} (v1 v2 v3 : rvec n),
         (v1 ⋅ (v2 + v3)%RV == v1 ⋅ v2 + v1 ⋅ v3)%A.
     Proof.
@@ -344,6 +347,7 @@ Module Export RowVector.
       revert v1 v2 v3. induction n; intros; simpl; auto. ring. rewrite IHn. ring.
     Qed.
 
+    (** (a c* v1) ⋅ v2 = a * (v1 ⋅ v2) *)
     Lemma rvdot_cmul_l : forall {n} (v1 v2 : rvec n) (a : A),
         ((a c* v1) ⋅ v2 == a * (v1 ⋅ v2))%A.
     Proof.
@@ -351,6 +355,7 @@ Module Export RowVector.
       rewrite seqsum_cmul_l. apply seqsum_eq; intros; ring.
     Qed.
     
+    (** v1 ⋅ (a c* v2) == a * (v1 ⋅ v2) *)
     Lemma rvdot_cmul_r : forall {n} (v1 v2 : rvec n) (a : A),
         (v1 ⋅ (a c* v2) == a * (v1 ⋅ v2))%A.
     Proof.
@@ -365,7 +370,7 @@ Module Export RowVector.
     (** v * 0 = 0 *)
     Lemma rvdot_0_r : forall {n} (v : rvec n), (v ⋅ rvec0 == A0)%A.
     Proof. intros. rewrite rvdot_comm, rvdot_0_l. easy. Qed.
-
+    
   End vec_ring.
 
   Section test.
@@ -493,8 +498,8 @@ Module Export ColVector.
 
     
     (** --------------------------------------------------- *)
-    (** *** Convert matrix to column-vector *)
-    Definition mat2col {r c : nat} (m : @mat A r c) (ci : nat) : cvec r :=
+    (** *** Get column-vector of a matrix *)
+    Definition mcol {r c : nat} (m : @mat A r c) (ci : nat) : cvec r :=
       mk_cvec (fun i => m $ i $ ci).
 
     
@@ -739,9 +744,11 @@ Module Export ColVector.
     
     Infix "⋅" := cvdot : cvec_scope.
 
+    (** v1 ⋅ v2 = v2 ⋅ v1 *)
     Lemma cvdot_comm : forall {n} (v1 v2 : cvec n), (v1 ⋅ v2 == v2 ⋅ v1)%A.
     Proof. intros. apply seqsum_eq. intros. ring. Qed.
 
+    (** (v1 + v2) ⋅ v3 = v1 ⋅ v3 + v2 ⋅ v3 *)
     Lemma cvdot_add_distr_l : forall {n} (v1 v2 v3 : cvec n),
         ((v1 + v2)%CV ⋅ v3 == v1 ⋅ v3 + v2 ⋅ v3)%A.
     Proof.
@@ -749,6 +756,7 @@ Module Export ColVector.
       revert v1 v2 v3. induction n; intros; simpl; auto. ring. rewrite IHn. ring.
     Qed.
 
+    (** v1 ⋅ (v2 + v3) = v1 ⋅ v2 + v1 ⋅ v3 *)
     Lemma cvdot_add_distr_r : forall {n} (v1 v2 v3 : cvec n),
         (v1 ⋅ (v2 + v3)%CV == v1 ⋅ v2 + v1 ⋅ v3)%A.
     Proof.
@@ -756,6 +764,7 @@ Module Export ColVector.
       revert v1 v2 v3. induction n; intros; simpl; auto. ring. rewrite IHn. ring.
     Qed.
 
+    (** (a c* v1) ⋅ v2 = a * (v1 ⋅ v2) *)
     Lemma cvdot_cmul_l : forall {n} (v1 v2 : cvec n) (a : A),
         ((a c* v1) ⋅ v2 == a * (v1 ⋅ v2))%A.
     Proof.
@@ -763,6 +772,7 @@ Module Export ColVector.
       rewrite seqsum_cmul_l. apply seqsum_eq; intros; ring.
     Qed.
     
+    (** v1 ⋅ (a c* v2) == a * (v1 ⋅ v2) *)
     Lemma cvdot_cmul_r : forall {n} (v1 v2 : cvec n) (a : A),
         (v1 ⋅ (a c* v2) == a * (v1 ⋅ v2))%A.
     Proof.

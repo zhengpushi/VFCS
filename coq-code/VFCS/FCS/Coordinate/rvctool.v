@@ -25,6 +25,7 @@ Notation matC := MatrixC.mat.
 Notation matR := MatrixR.mat.
 Notation cvecC := ColVectorC.cvec.
 Notation cvecR := ColVectorR.cvec.
+Notation mcolC := ColVectorC.mcol.
 
 
 (** Convert cvecC to cvecR *)
@@ -79,10 +80,9 @@ Module SO2.
 
   (** A 2D square matrix is orthonormal *)
   Definition orthonormal2 (m : smat 2) :=
-    let c0 := mat2col m 0 in
-    let c1 := mat2col m 1 in
+    let c0 := mcol m 0 in
+    let c1 := mcol m 1 in
     cvunit c0 /\ cvunit c1 /\ (cvorthogonal c0 c1).
-
 
   (** Special Orthogonal Group of dimension 2: R ∈ SO(2) ⊂ R^(2x2) *)
   Record SO2 := {
@@ -207,9 +207,9 @@ Module SO3.
 
   (** A 3D square matrix is orthonormal *)
   Definition orthonormal3 (m : smat 3) :=
-    let c0 := mat2col m 0 in
-    let c1 := mat2col m 1 in
-    let c2 := mat2col m 2 in
+    let c0 := mcol m 0 in
+    let c1 := mcol m 1 in
+    let c2 := mcol m 2 in
     cvunit c0 /\ cvunit c1 /\ cvunit c2 /\
       (cvorthogonal c0 c1) /\
       (cvorthogonal c0 c2) /\
@@ -460,7 +460,7 @@ Module SO3.
       (* e(idx,idx) = cosθ +i sinθ *)
       let theta_of_idx (idx : nat) := atan ((e $ idx $ idx).b / (e $ idx $ idx).a) in
       (* the idx-th column of x contain the needed vector, which is the real part *)
-      let vec_of_idx (idx : nat) := cvecC_to_cvecR (mat2col x idx) (fun c => c.a) in
+      let vec_of_idx (idx : nat) := cvecC_to_cvecR (mcolC x idx) (fun c => c.a) in
       (* find the angle and the vector *)
       if x.11 ==? 1
       then (theta_of_idx 1%nat, vec_of_idx 0%nat)

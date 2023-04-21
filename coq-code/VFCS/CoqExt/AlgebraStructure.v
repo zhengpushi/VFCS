@@ -146,7 +146,7 @@ Section Instances.
   Proof. constructor. apply Qc_eq_dec. Defined.
 
   Global Instance Decidable_R : Decidable (@eq R).
-  Proof. constructor. apply Req_EM_T. Qed.
+  Proof. constructor. apply Req_EM_T. Defined.
 
   Global Instance Decidable_list `{Dec:Decidable} : Decidable (eqlistA Aeq).
   Proof.

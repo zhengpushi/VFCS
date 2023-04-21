@@ -2932,3 +2932,16 @@ Section dlcmul_properties.
   Qed.
   
 End dlcmul_properties.
+
+
+(* ======================================================================= *)
+(** ** Folding of a bool list *)
+Section fold_blist.
+  
+  (** = true && hd l && hd (tl l) && ... *)
+  Definition and_blist (l : list bool) : bool := fold_left andb l true.
+
+  (** = false || hd l || hd (tl l) || ... *)
+  Definition or_blist (l : list bool) : bool := fold_left orb l false.
+
+End fold_blist.

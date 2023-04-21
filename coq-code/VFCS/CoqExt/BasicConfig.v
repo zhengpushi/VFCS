@@ -175,12 +175,23 @@ Ltac bdestruct X :=
 Definition is_true (b : bool) : Prop := b = true.
 Coercion is_true : bool >-> Sortclass.
 
-Goal true.
-apply eq_refl. Qed.
+(* Note that Coq.Bool.Bool.Is_true is another implementation, and I argue that it is 
+   a bit complex *)
+(* Print Is_true. (* Is_true = fun b : bool => if b then True else False *)
+     : bool -> Prop *)
 
-Goal negb false.
-simpl. apply eq_refl. Qed.
+Lemma is_true_and_iff : forall b1 b2 : bool,
+    is_true b1 /\ is_true b2 <-> is_true (b1 && b2).
+Proof. destruct b1,b2; intros; split; intros; auto; try easy. Qed.
 
+Lemma is_true_or_iff : forall b1 b2 : bool,
+    is_true b1 \/ is_true b2 <-> is_true (b1 || b2).
+Proof.
+  destruct b1,b2; intros; split; intros; auto; try easy.
+  simpl. unfold is_true in *. destruct H; auto.
+Qed.
+
+(** use reflect to connect bool and proposition equality *)
 Example eqnP (n m : nat) : reflect (n = m) (Nat.eqb n m).
 Proof.
   gd m. induction n; intros [|m]; simpl; try constructor; auto.

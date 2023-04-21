@@ -222,15 +222,12 @@ Infix ">?"  := (fun x y => y <? x) : R_scope.
 Infix ">=?" := (fun x y => y <=? x) : R_scope.
 
 (** Reflection of (=) and (=?) *)
-(* Lemma Reqb_true : forall x y, x =? y = true <-> x = y. *)
-(* Proof. *)
-(*   apply Aeqb_true. *)
-(* Qed. *)
+Lemma Reqb_true : forall x y, x =? y = true <-> x = y.
+Proof. apply Aeqb_true. Qed.
 
-(* Lemma Reqb_false : forall x y, x =? y = false <-> x <> y. *)
-(* Proof. *)
-(*   apply Aeqb_false. *)
-(* Qed. *)
+Lemma Reqb_false : forall x y, x =? y = false <-> x <> y.
+Proof. apply Aeqb_false. Qed.
+    
 Lemma Reqb_reflect : forall x y, reflect (x = y) (x =? y).
 Proof.
   intros. unfold Reqb,Aeqb. destruct (decidable); constructor; auto.

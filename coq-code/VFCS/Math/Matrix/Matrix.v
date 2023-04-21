@@ -100,6 +100,28 @@ Section meq.
   
 End meq.
 
+
+(* ======================================================================= *)
+(** ** Boolean Equality of matrix *)
+Section meqb.
+  Context `{Dec_Aeq : Decidable A Aeq}.
+  Infix "==" := (meq (Aeq:=Aeq)) : mat_scope.
+
+  Definition meqb {r c : nat} (m1 m2 : @mat A r c) : bool :=
+    seq2eqb r c (matf m1) (matf m2).
+  Infix "=?" := meqb : mat_scope.
+  
+  Lemma meqb_reflect : forall r c (m1 m2 : @mat A r c), reflect (m1 == m2) (m1 =? m2).
+  Proof.
+    intros. unfold meq,meqb.
+    destruct (seq2eqb) eqn:E1; constructor.
+    apply seq2eqb_true_iff; auto.
+    intro. apply seq2eqb_true_iff in H. rewrite H in E1. easy.
+  Qed.
+  
+End meqb.
+
+
 (* ======================================================================= *)
 (** ** Get element of a matrix *)
 Section mnth.
@@ -227,29 +249,29 @@ Global Ltac lma :=
 
 
 (* ======================================================================= *)
-(** ** Get row of a matrix *)
-Section mrow.
-  Context `{Equiv_Aeq : Equivalence A Aeq} {A0:A}.
-  Infix "==" := Aeq : A_scope.
-  Infix "==" := (meq (Aeq:=Aeq)) : mat_scope.
-  Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope.
+(** ** Get row of a matrix (deprecated) *)
+(* Section mrow. *)
+(*   Context `{Equiv_Aeq : Equivalence A Aeq} {A0:A}. *)
+(*   Infix "==" := Aeq : A_scope. *)
+(*   Infix "==" := (meq (Aeq:=Aeq)) : mat_scope. *)
+(*   Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope. *)
 
-  (** Get a row which row index is i *)
-  Definition mrow {r c : nat} (i : nat) (m : mat r c) : list A :=
-    map (fun j => m$i$j) (seq 0 c).
+(*   (** Get a row which row index is i *) *)
+(*   Definition mrow {r c : nat} (i : nat) (m : mat r c) : list A := *)
+(*     map (fun j => m$i$j) (seq 0 c). *)
 
-  Lemma mrow_length : forall {r c} i (m : mat r c), length (mrow i m) = c.
-  Proof. intros. unfold mrow. rewrite map_length. apply seq_length. Qed.
+(*   Lemma mrow_length : forall {r c} i (m : mat r c), length (mrow i m) = c. *)
+(*   Proof. intros. unfold mrow. rewrite map_length. apply seq_length. Qed. *)
 
-  (** (mrow m i)[j] = m[i][j] *)
-  Lemma nth_mrow : forall {r c} i j (m : mat r c) a,
-      i < r -> j < c -> (nth j (mrow i m) a == m ! i ! j)%A.
-  Proof.
-    intros. unfold mrow. rewrite nth_map_seq; auto.
-    rewrite Nat.add_0_r. rewrite mnth_eq_mnth_raw; auto. easy.
-  Qed.
+(*   (** (mrow m i)[j] = m[i][j] *) *)
+(*   Lemma nth_mrow : forall {r c} i j (m : mat r c) a, *)
+(*       i < r -> j < c -> (nth j (mrow i m) a == m ! i ! j)%A. *)
+(*   Proof. *)
+(*     intros. unfold mrow. rewrite nth_map_seq; auto. *)
+(*     rewrite Nat.add_0_r. rewrite mnth_eq_mnth_raw; auto. easy. *)
+(*   Qed. *)
   
-End mrow.
+(* End mrow. *)
 
 
 (* ======================================================================= *)
@@ -418,19 +440,19 @@ Arguments l2m {A} A0 {r c}.
 
 
 (* ======================================================================= *)
-(** ** Get column *)
-Section mcol.
-  Context {A : Type} {A0 : A}.
+(** ** Get column (deprecated) *)
+(* Section mcol. *)
+(*   Context {A : Type} {A0 : A}. *)
   
-  Definition mcol {r c : nat} (m : mat r c) (j : nat) : list A :=
-    let fix f r i0 :=
-      match r with
-      | O => nil
-      | S r' => m $ i0 $ j :: (f r' (S i0))
-      end in
-    f r 0.
+(*   Definition mcol {r c : nat} (m : mat r c) (j : nat) : list A := *)
+(*     let fix f r i0 := *)
+(*       match r with *)
+(*       | O => nil *)
+(*       | S r' => m $ i0 $ j :: (f r' (S i0)) *)
+(*       end in *)
+(*     f r 0. *)
   
-End mcol.
+(* End mcol. *)
 
 (* Let m1 := @l2m _ 0 3 3 [[1;2;3];[4;5;6];[7;8;9]]. *)
 (* Compute mcol m1 0. *)
@@ -623,6 +645,7 @@ Notation "m \T" := (mtrans m) : mat_scope.
 (** ** Zero matrirx and identity matrix *)
 Section mat0_mat1.
   Context `{Equiv_Aeq : Equivalence A Aeq} (A0 A1 : A).
+  Infix "==" := (Aeq) : A_scope.
   Infix "==" := (meq (Aeq:=Aeq)) : mat_scope.
 
   (** Zero matrix *)
@@ -639,6 +662,16 @@ Section mat0_mat1.
   (** mat1\T = mat1 *)
   Lemma mtrans_1 : forall {n : nat}, (@mat1 n)\T == mat1.
   Proof. lma. replace (j =? i) with (i =? j); try easy. apply Nat.eqb_sym. Qed.
+
+  (** i < n -> j < n -> i <> j -> mat1[i,j] = 0 *)
+  Lemma mnth_mat1_diff : forall {n} i j,
+      i < n -> j < n -> i <> j -> ((@mat1 n) $ i $ j == A0)%A.
+  Proof. intros. simpl. bdestruct (i =? j); try easy. Qed.
+
+  (** i < n -> mat1[i,i] = 1 *)
+  Lemma mnth_mat1_same : forall {n} i,
+      i < n -> ((@mat1 n) $ i $ i == A1)%A.
+  Proof. intros. simpl. bdestruct (i =? i); try easy. Qed.
 
 End mat0_mat1.
 
@@ -716,20 +749,20 @@ Section malg.
       ((m1 + m2)%M ! i ! j == (m1!i!j) + (m2!i!j))%A.
   Proof. intros. solve_mnth; monoid_simp. Qed.
 
-  (** (m1 + m2)[i] = m1[i] + m2[i] *)
-  Lemma mrow_madd : forall {r c} i (m1 m2 : mat r c),
-      i < r -> (mrow i (m1 + m2)%M == ((mrow i m1) + (mrow i m2))%list)%list.
-  Proof.
-    intros. unfold mrow.
-    apply nth_ext with (d1:=A0)(d2:=A0); auto.
-    - rewrite ladd_length with (n:=c).
-      all: rewrite map_length,seq_length; auto.
-    - intros. rewrite map_length,seq_length in H0.
-      unfold ladd. rewrite map2_nth with (a:=A0)(b:=A0);
-        try rewrite map_length,seq_length; auto; group_simp.
-      simpl.
-      rewrite !nth_map_seq; auto. group_simp.
-  Qed.
+  (* (** (m1 + m2)[i] = m1[i] + m2[i] *) *)
+  (* Lemma mrow_madd : forall {r c} i (m1 m2 : mat r c), *)
+  (*     i < r -> (mrow i (m1 + m2)%M == ((mrow i m1) + (mrow i m2))%list)%list. *)
+  (* Proof. *)
+  (*   intros. unfold mrow. *)
+  (*   apply nth_ext with (d1:=A0)(d2:=A0); auto. *)
+  (*   - rewrite ladd_length with (n:=c). *)
+  (*     all: rewrite map_length,seq_length; auto. *)
+  (*   - intros. rewrite map_length,seq_length in H0. *)
+  (*     unfold ladd. rewrite map2_nth with (a:=A0)(b:=A0); *)
+  (*       try rewrite map_length,seq_length; auto; group_simp. *)
+  (*     simpl. *)
+  (*     rewrite !nth_map_seq; auto. group_simp. *)
+  (* Qed. *)
 
   (** (m1 + m2)\T = m1\T + m2\T *)
   Lemma mtrans_add : forall {r c} (m1 m2 : mat r c), (m1 + m2)\T == m1\T + m2\T.

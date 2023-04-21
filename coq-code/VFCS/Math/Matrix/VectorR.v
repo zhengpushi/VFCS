@@ -46,6 +46,10 @@
   二、一些观点
   1. 在三维向量空间中：空间点M <-> 原点O指向M的向量 r⃗=OM=xi+yj+zk <-> 有序数(x,y,z)
 
+  三、额外内容
+  1. {R^n, standard-inner-product} is called Euclidean space
+     |v| = √(v,v)
+
  *)
 
 Require Export Vector.
@@ -83,7 +87,8 @@ Module Export RowVectorR.
       (v1 == v2) <-> (forall i, i < n -> v1!i = v2!i)%nat.
   Proof. intros. apply veq_iff_rvnth. Qed.
 
-  Definition mat2row {r c} (m : mat r c) (ci : nat) : rvec c := mat2row m ci.
+  (** *** Get row-vector of a matrix *)
+  Definition mrow {r c} (m : mat r c) (ci : nat) : rvec c := mrow m ci.
 
   
   (** *** convert between list and vector *)
@@ -244,7 +249,8 @@ Module Export ColVectorR.
       (v1 == v2) <-> (forall i, i < n -> v1!i = v2!i)%nat.
   Proof. intros. apply veq_iff_cvnth. Qed.
 
-  Definition mat2vec {r c} (m : mat r c) (ri : nat) : cvec r := mat2col m ri.
+  (** *** Get column-vector of a matrix *)
+  Definition mcol {r c} (m : mat r c) (ri : nat) : cvec r := mcol m ri.
 
 
   (** *** convert between list and vector *)
@@ -357,15 +363,6 @@ Module Export ColVectorR.
   (* ======================================================================= *)
   (** ** Vector theory applied to this type *)
 
-  
-  (** *** vector dot product *)
-  Lemma cvdot_ge0 : forall {n} (v : cvec n), 0 <= v ⋅ v.
-  Proof.
-    intros. cvec_to_fun. unfold cvdot, ColVector.cvdot. simpl.
-    revert v. induction n; intros; simpl; try lra. ra.
-  Qed.
-
-  
   (** *** zero or nonzero vector *)
   Section vzero_vnonzero.
     
@@ -447,9 +444,138 @@ Module Export ColVectorR.
 
   End vzero_vnonzero.
 
+
+  (** *** Unit vector *)
+  Section vunit.
+
+    (** A unit vector u is a vector whose length equals one.
+      Here, we use the square of length instead of length directly,
+      but this is reasonable with the proof of vunit_ok.
+     *)
+    Definition cvunit {n} (u : cvec n) : Prop := u ⋅ u = 1.
+    Definition cvunitb {n} (u : cvec n) : bool := (u ⋅ u =? 1)%R.
+
+  (** If column of a and column of b all are unit, 
+        then column of (a * b) is also unit *)
+    (*   a : mat 2 2 *)
+    (* a1 : cvunit (mat2col a 0) *)
+    (* a2 : cvunit (mat2col a 1) *)
+    (* a3 : cvorthogonal (mat2col a 0) (mat2col a 1) *)
+    (* b1 : cvunit (mat2col b 0) *)
+    (* b2 : cvunit (mat2col b 1) *)
+    (* b3 : cvorthogonal (mat2col b 0) (mat2col b 1) *)
+    (* ============================ *)
+    (* cvunit (mat2col (a * b) 0) *)
+
+  End vunit.
+  
+
+  (** *** Orthogonal column-vectors *)
+  Section cvorthogonal.
+    
+    (** Two real column-vectors are orthogonal (also called perpendicular) *)
+    Definition cvorthogonal {n} (v1 v2 : cvec n) : Prop := v1 ⋅ v2 = 0.
+    Definition cvorthogonalb {n} (v1 v2 : cvec n) : bool := (v1 ⋅ v2 =? 0)%R.
+    Infix "⟂" := cvorthogonal ( at level 50).
+
+    (** All different column-vectors of a matrix are orthogonal each other.
+        For example: [v1;v2;v3] => v1⟂v2 && v1⟂v3 && v2⟂v3. *)
+    Definition mcols_diff_orthogonal {n} (m : smat n) : bool :=
+      let is_orth (i j : nat) : bool := ((mcol m i) ⋅ (mcol m j) =? A0)%R in
+      let cids (i : nat) : list nat := seq (S i) (n - S i) in
+      let chk_col (j : nat) : bool := and_blist (map (fun k => is_orth j k) (cids j)) in
+      and_blist (map (fun j => chk_col j) (seq 0 n)).
+
+    Section test.
+      (* Variable a11 a12 a13 a21 a22 a23 a31 a32 a33 : R. *)
+      (* Let m1 : mat 2 2 := l2m _ _ [[a11;a12];[a21;a22]]. *)
+      (* Let m2 : mat 3 3 := l2m _ _ [[a11;a12;a13];[a21;a22;a23];[a31;a32;a33]]. *)
+
+      (* Compute mcols_diff_orthogonal m1. *)
+      (* Notation exp1 := *)
+      (*   (Aadd (Aadd (Aadd A0 (Amul a11 a12)) (Amul a21 a22)) (Amul a31 a32)). *)
+      (* Notation exp2 := *)
+      (*   (Aadd (Aadd (Aadd A0 (Amul a11 a13)) (Amul a21 a23)) (Amul a31 a33)). *)
+      (* Notation exp3:= *)
+      (*   (Aadd (Aadd (Aadd A0 (Amul a12 a13)) (Amul a22 a23)) (Amul a32 a33)). *)
+      (* Compute mcols_diff_orthogonal m2. *)
+    End test.
+
+    Lemma mcols_diff_orthogonal_iff : forall {n} (m : smat n),
+        mcols_diff_orthogonal m <->
+        (forall j1 j2, j1 < n -> j2 < n -> j1 <> j2 ->
+                  ((mcol m j1) ⋅ (mcol m j2) =? 0)%R)%nat.
+    Proof.
+      Admitted.
+
+    (** All column-vectors of a matrix are unit vector.
+        For example: [v1;v2;v3] => unit v1 && unit v2 && unit v3 *)
+    Definition mcols_unit {n} (m : smat n) : bool :=
+      and_blist (map (fun i => cvunitb (mcol m i)) (seq 0 3)).
+      
+    Lemma mcols_unit_iff : forall {n} (m : smat n),
+        mcols_unit m <-> (forall j, j < n -> ((mcol m j) ⋅ (mcol m j) =? 1)%R)%nat.
+    Proof.
+    Admitted.
+
+    Lemma mnth_mul : forall {r c s} (m : mat r c) (n : mat c s) i j,
+        (i < r)%nat -> (j < c)%nat ->
+        (m * n) $ i $ j = cvdot ((mrow m i)\T) (mcol n j).
+    Admitted.
+
+    Lemma mnth_mul_trans_l : forall {n} (m : smat n) i j,
+        (i < n)%nat -> (j < n)%nat ->
+        (m\T * m) $ i $ j = cvdot (mcol m i) (mcol m j).
+    Admitted.
+
+    Lemma mnth_mul_trans_r : forall {n} (m : smat n) i j,
+        (i < n)%nat -> (j < n)%nat ->
+        (m * m\T) $ i $ j = rvdot (mrow m i) (mrow m j).
+    Admitted.
+
+    (** orthogonal m <-> {different columns are orthogonal each other + all columns
+        are unit} *)
+    Lemma morthogonal_iff_cols : forall {n} (m : smat n),
+        morthogonal m <-> mcols_diff_orthogonal m && mcols_unit m.
+    Proof.
+      intros.
+      split; intros.
+      - apply is_true_and_iff. split.
+        + apply mcols_diff_orthogonal_iff.
+          intros. rewrite <- mnth_mul_trans_l; auto.
+          unfold morthogonal in H. rewrite H; auto. rewrite mnth_mat1_diff; auto.
+          bdestruct (R0 =? 0)%R; easy.
+        + apply mcols_unit_iff.
+          intros. rewrite <- mnth_mul_trans_l; auto.
+          unfold morthogonal in H. rewrite H; auto.
+          rewrite mnth_mat1_same; auto.
+          bdestruct (R1 =? 1)%R; easy.
+      - apply is_true_and_iff in H. destruct H as [H1 H2].
+        rewrite mcols_diff_orthogonal_iff in H1.
+        rewrite mcols_unit_iff in H2.
+        apply morthogonal_iff_mul_trans_l. red. intros.
+        rewrite mnth_mul_trans_l; auto.
+        bdestruct (i =? j)%nat.
+        + subst. rewrite mnth_mat1_same; auto.
+          apply Reqb_true. apply H2; auto.
+        + rewrite mnth_mat1_diff; auto.
+          apply Reqb_true. apply H1; auto.
+    Qed.
+    
+  End cvorthogonal.
+
+  
+  (** *** vector dot product *)
+  Lemma cvdot_ge0 : forall {n} (v : cvec n), 0 <= v ⋅ v.
+  Proof.
+    intros. cvec_to_fun. unfold cvdot, ColVector.cvdot. simpl.
+    revert v. induction n; intros; simpl; try lra. ra.
+  Qed.
+
+  
   (** *** Two vectors are parallel (or called collinear) *)
   Section vparallel.
-    
+
     (** Two vectors are parallel, iff their components have k-times relation *)
     Definition cvparallel {n} (v1 v2 : cvec n) : Prop :=
       exists k : R, k <> 0 /\ k c* v1 == v2.
@@ -458,10 +584,10 @@ Module Export ColVectorR.
 
     (** vparallel is an equivalence relation *)
 
-    Lemma vparallel_refl : forall {n} (v : cvec n), v ∥ v.
+    Lemma cvparallel_refl : forall {n} (v : cvec n), v ∥ v.
     Proof. intros. exists 1. split; auto. apply cvcmul_1_l. Qed.
 
-    Lemma vparallel_sym : forall {n} (v0 v1 : cvec n), v0 ∥ v1 -> v1 ∥ v0.
+    Lemma cvparallel_sym : forall {n} (v0 v1 : cvec n), v0 ∥ v1 -> v1 ∥ v0.
     Proof.
       intros. destruct H as [k [H1 H2]]. exists (1/k). split.
       (* ToDo: 提高R的自动化程度 *)
@@ -470,140 +596,48 @@ Module Export ColVectorR.
         unfold Rdiv. autorewrite with R. rewrite Rinv_l; auto. apply cvcmul_1_l.
     Qed.
 
-    Lemma vparallel_trans : forall {n} (v0 v1 v2 : cvec n), v0 ∥ v1 -> v1 ∥ v2 -> v0 ∥ v2.
+    Lemma cvparallel_trans : forall {n} (v0 v1 v2 : cvec n), v0 ∥ v1 -> v1 ∥ v2 -> v0 ∥ v2.
     Proof.
       intros. destruct H as [k1 [H1 H2]], H0 as [k2 [H3 H4]].
       exists (k2 * k1)%R. split; auto.
       rewrite <- cvcmul_assoc. rewrite H2. auto.
     Qed.
 
-    (** If two non-zero vectors are parallel, then there is a unique k such that *)
-    (*     they are k times relation *)
-    (* Lemma vparallel_vnonezero_imply_unique_k : forall {n} (v1 v2 : cvec n), *)
-    (*     vnonzero v1 -> vnonzero v2 -> v1 // v2 -> (exists ! k, v1 == k c* v2). *)
+    (** Zero vector is parallel to any other vectors *)
+    (* Lemma cvparallel_zero_l : forall {n} (v1 v2 : cvec n), cvzero v1 -> v1 ∥ v2. *)
+    (* Proof. intros. exists 0. *)
+      
+
+    (* (** If two non-zero vectors are parallel, then there is a unique k such that *)
+    (*     they are k times relation *) *)
+    (* Lemma cvparallel_vnonezero_imply_unique_k : *)
+    (*   forall {n} (v1 v2 : cvec n) (H1 : cvnonzero v1) (H2 : cvnonzero v2), *)
+    (*     v1 ∥ v2 -> (exists ! k, k c* v1 == v2). *)
     (* Proof. *)
-    (*   intros. *)
-    (*   destruct H1; try easy. destruct H1; try easy. destruct H1. *)
+    (*   intros. destruct H1 as [x [H1 H2]]. *)
     (*   exists x. split; auto. *)
-    (*   intros. apply vcmul_vnonzero_eq_iff_unique_k with (v:=v2); auto. *)
-    (*   rewrite <- H1,H2. easy. *)
+    (*   intros. apply cvcmul_vnonzero_eq_iff_unique_k with (v:=v1); auto. *)
+    (*   rewrite H2,H3. easy. *)
     (* Qed. *)
 
-    (** Given a non-zero vector v1 and another vector v2, *)
-    (*     v1 is parallel to v2, iff, there is a unique k such that v2 is k times v1. *)
-    (* Lemma vparallel_iff1 : forall {n} (v1 v2 : cvec n) (H : vnonzero v1), *)
-    (*     (v1 // v2) <-> (exists ! k, v2 == k c* v1). *)
+    (** A non-zero vector v1 is parallel to any other vector v2,
+        iff there is a unique k such that v2 is k times v1. *)
+    (* Lemma cvparallel_iff1 : forall {n} (v1 v2 : cvec n), *)
+    (*     (cvnonzero v1 /\ (v1 ∥ v2)) <-> (exists ! k, v2 == k c* v1). *)
     (* Proof. *)
     (*   intros. split; intros. *)
     (*   - destruct (v2 ==? cvec0). *)
     (*     + exists 0. split. *)
     (*       * rewrite vcmul_0_l. auto. *)
     (*       * intros. rewrite m in H1. *)
-    (*         apply symmetry in H1. apply vcmul_nonzero_eq_zero_imply_k0 in H1; auto. *)
-    (*     + apply vparallel_vnonezero_imply_unique_k; auto. apply vparallel_sym; auto. *)
+    (*         apply symmetry in H1. apply cvcmul_nonzero_eq_zero_imply_k0 in H1; auto. *)
+    (*     + apply cvparallel_vnonezero_imply_unique_k; auto. apply vparallel_sym; auto. *)
     (*   - destruct H0. destruct H0. apply vparallel_sym. right. right. exists x. auto. *)
     (* Qed. *)
-    
 
   End vparallel.
   Infix "∥" := cvparallel ( at level 50) : cvec_scope.
   
-  (** ** vector parallel (old implementation) *)
-  Section vparallel_old.
-
-    (* (* Definition 1: v1 is k times to v2，or v2 is k times to v1 *) *)
-    (* Definition vparallel_ver1 {n} (v1 v2 : cvec n) : Prop := *)
-    (*   exists k, (v1 == k c* v2 \/ v2 == k c* v1). *)
-
-    (* (* Definition 2: v1 is zero-vector, or v2 is zero-vector, or v1 is k times to v2 *) *)
-    (* Definition vparallel_ver2 {n} (v1 v2 : cvec n) : Prop := *)
-    (*   (vzero v1) \/ (vzero v2) \/ (exists k, v1 == k c* v2). *)
-
-    (* (* These two definitions are same *) *)
-    (* Lemma vparallel_ver1_eq_ver2 : forall {n} (v1 v2 : cvec n), *)
-    (*     vparallel_ver1 v1 v2 <-> vparallel_ver2 v1 v2. *)
-    (* Proof. *)
-    (*   intros. unfold vparallel_ver1, vparallel_ver2. *)
-    (*   unfold vzero, vnonzero, Vector.vzero. split; intros. *)
-    (*   - destruct H. destruct H. *)
-    (*     + right. right. exists x. auto. *)
-    (*     + destruct (v1 ==? cvec0); auto. *)
-    (*       destruct (v2 ==? cvec0); auto. *)
-    (*       right. right. exists (1/x). rewrite H. *)
-    (*       lma. apply cvec_eq_vcmul_imply_coef_neq0 in H; auto. *)
-    (*   - destruct H as [H1 | [H2 | H3]]. *)
-    (*     + exists 0. left. rewrite H1. rewrite vcmul_0_l. easy. *)
-    (*     + exists 0. right. rewrite H2. rewrite vcmul_0_l. easy. *)
-    (*     + destruct H3. exists x. left; auto. *)
-    (* Qed. *)
-
-    (* (** Vector parallel relation. Here, we use definition 2 *) *)
-    (* Definition vparallel {n} (v0 v1 : cvec n) : Prop := *)
-    (*   vparallel_ver2 v0 v1. *)
-
-    (* Notation "v0 // v1" := (vparallel (v0) (v1)) (at level 70) : cvec_scope. *)
-
-    (* (** vparallel is an equivalence relation *) *)
-
-    (* Lemma vparallel_refl : forall {n} (v : cvec n), v // v. *)
-    (* Proof. *)
-    (*   intros. unfold vparallel,vparallel_ver2. right. right. exists 1. *)
-    (*   rewrite vcmul_1_l. easy. *)
-    (* Qed. *)
-
-    (* Lemma vparallel_sym : forall {n} (v0 v1 : cvec n), v0 // v1 -> v1 // v0. *)
-    (* Proof. *)
-    (*   intros. unfold vparallel,vparallel_ver2 in *. *)
-    (*   destruct (v0 ==? cvec0); auto. *)
-    (*   destruct (v1 ==? cvec0); auto. *)
-    (*   destruct H; auto. destruct H; auto. destruct H. *)
-    (*   right. right. exists (1/x). rewrite H. *)
-    (*   lma. apply cvec_eq_vcmul_imply_coef_neq0 in H; auto. *)
-    (* Qed. *)
-
-  (* (* Additionally, v1 need to be a non-zero vector. Because if v1 is zero vector,  *)
-   (*    then v0//v1, v1//v2, but v0 and v2 needn't to be parallel. *) *)
-    (* Lemma vparallel_trans : forall {n} (v0 v1 v2 : cvec n),  *)
-    (*     vnonzero v1 -> v0 // v1 -> v1 // v2 -> v0 // v2. *)
-    (* Proof. *)
-    (*   intros. unfold vparallel, vparallel_ver2 in *. *)
-    (*   destruct (v0 ==? cvec0), (v1 ==? cvec0), (v2 ==? cvec0); *)
-    (*     auto; try easy. *)
-    (*   destruct H0,H1; auto; try easy. *)
-    (*   destruct H0,H1; auto; try easy. *)
-    (*   destruct H0,H1. right. right. *)
-    (*   exists (x*x0)%R. rewrite H0,H1. apply mcmul_assoc. *)
-    (* Qed. *)
-
-  (* (** If two non-zero vectors are parallel, then there is a unique k such that *)
-   (*     they are k times relation *) *)
-    (* Lemma vparallel_vnonezero_imply_unique_k : forall {n} (v1 v2 : cvec n), *)
-    (*     vnonzero v1 -> vnonzero v2 -> v1 // v2 -> (exists ! k, v1 == k c* v2). *)
-    (* Proof. *)
-    (*   intros. *)
-    (*   destruct H1; try easy. destruct H1; try easy. destruct H1. *)
-    (*   exists x. split; auto. *)
-    (*   intros. apply vcmul_vnonzero_eq_iff_unique_k with (v:=v2); auto. *)
-    (*   rewrite <- H1,H2. easy. *)
-    (* Qed. *)
-
-  (* (** Given a non-zero vector v1 and another vector v2, *)
-   (*     v1 is parallel to v2, iff, there is a unique k such that v2 is k times v1. *) *)
-    (* Lemma vparallel_iff1 : forall {n} (v1 v2 : cvec n) (H : vnonzero v1), *)
-    (*     (v1 // v2) <-> (exists ! k, v2 == k c* v1). *)
-    (* Proof. *)
-    (*   intros. split; intros. *)
-    (*   - destruct (v2 ==? cvec0). *)
-    (*     + exists 0. split. *)
-    (*       * rewrite vcmul_0_l. auto. *)
-    (*       * intros. rewrite m in H1. *)
-    (*         apply symmetry in H1. apply vcmul_nonzero_eq_zero_imply_k0 in H1; auto. *)
-    (*     + apply vparallel_vnonezero_imply_unique_k; auto. apply vparallel_sym; auto. *)
-    (*   - destruct H0. destruct H0. apply vparallel_sym. right. right. exists x. auto. *)
-    (* Qed. *)
-    
-  End vparallel_old.
-
 
   (** *** Standard unit vector in Euclidean space of 3-dimensions *)
   Definition v3i : cvec 3 := mk_cvec3 1 0 0.
@@ -640,36 +674,13 @@ Module Export ColVectorR.
     Lemma cvlen1_iff_vdot1 : forall n (u : cvec n), `|u| = 1 <-> u ⋅ u = 1.
     Proof. intros. unfold cvlen. split; intros; hnf in *. ra. rewrite H. ra. Qed.
 
-  End vlen.
-  Notation "`| v |" := (cvlen v) : cvec_scope.
-
-
-  (** *** Unit vector *)
-  Section vunit.
-
-    (** A unit vector u is a vector whose length equals one.
-      Here, we use the square of length instead of length directly,
-      but this is reasonable with the proof of vunit_ok.
-     *)
-    Definition cvunit {n} (u : cvec n) : Prop := u ⋅ u = 1.
-
+    
     (** Verify the definition is reasonable *)
     Lemma cvunit_spec : forall {n} (u : cvec n), cvunit u <-> `|u| = 1.
     Proof. intros. split; intros; apply cvlen1_iff_vdot1; auto. Qed.
 
-  (** If column of a and column of b all are unit, 
-        then column of (a * b) is also unit *)
-    (*   a : mat 2 2 *)
-    (* a1 : cvunit (mat2col a 0) *)
-    (* a2 : cvunit (mat2col a 1) *)
-    (* a3 : cvorthogonal (mat2col a 0) (mat2col a 1) *)
-    (* b1 : cvunit (mat2col b 0) *)
-    (* b2 : cvunit (mat2col b 1) *)
-    (* b3 : cvorthogonal (mat2col b 0) (mat2col b 1) *)
-    (* ============================ *)
-    (* cvunit (mat2col (a * b) 0) *)
-
-  End vunit.
+  End vlen.
+  Notation "`| v |" := (cvlen v) : cvec_scope.
 
 
   (** *** Cross product (vector product) of two 3-dim vectors *)
@@ -744,10 +755,6 @@ Module Export ColVectorR.
       let v2' := cvnormalize v2 in
       acos (v1' ⋅ v2').
 
-    (** Two vectors are perpendicular. Note that zero vector is perp to any vectors *)
-    Definition cvperp {n} (v1 v2 : cvec n) : Prop := v1 ⋅ v2 = 0.
-    Infix "⟂" := cvperp ( at level 50).
-    
   End vangle.
 
 

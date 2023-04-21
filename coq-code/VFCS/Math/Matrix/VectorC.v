@@ -31,7 +31,7 @@ Module Export RowVectorC.
       (v1 == v2) <-> (forall i, i < n -> (v1!i == v2!i)%A)%nat.
   Proof. intros. apply veq_iff_rvnth. Qed.
 
-  Definition mat2row {r c} (m : mat r c) (ci : nat) : rvec c := mat2row m ci.
+  Definition mrow {r c} (m : mat r c) (ci : nat) : rvec c := mrow m ci.
 
   
   (** *** convert between list and vector *)
@@ -191,7 +191,7 @@ Module Export ColVectorC.
       (v1 == v2) <-> (forall i, i < n -> (v1!i == v2!i)%A)%nat.
   Proof. intros. apply veq_iff_cvnth. Qed.
 
-  Definition mat2vec {r c} (m : mat r c) (ri : nat) : cvec r := mat2col m ri.
+  Definition mcol {r c} (m : mat r c) (ri : nat) : cvec r := mcol m ri.
 
 
   (** *** convert between list and vector *)

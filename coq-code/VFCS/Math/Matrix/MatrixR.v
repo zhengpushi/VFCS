@@ -48,6 +48,7 @@ Notation smat n := (smat A n).
 Notation meq := (meq (Aeq:=eq)).
 Infix "==" := (meq) : mat_scope.
 Infix "!=" := (fun m1 m2 => ~(m1 == m2)%M) : mat_scope.
+Infix "=?" := (meqb) : mat_scope.
 Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope.
 
 Lemma meq_iff_mnth : forall {r c} (m1 m2 : mat r c),
@@ -161,6 +162,13 @@ Definition mat1 {n} : mat n n := @mat1 _ A0 A1 n.
 
 Lemma mtrans_1 : forall {n : nat}, (@mat1 n)\T == mat1.
 Proof. intros. apply mtrans_1. Qed.
+
+Lemma mnth_mat1_diff : forall {n : nat} i j,
+    (i < n)%nat -> (j < n)%nat -> i <> j -> (@mat1 n) $ i $ j = A0.
+Proof. intros. apply mnth_mat1_diff; auto. Qed.
+
+Lemma mnth_mat1_same : forall {n : nat} i, (i < n)%nat -> (@mat1 n) $ i $ i = A1.
+Proof. intros. apply mnth_mat1_same; auto. Qed.
 
 
 (** *** Matrix trace *)
@@ -430,12 +438,26 @@ Section OrthogonalMatrix.
       morthogonal m -> m⁻¹ == m\T.
   Proof. intros. red in H. apply mmul_eq1_imply_minv_r in H. auto. Qed.
 
-  (** orthogonal m -> m * m\T = mat1 *)
-  Lemma morthogonal_mul_trans_r : forall {n} (m : smat n),
-      morthogonal m -> m * m\T == mat1.
+  (** orthogonal m <-> m\T * m = mat1 *)
+  Lemma morthogonal_iff_mul_trans_l : forall {n} (m : smat n),
+      morthogonal m <-> m\T * m == mat1.
+  Proof. intros. red. auto. Qed.
+
+  (* (** orthogonal m -> m * m\T = mat1 *) *)
+  (* Lemma morthogonal_iff_mul_trans_r : forall {n} (m : smat n), *)
+  (*     morthogonal m -> m * m\T == mat1. *)
+  (* Proof. *)
+  (*   intros. red in H. apply mmul_eq1_imply_minv_r in H. *)
+  (*   rewrite <- H. apply mmul_minv_r. *)
+  (* Qed. *)
+
+  (** orthogonal m <-> m * m\T = mat1 *)
+  Lemma morthogonal_iff_mul_trans_r : forall {n} (m : smat n),
+      morthogonal m <-> m * m\T == mat1.
   Proof.
-    intros. red in H. apply mmul_eq1_imply_minv_r in H.
-    rewrite <- H. apply mmul_minv_r.
+    intros. split; intros H.
+    - apply mmul_eq1_imply_minv_r in H. rewrite <- H. apply mmul_minv_r.
+    - red. apply mmul_eq1_imply_minv_l in H. rewrite <- H. apply mmul_minv_l.
   Qed.
 
   (** orthogonal mat1 *)
@@ -454,14 +476,14 @@ Section OrthogonalMatrix.
   (** orthogonal m -> orthogonal m\T *)
   Lemma morthogonal_trans : forall {n} (m : smat n), morthogonal m -> morthogonal (m\T).
   Proof.
-    intros. red. rewrite mtrans_trans. apply morthogonal_mul_trans_r in H. auto.
+    intros. red. rewrite mtrans_trans. apply morthogonal_iff_mul_trans_r in H. auto.
   Qed.
 
   (** orthogonal m -> orthogonal m⁻¹ *)
   Lemma morthogonal_inv : forall {n} (m : smat n), morthogonal m -> morthogonal (m⁻¹).
   Proof.
     intros. red. rewrite morthogonal_inv_eq_trans; auto.
-    rewrite mtrans_trans. apply morthogonal_mul_trans_r in H. auto.
+    rewrite mtrans_trans. apply morthogonal_iff_mul_trans_r in H. auto.
   Qed.
 
   (** orthogonal m -> |m| = ± 1 *)
@@ -475,6 +497,7 @@ Section OrthogonalMatrix.
   Qed.
 
 End OrthogonalMatrix.
+
 
 (** *** SO(n): special orthogonal group *)
 Section SO3.
