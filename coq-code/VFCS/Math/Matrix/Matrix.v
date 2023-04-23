@@ -92,11 +92,14 @@ Section meq.
   Proof. intros. constructor. intros. apply seq2eq_dec. Qed.
 
   (** matf is proper *)
-  Lemma matf_mor : forall r c (m p : @mat _ r c) i j,
+  Lemma matf_mor : forall {r c} (m p : @mat _ r c) i j,
       i < r -> j < c -> m == p -> (matf m i j == matf p i j)%A.
   Proof.
     intros. destruct m as [m], p as [p]. simpl in *. subst. apply H1; auto.
   Qed.
+
+  Example matf_mor_ex1 : forall (m p : @mat _ 3 3), m == p -> (matf m 0 0 == matf p 0 0)%A.
+  Proof. intros. rewrite matf_mor; auto. easy. Qed.
   
 End meq.
 
@@ -1063,12 +1066,12 @@ Section malg.
   Qed.
   
   (* a c* (m1 * m2) = (a c* m1) * m2. *)
-  Lemma mcmul_mul_assoc : forall {r c s} (a : A) (m1 : mat r c) (m2 : mat c s), 
+  Lemma mcmul_mul_assoc_l : forall {r c s} (a : A) (m1 : mat r c) (m2 : mat c s), 
       a c* (m1 * m2) == (a c* m1) * m2.
   Proof. lma. rewrite seqsum_cmul_l. apply seqsum_eq; intros; ring. Qed.
   
-  (** m1 * (a c* m2) = a c* (m1 * m2). *)
-  Lemma mcmul_mul_perm : forall {r c s} (a : A) (m1 : mat r c) (m2 : mat c s), 
+  (** a c* (m1 * m2) = m1 * (a c* m2) *)
+  Lemma mcmul_mul_assoc_r : forall {r c s} (a : A) (m1 : mat r c) (m2 : mat c s), 
       a c* (m1 * m2) == m1 * (a c* m2).
   Proof. lma. rewrite seqsum_cmul_l. apply seqsum_eq; intros; ring. Qed.
   

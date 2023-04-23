@@ -372,8 +372,12 @@ Module Export ColVectorR.
   (** *** vector dot product *)
   Definition cvdot {n} (v1 v2 : cvec n) :=
     cvdot v1 v2 (Aadd:=Aadd)(A0:=A0)(Amul:=Amul).
-
   Notation "< a , b >" := (cvdot a b) : cvec_scope.
+
+  (** <v1,v2> = v1\T * v2 *)
+  Lemma cvdot_eq_mul_trans : forall {n} (v1 v2 : cvec n),
+      <v1,v2> = scalar_of_mat (v1\T * v2).
+  Proof. intros. apply cvdot_eq_mul_trans. Qed.
 
   
   (* ======================================================================= *)
@@ -686,7 +690,39 @@ Module Export ColVectorR.
     (* cvunit (mat2col (a * b) 0) *)
 
   End vunit.
+
   
+  (** *** vector normalization *)
+  Section vnormalize.
+    
+    (** Normalization of a non-zero vector v.
+      That is, get a unit vector in the same directin as v. *)
+    Definition cvnormalize {n} (v : cvec n) : cvec n := ||v|| c* v.
+
+  End vnormalize.
+
+  
+  (** *** Angle between two vectors *)
+  Section vangle.
+
+    (** The angle between two vectors, is derived from the inner-product *)
+    Definition cvangle {n} (v1 v2 : cvec n) : R :=
+      let v1' := cvnormalize v1 in
+      let v2' := cvnormalize v2 in
+      acos (<v1', v2'>).
+
+    Infix "∠" := cvangle (at level 60) : cvec_scope.
+
+    (* (** Angle equal iff dot-product equal *) *)
+    (* Lemma cvangle_eq_if_dot_eq : forall {n} (u1 u2 v1 v2 : cvec n), *)
+    (*     <u1,v1> = <u2,v2> -> u1 ∠ v1 = u2 ∠ v2. *)
+    (* Proof. *)
+    (*   intros. unfold cvangle. f_equal. *)
+    (* Qed. *)
+
+  End vangle.
+  Infix "∠" := cvangle (at level 60) : cvec_scope.
+
 
   (** *** Propertities for orthogonal matrix *)
   Section orthogonal_matrix_props.
@@ -775,12 +811,45 @@ Module Export ColVectorR.
           apply Reqb_true. apply H1; auto.
     Qed.
   
-    (** Transformation by orthogonal matrix will keep length *)
-    Theorem morthogonal_keep_length : forall {n} (m : smat n) (v : cvec n),
+    (** Transformation by orthogonal matrix will keep inner-product *)
+    Theorem morthogonal_keep_dot : forall {n} (m : smat n) (v1 v2 : cvec n),
+        morthogonal m -> <m * v1, m * v2> = <v1, v2>.
+    Proof.
+      intros. rewrite cvdot_eq_mul_trans.
+      assert (((m * v1)\T * (m * v2)) == v1\T * v2).
+      { rewrite mtrans_mul. rewrite mmul_assoc. rewrite <- (mmul_assoc _ m).
+        rewrite morthogonal_iff_mul_trans_l in H. rewrite H.
+        rewrite mmul_1_l. easy. }
+      unfold scalar_of_mat.
+      rewrite (matf_mor _ (v1\T * v2)); auto.
+    Qed.
+    
+    (** Transformation by orthogonal matrix will keep length. *)
+    Corollary morthogonal_keep_length : forall {n} (m : smat n) (v : cvec n),
         morthogonal m -> ||m * v|| = ||v||.
     Proof.
-      intros. rewrite cvlen_eq_iff_dot_eq.
-    Admitted.
+      intros. rewrite cvlen_eq_iff_dot_eq. apply morthogonal_keep_dot. auto.
+    Qed.
+
+    (** Transformation by orthogonal matrix will keep normalization. *)
+    Corollary morthogonal_keep_normalize : forall {n} (m : smat n) (v : cvec n),
+        morthogonal m -> cvnormalize (m * v) == m * (cvnormalize v).
+    Proof.
+      intros. unfold cvnormalize.
+      rewrite morthogonal_keep_length; auto. apply mcmul_mul_assoc_r.
+    Qed.
+    
+    (** Transformation by orthogonal matrix will keep angle. *)
+    Corollary morthogonal_keep_angle : forall {n} (m : smat n) (v1 v2 : cvec n),
+        morthogonal m -> m * v1 ∠ m * v2 = v1 ∠ v2.
+    Proof.
+      intros. unfold cvangle. f_equal. rewrite !morthogonal_keep_normalize; auto.
+      rewrite morthogonal_keep_dot; auto.
+    Qed.
+
+    (** 由于正交矩阵可保持变换向量的长度和角度，它可保持坐标系的整体结构不变。
+        因此，正交矩阵仅可用于旋转变换和反射变换或二者的组合变换。
+        当正交矩阵的行列式为1，表示一个旋转，行列式为-1，表示一个反射。*)
 
   End orthogonal_matrix_props.
 
@@ -815,6 +884,12 @@ Module Export ColVectorR.
       rewrite <- cvcmul_assoc. rewrite H2. auto.
     Qed.
 
+    Lemma cvnormalize_spec : forall {n} (v : cvec n),
+        let v' := cvnormalize v in
+        cvlen v' = 1 /\ v ∥ v'.
+    Proof.
+    Admitted.
+    
     (** Zero vector is parallel to any other vectors *)
     (* Lemma cvparallel_zero_l : forall {n} (v1 v2 : cvec n), cvzero v1 -> v1 ∥ v2. *)
     (* Proof. intros. exists 0. *)
@@ -969,34 +1044,6 @@ Module Export ColVectorR.
     Admitted.
 
   End v3parallel.
-
-
-  (** *** vector normalization *)
-  Section vnormalize.
-    
-    (** Normalization of a non-zero vector v.
-      That is, get a unit vector in the same directin as v. *)
-    Definition cvnormalize {n} (v : cvec n) : cvec n := ||v|| c* v.
-
-    Lemma cvnormalize_spec : forall {n} (v : cvec n),
-        let v' := cvnormalize v in
-        cvlen v' = 1 /\ v ∥ v'.
-    Proof.
-    Admitted.
-    
-  End vnormalize.
-
-  
-  (** *** Angle between two vectors *)
-  Section vangle.
-
-    (** The angle between two vectors, is derived from the inner-product *)
-    Definition cvangle {n} (v1 v2 : cvec n) : R :=
-      let v1' := cvnormalize v1 in
-      let v2' := cvnormalize v2 in
-      acos (<v1', v2'>).
-
-  End vangle.
 
 
   (** ** Operations on vectors of 3-dimensional *)

@@ -749,11 +749,17 @@ Module Export ColVector.
     (** dot production of two vectors. *)
     Definition cvdot {n : nat} (v1 v2 : cvec n) : A :=
       seqsum (fun i => v1$i * v2$i)%A n.
-    
     Notation "< a , b >" := (cvdot a b) : cvec_scope.
 
+    Global Instance cvdot_mor {n} : Proper (meq ==> meq ==> Aeq) (@cvdot n).
+    Proof.
+      simp_proper. intros. unfold cvdot.
+      apply seqsum_eq. intros. f_equiv; auto.
+    Qed.
+    
+
     (** <v1,v2> = v1\T * v2 *)
-    Lemma cvdot_mat_form : forall {n} (v1 v2 : cvec n),
+    Lemma cvdot_eq_mul_trans : forall {n} (v1 v2 : cvec n),
         (<v1,v2> == scalar_of_mat (v1\T * v2)%M)%A.
     Proof. intros. simpl. apply seqsum_eq. intros. easy. Qed.
 

@@ -93,7 +93,7 @@ Proof. intros. apply (m2l_surj (A0:=A0)); auto. Qed.
 Definition t2m_3_3 (t : T_3_3) : mat 3 3 := t2m_3_3 A0 t.
 Definition m2t_3_3 (m : mat 3 3) : T_3_3 := m2t_3_3 m.
 Definition m2t_1_1 (m : mat 1 1) := m2t_1_1 m.
-Definition scalar_of_mat (m : mat 1 1) := m2t_1_1 m.
+(* Definition scalar_of_mat (m : mat 1 1) := scalar_of_mat m. *)
 
 
 (** *** construct matrix with vector and matrix *)
