@@ -46,7 +46,7 @@ Parameter eig : forall {n : nat} (m : matR n n), matC n n * matC n n.
 (* Definition orthonormal {n} (m : smat n) :=?. *)
 
 (** Two vectors are orthogonal *)
-Definition cvorthogonal {n} (v1 v2 : cvec n) := (v1 ⋅ v2 = 0).
+Definition cvorthogonal {n} (v1 v2 : cvec n) := <v1,v2> = 0.
 
 (** * Convert a angle between degree and radian *)
 Module Export Angle.

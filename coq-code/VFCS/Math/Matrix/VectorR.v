@@ -68,6 +68,22 @@ Local Notation Aopp := Ropp.
 Local Notation Amul := Rmult.
 Local Notation Ainv := Rinv.
 
+Infix "+" := Aadd : A_scope.
+Notation "- a" := (Aopp a) : A_scope.
+Infix "-" := (fun a b => a + (-b)) : A_scope.
+Infix "*" := Amul : A_scope.
+Notation "/ a" := (Ainv a) : A_scope.
+Infix "/" := (fun a b => a * (/b)) : A_scope.
+
+
+(** ** Kronecker delta function *)
+Section kronecker.
+
+  Definition kronecker_fun {A} {A0 A1 : A} (i j : nat) :=
+    if (i =? j)%nat then A1 else A0.
+
+End kronecker.
+
 
 Module Export RowVectorR.
   Open Scope rvec_scope.
@@ -357,11 +373,24 @@ Module Export ColVectorR.
   Definition cvdot {n} (v1 v2 : cvec n) :=
     cvdot v1 v2 (Aadd:=Aadd)(A0:=A0)(Amul:=Amul).
 
-  Infix "⋅" := cvdot : cvec_scope.
+  Notation "< a , b >" := (cvdot a b) : cvec_scope.
 
   
   (* ======================================================================= *)
   (** ** Vector theory applied to this type *)
+
+  (** *** Propertities for seqsum *)
+  Section seqsum_props.
+
+    Notation seqsum := (seqsum (Aadd:=Aadd)(A0:=A0)).
+
+    (** If all elements is >= 0, then the sum is >= 0 *)
+    Lemma seqsum_ge0 : forall (f : nat -> R) n,
+        (forall i, (i < n)%nat -> 0 <= f i) -> 0 <= seqsum f n.
+    Proof. intros. induction n; simpl. lra. apply Rplus_le_le_0_compat; auto. Qed.
+      
+  End seqsum_props.
+
 
   (** *** zero or nonzero vector *)
   Section vzero_vnonzero.
@@ -445,6 +474,191 @@ Module Export ColVectorR.
   End vzero_vnonzero.
 
 
+  (** *** Propertities for vector dot product *)
+  Section cvdot_props.
+
+    (** 0 <= <v,v> *)
+    Lemma cvdot_ge0 : forall {n} (v : cvec n), 0 <= <v,v>.
+    Proof.
+      intros. cvec_to_fun. unfold cvdot, ColVector.cvdot. simpl.
+      revert v. induction n; intros; simpl; try lra. ra.
+    Qed.
+
+    (** <v,v> = 0 <-> v = 0 *)
+    Lemma cvdot0_iff_0 : forall {n} (v : cvec n), <v,v> = 0 <-> v == cvec0.
+    Proof.
+      intros. unfold cvdot, ColVector.cvdot. cvec_to_fun.
+      split; intros.
+      - revert v H. induction n; intros; simpl in *. lva.
+        apply Rplus_eq_R0 in H; ra.
+        + destruct H. apply IHn in H. apply Rsqr_eq_0 in H0.
+          apply seq2eq_Sr. split; auto.
+          hnf; simpl. intros. assert (i = 0%nat) by lia. subst; auto.
+        + apply seqsum_ge0. intros. ra.
+      - hnf in H; simpl in *.
+        apply seqsum_seq0. intros. apply Rsqr_eq0_if0. apply H; auto.
+    Qed.
+
+  End cvdot_props.
+
+
+  (** *** Length of a vector *)
+  Section vlen.
+
+    (** Length (magnitude) of a vector, is derived by inner-product *)
+    Definition cvlen {n} (v : cvec n) : R := sqrt (<v,v>).
+
+    Notation "|| v ||" := (cvlen v) : cvec_scope.
+
+    (** Square of length equal to dot-product *)
+    Lemma cvlen_sqr : forall {n} (v : cvec n), ||v||² = <v,v>.
+    Proof. intros. unfold cvlen. rewrite Rsqr_sqrt; auto. apply cvdot_ge0. Qed.
+
+    (** 0 <= ||v|| *)
+    Lemma cvlen_ge0 : forall {n} (v : cvec n), 0 <= ||v||.
+    Proof. intros. unfold cvlen. ra. Qed.
+
+    (** Length equal iff dot-product equal *)
+    Lemma cvlen_eq_iff_dot_eq : forall {n} (u v : cvec n), ||u|| = ||v|| <-> <u,u> = <v,v>.
+    Proof.
+      intros. rewrite <- !cvlen_sqr. split; intros.
+      - apply Rsqr_eq_asb_1. rewrite H. auto.
+      - apply Rsqr_eq_abs_0 in H. rewrite !Rabs_right in H; auto.
+        all: apply Rle_ge; apply cvlen_ge0.
+    Qed.
+
+    (** ||v|| = 0 <-> v = 0 *)
+    Lemma cvlen0_iff_0 : forall {n} (v : cvec n), ||v|| = 0 <-> v == cvec0.
+    Proof.
+      intros. unfold cvlen. split; intros.
+      - apply cvdot0_iff_0. apply sqrt_eq_0 in H. auto. apply cvdot_ge0.
+      - apply cvdot0_iff_0 in H. rewrite H. ra.
+    Qed.
+    
+    (** Length of a vector u is 1, iff the dot product of u and u is 1 *)
+    Lemma cvlen1_iff_vdot1 : forall {n} (u : cvec n), ||u|| = 1 <-> <u,u> = 1.
+    Proof. intros. unfold cvlen. split; intros; hnf in *. ra. rewrite H. ra. Qed.
+
+    (** ||k c* v|| = |k| * ||v|| *)
+    Lemma cvlen_cmul : forall n (v : cvec n) k, ||k c* v|| = (|k| * ||v||)%R.
+    Proof.
+    Admitted.
+
+    (** ||u + v|| <= ||u|| + ||v|| *)
+    Lemma cvlen_add_ineq : forall {n} (u v : cvec n), ||(u + v)|| <= ||u|| + ||v||.
+    Admitted.
+
+    (** |<u,v>| <= ||u|| * ||v|| *)
+    Lemma cvlen_mul_ineq : forall {n} (u v : cvec n), |<u,v>| <= ||u|| * ||v||.
+    Admitted.
+
+  End vlen.
+  Notation "|| v ||" := (cvlen v) : cvec_scope.
+
+
+  (** *** Orthogonal vectors 正交的两个向量 *)
+  Section cvorthogonal.
+
+    (** Two vectors, x and y, in an inner product space V, are orthogonal if their 
+        inner-product <x,y> is zero, and the relationship is denoted x ⟂ y. *)
+    
+    (** Two real column-vectors are orthogonal (also called perpendicular) *)
+    Definition cvorthogonal {n} (v1 v2 : cvec n) : Prop := <v1,v2> = 0.
+    Definition cvorthogonalb {n} (v1 v2 : cvec n) : bool := (<v1,v2> =? 0)%R.
+    Infix "⟂" := cvorthogonal ( at level 50).
+
+  End cvorthogonal.
+  Infix "⟂" := cvorthogonal ( at level 50).
+
+
+  (** *** Orthogonal set 正交向量组（集） *)
+  Section cvorthogonalset.
+
+    (** A set of vectors in an inner product space is called pairwise orthogonal if 
+        each pairing of them is orthogonal. Such a set is called an orthogonal set.
+        Note: each pair means {(vi,vj)|i≠j}  *)
+    Definition cvorthogonalset {r c} (m : mat r c) : Prop :=
+      forall j1 j2, (j1 < c)%nat -> (j2 < c)%nat -> (j1 <> j2) -> <mcol m j1, mcol m j2> = A0.
+
+    (** (bool version) *)
+    Definition cvorthogonalsetb {r c} (m : mat r c) : bool :=
+      (* two column vectors is orthogonal *)
+      let orth (i j : nat) : bool := (<mcol m i, mcol m j> =? A0)%R in
+      (* remain column indexes after this column *)
+      let cids (i : nat) : list nat := seq (S i) (c - S i) in
+      (* the column is orthogonal to right-side remain columns *)
+      let allcols (j : nat) : bool := and_blist (map (fun k => orth j k) (cids j)) in
+      (* all columns is mutually orthogonal (Note orthogonal is commutative) *)
+      and_blist (map (fun j => allcols j) (seq 0 c)).
+
+    Lemma cvorthogonalsetb_true_iff : forall {r c} (m : mat r c),
+        cvorthogonalsetb m <-> cvorthogonalset m.
+    Admitted.
+
+    Example cvorthogonalset_ex1 :
+      cvorthogonalset (l2m 3 3 [[1;1;1];[0;sqrt 2; -(sqrt 2)];[-1;1;1]])%A.
+    Proof.
+      apply cvorthogonalsetb_true_iff.
+      cbv.
+      (** Auto solve equality contatin "Req_EM_T" *)
+      repeat
+        match goal with
+        | |- context[ Req_EM_T ?a ?b] => destruct Req_EM_T; try lra
+        end.
+      autorewrite with R sqrt in *; ra.
+    Qed.
+
+  End cvorthogonalset.
+
+  (** Orthonormal vectors 标准正交的两个向量 *)
+  Section cvorthonormal.
+    (* Check kronecker_fun. *)
+
+  End cvorthonormal.
+    
+
+  
+  (** *** Projection of two vectors *)
+  Section cvproj.
+
+    (** First vector project to second vector *)
+    Definition cvproj {n} (u v : cvec n) : cvec n := (<u,v> / <v,v>) c* v.
+
+    (** The perpendicular vector followed the cvproj *)
+    Definition cvperp {n} (u v : cvec n) : cvec n := u - cvproj u v.
+
+    (** cvproj ⟂ cvperp *)
+    Lemma cvproj_perp_cvprep : forall {n} (u v : cvec n), cvproj u v ⟂ cvperp u v.
+    Proof.
+      intros. hnf. unfold cvproj,cvperp.
+      (* 以下证明思路明显是错误的，不可能所有元素都是0 *)
+      apply seqsum_seq0.
+      intros.
+      cvec_to_fun. simpl.
+      unfold cvdot, ColVector.cvdot. simpl.
+      autorewrite with R.
+      remember (seqsum (fun i0 : nat => v i0 0%nat * v i0 0%nat) n)%A as r1.
+      remember (seqsum (fun i0 : nat => u i0 0%nat * v i0 0%nat) n)%A as r2.
+    Admitted.
+    
+    (** The matrix form of cvproj in 3-dim *)
+    Definition cv3proj (u v : cvec 3) : cvec 3 :=
+      let x := v.1 in
+      let y := v.2 in
+      let z := v.3 in
+      let M : mat 3 3 :=
+        l2m _ _
+          [[x * x; x * y; x * z];
+           [x * y; y * y; y * z];
+           [x * z; y * z; z * z]]%R in
+      (1/<v,v>) c* (M * u).
+
+    Lemma cv3proj_spec : forall u v : cvec 3, cv3proj u v == cvproj u v.
+    Proof. lva. Qed.
+
+  End cvproj.
+
+
   (** *** Unit vector *)
   Section vunit.
 
@@ -452,8 +666,12 @@ Module Export ColVectorR.
       Here, we use the square of length instead of length directly,
       but this is reasonable with the proof of vunit_ok.
      *)
-    Definition cvunit {n} (u : cvec n) : Prop := u ⋅ u = 1.
-    Definition cvunitb {n} (u : cvec n) : bool := (u ⋅ u =? 1)%R.
+    Definition cvunit {n} (u : cvec n) : Prop := <u,u> = 1.
+    Definition cvunitb {n} (u : cvec n) : bool := (<u,u> =? 1)%R.
+    
+    (** Verify the definition is reasonable *)
+    Lemma cvunit_spec : forall {n} (u : cvec n), cvunit u <-> ||u|| = 1.
+    Proof. intros. split; intros; apply cvlen1_iff_vdot1; auto. Qed.
 
   (** If column of a and column of b all are unit, 
         then column of (a * b) is also unit *)
@@ -470,18 +688,13 @@ Module Export ColVectorR.
   End vunit.
   
 
-  (** *** Orthogonal column-vectors *)
-  Section cvorthogonal.
-    
-    (** Two real column-vectors are orthogonal (also called perpendicular) *)
-    Definition cvorthogonal {n} (v1 v2 : cvec n) : Prop := v1 ⋅ v2 = 0.
-    Definition cvorthogonalb {n} (v1 v2 : cvec n) : bool := (v1 ⋅ v2 =? 0)%R.
-    Infix "⟂" := cvorthogonal ( at level 50).
+  (** *** Propertities for orthogonal matrix *)
+  Section orthogonal_matrix_props.
 
     (** All different column-vectors of a matrix are orthogonal each other.
         For example: [v1;v2;v3] => v1⟂v2 && v1⟂v3 && v2⟂v3. *)
     Definition mcols_diff_orthogonal {n} (m : smat n) : bool :=
-      let is_orth (i j : nat) : bool := ((mcol m i) ⋅ (mcol m j) =? A0)%R in
+      let is_orth (i j : nat) : bool := (<mcol m i, mcol m j> =? A0)%R in
       let cids (i : nat) : list nat := seq (S i) (n - S i) in
       let chk_col (j : nat) : bool := and_blist (map (fun k => is_orth j k) (cids j)) in
       and_blist (map (fun j => chk_col j) (seq 0 n)).
@@ -504,7 +717,7 @@ Module Export ColVectorR.
     Lemma mcols_diff_orthogonal_iff : forall {n} (m : smat n),
         mcols_diff_orthogonal m <->
         (forall j1 j2, j1 < n -> j2 < n -> j1 <> j2 ->
-                  ((mcol m j1) ⋅ (mcol m j2) =? 0)%R)%nat.
+                  (<mcol m j1, mcol m j2> =? 0)%R)%nat.
     Proof.
       Admitted.
 
@@ -514,7 +727,7 @@ Module Export ColVectorR.
       and_blist (map (fun i => cvunitb (mcol m i)) (seq 0 3)).
       
     Lemma mcols_unit_iff : forall {n} (m : smat n),
-        mcols_unit m <-> (forall j, j < n -> ((mcol m j) ⋅ (mcol m j) =? 1)%R)%nat.
+        mcols_unit m <-> (forall j, j < n -> (<mcol m j, mcol m j> =? 1)%R)%nat.
     Proof.
     Admitted.
 
@@ -561,16 +774,15 @@ Module Export ColVectorR.
         + rewrite mnth_mat1_diff; auto.
           apply Reqb_true. apply H1; auto.
     Qed.
-    
-  End cvorthogonal.
-
   
-  (** *** vector dot product *)
-  Lemma cvdot_ge0 : forall {n} (v : cvec n), 0 <= v ⋅ v.
-  Proof.
-    intros. cvec_to_fun. unfold cvdot, ColVector.cvdot. simpl.
-    revert v. induction n; intros; simpl; try lra. ra.
-  Qed.
+    (** Transformation by orthogonal matrix will keep length *)
+    Theorem morthogonal_keep_length : forall {n} (m : smat n) (v : cvec n),
+        morthogonal m -> ||m * v|| = ||v||.
+    Proof.
+      intros. rewrite cvlen_eq_iff_dot_eq.
+    Admitted.
+
+  End orthogonal_matrix_props.
 
   
   (** *** Two vectors are parallel (or called collinear) *)
@@ -640,9 +852,9 @@ Module Export ColVectorR.
   
 
   (** *** Standard unit vector in Euclidean space of 3-dimensions *)
-  Definition v3i : cvec 3 := mk_cvec3 1 0 0.
-  Definition v3j : cvec 3 := mk_cvec3 0 1 0.
-  Definition v3k : cvec 3 := mk_cvec3 0 0 1.
+  Definition cv3i : cvec 3 := mk_cvec3 1 0 0.
+  Definition cv3j : cvec 3 := mk_cvec3 0 1 0.
+  Definition cv3k : cvec 3 := mk_cvec3 0 0 1.
   
 
   (** *** Dot product (inner-product) of two 3-dim vectors *)
@@ -653,39 +865,25 @@ Module Export ColVectorR.
       let '(b1,b2,b3) := cv2t_3 b in
       (a1*b1 + a2*b2 + a3*b3)%R.
 
-    Lemma cvdot3_spec : forall v1 v2 : cvec 3, cv3dot v1 v2 = v1 ⋅ v2.
+    Lemma cvdot3_spec : forall v1 v2 : cvec 3, cv3dot v1 v2 = <v1,v2>.
     Proof. intros. cbv. ring. Qed.
 
   End v3dot.
 
 
-  (** *** Length of a vector *)
-  Section vlen.
-
-    (** Length (magnitude) of a vector, is derived by inner-product *)
-    Definition cvlen {n} (v : cvec n) : R := sqrt (v ⋅ v).
-
-    Notation "`| v |" := (cvlen v) : cvec_scope.
-
-    Lemma cvdot_same_eq : forall {n} (v : cvec n), v ⋅ v = (cvlen v)².
-    Proof. intros. unfold cvlen. rewrite Rsqr_sqrt; auto. apply cvdot_ge0. Qed.
-    
-    (** Length of a vector u is 1, iff the dot product of u and u is 1 *)
-    Lemma cvlen1_iff_vdot1 : forall n (u : cvec n), `|u| = 1 <-> u ⋅ u = 1.
-    Proof. intros. unfold cvlen. split; intros; hnf in *. ra. rewrite H. ra. Qed.
-
-    
-    (** Verify the definition is reasonable *)
-    Lemma cvunit_spec : forall {n} (u : cvec n), cvunit u <-> `|u| = 1.
-    Proof. intros. split; intros; apply cvlen1_iff_vdot1; auto. Qed.
-
-  End vlen.
-  Notation "`| v |" := (cvlen v) : cvec_scope.
-
-
   (** *** Cross product (vector product) of two 3-dim vectors *)
   Section v3cross.
 
+    (**
+       1. 外积的三角学的意义
+          ||P×Q|| = ||P|| * ||Q|| * sin α
+       2. 外积若不为零，则其与这两个向量都垂直。有两个向量，方向相反。
+          根据所选左/右手系来确定方向。
+       3. 3D坐标系中的x,y,z轴正方向用 i,j,k 表示，并按 i,j,k 顺序组成一个循环，则：
+          (1) 相邻两个向量按相同次序的外积为第三个向量，即 i×j=k, j×k=i, k×i=j。
+          (2) 相邻两个向量按相反次序的外积为第三个向量的取反，即 j×i=-k, etc.
+     *)
+    
     Definition cv3cross (v1 v2 : cvec 3) : cvec 3 :=
       let '(a0,a1,a2) := cv2t_3 v1 in
       let '(b0,b1,b2) := cv2t_3 v2 in
@@ -693,27 +891,70 @@ Module Export ColVectorR.
 
     Infix "×" := cv3cross : cvec_scope.
 
+    (** v × v = 0 *)
     Lemma cv3cross_self : forall v : cvec 3, v × v == cvec0.
     Proof. lva. Qed.
 
+    (** v1 × v2 = - (v2 × v1) *)
     Lemma cv3cross_anticomm : forall v1 v2 : cvec 3, v1 × v2 == -(v2 × v1).
     Proof. lva. Qed.
 
+    (** (v1 + v2) × v3 = (v1 × v3) + (v2 × v3) *)
     Lemma cv3cross_add_distr_l : forall v1 v2 v3 : cvec 3,
         (v1 + v2) × v3 == (v1 × v3) + (v2 × v3).
     Proof. lva. Qed.
     
+    (** v1 × (v2 + v3) = (v1 × v2) + (v1 × v3) *)
     Lemma cv3cross_add_distr_r : forall v1 v2 v3 : cvec 3,
         v1 × (v2 + v3) == (v1 × v2) + (v1 × v3).
     Proof. lva. Qed.
 
+    (** (a c* v1) × v2 = a c* (v1 × v2) *)
     Lemma cv3cross_cmul_assoc_l : forall (a : R) (v1 v2 : cvec 3),
         (a c* v1) × v2 == a c* (v1 × v2).
     Proof. lva. Qed.
     
+    (** v1 × (a c* v2) = a c* (v1 × v2) *)
     Lemma cv3cross_cmul_assoc_r : forall (a : R) (v1 v2 : cvec 3),
         v1 × (a c* v2) == a c* (v1 × v2).
     Proof. lva. Qed.
+
+    (** <v1 × v2, v3> = <v3 × v1, v2> *)
+    Lemma cv3cross_dot_l : forall v1 v2 v3 : cvec 3, <v1 × v2, v3> = <v3 × v1, v2>.
+    Proof. intros. cbv. field. Qed.
+
+    (** <v1 × v2, v3> = <v2 × v3, v1> *)
+    Lemma cv3cross_dot_r : forall v1 v2 v3 : cvec 3, <v1 × v2, v3> = <v2 × v3, v1>.
+    Proof. intros. cbv. field. Qed.
+
+    (** <v1 × v2, v1> = 0 *)
+    Lemma cv3cross_dot_same_l : forall v1 v2 : cvec 3, <v1 × v2, v1> = 0.
+    Proof. intros. cbv. field. Qed.
+
+    (** <v1 × v2, v2> = 0 *)
+    Lemma cv3cross_dot_same_r : forall v1 v2 : cvec 3, <v1 × v2, v2> = 0.
+    Proof. intros. cbv. field. Qed.
+
+    (** (v1 × v2) × v1 = v1 × (v2 × v1) *)
+    Lemma cv3cross_cross_form1 : forall v1 v2 : cvec 3,
+        (v1 × v2) × v1 == v1 × (v2 × v1).
+    Proof. lva. Qed.
+
+    (** (v1 × v2) × v1 = <v1,v1> c* v2 - <v1,v2> c* v1 *)
+    Lemma cv3cross_cross_form2 : forall v1 v2 : cvec 3,
+        (v1 × v2) × v1 == <v1,v1> c* v2 - <v1,v2> c* v1.
+    Proof. lva. Qed.
+
+    (** i×j=k, j×k=i, k×i=j *)
+    Lemma cv3cross_ij : cv3i × cv3j == cv3k. Proof. lva. Qed.
+    Lemma cv3cross_jk : cv3j × cv3k == cv3i. Proof. lva. Qed.
+    Lemma cv3cross_ki : cv3k × cv3i == cv3j. Proof. lva. Qed.
+    
+    (** j×i=-k, k×j=-i, i×k=-j *)
+    Lemma cv3cross_ji : cv3j × cv3i == -cv3k. Proof. lva. Qed.
+    Lemma cv3cross_kj : cv3k × cv3j == -cv3i. Proof. lva. Qed.
+    Lemma cv3cross_ik : cv3i × cv3k == -cv3j. Proof. lva. Qed.
+
 
   End v3cross.
   Infix "×" := cv3cross : cvec_scope.
@@ -735,7 +976,7 @@ Module Export ColVectorR.
     
     (** Normalization of a non-zero vector v.
       That is, get a unit vector in the same directin as v. *)
-    Definition cvnormalize {n} (v : cvec n) : cvec n := `|v| c* v.
+    Definition cvnormalize {n} (v : cvec n) : cvec n := ||v|| c* v.
 
     Lemma cvnormalize_spec : forall {n} (v : cvec n),
         let v' := cvnormalize v in
@@ -753,7 +994,7 @@ Module Export ColVectorR.
     Definition cvangle {n} (v1 v2 : cvec n) : R :=
       let v1' := cvnormalize v1 in
       let v2' := cvnormalize v2 in
-      acos (v1' ⋅ v2').
+      acos (<v1', v2'>).
 
   End vangle.
 
@@ -806,7 +1047,7 @@ Module Export ColVectorR.
         det3 m.
 
       (** A equivalent form *)
-      Lemma cv3mixed_eq : forall a b c : cvec 3, cv3mixed a b c = (a × b) ⋅ c.
+      Lemma cv3mixed_eq : forall a b c : cvec 3, cv3mixed a b c = <a × b, c>.
       Proof. intros [a] [b] [c]. cbv. ring. Qed.
       
 
@@ -828,7 +1069,7 @@ Module Export ColVectorR.
     (** 习题8.2第12题, page 23, 高等数学，第七版 *)
     (** 利用向量来证明不等式，并指出等号成立的条件 *)
     Theorem Rineq3 : forall a1 a2 a3 b1 b2 b3 : R,
-        sqrt (a1² + a2² + a3²) * sqrt (b1² + b2² + b3²) >= Rabs (a1*b1 + a2*b2 + a3*b3).
+        sqrt (a1² + a2² + a3²) * sqrt (b1² + b2² + b3²) >= |a1*b1 + a2*b2 + a3*b3|.
     Proof.
       intros.
       pose (a := t2cv_3 (a1,a2,a3)).
@@ -837,7 +1078,7 @@ Module Export ColVectorR.
       pose (blen := cvlen b).
       replace (sqrt _) with alen; [| unfold alen; cbv; f_equal; ring].
       replace (sqrt _) with blen; [| unfold blen; cbv; f_equal; ring].
-      replace (Rabs _) with (Rabs (a ⋅ b)); [| cbv; autorewrite with R; auto].
+      replace (Rabs _) with (|<a,b>|); [| cbv; autorewrite with R; auto].
     Abort.
 
 
@@ -852,7 +1093,7 @@ Module Export ColVectorR.
     Definition cv3_area_of_triangle (A B C : cvec 3) :=
       let AB := B - A in
       let AC := C - A in
-      ((1/2) * `|AB × AC|)%R.
+      ((1/2) * ||AB × AC||)%R.
 
     (** Example 6, page 20, 高等数学，第七版 *)
     (** 刚体绕轴以角速度 ω 旋转，某点M（OM为向量r⃗）处的线速度v⃗，三者之间的关系*)

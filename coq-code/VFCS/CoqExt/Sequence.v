@@ -188,6 +188,18 @@ Section seq2eq.
       destruct (Aeq_reflect ri r); subst; auto. apply H; auto. lia.
   Qed.
 
+  (** seq2eq of Sc has a equivalent form. *)
+  Lemma seq2eq_Sc : forall r c (f g : nat -> nat -> A), 
+      seq2eq r (S c) f g <-> (seq2eq r c f g) /\ (seqeq r (fun i => f i c) (fun i => g i c)).
+  Proof.
+    split.
+    - intros. split; auto.
+      + unfold seq2eq in *. intros. apply H; auto.
+      + unfold seq2eq, seqeq in *. intros. auto.
+    - unfold seq2eq,seqeq. intros. destruct H.
+      destruct (Aeq_reflect ci c); subst; auto. apply H; auto. lia.
+  Qed.
+
   (** seq2eq is a equivalence relation *)
   Lemma seq2eq_refl : forall r c (f : nat -> nat -> A),
       let R := seq2eq r c in R f f.

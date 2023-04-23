@@ -68,7 +68,7 @@ Section general_useful_props.
   Proof.
     intros.
     apply Rsqr_incr_0_var; ra. ring_simplify.
-    autorewrite with R. rewrite !Rsqr_sqrt; ra.
+    autorewrite with R sqrt; ra.
     ring_simplify.
     rewrite !Rplus_assoc; repeat apply Rplus_le_compat_l.
     rewrite <- !Rplus_assoc; repeat apply Rplus_le_compat_r.

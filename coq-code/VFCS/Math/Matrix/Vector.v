@@ -325,50 +325,50 @@ Module Export RowVector.
     Definition rvdot {n : nat} (v1 v2 : rvec n) : A :=
       seqsum (fun i => v1$i * v2$i) n (Aadd:=Aadd) (A0:=A0).
     
-    Infix "⋅" := rvdot : rvec_scope.
+    Notation "< a , b >" := (rvdot a b) : rvec_scope.
 
-    (** v1 ⋅ v2 = v2 ⋅ v1 *)
-    Lemma rvdot_comm : forall {n} (v1 v2 : rvec n), (v1 ⋅ v2 == v2 ⋅ v1)%A.
+    (** <v1,v2> = <v2,v1> *)
+    Lemma rvdot_comm : forall {n} (v1 v2 : rvec n), (<v1,v2> == <v2,v1>)%A.
     Proof. intros. apply seqsum_eq. intros. ring. Qed.
 
-    (** (v1 + v2) ⋅ v3 = v1 ⋅ v3 + v2 ⋅ v3 *)
+    (** <v1 + v2,v3> = <v1,v3> + <v2,v3> *)
     Lemma rvdot_add_distr_l : forall {n} (v1 v2 v3 : rvec n),
-        ((v1 + v2)%RV ⋅ v3 == v1 ⋅ v3 + v2 ⋅ v3)%A.
+        (<(v1 + v2)%RV,v3> == <v1,v3> + <v2,v3>)%A.
     Proof.
       intros n [v1] [v2] [v3]. unfold rvdot; simpl.
       revert v1 v2 v3. induction n; intros; simpl; auto. ring. rewrite IHn. ring.
     Qed.
 
-    (** v1 ⋅ (v2 + v3) = v1 ⋅ v2 + v1 ⋅ v3 *)
+    (** <v1, v2 + v3> = <v1,v2> + <v1,v3> *)
     Lemma rvdot_add_distr_r : forall {n} (v1 v2 v3 : rvec n),
-        (v1 ⋅ (v2 + v3)%RV == v1 ⋅ v2 + v1 ⋅ v3)%A.
+        (<v1,(v2 + v3)%RV> == <v1,v2> + <v1,v3>)%A.
     Proof.
       intros n [v1] [v2] [v3]. unfold rvdot; simpl.
       revert v1 v2 v3. induction n; intros; simpl; auto. ring. rewrite IHn. ring.
     Qed.
 
-    (** (a c* v1) ⋅ v2 = a * (v1 ⋅ v2) *)
+    (** <a c* v1, v2> = a * <v1,v2> *)
     Lemma rvdot_cmul_l : forall {n} (v1 v2 : rvec n) (a : A),
-        ((a c* v1) ⋅ v2 == a * (v1 ⋅ v2))%A.
+        (<a c* v1,v2> == a * <v1,v2>)%A.
     Proof.
       intros n [v1] [v2] a. unfold rvdot; simpl.
       rewrite seqsum_cmul_l. apply seqsum_eq; intros; ring.
     Qed.
     
-    (** v1 ⋅ (a c* v2) == a * (v1 ⋅ v2) *)
+    (** <v1, a c* v2> == a * <v1,v2> *)
     Lemma rvdot_cmul_r : forall {n} (v1 v2 : rvec n) (a : A),
-        (v1 ⋅ (a c* v2) == a * (v1 ⋅ v2))%A.
+        (<v1, a c* v2> == a * <v1,v2>)%A.
     Proof.
       intros n [v1] [v2] a. unfold rvdot; simpl.
       rewrite seqsum_cmul_l. apply seqsum_eq; intros; ring.
     Qed.
 
-    (** 0 * v = 0 *)
-    Lemma rvdot_0_l : forall {n} (v : rvec n), (rvec0 ⋅ v == A0)%A.
+    (** <0,v> = 0 *)
+    Lemma rvdot_0_l : forall {n} (v : rvec n), (<rvec0,v> == A0)%A.
     Proof. intros. apply seqsum_seq0. intros. cbv. ring. Qed.
 
-    (** v * 0 = 0 *)
-    Lemma rvdot_0_r : forall {n} (v : rvec n), (v ⋅ rvec0 == A0)%A.
+    (** <v,0> = 0 *)
+    Lemma rvdot_0_r : forall {n} (v : rvec n), (<v,rvec0> == A0)%A.
     Proof. intros. rewrite rvdot_comm, rvdot_0_l. easy. Qed.
     
   End vec_ring.
@@ -382,7 +382,7 @@ Module Export RowVector.
     Notation "- v" := (rvopp (Aopp:=Z.opp) v) : rvec_scope.
     Infix "-" := (rvsub (Aadd:=Z.add)(Aopp:=Z.opp)) : rvec_scope.
     Infix "c*" := (rvcmul (Amul:=Z.mul)) : rvec_scope.
-    Infix "⋅" := (rvdot (A0:=0) (Aadd:=Z.add) (Amul:=Z.mul)) : rvec_scope.
+    Notation "< a , b >" :=  (rvdot a b (A0:=0) (Aadd:=Z.add) (Amul:=Z.mul)) : rvec_scope.
 
     Let v1 := l2rv 0 3 [1;2;3].
     Let v2 := l2rv 0 3 [4;5;6].
@@ -390,7 +390,7 @@ Module Export RowVector.
     (* Compute rv2l (v1 + v2). *)
     (* Compute rv2l (v2 - v1). *)
     (* Compute rv2l (3 c* v1). *)
-    (* Compute v1⋅v2. *)
+    (* Compute <v1,v2>. *)
 
   End test.
 
@@ -495,6 +495,9 @@ Module Export ColVector.
       - rewrite (meq_iff_mnth (A0:=A0)). intros.
         assert (j = 0) by lia. subst; auto.
     Qed.
+
+    (** veq, iff {top n-1 elements equal, and the n-th elements equal} *)
+    
 
     
     (** --------------------------------------------------- *)
@@ -621,8 +624,11 @@ Module Export ColVector.
     Infix "-" := (fun a b => a + (-b)) : A_scope.
 
     Infix "==" := (eqlistA Aeq) : list_scope.
+
     Notation meq := (meq (Aeq:=Aeq)).
     Infix "==" := (meq) : mat_scope.
+
+    Notation seqsum := (seqsum (Aadd:=Aadd)(A0:=A0)).
     
     (* Infix "+" := (ladd (Aadd:=Aadd)) : list_scope. *)
 
@@ -688,6 +694,8 @@ Module Export ColVector.
     Add Ring ring_inst : (make_ring_theory R).
     Infix "*" := Amul : A_scope.
     
+    Infix "*" := (@mmul _ Aadd A0 Amul _ _ _) : mat_scope.
+    
 
     (** *** Vector scalar multiplication *)
 
@@ -699,7 +707,7 @@ Module Export ColVector.
     (* Proof. intros. apply mcmul_mor. Qed. *)
 
     (** a c* (b c* v) = (a * b) c* v *)
-    Lemma cvcmul_assoc : forall {n} a b (v : cvec n), a c* (b c* v) == (a * b) c* v.
+    Lemma cvcmul_assoc : forall {n} a b (v : cvec n), a c* (b c* v) == (a * b)%A c* v.
     Proof. intros. apply mcmul_assoc. Qed.
 
     (** a c* (b c* v) = b c* (a c* v) *)
@@ -740,52 +748,57 @@ Module Export ColVector.
 
     (** dot production of two vectors. *)
     Definition cvdot {n : nat} (v1 v2 : cvec n) : A :=
-      seqsum (fun i => v1$i * v2$i) n (Aadd:=Aadd) (A0:=A0).
+      seqsum (fun i => v1$i * v2$i)%A n.
     
-    Infix "⋅" := cvdot : cvec_scope.
+    Notation "< a , b >" := (cvdot a b) : cvec_scope.
 
-    (** v1 ⋅ v2 = v2 ⋅ v1 *)
-    Lemma cvdot_comm : forall {n} (v1 v2 : cvec n), (v1 ⋅ v2 == v2 ⋅ v1)%A.
+    (** <v1,v2> = v1\T * v2 *)
+    Lemma cvdot_mat_form : forall {n} (v1 v2 : cvec n),
+        (<v1,v2> == scalar_of_mat (v1\T * v2)%M)%A.
+    Proof. intros. simpl. apply seqsum_eq. intros. easy. Qed.
+
+    (** <v1,v2> = <v2,v1> *)
+    Lemma cvdot_comm : forall {n} (v1 v2 : cvec n), (<v1,v2> == <v2,v1>)%A.
     Proof. intros. apply seqsum_eq. intros. ring. Qed.
 
-    (** (v1 + v2) ⋅ v3 = v1 ⋅ v3 + v2 ⋅ v3 *)
+    (** <v1 + v2, v3> = <v1,v3> + <v2,v3> *)
     Lemma cvdot_add_distr_l : forall {n} (v1 v2 v3 : cvec n),
-        ((v1 + v2)%CV ⋅ v3 == v1 ⋅ v3 + v2 ⋅ v3)%A.
+        (<(v1 + v2)%CV,v3> == <v1,v3> + <v2,v3>)%A.
     Proof.
       intros n [v1] [v2] [v3]. unfold cvdot; simpl.
       revert v1 v2 v3. induction n; intros; simpl; auto. ring. rewrite IHn. ring.
     Qed.
 
-    (** v1 ⋅ (v2 + v3) = v1 ⋅ v2 + v1 ⋅ v3 *)
+    (** <v1, v2 + v3> = <v1,v2> + <v1,v3> *)
     Lemma cvdot_add_distr_r : forall {n} (v1 v2 v3 : cvec n),
-        (v1 ⋅ (v2 + v3)%CV == v1 ⋅ v2 + v1 ⋅ v3)%A.
+        (<v1, (v2 + v3)%CV> == <v1,v2> + <v1,v3>)%A.
     Proof.
       intros n [v1] [v2] [v3]. unfold cvdot; simpl.
       revert v1 v2 v3. induction n; intros; simpl; auto. ring. rewrite IHn. ring.
     Qed.
 
-    (** (a c* v1) ⋅ v2 = a * (v1 ⋅ v2) *)
+    (** <a c* v1, v2> = a * <v1,v2> *)
     Lemma cvdot_cmul_l : forall {n} (v1 v2 : cvec n) (a : A),
-        ((a c* v1) ⋅ v2 == a * (v1 ⋅ v2))%A.
+        (<a c* v1, v2> == a * <v1,v2>)%A.
     Proof.
       intros n [v1] [v2] a. unfold cvdot; simpl.
       rewrite seqsum_cmul_l. apply seqsum_eq; intros; ring.
     Qed.
     
-    (** v1 ⋅ (a c* v2) == a * (v1 ⋅ v2) *)
+    (** <v1, a c* v2> == a * <v1,v2> *)
     Lemma cvdot_cmul_r : forall {n} (v1 v2 : cvec n) (a : A),
-        (v1 ⋅ (a c* v2) == a * (v1 ⋅ v2))%A.
+        (<v1, a c* v2> == a * <v1,v2>)%A.
     Proof.
       intros n [v1] [v2] a. unfold cvdot; simpl.
       rewrite seqsum_cmul_l. apply seqsum_eq; intros; ring.
     Qed.
 
-    (** 0 * v = 0 *)
-    Lemma cvdot_0_l : forall {n} (v : cvec n), (cvec0 ⋅ v == A0)%A.
+    (** <0,v> = 0 *)
+    Lemma cvdot_0_l : forall {n} (v : cvec n), (<cvec0,v> == A0)%A.
     Proof. intros. apply seqsum_seq0. intros. cbv. ring. Qed.
 
-    (** v * 0 = 0 *)
-    Lemma cvdot_0_r : forall {n} (v : cvec n), (v ⋅ cvec0 == A0)%A.
+    (** <v,0> = 0 *)
+    Lemma cvdot_0_r : forall {n} (v : cvec n), (<v,cvec0> == A0)%A.
     Proof. intros. rewrite cvdot_comm, cvdot_0_l. easy. Qed.
 
   End vec_ring.
@@ -799,7 +812,7 @@ Module Export ColVector.
     Notation "- v" := (cvopp (Aopp:=Z.opp) v) : cvec_scope.
     Infix "-" := (cvsub (Aadd:=Z.add)(Aopp:=Z.opp)) : cvec_scope.
     Infix "c*" := (cvcmul (Amul:=Z.mul)) : cvec_scope.
-    Infix "⋅" := (cvdot (A0:=0) (Aadd:=Z.add) (Amul:=Z.mul)) : cvec_scope.
+    Notation "< a , b >" := (cvdot a b (A0:=0) (Aadd:=Z.add) (Amul:=Z.mul)) : cvec_scope.
 
     Let v1 := l2cv 0 3 [1;2;3].
     Let v2 := l2cv 0 3 [4;5;6].
@@ -807,7 +820,7 @@ Module Export ColVector.
     (* Compute cv2l (v1 + v2). *)
     (* Compute cv2l (v2 - v1). *)
     (* Compute cv2l (3 c* v1). *)
-    (* Compute v1⋅v2. *)
+    (* Compute <v1,v2>. *)
 
   End test.
 

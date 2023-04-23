@@ -71,6 +71,9 @@ Require Export Reals.
 Open Scope R_scope.
 
 
+(** ** Notations for R *)
+
+Notation "| r |" := (Rabs r) : R_scope.
 
 
 (* ######################################################################### *)
@@ -86,9 +89,9 @@ Global Hint Unfold
 (** Config hint db for autorewrite, for rewriting of equations *)
 #[export] Hint Rewrite
   (* Abs *)
-  Rabs_R0             (* Rabs 0 = 0 *)
-  Rabs_Ropp           (* Rabs (-x) = Rabs x *)
-  Rabs_Rabsolu        (* Rabs (Rabs x) = Rabs x *)
+  Rabs_R0             (* |0| = 0 *)
+  Rabs_Ropp           (* |-x| = |x| *)
+  Rabs_Rabsolu        (* | |x| | = |x| *)
 
   (* + *)
   Rplus_0_l           (* 0 + r = r *)
@@ -125,11 +128,20 @@ Global Hint Unfold
   Rsqr_mult           (* (x * y)² = x² * y² *)
 
   (* sqrt *)
-  sqrt_Rsqr_abs       (* (sqrt x²) = Rabs x *)
-  (* Rsqr_sqrt           (* 0 <= x -> (sqrt x)² = x *) *)
-  (* sqrt_Rsqr           (* 0 <= x -> sqrt x² = x *) *)
+  sqrt_Rsqr_abs       (* (sqrt x²) = |x| *)
+  
   sqrt_0              (* sqrt 0 = 0 *)
   : R.
+
+
+(** Note that, these leamms should be used careful, they may generate an undesired
+    burden of proof. Thus, we use a new database name "sqrt" *)
+#[export] Hint Rewrite
+  (* Abs *)
+  Rsqr_sqrt           (* 0 <= x -> (sqrt x)² = x *)
+  sqrt_Rsqr           (* 0 <= x -> sqrt x² = x *)
+  : sqrt.
+
 
 (** Config hint db for auto，for solving equalities or inequalities *)
 Global Hint Resolve
@@ -145,8 +157,8 @@ Global Hint Resolve
   (* general inequalities *)
   Rlt_0_1             (* 0 < 1 *)
   PI_RGT_0            (* PI > 0 *)
-  Rabs_pos            (* 0 <= Rabs x *)
-  Rabs_no_R0          (* r <> 0 -> Rabs r <> 0 *)
+  Rabs_pos            (* 0 <= |x| *)
+  Rabs_no_R0          (* r <> 0 -> |r| <> 0 *)
   sqrt_pos            (* 0 <= sqrt x *)
   Rle_0_sqr           (* 0 <= r² *)
 (*   Rsqr_inj            (* 0 <= x -> 0 <= y -> x² = y² -> x = y *) *)
@@ -335,7 +347,7 @@ Qed.
 
 
 (* ======================================================================= *)
-(** ** R0 and 0 *)
+(** ** About R0 and 0 *)
 
 (* (** We always prefer 0 *) *)
 (* Lemma R0_eq_0 : R0 = 0. *)
@@ -351,9 +363,12 @@ Qed.
 #[export] Hint Rewrite Rsqr_R0 : R.
 Global Hint Resolve Rsqr_R0 : R.
 
+Lemma Rplus_eq0_if_both0 : forall a b : R, a = 0 -> b = 0 -> a + b = 0.
+Proof. intros. subst. lra. Qed.
+
 
 (* ======================================================================= *)
-(** ** R1 and 1 *)
+(** ** About R1 and 1 *)
 
 (* (** We always prefer 1 *) *)
 (* Lemma R1_eq_1 : R1 = 1. *)
@@ -561,30 +576,30 @@ End test.
 (* ======================================================================= *)
 (** ** About "absolute value" *)
 
-Lemma Rabs_neg_left : forall r, 0 <= r -> Rabs (-r) = r.
+Lemma Rabs_neg_left : forall r, 0 <= r -> | -r | = r.
 Proof.
   intros. rewrite Rabs_Ropp. apply Rabs_right; nra.
 Qed.
 
-Lemma Rabs_neg_right : forall r, r < 0 -> Rabs (-r) = -r.
+Lemma Rabs_neg_right : forall r, r < 0 -> | -r| = -r.
 Proof.
   intros. rewrite Rabs_Ropp. apply Rabs_left; nra.
 Qed.
 
 Global Hint Resolve
-  Rabs_right     (* r >= 0 -> Rabs r = r *)
-  Rabs_pos_eq    (* 0 <= r -> Rabs r = r *)
-  Rabs_left      (* r < 0 -> Rabs r = - r *)
-  Rabs_left1     (* r <= 0 -> Rabs r = - r *)
-  Rabs_neg_left  (* 0 <= r -> Rabs (-r) = r *)
-  Rabs_neg_right (* r < 0 -> Rabs (-r) = -r *)
+  Rabs_right     (* r >= 0 -> |r| = r *)
+  Rabs_pos_eq    (* 0 <= r -> |r| = r *)
+  Rabs_left      (* r < 0 -> |r| = - r *)
+  Rabs_left1     (* r <= 0 -> |r| = - r *)
+  Rabs_neg_left  (* 0 <= r -> |-r| = r *)
+  Rabs_neg_right (* r < 0 -> |-r| = -r *)
   : R.
 
 
 (* ======================================================================= *)
 (** ** About "sqrt" *)
 
-Lemma sqrt_square_abs : forall r, sqrt (r * r) = Rabs r.
+Lemma sqrt_square_abs : forall r, sqrt (r * r) = |r|.
 Proof.
   intros. destruct (Rcase_abs r).
   - replace (r * r) with ((-r) * (-r)) by nra.
@@ -649,7 +664,7 @@ Lemma Rsqr_sqrt_sqrt r1 r2 : 0 <= r1 -> 0 <= r2 ->
 Proof.
   destruct (Rcase_abs r1), (Rcase_abs r2); try lra.
   autorewrite with R; auto with R.
-  rewrite ?Rsqr_sqrt; auto with R.
+  autorewrite with sqrt; ra.
 Qed.
 
 (** If the sqrt of the sum of squares of two real numbers equal to 0, iff both of 
@@ -688,10 +703,10 @@ Qed.
 
 (** /(sqrt (1+(b/a)²)) = abs(a) / sqrt(a*a + b*b) *)
 Lemma Rinv_sqrt_plus_1_sqr_div_a_b (a b : R) : a <> 0 ->
-  (/ (sqrt (1+(b/a)²)) = (Rabs a) / sqrt(a*a + b*b)).
+  (/ (sqrt (1+(b/a)²)) = |a| / sqrt(a*a + b*b)).
 Proof.
   intros.
-  replace (1 + (b/a)²) with ((a*a + b*b) / ((Rabs a)*(Rabs a))).
+  replace (1 + (b/a)²) with ((a*a + b*b) / (|a|*|a|)).
   - rewrite sqrt_div_alt.
     + rewrite sqrt_square. 
       * field. split; autorewrite with R; auto 6 with R.
@@ -699,8 +714,8 @@ Proof.
     + autorewrite with R; auto with R.
   - unfold Rsqr.
     destruct (Rcase_abs a).
-    + replace (Rabs a) with (-a). field; auto. rewrite Rabs_left; auto.
-    + replace (Rabs a) with a. field; auto. rewrite Rabs_right; auto.
+    + replace (|a|) with (-a). field; auto. rewrite Rabs_left; auto.
+    + replace (|a|) with a. field; auto. rewrite Rabs_right; auto.
 Qed.
 
 (** (√ r1 * √ r2) * (√ r1 * √ r2) = r1 * r2 *)
@@ -713,7 +728,7 @@ Qed.
 
 
 #[export] Hint Rewrite
-  sqrt_square_abs         (* sqrt (r * r) = Rabs r *)
+  sqrt_square_abs         (* sqrt (r * r) = |r| *)
   (* Rsqr_sqrt               (* 0 <= x -> (sqrt x)² = x *) *)
   sqrt_1                  (* sqrt 1 = 1 *)
   Rsqr_sqrt_sqrt          (* ( √ r1 * √ r2)² = r1 * r2 *)
@@ -904,10 +919,11 @@ Lemma Rmult_eq_self_imply_0_or_k1 : forall k x,
     k * x = x -> x = 0 \/ (x <> 0 /\ k = R1).
 Proof. ra. Qed.
 
+Lemma Rsqr_eq0_if0 : forall r, r = 0 -> r² = 0. ra. Qed.
+
 Section TEST_r_eq_0.
   Goal forall r r1 r2 : R, r * r1 = r * r2 -> r1 <> r2 -> r = 0. ra. Qed.
   Goal forall r r1 r2 : R, r1 * r = r2 * r -> r1 <> r2 -> r = 0. ra. Qed.
-  Goal forall r, r = 0 -> r² = 0. ra. Qed.
 End TEST_r_eq_0.
 
 (* ======================================================================= *)
@@ -1440,10 +1456,10 @@ Definition R2nat_ceiling (r : R) : nat := Z2nat (R2Z_ceiling r).
 (** * Approximate of two real numbers *)
 
 (** r1 ≈ r2, that means |r1 - r2| <= diff *)
-Definition Rapprox (r1 r2 diff : R) : Prop := Rabs (r1 - r2) <= diff.
+Definition Rapprox (r1 r2 diff : R) : Prop := |r1 - r2| <= diff.
 
 (** boolean version of approximate function *)
-Definition Rapproxb (r1 r2 diff : R) : bool := Rleb (Rabs (r1 - r2)) diff.
+Definition Rapproxb (r1 r2 diff : R) : bool := |r1 - r2| <=? diff.
 
 
 

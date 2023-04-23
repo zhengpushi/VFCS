@@ -1143,6 +1143,7 @@ Section t2m_m2t.
 
   (** m[0,0]: mat_1x1 -> A *)
   Definition m2t_1_1 (m : @mat A 1 1) := m.11.
+  Definition scalar_of_mat (m : @mat A 1 1) := m.11.
 
   (** mat_2x2 -> tuple 2x2. That is: ((a11,a12),(a21,a22)) *)
   Definition m2t_2_2 (m : mat 2 2) : @T_2_2 A :=

@@ -37,12 +37,18 @@ Require Export Coq.Logic.FunctionalExtensionality.
 (* ######################################################################### *)
 (** * Reserved Notations *)
 
-(** Reserved Notations, to keep same precedence and associativity *)
+(* Reserved Notations, to keep same precedence and associativity *)
+
+(* ****************************************************** *)
+(* The precedence ∈ [60,100) are logic operations *)
 Reserved Infix    "=="      (at level 70, no associativity).      (* equiv *)
 Reserved Infix    "==?"     (at level 65, no associativity).      (* decidable *)
 Reserved Infix    "<>?"     (at level 65, no associativity).      (* decidable right *)
 Reserved Notation "a != b"  (at level 70, no associativity).      (* not equiv *)
 Reserved Infix    "=?"      (at level 70, no associativity).      (* bool equal *)
+
+(* ****************************************************** *)
+(* The precedence ∈ [30,60) are vector/matrix operations *)
 Reserved Infix    "+"       (at level 50, left associativity).    (* add *)
 Reserved Infix    "-"       (at level 50, left associativity).    (* sub *)
 Reserved Infix    "*"       (at level 40, left associativity).    (* mul *)
@@ -53,6 +59,8 @@ Reserved Infix    "*c"      (at level 40, left associativity).    (* scal right 
 Reserved Infix    "⦿"      (at level 40, left associativity).    (* hardmard prod *)
 Reserved Infix    "\o"      (at level 50, no associativity).
 Reserved Infix    "⋅"       (at level 40, no associativity).      (* dot prod *)
+Reserved Notation "< a , b >" (at level 60, b at level 55, format "< a , b >"). (* dot prod *)
+Reserved Notation "|| v ||"   (at level 60, v at level 45, format "|| v ||").  (* vlen *)
 Reserved Infix    "×"       (at level 40, no associativity).      (* cross prod *)
 Reserved Infix    "∘"       (at level 40, left associativity).    (* compose *)
 Reserved Notation "- a"     (at level 35, right associativity).   (* opp *)
@@ -61,6 +69,11 @@ Reserved Notation "m \T"    (at level 32, left associativity).    (* transpose *
 Reserved Notation "m ⁻¹"    (at level 20, format "m ⁻¹").         (* minv *)
 Reserved Notation "m1 @ m2" (at level 30, no associativity).      (* cons by col *)
 Reserved Notation "'tr' m"  (at level 33, no associativity).
+
+(* ****************************************************** *)
+(* The precedence ∈ [1,30) are element operations *)
+
+Reserved Notation "| r |"   (at level 30, r at level 25, format "| r |").  (* Rabs *)
 
 (* this level is consistent with Mathcomp.ssreflect.ssrnotations.v *)
 

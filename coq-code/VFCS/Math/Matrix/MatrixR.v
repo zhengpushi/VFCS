@@ -425,6 +425,86 @@ Definition minv_gauss {n} (m : mat n n) : option (mat n n) :=
 (** *** Orthogonal matrix *)
 Section OrthogonalMatrix.
 
+  (*
+  Refernece: https://en.wikipedia.org/wiki/3D_rotation_group
+
+  Every rotation maps an orthonormal basis of R^3 to another orthonormal basis.
+  Like any linear transformation of finite-dimensional vector spaces, a rotation 
+  can always be represented by a matrix.
+
+  Let R be a given rotation. With respect to the standard basis e1, e2, e3 of R^3 
+  the columns of R are given by (Re1, Re2, Re3). Since the standard basis is 
+  orthonormal, and since R preserves angles and length, the columns of R form 
+  another orthonormal basis. This orthonormality condition can be expressed in the 
+  form 
+       R^{T} R = R R^{T} = I,
+  where RT denotes the transpose of R and I is the 3 × 3 identity matrix. 
+  Matrices for which this property holds are called orthogonal matrices.
+
+  The group of all 3 × 3 orthogonal matrices is denoted O(3), and consists of all 
+  proper and improper rotations.
+
+  In addition to preserving length, proper rotations must also preserve orientation. 
+  A matrix will preserve or reverse orientation according to whether the determinant 
+  of the matrix is positive or negative. For an orthogonal matrix R, note that 
+  det R^{T} = det R implies (det R)^2 = 1, so that det R = ±1. 
+  The subgroup of orthogonal matrices with determinant +1 is called the special 
+  orthogonal group, denoted SO(3). 
+  Thus every rotation can be represented uniquely by an orthogonal matrix with unit 
+  determinant. Moreover, since composition of rotations corresponds to matrix 
+  multiplication, the rotation group is isomorphic to the special orthogonal group 
+  SO(3).
+
+  Improper rotations correspond to orthogonal matrices with determinant −1, and they 
+  do not form a group because the product of two improper rotations is a proper 
+  rotation. 
+
+  ----------- 中文笔记 ---------------
+  Orthogonal: 正交的，一般用于描述一组基是相互正交的（垂直的）
+  Orthonormal Basic: 标准正交基，两两正交，并且单个向量具有单位长度。
+  Gram-Schmidt: 施密特正交化。以2维为例，该算法保持r1不变，r3的改变最多。
+  有一种无偏差的递增正交化算法，不偏向特定轴，需要多次迭代（比如10次），然后用1次
+    标准的Gram-Schmidt算法来保证完全正交。
+  O(n): Orthogonal Group 正交群（保距，行列式为±1）
+  SO(n): Special Orthogonal Group 特殊正交群（保持手性，行列式为1）
+    Proper rotation: 正确的旋转 (行列式为1)
+    Improper rotation: 错误的旋转（行列式为-1）, rotation-reflect, 旋转反射，瑕旋转
+  ----------------------
+  补充一些理论：
+  1. 特殊矩阵：对称（自伴）、斜对称（斜伴）、正交（酉）、正规矩阵
+      实矩阵                      复矩阵
+      条件           名称         条件            名称
+  (1) A = A\T        对称阵       A = A\H         自伴阵
+  (2) A = -A\T       斜称阵       A = -A\H        斜伴阵
+  (3) AA\T = E       正交阵       AA\H = E        酉矩阵
+  (4)                            A A\H=A\H A      正规矩阵
+  其中，(1),(2),(3)都是正规矩阵
+
+  正规矩阵的一个定理：每个 n*n 正规矩阵A，都有一个由对应于特征值λ1,...,λn的特征向量
+  组成的完全正交基 x1,...,xn。
+  若设 U = (x1,...,xn)，则 U 是酉矩阵，并且有
+  U^{-1} A U = 对角阵 {λ1,...,λn}
+
+  正交矩阵的应用（旋转）：若一个 n*n 实矩阵A是正交的，则其特征值等于
+  ±1 或 e^{±iϕ}成对出现（ϕ是实数）。
+  
+  2. 特征值、特征向量、矩阵的谱
+  (1) 方阵A，使方程 A x = λ x 有非零解时，λ(复数)称一个特征值，x称对应的特征向量
+  (2) A的所有特征值的集合称为A的谱 σ(A)，A的特征值的绝对值的最大值称为A的谱半径，记做 r(A)
+  (3) 特征方程：det(A-λE)=0，其解是A的特征值λ，λ的重数称为代数重数。
+  (4) 设矩阵U是正交的（酉的），U的谱由数 e^{±iϕ} 组成，
+      变换 x' = U x 对应于笛卡尔坐标系中的正向旋转，旋转角ϕ
+      x1' = x1 * cos ϕ + x2 * sin ϕ
+      y1' = - x1 * sin ϕ + x2 * cos ϕ
+  (5) 谱定理
+      (i) 自伴矩阵的谱在实直线上
+      (ii) 斜伴矩阵的谱在虚轴上
+      (iii) 酉矩阵的谱在单位圆上
+
+  3. 正交性
+
+   *)
+
   (** A real square matrix m is an orthogonal matrix *)
   Definition morthogonal {n} (m : smat n) : Prop := m\T * m == mat1.
 
@@ -442,14 +522,6 @@ Section OrthogonalMatrix.
   Lemma morthogonal_iff_mul_trans_l : forall {n} (m : smat n),
       morthogonal m <-> m\T * m == mat1.
   Proof. intros. red. auto. Qed.
-
-  (* (** orthogonal m -> m * m\T = mat1 *) *)
-  (* Lemma morthogonal_iff_mul_trans_r : forall {n} (m : smat n), *)
-  (*     morthogonal m -> m * m\T == mat1. *)
-  (* Proof. *)
-  (*   intros. red in H. apply mmul_eq1_imply_minv_r in H. *)
-  (*   rewrite <- H. apply mmul_minv_r. *)
-  (* Qed. *)
 
   (** orthogonal m <-> m * m\T = mat1 *)
   Lemma morthogonal_iff_mul_trans_r : forall {n} (m : smat n),
