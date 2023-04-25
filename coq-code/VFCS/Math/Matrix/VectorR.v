@@ -85,6 +85,8 @@ Section kronecker.
 End kronecker.
 
 
+(* ======================================================================= *)
+(** * Row vector theory *)
 Module Export RowVectorR.
   Open Scope rvec_scope.
 
@@ -232,6 +234,8 @@ Module Export RowVectorR.
 End RowVectorR.
 
 
+(* ======================================================================= *)
+(** * Column vector theory *)
 Module Export ColVectorR.
   Open Scope cvec_scope.
 
@@ -325,6 +329,9 @@ Module Export ColVectorR.
   Lemma cvadd_assoc : forall {n} (v1 v2 v3 : cvec n), (v1 + v2) + v3 == v1 + (v2 + v3).
   Proof. intros. apply cvadd_assoc. Qed.
 
+  Lemma cvadd_perm : forall {n} (v1 v2 v3 : cvec n), (v1 + v2) + v3 == (v1 + v3) + v2.
+  Proof. intros. apply cvadd_perm. Qed.
+
   Lemma cvadd_0_l : forall {n} (v : cvec n), cvec0 + v == v.
   Proof. intros. apply cvadd_0_l. Qed.
 
@@ -340,8 +347,45 @@ Module Export ColVectorR.
   Lemma cvadd_opp_r : forall {n} (v : cvec n), v + (- v) == cvec0.
   Proof. intros. apply cvadd_opp_r. Qed.
 
+  (** - (v1 + v2) = (- v1) + (- v2) *)
+  Lemma cvopp_add : forall {n} (v1 v2 : cvec n), - (v1 + v2) == (- v1) + (- v2).
+  Proof. intros. apply cvopp_add. Qed.
+
+
   Definition cvsub {n} (v1 v2 : cvec n) : cvec n := cvsub v1 v2 (Aadd:=Aadd) (Aopp:=Aopp).
   Infix "-" := cvsub : cvec_scope.
+
+  (** Rewrite vsub: v1 - v2 = v1 + (-v2) *)
+  Lemma cvsub_rw : forall {n} (v1 v2 : cvec n), v1 - v2 == v1 + (-v2).
+  Proof. intros. apply cvsub_rw. Qed.
+
+  (** v1 - v2 = -(v2 - v1) *)
+  Lemma cvsub_comm : forall {n} (v1 v2 : cvec n), v1 - v2 == - (v2 - v1).
+  Proof. intros. apply cvsub_comm. Qed.
+
+  (** (v1 - v2) - v3 = v1 - (v2 + v3) *)
+  Lemma cvsub_assoc : forall {n} (v1 v2 v3 : cvec n), (v1 - v2) - v3 == v1 - (v2 + v3).
+  Proof. intros. apply cvsub_assoc. Qed.
+
+  (** (v1 + v2) - v3 = v1 + (v2 - v3) *)
+  Lemma cvsub_assoc1 : forall {n} (v1 v2 v3 : cvec n), (v1 + v2) - v3 == v1 + (v2 - v3).
+  Proof. intros. apply cvsub_assoc1. Qed.
+
+  (** (v1 - v2) - v3 = v1 - (v3 - v2) *)
+  Lemma cvsub_assoc2 : forall {n} (v1 v2 v3 : cvec n), (v1 - v2) - v3 == (v1 - v3) - v2.
+  Proof. intros. apply cvsub_assoc2. Qed.
+
+  (** vec0 - v = - v *)
+  Lemma cvsub_0_l : forall {n} (v : cvec n), cvec0 - v == - v.
+  Proof. intros. apply cvsub_0_l. Qed.
+
+  (** v - vec0 = v *)
+  Lemma cvsub_0_r : forall {n} (v : cvec n), v - cvec0 == v.
+  Proof. intros. apply cvsub_0_r. Qed.
+
+  (** v - v = vec0 *)
+  Lemma cvsub_self : forall {n} (v : cvec n), v - v == cvec0.
+  Proof. intros. apply cvsub_self. Qed.
 
 
   (** *** vector scalar multiplication *)
@@ -354,20 +398,47 @@ Module Export ColVectorR.
   Lemma cvcmul_perm : forall {n} a b (v : cvec n), a c* (b c* v) == b c* (a c* v).
   Proof. intros. apply cvcmul_perm. Qed.
 
-  Lemma cvcmul_add_distr_l : forall {n} a b (v : cvec n),
-      (a + b) c* v == (a c* v) + (b c* v).
+  Lemma cvcmul_add_distr_l : forall {n} a (v1 v2 : cvec n),
+      a c* (v1 + v2) == (a c* v1) + (a c* v2).
   Proof. intros. apply cvcmul_add_distr_l. Qed.
 
-  Lemma cvcmul_add_distr_r : forall {n} a (v1 v2 : cvec n),
-      a c* (v1 + v2) == (a c* v1) + (a c* v2).
+  Lemma cvcmul_add_distr_r : forall {n} a b (v : cvec n),
+      (a + b) c* v == (a c* v) + (b c* v).
   Proof. intros. apply cvcmul_add_distr_r. Qed.
 
   Lemma cvcmul_0_l : forall {n} (v : cvec n), A0 c* v == cvec0.
   Proof. intros. apply cvcmul_0_l. Qed.
 
+  Lemma cvcmul_0_r : forall {n} a, a c* (@cvec0 n) == cvec0.
+  Proof. intros. apply cvcmul_0_r. Qed.
+  
   Lemma cvcmul_1_l : forall {n} (v : cvec n), A1 c* v == v.
   Proof. intros. apply cvcmul_1_l. Qed.
 
+  Lemma cvopp_cmul : forall {n} a (v : cvec n), - (a c* v) == (-a)%A c* v.
+  Proof. intros. apply cvopp_cmul. Qed.
+
+  (** a c* (v1 - v2) = (a c* v1) - (a c* v2) *)
+  Lemma cvcmul_sub : forall {n} a (v1 v2 : cvec n),
+      a c* (v1 - v2) == (a c* v1) - (a c* v2).
+  Proof. intros. apply cvcmul_sub. Qed.
+
+  Lemma cvcmul_mul_assoc_l : forall {r c} (a : A) (m : mat r c) (v : cvec c), 
+      a c* (m * v) == (a c* m)%M * v.
+  Proof. intros. apply cvcmul_mul_assoc_l. Qed.
+
+  Lemma cvcmul_mul_assoc_r : forall {r c} (a : A) (m : mat r c) (v : cvec c), 
+      a c* (m * v) == m * (a c* v).
+  Proof. intros. apply cvcmul_mul_assoc_r. Qed.
+  
+
+  Definition cvmulc {n} (v : cvec n) a : cvec n := cvmulc v a (Amul:=Amul).
+  Infix "*c" := cvmulc : cvec_scope.
+
+  (** v *c a = a c* v *)
+  Lemma cvmulc_eq_cmul : forall {n} a (v : cvec n), (v *c a) == (a c* v).
+  Proof. intros. apply cvmulc_eq_cmul. Qed.
+  
 
   (** *** vector dot product *)
   Definition cvdot {n} (v1 v2 : cvec n) :=
@@ -392,7 +463,7 @@ Module Export ColVectorR.
     Lemma seqsum_ge0 : forall (f : nat -> R) n,
         (forall i, (i < n)%nat -> 0 <= f i) -> 0 <= seqsum f n.
     Proof. intros. induction n; simpl. lra. apply Rplus_le_le_0_compat; auto. Qed.
-      
+    
   End seqsum_props.
 
 
@@ -614,12 +685,11 @@ Module Export ColVectorR.
 
   End cvorthogonalset.
 
-  (** Orthonormal vectors 标准正交的两个向量 *)
+  (** *** Orthonormal vectors 标准正交的两个向量 *)
   Section cvorthonormal.
     (* Check kronecker_fun. *)
 
   End cvorthonormal.
-    
 
   
   (** *** Projection of two vectors *)
@@ -630,6 +700,9 @@ Module Export ColVectorR.
 
     (** The perpendicular vector followed the cvproj *)
     Definition cvperp {n} (u v : cvec n) : cvec n := u - cvproj u v.
+
+    (* (** The scalar projection of a on b is a simple triangle relation *) *)
+    (* Lemma cvsproj_spec : forall {n} (a b : cvec n), cvsproj a b == `|a| * cvangle. *)
 
     (** cvproj ⟂ cvperp *)
     Lemma cvproj_perp_cvprep : forall {n} (u v : cvec n), cvproj u v ⟂ cvperp u v.
@@ -644,6 +717,7 @@ Module Export ColVectorR.
       remember (seqsum (fun i0 : nat => v i0 0%nat * v i0 0%nat) n)%A as r1.
       remember (seqsum (fun i0 : nat => u i0 0%nat * v i0 0%nat) n)%A as r2.
     Admitted.
+
     
     (** The matrix form of cvproj in 3-dim *)
     Definition cv3proj (u v : cvec 3) : cvec 3 :=
@@ -752,16 +826,16 @@ Module Export ColVectorR.
 
     Lemma mcols_diff_orthogonal_iff : forall {n} (m : smat n),
         mcols_diff_orthogonal m <->
-        (forall j1 j2, j1 < n -> j2 < n -> j1 <> j2 ->
-                  (<mcol m j1, mcol m j2> =? 0)%R)%nat.
+          (forall j1 j2, j1 < n -> j2 < n -> j1 <> j2 ->
+                    (<mcol m j1, mcol m j2> =? 0)%R)%nat.
     Proof.
-      Admitted.
+    Admitted.
 
     (** All column-vectors of a matrix are unit vector.
         For example: [v1;v2;v3] => unit v1 && unit v2 && unit v3 *)
     Definition mcols_unit {n} (m : smat n) : bool :=
       and_blist (map (fun i => cvunitb (mcol m i)) (seq 0 3)).
-      
+    
     Lemma mcols_unit_iff : forall {n} (m : smat n),
         mcols_unit m <-> (forall j, j < n -> (<mcol m j, mcol m j> =? 1)%R)%nat.
     Proof.
@@ -810,7 +884,7 @@ Module Export ColVectorR.
         + rewrite mnth_mat1_diff; auto.
           apply Reqb_true. apply H1; auto.
     Qed.
-  
+    
     (** Transformation by orthogonal matrix will keep inner-product *)
     Theorem morthogonal_keep_dot : forall {n} (m : smat n) (v1 v2 : cvec n),
         morthogonal m -> <m * v1, m * v2> = <v1, v2>.
@@ -847,7 +921,7 @@ Module Export ColVectorR.
       rewrite morthogonal_keep_dot; auto.
     Qed.
 
-    (** 由于正交矩阵可保持变换向量的长度和角度，它可保持坐标系的整体结构不变。
+  (** 由于正交矩阵可保持变换向量的长度和角度，它可保持坐标系的整体结构不变。
         因此，正交矩阵仅可用于旋转变换和反射变换或二者的组合变换。
         当正交矩阵的行列式为1，表示一个旋转，行列式为-1，表示一个反射。*)
 
@@ -893,10 +967,10 @@ Module Export ColVectorR.
     (** Zero vector is parallel to any other vectors *)
     (* Lemma cvparallel_zero_l : forall {n} (v1 v2 : cvec n), cvzero v1 -> v1 ∥ v2. *)
     (* Proof. intros. exists 0. *)
-      
+    
 
-    (* (** If two non-zero vectors are parallel, then there is a unique k such that *)
-    (*     they are k times relation *) *)
+  (* (** If two non-zero vectors are parallel, then there is a unique k such that *)
+   (*     they are k times relation *) *)
     (* Lemma cvparallel_vnonezero_imply_unique_k : *)
     (*   forall {n} (v1 v2 : cvec n) (H1 : cvnonzero v1) (H2 : cvnonzero v2), *)
     (*     v1 ∥ v2 -> (exists ! k, k c* v1 == v2). *)
@@ -907,7 +981,7 @@ Module Export ColVectorR.
     (*   rewrite H2,H3. easy. *)
     (* Qed. *)
 
-    (** A non-zero vector v1 is parallel to any other vector v2,
+  (** A non-zero vector v1 is parallel to any other vector v2,
         iff there is a unique k such that v2 is k times v1. *)
     (* Lemma cvparallel_iff1 : forall {n} (v1 v2 : cvec n), *)
     (*     (cvnonzero v1 /\ (v1 ∥ v2)) <-> (exists ! k, v2 == k c* v1). *)
@@ -924,7 +998,59 @@ Module Export ColVectorR.
 
   End vparallel.
   Infix "∥" := cvparallel ( at level 50) : cvec_scope.
+
   
+  (* ======================================================================= *)
+  (** ** 2D vector theory *)
+
+  (** 主动旋转，逆时针正向(或顺时针负向)时，旋转矩阵 *)
+
+  (** 注意列向量和行向量的不同用法：
+     1. 给一个在该坐标系下的列向量 v1，正向旋转该向量 θ 角得到新的向量 v1'，按如下公式
+          v1' = R2d(θ) * v1
+     2. 给一个在该坐标系下的行向量 v2，正向旋转该向量 θ 角得到新的向量 v2'，按如下公式
+          v2' = v2 * (R2d(θ))\T
+     3. 如果进行了连续两次旋转，即，先旋转θ1，然后在此基础上再旋转θ2，则
+        按照列向量：v' = R(θ2) * R(θ1) * v，其中 R 是 R2d
+        按照行向量：v' = v * R(θ1) * R(θ2)，其中 R 是 R2d\T
+   *)
+  Definition R2d (θ : R) : smat 2 :=
+    let c := cos θ in
+    let s := sin θ in
+    l2m 2 2 [[c;-s];[s;c]]%R.
+
+  (** 一个实际的例子来说明该旋转矩阵的用法 *)
+  Section test.
+    Variable θ : R.
+    Variable v1 : cvec 2.
+    Let v2 : rvec 2 := v1\T. (* v1和v2在数学上相等，只是分别写作列向量和行向量的形式 *)
+    Let v1' : cvec 2 := (R2d θ) * v1.     (* 用列向量形式计算 *)
+    Let v2' : rvec 2 := v2 * ((R2d θ)\T). (* 用行向量形式计算 *)
+    Let v2'' : cvec 2 := v2'\T.  (* 再次写出 v2' 的列向量形式 *)
+    Goal v1' == v2''. (* 结果应该相同 *)
+    Proof. lva. Qed.
+
+  End test.
+
+  (** 为了避免旋转矩阵使用错误，命名一些操作 *)
+
+  (** 2D中旋转一个列向量 *)
+  Definition Rot2dC (θ : R) (v : cvec 2) : cvec 2 := (R2d θ) * v.
+
+  (** 2D中旋转一个行向量 *)
+  Definition Rot2dR (θ : R) (v : rvec 2) : rvec 2 := v * ((R2d θ)\T).
+
+  (** 旋转列向量，等效于旋转行向量，但需要转换输入和输出的向量形式 *)
+  Lemma Rot2dC_eq_Rot2dR : forall θ (v : cvec 2), Rot2dC θ v == (Rot2dR θ (v\T))\T.
+  Proof. lva. Qed.
+  
+  (** 旋转列向量，等效于旋转行向量，但需要转换输入和输出的向量形式 *)
+  Lemma Rot2dR_eq_Rot2dC : forall θ (v : rvec 2), Rot2dR θ v == (Rot2dC θ (v\T))\T.
+  Proof. lva. Qed.
+
+  
+  (* ======================================================================= *)
+  (** ** 3D vector theory *)
 
   (** *** Standard unit vector in Euclidean space of 3-dimensions *)
   Definition cv3i : cvec 3 := mk_cvec3 1 0 0.
@@ -965,6 +1091,11 @@ Module Export ColVectorR.
       t2cv_3 (a1 * b2 - a2 * b1, a2 * b0 - a0 * b2, a0 * b1 - a1 * b0)%R.
 
     Infix "×" := cv3cross : cvec_scope.
+
+    Global Instance cv3corss_mor : Proper (meq ==> meq ==> meq) cv3cross.
+    Proof.
+      simp_proper. intros. hnf in *. mat_to_fun. intros. rewrite !H,!H0; auto.
+    Qed.
 
     (** v × v = 0 *)
     Lemma cv3cross_self : forall v : cvec 3, v × v == cvec0.
@@ -1041,111 +1172,232 @@ Module Export ColVectorR.
     (** Two 3-dim vectors are parallel, can be quickly checked by cross-product. *)
     Lemma cv3parallel : forall (v1 v2 : cvec 3), v1 ∥ v2 <-> cvzero (v1 × v2).
     Proof.
-    Admitted.
+      intros. cvec_to_fun. unfold cvparallel. split; intros.
+      - destruct H as [k [H1]].
+        cbv. intros. rewrite <- !H; auto; simpl.
+        repeat (destruct i; try ring).
+      - cbv in *.
+    Abort. (* 叉乘为零，则{1:两行线性相关，对应系数成比例; 2.存在零向量}。*)
 
   End v3parallel.
 
+  
+  (** *** skew symmetry matrix *)
+  Section v3skew.
+    
+    Definition cv3skew (v : cvec 3) : smat 3 :=
+      let '(x,y,z) := cv2t_3 v in
+      (mk_mat_3_3
+         0    (-z)  y
+         z     0    (-x)
+         (-y)  x     0)%R.
+    Notation "`| v |ₓ" := (cv3skew v).
 
-  (** ** Operations on vectors of 3-dimensional *)
-  Section v3.
-
-    (** *** Frame and point *)
-    (** A point can be described by a coordinate vector, and the vector represents 
-      the displacement of the point with respect to some reference coordinate 
-      frame. We call it a bound vector since it cannot be freely moved. *)
-    Section frame.
-
-      (** A frame contains three orthogonal axes and a point known as the origin. *)
-      Record frame := {
-          Forigin : cvec 3;
-          Fx : cvec 3;
-          Fy : cvec 3;
-          Fz : cvec 3;
-        }.
-      
-    End frame.
-
-    (** *** skew symmetry matrix *)
-    Section v3ssm.
-      
-      Definition cv3_skew_sym_mat (v : cvec 3) : smat 3 :=
-        let '(x,y,z) := cv2t_3 v in
-        (mk_mat_3_3
-           0    (-z)  y
-           z     0    (-x)
-           (-y)  x     0)%R.
-      Notation "`| v |ₓ" := (cv3_skew_sym_mat v).
-
-      Lemma cv3cross_eq_ssm : forall (v1 v2 : cvec 3), v1 × v2 == `|v1|ₓ * v2.
-      Proof. lva. Qed.
-      
-    End v3ssm.
-    Notation "`| v |ₓ" := (cv3_skew_sym_mat v).
-
-
-    (** *** The triple scalar product (or called Mixed products of vectors) *)
-    Section v3mixed.
-
-      (** 几何意义：绝对值表示以向量a,b,c为棱的平行六面体的体积，另外若a,b,c组成右手系，
-        则混合积的符号为正；若组成左手系，则符号为负。*)
-      Definition cv3mixed (a b c : cvec 3) :=
-        let m :=
-          l2m 3 3 [[a$0; a$1; a$2]; [b$0; b$1; b$2]; [c$0; c$1; c$2]] in
-        det3 m.
-
-      (** A equivalent form *)
-      Lemma cv3mixed_eq : forall a b c : cvec 3, cv3mixed a b c = <a × b, c>.
-      Proof. intros [a] [b] [c]. cbv. ring. Qed.
-      
-
-      (** 若混合积≠0，则三向量可构成平行六面体，即三向量不共面，反之也成立。
-        所以有如下结论：三向量共面的充要条件是混合积为零。*)
-      Definition cv3coplanar (a b c : cvec 3) := cv3mixed a b c = 0.
-
-      (** Example 7, page 22, 高等数学，第七版 *)
-      (** 根据四顶点的坐标，求四面体的体积：四面体ABCD的体积等于AB,AC,AD为棱的平行六面体
-        的体积的六分之一 *)
-      Definition cv3_volume_of_tetrahedron (A B C D : cvec 3) :=
-        let AB := B - A in
-        let AC := C - A in
-        let AD := D - A in
-        ((1/6) * (cv3mixed AB AC AD))%R.
-
-    End v3mixed.
-
-    (** 习题8.2第12题, page 23, 高等数学，第七版 *)
-    (** 利用向量来证明不等式，并指出等号成立的条件 *)
-    Theorem Rineq3 : forall a1 a2 a3 b1 b2 b3 : R,
-        sqrt (a1² + a2² + a3²) * sqrt (b1² + b2² + b3²) >= |a1*b1 + a2*b2 + a3*b3|.
-    Proof.
-      intros.
-      pose (a := t2cv_3 (a1,a2,a3)).
-      pose (b := t2cv_3 (b1,b2,b3)).
-      pose (alen := cvlen a).
-      pose (blen := cvlen b).
-      replace (sqrt _) with alen; [| unfold alen; cbv; f_equal; ring].
-      replace (sqrt _) with blen; [| unfold blen; cbv; f_equal; ring].
-      replace (Rabs _) with (|<a,b>|); [| cbv; autorewrite with R; auto].
-    Abort.
-
-
-    (** Example 4, page 19, 高等数学，第七版 *)
-    Goal let a := t2cv_3 (2,1,-1) in
-         let b := t2cv_3 (1,-1,2) in
-         a × b == t2cv_3 (1,-5,-3).
+    Lemma cv3cross_eq_skew : forall (v1 v2 : cvec 3), v1 × v2 == `|v1|ₓ * v2.
     Proof. lva. Qed.
+    
+  End v3skew.
+  Notation "`| v |ₓ" := (cv3skew v).
 
-    (** Example 5, page 19, 高等数学，第七版 *)
-    (** 根据三点坐标求三角形面积 *)
-    Definition cv3_area_of_triangle (A B C : cvec 3) :=
+
+  (** *** The triple scalar product (or called Mixed products of vectors) *)
+  Section v3mixed.
+
+    (** 几何意义：绝对值表示以向量a,b,c为棱的平行六面体的体积，另外若a,b,c组成右手系，
+        则混合积的符号为正；若组成左手系，则符号为负。*)
+    Definition cv3mixed (a b c : cvec 3) :=
+      let m :=
+        l2m 3 3 [[a$0; a$1; a$2]; [b$0; b$1; b$2]; [c$0; c$1; c$2]] in
+      det3 m.
+
+    (** A equivalent form *)
+    Lemma cv3mixed_eq : forall a b c : cvec 3, cv3mixed a b c = <a × b, c>.
+    Proof. intros [a] [b] [c]. cbv. ring. Qed.
+    
+
+    (** 若混合积≠0，则三向量可构成平行六面体，即三向量不共面，反之也成立。
+        所以有如下结论：三向量共面的充要条件是混合积为零。*)
+    Definition cv3coplanar (a b c : cvec 3) := cv3mixed a b c = 0.
+
+    (** Example 7, page 22, 高等数学，第七版 *)
+    (** 根据四顶点的坐标，求四面体的体积：四面体ABCD的体积等于AB,AC,AD为棱的平行六面体
+        的体积的六分之一 *)
+    Definition cv3_volume_of_tetrahedron (A B C D : cvec 3) :=
       let AB := B - A in
       let AC := C - A in
-      ((1/2) * ||AB × AC||)%R.
+      let AD := D - A in
+      ((1/6) * (cv3mixed AB AC AD))%R.
 
-    (** Example 6, page 20, 高等数学，第七版 *)
-    (** 刚体绕轴以角速度 ω 旋转，某点M（OM为向量r⃗）处的线速度v⃗，三者之间的关系*)
-    Definition cv3_rotation_model (ω r v : cvec 3) := v = ω × r.
+  End v3mixed.
+
+
+  (** 推导一个绕任意轴 k̂ 旋转 θ 角度的矩阵 R(k̂,θ)，使得 v' = R(k̂,θ) * v *)
+  Section derive_AxisAngleMatrix.
+
+    (** Rotate a vector v in R^3 by an axis described with a unit vector k and 
+        an angle θ according to right handle rule, we got the rotated vector as
+        follows. This formula is known as Rodrigues formula. *)
+    Definition rotAxisAngle (θ : R) (k : cvec 3) (v : cvec 3) : cvec 3 :=
+      (cos θ) c* (v - <v,k> c* k) + (sin θ) c* (k×v) + <v,k> c* k.
+
+    (** Proof its correctness *)
+    Theorem rotAxisAngle_spec : forall (θ : R) (k : cvec 3) (v : cvec 3),
+        let v_para : cvec 3 := cvproj v k in
+        let v_perp : cvec 3 := v - v_para in
+        let w : cvec 3 := k × v_perp in
+        let v_perp' : cvec 3 := (cos θ) c* v_perp + (sin θ) c* w in
+        let v' : cvec 3 := v_perp' + v_para in
+        cvunit k ->
+        v' == rotAxisAngle θ k v.
+    Proof.
+      intros.
+      unfold rotAxisAngle.
+      assert (v_para == <v,k> c* k) as H1.
+      { unfold v_para, cvproj. rewrite H. f_equiv. field. }
+      assert (v_perp == v - <v,k> c* k) as H2.
+      { unfold v_perp. rewrite H1. easy. }
+      assert (w == k × v) as H3.
+      { unfold w. rewrite H2.
+        (* lva. (* auto solve. Below is the manual process. *) *)
+        unfold cvsub, ColVector.cvsub. rewrite cv3cross_add_distr_r.
+        unfold cvcmul. rewrite cvopp_cmul. rewrite cv3cross_cmul_assoc_r.
+        rewrite cv3cross_self. rewrite cvcmul_0_r. rewrite cvadd_0_r. easy. }
+      unfold v'. unfold v_perp'. rewrite H1. rewrite H2. rewrite H3. easy.
+    Qed.
+
+    (** Matrix formula of roation with axis-angle *)
+    Definition rotAxisAngleMat (θ : R) (k : cvec 3) : smat 3 :=
+      let K := cv3skew k in
+      (mat1 + (sin θ) c* K + (1 - cos θ) c* K * K)%M.
+
+    (** Another form of the formula *)
+    Lemma rotAxisAngle_form1 : forall (θ : R) (k : cvec 3) (v : cvec 3),
+        rotAxisAngle θ k v ==
+          v *c (cos θ) + (k × v) *c (sin θ) + k *c <v,k> * (1 - cos θ).
+    Proof.
+      intros. unfold rotAxisAngle.
+      rewrite !cvmulc_eq_cmul. rewrite cvcmul_sub. rewrite cvsub_rw.
+      rewrite !cvadd_assoc. f_equiv.
+      rewrite <- cvadd_assoc. rewrite cvadd_perm. rewrite cvadd_comm. f_equiv.
+      unfold Rminus. rewrite Rmult_plus_distr_l. autorewrite with R.
+      rewrite cvcmul_add_distr_r. rewrite cvadd_comm. f_equiv.
+      rewrite cvopp_cmul. rewrite cvcmul_assoc. f_equiv. ring.
+    Qed.
+
+    Lemma rotAxisAngleMat_spec : forall (θ : R) (k : cvec 3) (v : cvec 3),
+        cvunit k -> (rotAxisAngleMat θ k) * v == rotAxisAngle θ k v.
+    Proof.
+      intros.
+      rewrite rotAxisAngle_form1. unfold rotAxisAngleMat.
+      rewrite cv3cross_eq_skew.
+      remember (cv3skew k) as K.
+      rewrite !cvmulc_eq_cmul.
+      rewrite !mmul_add_distr_r.
+      am_move2h (sin θ c* K * v)%M.
+      am_move2h (sin θ c* (K * v)). f_equiv.
+      { rewrite cvcmul_mul_assoc_l. easy. }
+      rewrite Rmult_comm.
+      rewrite cvcmul_mul_assoc_l.
+      
+        rewrite <- mcmul_mul_assoc_l.
+      Set Printing All.
+        
+
+      
+        as v1.
+      amonoid_move2h v1.
+      Ltac amonoid_move2h c :=
+  rewrite <- ?monoid_assoc;
+  try rewrite (madd_comm _ c); rewrite ?madd_assoc.      
+
+      rewrite group ?
+      
+      assert (<v,k> c* k == v + K * (K * v)).
+      admit.
+      rewrite !H0.
+      rewrite cvcmul_sub.
+      rewrite cvsub_rw.
+      unfold Rminus.
+      rewrite mcmul_add_distr_r.
+      rewrite cvcmul_add_distr_l.
+      rewrite mmul_1_l.
+      rewrite madd_perm.
+      rewrite !cvadd_assoc. rewrite (cvadd_comm (sin θ c* (K * v)) _).
+      rewrite <- !cvadd_assoc. f_equiv.
+      2:{ unfold cvcmul, ColVector.cvcmul, mmul.
+          rewrite mcmul_mul_assoc_l. easy. }
+      rewrite cvopp_add.
+      rewrite !madd_assoc.
+     rewrite <- !cvadd_assoc.
+      group_simp.
+      
+      ?
+      
+      Search (- (_ + _))%M.
+      unfold cvsub, ColVector.cvsub, ColVector.cvopp.
+      unfold cvadd, ColVector.cvadd.
+      unfold cvcmul, ColVector.cvcmul.
+      
+      cvopp_add.
+      
+      rewrite mopp_cmul.
+      unfold Matrix.madd.
+      
+      unfold cvcmul. 
+      unfold ColVector.cvadd.
+      rewrite mcmul_add_distr_l.
+      rewrite 
+      
+      assert (rotAxisAngle θ k v == v
+      assert (
+      lma.
+(θ
     
+
+    (** Direct formula of rotation with axis-angle *)
+    Definition rotAxisAngle_direct (θ : R) (k : cvec 3) (v : cvec 3) : cvec 3 :=
+      l2cv 3
+        [?
+          
+    
+  End derive_AxisAngleMatrix.
+
+  (*
+
+
+  (** 习题8.2第12题, page 23, 高等数学，第七版 *)
+  (** 利用向量来证明不等式，并指出等号成立的条件 *)
+  Theorem Rineq3 : forall a1 a2 a3 b1 b2 b3 : R,
+      sqrt (a1² + a2² + a3²) * sqrt (b1² + b2² + b3²) >= |a1*b1 + a2*b2 + a3*b3|.
+  Proof.
+    intros.
+    pose (a := t2cv_3 (a1,a2,a3)).
+    pose (b := t2cv_3 (b1,b2,b3)).
+    pose (alen := cvlen a).
+    pose (blen := cvlen b).
+    replace (sqrt _) with alen; [| unfold alen; cbv; f_equal; ring].
+    replace (sqrt _) with blen; [| unfold blen; cbv; f_equal; ring].
+    replace (Rabs _) with (|<a,b>|); [| cbv; autorewrite with R; auto].
+  Abort.
+
+
+  (** Example 4, page 19, 高等数学，第七版 *)
+  Goal let a := t2cv_3 (2,1,-1) in
+       let b := t2cv_3 (1,-1,2) in
+       a × b == t2cv_3 (1,-5,-3).
+  Proof. lva. Qed.
+
+  (** Example 5, page 19, 高等数学，第七版 *)
+  (** 根据三点坐标求三角形面积 *)
+  Definition cv3_area_of_triangle (A B C : cvec 3) :=
+    let AB := B - A in
+    let AC := C - A in
+    ((1/2) * ||AB × AC||)%R.
+
+  (** Example 6, page 20, 高等数学，第七版 *)
+  (** 刚体绕轴以角速度 ω 旋转，某点M（OM为向量r⃗）处的线速度v⃗，三者之间的关系*)
+  Definition cv3_rotation_model (ω r v : cvec 3) := v = ω × r.
+  
 
   (* 
   
@@ -1169,8 +1421,8 @@ Module Export ColVectorR.
     v0 <> v1 /\ v0 <> (-v1)%M.
    *)
    *)
-    
-  End v3.
+
+  Infix "×" := cv3cross : cvec_scope.
 
 
   (* ======================================================================= *)

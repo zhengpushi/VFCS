@@ -311,8 +311,8 @@ Module Export RowVector.
     Infix "*c" := rvmulc : rvec_scope.
 
     (** v *c a = a c* v *)
-    Lemma rvmulc_eq_rvcmul : forall {n} a (v : rvec n), (v *c a) == (a c* v).
-    Proof. intros. apply mmulc_eq_mcmul. Qed.
+    Lemma rvmulc_eq_cmul : forall {n} a (v : rvec n), (v *c a) == (a c* v).
+    Proof. intros. apply mmulc_eq_cmul. Qed.
 
     
     (** *** Vector dot product *)
@@ -660,6 +660,10 @@ Module Export ColVector.
     Lemma cvadd_assoc : forall {n} (v1 v2 v3 : cvec n), (v1 + v2) + v3 == v1 + (v2 + v3).
     Proof. intros. apply madd_assoc. Qed.
 
+    (** (v1 + v2) + v3 = (v1 + v3) + v2 *)
+    Lemma cvadd_perm : forall {n} (v1 v2 v3 : cvec n), (v1 + v2) + v3 == (v1 + v3) + v2.
+    Proof. intros. apply madd_perm. Qed.
+
     (** vec0 + v = v *)
     Lemma cvadd_0_l : forall {n} (v : cvec n), cvec0 + v == v.
     Proof. intros. apply madd_0_l. Qed.
@@ -681,12 +685,62 @@ Module Export ColVector.
     (** v + (- v) = vec0 *)
     Lemma cvadd_opp_r : forall {n} (v : cvec n), v + (- v) == cvec0.
     Proof. intros. apply madd_opp_r. Qed.
-    
+
+    (** - (v1 + v2) = (- v1) + (- v2) *)
+    Lemma cvopp_add : forall {n} (v1 v2 : cvec n), - (v1 + v2) == (- v1) + (- v2).
+    Proof. intros. apply mopp_add. Qed.
+
 
     (** *** Vector subtraction *)
 
     Definition cvsub {n} (v1 v2 : cvec n) : cvec n := v1 + (- v2).
     Infix "-" := cvsub : cvec_scope.
+
+    (** Rewrite vsub: v1 - v2 = v1 + (-v2) *)
+    Lemma cvsub_rw : forall {n} (v1 v2 : cvec n), v1 - v2 == v1 + (-v2).
+    Proof. intros. apply msub_rw. Qed.
+
+    (** v1 - v2 = -(v2 - v1) *)
+    Lemma cvsub_comm : forall {n} (v1 v2 : cvec n), v1 - v2 == - (v2 - v1).
+    Proof. intros. apply msub_comm. Qed.
+
+    (** (v1 - v2) - v3 = v1 - (v2 + v3) *)
+    Lemma cvsub_assoc : forall {n} (v1 v2 v3 : cvec n), (v1 - v2) - v3 == v1 - (v2 + v3).
+    Proof. intros. apply msub_assoc. Qed.
+
+    (** (v1 + v2) - v3 = v1 + (v2 - v3) *)
+    Lemma cvsub_assoc1 : forall {n} (v1 v2 v3 : cvec n), (v1 + v2) - v3 == v1 + (v2 - v3).
+    Proof. intros. apply msub_assoc1. Qed.
+
+    (** (v1 - v2) - v3 = v1 - (v3 - v2) *)
+    Lemma cvsub_assoc2 : forall {n} (v1 v2 v3 : cvec n), (v1 - v2) - v3 == (v1 - v3) - v2.
+    Proof. intros. apply msub_assoc2. Qed.
+
+    (** vec0 - v = - v *)
+    Lemma cvsub_0_l : forall {n} (v : cvec n), cvec0 - v == - v.
+    Proof. intros. apply msub_0_l. Qed.
+
+    (** v - vec0 = v *)
+    Lemma cvsub_0_r : forall {n} (v : cvec n), v - cvec0 == v.
+    Proof. intros. apply msub_0_r. Qed.
+
+    (** v - v = vec0 *)
+    Lemma cvsub_self : forall {n} (v : cvec n), v - v == cvec0.
+    Proof. intros. apply msub_self. Qed.
+
+    (* Section test. *)
+    (*   Goal forall n (v1 v2 : cvec n), cvec0 + v1 + (-v2) + v2 == v1. *)
+    (*     intros. *)
+    (*     rewrite identityLeft. *)
+    (*     (* rewrite associative. *) *)
+    (*     (* rewrite inverseLeft. *) *)
+    (*     group_simp. *)
+    (*   Qed. *)
+    (* End test. *)
+
+    (* (** *** Group structure over {vadd,vec0,vopp,meq} *) *)
+    (* Global Instance Group_VecAdd : forall n, Group (@cvadd n) (cvec0) cvopp meq. *)
+    (* intros. apply Group_MatAadd. Qed. *)
 
     
     (** Let's have a ring *)
@@ -695,7 +749,8 @@ Module Export ColVector.
     Infix "*" := Amul : A_scope.
     
     Infix "*" := (@mmul _ Aadd A0 Amul _ _ _) : mat_scope.
-    
+    Infix "c*" := (mcmul (Amul:=Amul)) : mat_scope.
+    Infix "*c" := (mmulc (Amul:=Amul)) : mat_scope.
 
     (** *** Vector scalar multiplication *)
 
@@ -714,15 +769,15 @@ Module Export ColVector.
     Lemma cvcmul_perm : forall {n} a b (v : cvec n), a c* (b c* v) == b c* (a c* v).
     Proof. intros. apply mcmul_perm. Qed.
 
-    (** (a + b) c* v = (a c* v) + (b c* v) *)
-    Lemma cvcmul_add_distr_l : forall {n} a b (v : cvec n),
-        (a + b)%A c* v == (a c* v) + (b c* v).
-    Proof. intros. apply mcmul_add_distr_r. Qed.
-
     (** a c* (v1 + v2) = (a c* v1) + (a c* v2) *)
-    Lemma cvcmul_add_distr_r : forall {n} a (v1 v2 : cvec n), 
+    Lemma cvcmul_add_distr_l : forall {n} a (v1 v2 : cvec n), 
         a c* (v1 + v2) == (a c* v1) + (a c* v2).
     Proof. intros. apply mcmul_add_distr_l. Qed.
+
+    (** (a + b) c* v = (a c* v) + (b c* v) *)
+    Lemma cvcmul_add_distr_r : forall {n} a b (v : cvec n),
+        (a + b)%A c* v == (a c* v) + (b c* v).
+    Proof. intros. apply mcmul_add_distr_r. Qed.
 
     (** 1 c* v = v *)
     Lemma cvcmul_1_l : forall {n} (v : cvec n), A1 c* v == v.
@@ -732,12 +787,34 @@ Module Export ColVector.
     Lemma cvcmul_0_l : forall {n} (v : cvec n), A0 c* v == cvec0.
     Proof. intros. apply mcmul_0_l. Qed.
 
+    (** a c* 0 = cvec0 *)
+    Lemma cvcmul_0_r : forall {n} a, a c* (@cvec0 n) == cvec0.
+    Proof. intros. apply mcmul_0_r. Qed.
+
+    (** - (a c* v) = (-a) c* v *)
+    Lemma cvopp_cmul : forall {n} a (v : cvec n), - (a c* v) == (-a)%A c* v.
+    Proof. lva. Qed.
+
+    (** a c* (v1 - v2) = (a c* v1) - (a c* v2) *)
+    Lemma cvcmul_sub : forall {n} a (v1 v2 : cvec n),
+        a c* (v1 - v2) == (a c* v1) - (a c* v2).
+    Proof. lva. Qed.
+
+    Lemma cvcmul_mul_assoc_l : forall {r c} (a : A) (m : mat r c) (v : cvec c), 
+        a c* (m * v) == (a c* m)%M * v.
+    Proof. intros. apply mcmul_mul_assoc_l. Qed.
+
+    Lemma cvcmul_mul_assoc_r : forall {r c} (a : A) (m : mat r c) (v : cvec c), 
+        a c* (m * v) == m * (a c* v).
+    Proof. intros. apply mcmul_mul_assoc_r. Qed.
+    
+
     Definition cvmulc {n} (v : cvec n) a : cvec n := mmulc (Amul:=Amul) v a.
     Infix "*c" := cvmulc : cvec_scope.
 
     (** v *c a = a c* v *)
-    Lemma cvmulc_eq_cvcmul : forall {n} a (v : cvec n), (v *c a) == (a c* v).
-    Proof. intros. apply mmulc_eq_mcmul. Qed.
+    Lemma cvmulc_eq_cmul : forall {n} a (v : cvec n), (v *c a) == (a c* v).
+    Proof. intros. apply mmulc_eq_cmul. Qed.
 
     
     (** *** Vector dot product *)
@@ -756,7 +833,11 @@ Module Export ColVector.
       simp_proper. intros. unfold cvdot.
       apply seqsum_eq. intros. f_equiv; auto.
     Qed.
-    
+
+    (** [m1 * m2].ij = <row(m1,i)\T, col(m2,j)> *)
+    Lemma mmul_eq_dot_row_col : forall {r c s} (m1 : mat r c) (m2 : mat c s) i j,
+        i < r -> j < s -> ((m1 * m2)%M $ i $ j == <(mrow m1 i)\T, mcol m2 j>)%A.
+    Proof. intros. mat_to_fun. unfold mrow,mcol,cvdot. simpl. easy. Qed.
 
     (** <v1,v2> = v1\T * v2 *)
     Lemma cvdot_eq_mul_trans : forall {n} (v1 v2 : cvec n),
@@ -807,6 +888,40 @@ Module Export ColVector.
     Lemma cvdot_0_r : forall {n} (v : cvec n), (<v,cvec0> == A0)%A.
     Proof. intros. rewrite cvdot_comm, cvdot_0_l. easy. Qed.
 
+    (** *** Connection and difference between "Matrix multiplication with row vector 
+        or column vector" *)
+
+    (** M * v = v * M\T *)
+    Lemma mmv_eq_vmmt : forall {r c : nat} (M : mat r c) (v : cvec c),
+        (* Treat the column vector v as a row vector *)
+        let v' : rvec c := v\T in
+        (* matrix left multiply a vector *)
+        let u1 : cvec r := M * v in
+        (* matrix right multiply a vector (the matrix need to be transposed) *)
+        let u2 : rvec r := v' * M\T in
+        (* Treat the row vector u2 as a column vector *)
+        let u2' : cvec r := u2\T in
+        (* The result must be same *)
+        u1 == u2'.
+      Proof. lva. apply seqsum_eq. intros. ring. Qed.
+    
+    (** v * M = M\T * v *)
+    Lemma mvm_eq_mtmv : forall {r c : nat} (v : rvec r) (M : mat r c),
+        (* Treat the row vector v as a column vector *)
+        let v' : cvec r := v\T in
+        (* matrix right multiply a vector *)
+        let u1 : rvec c := v * M in
+        (* matrix left multiply a vector (the matrix need to be transposed) *)
+        let u2 : cvec c := M\T * v' in
+        (* Treat the column vector u2 as a row vector *)
+        let u2' : rvec c := u2\T in
+        (* The result must be same *)
+        u1 == u2'.
+    Proof. lva. apply seqsum_eq. intros. ring. Qed.
+
+    (** Thus, we proved that, row vector and column vector are different but have 
+        a tight connection. *)
+    
   End vec_ring.
 
   Section test.
@@ -878,8 +993,16 @@ Section cvt.
   Definition cv2rv {n} (v : cvec n) : rvec n :=
     mk_rvec (fun i => cvnth A0 v i).
 
+  Lemma cv2rv_spec : forall {n} (v : cvec n), cv2rv v == v\T.
+  Proof. lva. rewrite cvnth_spec; easy. Qed.
+
   Definition rv2cv {n} (v : rvec n) : cvec n :=
     mk_cvec (fun i => rvnth A0 v i).
+
+  Lemma rv2cv_spec : forall {n} (v : rvec n), rv2cv v == v\T.
+  Proof. lva. rewrite rvnth_spec; easy. Qed.
+
+
 
 End cvt.
 

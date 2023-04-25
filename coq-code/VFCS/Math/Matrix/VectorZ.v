@@ -259,12 +259,12 @@ Module Export ColVectorZ.
   Lemma cvcmul_perm : forall {n} a b (v : cvec n), a c* (b c* v) == b c* (a c* v).
   Proof. intros. apply cvcmul_perm. Qed.
 
-  Lemma cvcmul_add_distr_l : forall {n} a b (v : cvec n),
-      (a + b) c* v == (a c* v) + (b c* v).
+  Lemma cvcmul_add_distr_l : forall {n} a (v1 v2 : cvec n),
+      a c* (v1 + v2) == (a c* v1) + (a c* v2).
   Proof. intros. apply cvcmul_add_distr_l. Qed.
 
-  Lemma cvcmul_add_distr_r : forall {n} a (v1 v2 : cvec n),
-      a c* (v1 + v2) == (a c* v1) + (a c* v2).
+  Lemma cvcmul_add_distr_r : forall {n} a b (v : cvec n),
+      (a + b) c* v == (a c* v) + (b c* v).
   Proof. intros. apply cvcmul_add_distr_r. Qed.
 
   Lemma cvcmul_0_l : forall {n} (v : cvec n), A0 c* v == cvec0.

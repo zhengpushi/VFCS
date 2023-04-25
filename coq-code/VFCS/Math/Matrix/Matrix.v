@@ -501,6 +501,33 @@ End mshift.
 
 
 (* ======================================================================= *)
+(** ** Diagonal matrix *)
+Section mdiagonal.
+  Context `{Equiv_Aeq : Equivalence A Aeq} {A0 : A}.
+  Infix "==" := Aeq : A_scope.
+
+  (** A matrix is a diagonal matrix *)
+  Definition mdiag {n} (m : smat A n) : Prop :=
+    forall i j, i < n -> j < n -> i <> j -> m$i$j == A0.
+
+  (** Construct a diagonal matrix *)
+  Definition mk_diag {n} (l : list A) : smat A n :=
+    mk_mat (fun i j => if i =? j then nth i l A0 else A0).
+
+  (** mk_diag is correct *)
+  Lemma mk_diag_spec : forall {n} (l : list A), mdiag (@mk_diag n l).
+  Proof. intros. hnf. intros. cbn. bdestruct (i =? j); easy. Qed.
+
+  (* (** i <> j -> m[i,j] = 0 *) *)
+  (* Lemma mnth_diag_diff : forall {n} (m : smat A n), *)
+  (*     mdiag m -> (forall i j, i < n -> j < n -> i <> j -> m$0$1 = A0. *)
+
+End mdiagonal.
+
+(* Compute m2l (@mk_diag _ 0 3 [1;2;3]). *)
+
+
+(* ======================================================================= *)
 (** ** Construct matrix with vector and matrix *)
 Section mcons.
   Context `{Equiv_Aeq : Equivalence A Aeq} {A0 : A}.
@@ -592,6 +619,46 @@ End mk_mat.
 
 
 (* ======================================================================= *)
+(** ** Convert between tuples and matrix *)
+Section t2m_m2t.
+  Context {A : Type} (A0 : A).
+  (* Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope. *)
+  
+  (** Tuples 2x2 -> mat_2x2 *)
+  Definition t2m_2_2 (t : @T_2_2 A) : @mat A 2 2.
+  Proof.
+    destruct t as (t1,t2).
+    destruct t1 as (a11,a12).
+    destruct t2 as (a21,a22).
+    exact (mk_mat_2_2 (A0:=A0) a11 a12 a21 a22).
+  Defined.
+
+  (** Tuples 3x3 -> mat_3x3 *)
+  Definition t2m_3_3 (t : @T_3_3 A) : @mat A 3 3.
+  Proof.
+    destruct t as ((t1,t2),t3).
+    destruct t1 as ((a11,a12),a13).
+    destruct t2 as ((a21,a22),a23).
+    destruct t3 as ((a31,a32),a33).
+    exact (mk_mat_3_3 (A0:=A0) a11 a12 a13 a21 a22 a23 a31 a32 a33).
+  Defined.
+
+  (** m[0,0]: mat_1x1 -> A *)
+  Definition m2t_1_1 (m : @mat A 1 1) := m.11.
+  Definition scalar_of_mat (m : @mat A 1 1) := m.11.
+
+  (** mat_2x2 -> tuple 2x2. That is: ((a11,a12),(a21,a22)) *)
+  Definition m2t_2_2 (m : mat 2 2) : @T_2_2 A :=
+    ((m.11, m.12), (m.21, m.22)).
+
+  (** mat_3x3 -> tuple 3x3. That is: ((a11,a12,a13),(a21,a22,a23),(a31,a32,a33)) *)
+  Definition m2t_3_3 (m : mat 3 3) : @T_3_3 A :=
+    ((m.11,m.12,m.13),(m.21,m.22,m.23),(m.31,m.32,m.33)).
+
+End t2m_m2t.
+
+
+(* ======================================================================= *)
 (** ** Mapping of matrix *)
 Section Map.
   Context `{Equiv_Aeq : Equivalence A Aeq} {A0 : A}.
@@ -640,6 +707,10 @@ Section mtrans.
   Lemma mtrans_trans : forall {r c} (m : @mat A r c), m \T \T == m.
   Proof. lma. Qed.
 
+  (** Transpose of a diagonal matrix keep unchanged *)
+  Lemma mtrans_diag : forall {n} (m : smat A n), @mdiag _ Aeq A0 _ m -> m\T == m.
+  Proof. lma. bdestruct (i =? j); subst; try easy. rewrite !H; auto. easy. Qed.
+
 End mtrans.
 Notation "m \T" := (mtrans m) : mat_scope.
 
@@ -657,6 +728,13 @@ Section mat0_mat1.
   (** Identity matrix *)
   Definition mat1 {n : nat} : mat n n :=
     mk_mat (fun i j => if (i =? j)%nat then A1 else A0).
+
+  (** mat1 is diagonal matrix *)
+  Lemma mat1_is_diag : forall {n : nat}, @mdiag _ Aeq A0 n mat1.
+  Proof.
+    intros. hnf. intros. unfold mat1. simpl.
+    bdestruct (i =? j); subst; try easy.
+  Qed.
   
   (** mat0\T = mat0 *)
   Lemma mtrans_0 : forall {r c : nat}, (@mat0 r c)\T == mat0.
@@ -738,6 +816,10 @@ Section malg.
   Lemma madd_assoc : forall {r c} (m1 m2 m3 : mat r c), (m1 + m2) + m3 == m1 + (m2 + m3).
   Proof. lma. monoid_simp. Qed.
 
+  (** (m1 + m2) + m3 = (m1 + m3) + m2 *)
+  Lemma madd_perm : forall {r c} (m1 m2 m3 : mat r c), (m1 + m2) + m3 == (m1 + m3) + m2.
+  Proof. intros. rewrite !madd_assoc. f_equiv. apply madd_comm. Qed.
+
   (** mat0 + m = m *)
   Lemma madd_0_l : forall {r c} (m : mat r c), mat0 A0 + m == m. 
   Proof. lma. monoid_simp. Qed.
@@ -768,11 +850,11 @@ Section malg.
   (* Qed. *)
 
   (** (m1 + m2)\T = m1\T + m2\T *)
-  Lemma mtrans_add : forall {r c} (m1 m2 : mat r c), (m1 + m2)\T == m1\T + m2\T.
+  Lemma mtrans_madd : forall {r c} (m1 m2 : mat r c), (m1 + m2)\T == m1\T + m2\T.
   Proof. lma. Qed.
 
   (** tr(m1 + m2) = tr(m1) + tr(m2) *)
-  Lemma mtrace_add : forall {n} (m1 m2 : smat n), (tr (m1 + m2)%M == tr(m1) + tr(m2))%A.
+  Lemma mtrace_madd : forall {n} (m1 m2 : smat n), (tr (m1 + m2)%M == tr(m1) + tr(m2))%A.
   Proof. intros. unfold mtrace. rewrite <- seqsum_add. apply seqsum_eq. easy. Qed.
 
   (** Monoid structure over {madd,mat0,meq} *)
@@ -799,19 +881,19 @@ Section malg.
   Qed.
 
   (** - (m1 + m2) = (-m1) + (-m2) *)
-  Lemma mopp_add : forall {r c : nat} (m1 m2 : mat r c), - (m1 + m2) == (-m1) + (-m2).
+  Lemma mopp_madd : forall {r c : nat} (m1 m2 : mat r c), - (m1 + m2) == (-m1) + (-m2).
   Proof. lma. rewrite group_inv_distr. apply commutative. Qed.
 
   (** (-m) + m = mat0 *)
-  Lemma madd_opp_l : forall r c (m : mat r c), (-m) + m == mat0 A0.
+  Lemma madd_mopp_l : forall r c (m : mat r c), (-m) + m == mat0 A0.
   Proof. lma. group_simp. Qed.
 
   (** m + (-m) = mat0 *)
-  Lemma madd_opp_r : forall r c (m : mat r c), m + (-m) == mat0 A0.
+  Lemma madd_mopp_r : forall r c (m : mat r c), m + (-m) == mat0 A0.
   Proof. lma. group_simp. Qed.
 
   (** - (- m) = m *)
-  Lemma mopp_opp : forall {r c} (m : mat r c), - (- m) == m.
+  Lemma mopp_mopp : forall {r c} (m : mat r c), - (- m) == m.
   Proof. lma. apply group_inv_inv. Qed.
 
   (** - mat0 = mat0 *)
@@ -819,11 +901,11 @@ Section malg.
   Proof. lma. apply group_inv_id. Qed.
 
   (** (m1 + m2)\T = m1\T + m2\T *)
-  Lemma mtrans_opp : forall {r c} (m : mat r c), (- m)\T == - (m\T).
+  Lemma mtrans_mopp : forall {r c} (m : mat r c), (- m)\T == - (m\T).
   Proof. lma. Qed.
 
   (** tr(- m) = - (tr(m)) *)
-  Lemma mtrace_opp : forall {n} (m : smat n), (tr((-m)%M) == - (tr(m)))%A.
+  Lemma mtrace_mopp : forall {n} (m : smat n), (tr((-m)%M) == - (tr(m)))%A.
   Proof. intros. unfold mtrace. rewrite seqsum_opp. apply seqsum_eq. easy. Qed.
 
 
@@ -869,21 +951,22 @@ Section malg.
   Proof. lma. group_simp. Qed.
 
   (** (m1 - m2)\T = m1\T - m2\T *)
-  Lemma mtrans_sub : forall {r c} (m1 m2 : mat r c), (m1 - m2)\T == m1\T - m2\T.
+  Lemma mtrans_msub : forall {r c} (m1 m2 : mat r c), (m1 - m2)\T == m1\T - m2\T.
   Proof. lma. Qed.
 
   (** tr(m1 - m2) = tr(m1) - tr(m2) *)
-  Lemma mtrace_sub : forall {n} (m1 m2 : smat n), (tr ((m1 - m2)%M) == tr(m1) - tr(m2))%A.
+  Lemma mtrace_msub : forall {n} (m1 m2 : smat n),
+      (tr ((m1 - m2)%M) == tr(m1) - tr(m2))%A.
   Proof. intros. unfold mtrace. rewrite seqsum_opp. rewrite <- seqsum_add.
          apply seqsum_eq. easy. Qed.
 
 
   (** *** Group structure over {madd,mat0,mopp,meq} *)
-  Global Instance Group_MatAadd : forall r c, Group (@madd r c) (mat0 A0) mopp meq.
+  Global Instance Group_MatAdd : forall r c, Group (@madd r c) (mat0 A0) mopp meq.
   intros; constructor; try apply meq_equiv.
   apply Monoid_MatAadd.
-  constructor. apply madd_opp_l.
-  constructor. apply madd_opp_r.
+  constructor. apply madd_mopp_l.
+  constructor. apply madd_mopp_r.
   apply madd_mor. apply mopp_mor. Qed.
 
   Section test.
@@ -897,9 +980,9 @@ Section malg.
   End test.
 
   (** *** Abelian group structure over {madd,mat0,mopp,meq} *)
-  Global Instance AGroup_MatAadd : forall r c, AGroup (@madd r c) (mat0 A0) mopp meq.
-  intros; constructor; try apply meq_equiv. apply Group_MatAadd.
-  constructor. apply Group_MatAadd. all: constructor; apply madd_comm. Qed.
+  Global Instance AGroup_MatAdd : forall r c, AGroup (@madd r c) (mat0 A0) mopp meq.
+  intros; constructor; try apply meq_equiv. apply Group_MatAdd.
+  constructor. apply Group_MatAdd. all: constructor; apply madd_comm. Qed.
 
   
   (** *** Below, we need a ring structure *)
@@ -949,22 +1032,32 @@ Section malg.
   Lemma mcmul_perm : forall {r c} (a b : A) (m : mat r c), a c* (b c* m) == b c* (a c* m).
   Proof. lma. Qed.
 
-  (** a c* (m1 + m2) = (a c* m1) + (a c* m2) *)
-  Lemma mcmul_add_distr_l : forall {r c} (a : A) (m1 m2 : mat r c), 
-      a c* (m1 + m2) == (a c* m1) + (a c* m2).
-  Proof. lma. Qed.
-  
   (** (a + b) c* m = (a c* m) + (b c* m) *)
-  Lemma mcmul_add_distr_r : forall {r c} (a b : A) (m : mat r c), 
+  Lemma mcmul_add_distr : forall {r c} (a b : A) (m : mat r c), 
       (a + b)%A c* m == (a c* m) + (b c* m).
   Proof. lma. Qed.
 
+  (** a c* (m1 + m2) = (a c* m1) + (a c* m2) *)
+  Lemma mcmul_madd_distr : forall {r c} (a : A) (m1 m2 : mat r c), 
+      a c* (m1 + m2) == (a c* m1) + (a c* m2).
+  Proof. lma. Qed.
+  
+  (** - (a c* m) = (-a) c* m *)
+  Lemma mopp_mcmul : forall {r c} a (m : mat r c), - (a c* m) == (-a)%A c* m.
+  Proof. lma. Qed.
+
+  (** a c* (m1 - m2) = (a c* m1) - (a c* m2) *)
+  Lemma mcmul_msub : forall {r c} a (m1 m2 : mat r c),
+      a c* (m1 - m2) == (a c* m1) - (a c* m2).
+  Proof. lma. Qed.
+
+
   (** (a c* m)\T = a c* (m\T) *)
-  Lemma mtrans_cmul : forall {r c} (a : A) (m : mat r c), (a c* m)\T == a c* (m\T).
+  Lemma mtrans_mcmul : forall {r c} (a : A) (m : mat r c), (a c* m)\T == a c* (m\T).
   Proof. lma. Qed.
 
   (** tr (a c* m) = a * tr (m) *)
-  Lemma mtrace_cmul : forall {n} (a : A) (m : smat n), (tr (a c* m) == a * tr (m))%A.
+  Lemma mtrace_mcmul : forall {n} (a : A) (m : smat n), (tr (a c* m) == a * tr (m))%A.
   Proof.
     unfold mtrace,mcmul; intros. rewrite seqsum_cmul_l. apply seqsum_eq.
     intros. simpl. ring.
@@ -981,7 +1074,7 @@ Section malg.
 
   (** show it is a proper morphism *)
   Global Instance mmulc_mor : forall r c, Proper (meq ==> Aeq ==> meq) (mmulc (r:=r)(c:=c)).
-  Proof. simp_proper. intros. rewrite ?mmulc_eq_mcmul. rewrite H,H0. easy. Qed.
+  Proof. simp_proper. intros. rewrite !mmulc_eq_mcmul. rewrite H,H0. easy. Qed.
 
   
   (** *** Matrix multiplication *)
@@ -1010,34 +1103,34 @@ Section malg.
   Qed.
 
   (** m1 * (m2 + m3) = m1 * m2 + m1 * m3 *)
-  Lemma mmul_add_distr_l : forall {r c s : nat} (m1 : mat r c) (m2 m3 : mat c s), 
+  Lemma mmul_madd_distr_l : forall {r c s : nat} (m1 : mat r c) (m2 m3 : mat c s), 
       m1 * (m2 + m3) == m1 * m2 + m1 * m3.
   Proof. lma. rewrite <- seqsum_add. apply seqsum_eq; intros. ring. Qed.
   
   (** (m1 + m2) * m3 = m1 * m3 + m2 * m3 *)
-  Lemma mmul_add_distr_r : forall {r c s : nat} (m1 m2 : mat r c) (m3 : mat c s),
+  Lemma mmul_madd_distr_r : forall {r c s : nat} (m1 m2 : mat r c) (m3 : mat c s),
       (m1 + m2) * m3 == m1 * m3 + m2 * m3.
   Proof. lma. rewrite <- seqsum_add. apply seqsum_eq; intros. ring. Qed.
 
   (** m1 * (m2 - m3) = m1 * m2 - m1 * m3 *)
-  Lemma mmul_sub_distr_l : forall {r c s : nat} (m1 : mat r c) (m2 m3 : mat c s), 
+  Lemma mmul_msub_distr_l : forall {r c s : nat} (m1 : mat r c) (m2 m3 : mat c s), 
       m1 * (m2 - m3) == m1 * m2 - m1 * m3.
   Proof. lma. rewrite seqsum_opp. rewrite <- seqsum_add. apply seqsum_eq; intros.
          ring. Qed.
   
   (** (m1 - m2) * m3 = m1 * m3 - m2 * m3 *)
-  Lemma mmul_sub_distr_r : forall {r c s : nat} (m1 m2 : mat r c) (m3 : mat c s),
+  Lemma mmul_msub_distr_r : forall {r c s : nat} (m1 m2 : mat r c) (m3 : mat c s),
       (m1 - m2) * m3 == m1 * m3 - m2 * m3.
   Proof. lma. rewrite seqsum_opp. rewrite <- seqsum_add. apply seqsum_eq; intros.
          ring. Qed.
 
   (** - (m1 * m2) = (-m1) * m2 *)
-  Lemma mopp_mul_l : forall {r c s : nat} (m1 : mat r c) (m2 : mat c s),
+  Lemma mopp_mmul_l : forall {r c s : nat} (m1 : mat r c) (m2 : mat c s),
       - (m1 * m2) == (-m1) * m2.
   Proof. lma. rewrite seqsum_opp. apply seqsum_eq; intros. ring. Qed.
 
   (** - (m1 * m2) = m1 * (-m2) *)
-  Lemma mopp_mul_r : forall {r c s : nat} (m1 : mat r c) (m2 : mat c s),
+  Lemma mopp_mmul_r : forall {r c s : nat} (m1 : mat r c) (m2 : mat c s),
       - (m1 * m2) == m1 * (-m2).
   Proof. lma. rewrite seqsum_opp. apply seqsum_eq; intros. ring. Qed.
 
@@ -1065,23 +1158,28 @@ Section malg.
     - intros. bdestruct (j0 =? j). lia. ring.
   Qed.
   
-  (* a c* (m1 * m2) = (a c* m1) * m2. *)
-  Lemma mcmul_mul_assoc_l : forall {r c s} (a : A) (m1 : mat r c) (m2 : mat c s), 
+  (** (a * b) c* m = a c* (b c* m) *)
+  Lemma mcmul_mul_assoc : forall {r c} (a b : A) (m : mat r c),
+      (a * b)%A c* m == a c* (b c* m).
+  Proof. lma. Qed.
+
+  (** a c* (m1 * m2) = (a c* m1) * m2. *)
+  Lemma mcmul_mmul_assoc_l : forall {r c s} (a : A) (m1 : mat r c) (m2 : mat c s), 
       a c* (m1 * m2) == (a c* m1) * m2.
   Proof. lma. rewrite seqsum_cmul_l. apply seqsum_eq; intros; ring. Qed.
   
   (** a c* (m1 * m2) = m1 * (a c* m2) *)
-  Lemma mcmul_mul_assoc_r : forall {r c s} (a : A) (m1 : mat r c) (m2 : mat c s), 
+  Lemma mcmul_mmul_assoc_r : forall {r c s} (a : A) (m1 : mat r c) (m2 : mat c s), 
       a c* (m1 * m2) == m1 * (a c* m2).
   Proof. lma. rewrite seqsum_cmul_l. apply seqsum_eq; intros; ring. Qed.
   
-  (** (a c* m)\T = a c* (m\T) *)
-  Lemma mtrans_mul : forall {r c s} (m1 : mat r c) (m2 : mat c s),
+  (** (m1 * m2)\T = m2\T * m1\T *)
+  Lemma mtrans_mmul : forall {r c s} (m1 : mat r c) (m2 : mat c s),
       (m1 * m2)\T == m2\T * m1\T.
   Proof. lma. apply seqsum_eq. intros. ring. Qed.
 
   (** tr (m1 * m2) = tr (m2 * m1) *)
-  Lemma mtrace_mul : forall {r c} (m1 : mat r c) (m2 : mat c r),
+  Lemma mtrace_mmul : forall {r c} (m1 : mat r c) (m2 : mat c r),
       (tr (m1 * m2)%M == tr (m2 * m1)%M)%A.
   Proof.
     unfold mtrace; intros. unfold mmul. mat_to_fun.
@@ -1117,60 +1215,6 @@ Global Hint Unfold
 (* Infix "*" := mmul : mat_scope. *)
 (* Infix "c*" := mcmul : mat_scope. *)
 (* Infix "*c" := mmulc : mat_scope. *)
-
-
-(* ======================================================================= *)
-(** ** Convert between tuples and matrix *)
-Section t2m_m2t.
-  Context {A : Type} (A0 : A).
-  (* Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope. *)
-  
-  (** Tuples 2x2 -> mat_2x2 *)
-  Definition t2m_2_2 (t : @T_2_2 A) : @mat A 2 2.
-  Proof.
-    destruct t as (t1,t2).
-    destruct t1 as (a11,a12).
-    destruct t2 as (a21,a22).
-    exact (mk_mat_2_2 (A0:=A0) a11 a12 a21 a22).
-  Defined.
-
-  (** Tuples 3x3 -> mat_3x3 *)
-  Definition t2m_3_3 (t : @T_3_3 A) : @mat A 3 3.
-  Proof.
-    destruct t as ((t1,t2),t3).
-    destruct t1 as ((a11,a12),a13).
-    destruct t2 as ((a21,a22),a23).
-    destruct t3 as ((a31,a32),a33).
-    exact (mk_mat_3_3 (A0:=A0) a11 a12 a13 a21 a22 a23 a31 a32 a33).
-  Defined.
-
-  (** m[0,0]: mat_1x1 -> A *)
-  Definition m2t_1_1 (m : @mat A 1 1) := m.11.
-  Definition scalar_of_mat (m : @mat A 1 1) := m.11.
-
-  (** mat_2x2 -> tuple 2x2. That is: ((a11,a12),(a21,a22)) *)
-  Definition m2t_2_2 (m : mat 2 2) : @T_2_2 A :=
-    ((m.11, m.12), (m.21, m.22)).
-
-  (** mat_3x3 -> tuple 3x3. That is: ((a11,a12,a13),(a21,a22,a23),(a31,a32,a33)) *)
-  Definition m2t_3_3 (m : mat 3 3) : @T_3_3 A :=
-    ((m.11,m.12,m.13),(m.21,m.22,m.23),(m.31,m.32,m.33)).
-
-End t2m_m2t.
-
-
-(* ======================================================================= *)
-(** ** trace *)
-Section trace.
-  Context {A : Type} {Aadd: A -> A -> A} {A0 : A}.
-  (* Notation "m ! i ! j " := (mnth A0 m i j) : mat_scope. *)
-  Notation smat n := (smat A n).
-
-  (** Trace *)
-  Definition trace {n : nat} (m : smat n) := 
-    seqsum (Aadd:=Aadd)(A0:=A0) (fun i => m$i$i) n.
-
-End trace.
 
 
 (* ======================================================================= *)

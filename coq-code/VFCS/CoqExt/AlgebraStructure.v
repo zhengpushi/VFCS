@@ -774,18 +774,41 @@ Ltac amonoid_simp :=
   monoid_simp;
   apply commutative.
 
-(* Section Theory. *)
 
-(*   Context `(AM : AMonoid). *)
-(*   Infix "*" := op. *)
+(** 交换幺半群中，将任意单个元素移动到整个表达式的头部
+    转换 a1 + (... + (... + c) ...)
+    到   c + (a1 + (... + ...) ...) *)
+Ltac am_move2h c :=
+  rewrite <- ?associative;
+  try rewrite (commutative _ c);
+  rewrite ?associative.
 
+(* 在 Kalmanfilter 中，我还多加了一些策略，能够调用上面的策略来自动化简表达式，
+   有需要时可移植到这里来 *)
+
+Section Theory.
+
+  Context `(AM : AMonoid).
+  Infix "+" := Aadd.
+  Infix "==" := Aeq.
+
+  (* 如何证明这类复杂表达式（表示很复杂时，不方便使用结合律、交换律）*)
+  Goal forall a b c d e : A, a + (b + c) + (d + e) == (c + e) + (d + a + b).
+  Proof.
+    intros.
+    am_move2h a; f_equiv.
+    am_move2h b; f_equiv.
+    am_move2h c; f_equiv.
+    am_move2h d; f_equiv.
+  Qed.
+  
 (*   Lemma amonoid_comm : forall a b, a * b = b * a. *)
 (*   Proof. apply comm. Qed. *)
 
 (*   Lemma amonoid_comm' : forall a b, a * b = b * a. *)
 (*   Proof. destruct AM. auto. Qed. *)
 
-(* End Theory. *)
+End Theory.
 
 (** ** Examples *)
 Section Examples.

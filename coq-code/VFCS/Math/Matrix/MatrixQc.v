@@ -192,8 +192,8 @@ Proof. intros. apply mcmul_0_l. Qed.
 Definition mmulc {r c} (m : mat r c) (a : A) : mat r c := mmulc m a (Amul:=Amul).
 Infix "*c" := mmulc : mat_scope.
 
-Lemma mmulc_eq_mcmul : forall {r c} (a : A) (m : mat r c), m *c a == a c* m.
-Proof. intros. apply mmulc_eq_mcmul. Qed.
+Lemma mmulc_eq_cmul : forall {r c} (a : A) (m : mat r c), m *c a == a c* m.
+Proof. intros. apply mmulc_eq_cmul. Qed.
 
 Global Instance mmulc_mor : forall r c, Proper (meq ==> eq ==> meq) (mmulc (r:=r)(c:=c)).
 Proof. apply mmulc_mor. Qed.

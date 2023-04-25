@@ -37,43 +37,45 @@ VFCS/Math/Calculus/Derivative_coquelicot.v
 VFCS/Math/Calculus/Calculus.v
 
 VFCS/Math/Matrix/Matrix.v
+VFCS/Math/Matrix/ElementType.v
+VFCS/Math/Matrix/MatrixModule.v
 VFCS/Math/Matrix/MatrixNat.v
-VFCS/Math/Matrix/MatrixZ.v
-VFCS/Math/Matrix/MatrixQ.v
-VFCS/Math/Matrix/MatrixQc.v
-VFCS/Math/Matrix/MatrixR.v
-VFCS/Math/Matrix/MatrixRfun.v
-VFCS/Math/Matrix/MatrixC.v
-VFCS/Math/Matrix/Vector.v
-VFCS/Math/Matrix/VectorNat.v
-VFCS/Math/Matrix/VectorZ.v
-VFCS/Math/Matrix/VectorQ.v
-VFCS/Math/Matrix/VectorQc.v
-VFCS/Math/Matrix/VectorR.v
-VFCS/Math/Matrix/VectorRfun.v
-VFCS/Math/Matrix/VectorC.v
+# VFCS/Math/Matrix/MatrixZ.v
+# VFCS/Math/Matrix/MatrixQ.v
+# VFCS/Math/Matrix/MatrixQc.v
+# VFCS/Math/Matrix/MatrixR.v
+# VFCS/Math/Matrix/MatrixRfun.v
+# VFCS/Math/Matrix/MatrixC.v
+# VFCS/Math/Matrix/Vector.v
+# VFCS/Math/Matrix/VectorNat.v
+# VFCS/Math/Matrix/VectorZ.v
+# VFCS/Math/Matrix/VectorQ.v
+# VFCS/Math/Matrix/VectorQc.v
+# VFCS/Math/Matrix/VectorR.v
+# VFCS/Math/Matrix/VectorRfun.v
+# VFCS/Math/Matrix/VectorC.v
 
-VFCS/Math/LinearAlgebra/PermutationExt.v
+# VFCS/Math/LinearAlgebra/PermutationExt.v
 
-VFCS/Math/Quaternion/Quaternion.v
+# VFCS/Math/Quaternion/Quaternion.v
 
-VFCS/Math/DifferenceEquation/DifferenceEquation.v
-VFCS/Math/LaplaceTransform/LaplaceTransform.v
+# VFCS/Math/DifferenceEquation/DifferenceEquation.v
+# VFCS/Math/LaplaceTransform/LaplaceTransform.v
 
 # ====== Automatic Control System ====================================
-VFCS/ACS/Diagram.v
-VFCS/ACS/DifferentialEquation.v
-VFCS/ACS/RationalExpression.v
+# VFCS/ACS/Diagram.v
+# VFCS/ACS/DifferentialEquation.v
+# VFCS/ACS/RationalExpression.v
 
 # ====== Flight Control System =======================================
-VFCS/FCS/Propulsion/RAux.v
-VFCS/FCS/Propulsion/PSModel.v
-VFCS/FCS/Propulsion/PSExtension.v
-VFCS/FCS/Propulsion/Q1.v
-VFCS/FCS/Propulsion/Q2.v
-VFCS/FCS/Propulsion/Q3.v
-VFCS/FCS/Propulsion/Q4.v
-#VFCS/FCS/Propulsion/ExtractionThis.v
+# VFCS/FCS/Propulsion/RAux.v
+# VFCS/FCS/Propulsion/PSModel.v
+# VFCS/FCS/Propulsion/PSExtension.v
+# VFCS/FCS/Propulsion/Q1.v
+# VFCS/FCS/Propulsion/Q2.v
+# VFCS/FCS/Propulsion/Q3.v
+# VFCS/FCS/Propulsion/Q4.v
+##VFCS/FCS/Propulsion/ExtractionThis.v
 
-VFCS/FCS/Coordinate/rvctool.v
+# VFCS/FCS/Coordinate/rvctool.v
 
