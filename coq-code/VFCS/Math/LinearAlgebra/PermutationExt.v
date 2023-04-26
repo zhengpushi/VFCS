@@ -1,6 +1,6 @@
 (*
-  Copyright 2022 ZhengPu Shi
-  This file is part of CoqExt. It is distributed under the MIT
+Copyright 2022 ZhengPu Shi
+This file is part of CoqExt. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
   purpose   : Extension for permutation, especially for computable permutation.
@@ -124,7 +124,7 @@ Module Perm_with_list.
       unfold perm in *.
       (* Abort. *)
       (* simpl. *)
-      Admitted.
+    Admitted.
 
     Section test.
       Variable a b c : A.
@@ -199,11 +199,11 @@ Module Export Perm_with_vector.
       match n with
       | 0 => fun _ => [cvec0 (A0:=A0)]
       | S n' => fun (v : cvec (S n')) =>
-          let d1 := map (fun i => pick v i) (seq 0 n) in
-          let d2 :=
-            map (fun x : A * @cvec A n' =>
-                   map (fun v0 => cvcons (fst x) v0) (perm (snd x))) d1 in
-          concat d2
+                  let d1 := map (fun i => pick v i) (seq 0 n) in
+                  let d2 :=
+                    map (fun x : A * @cvec A n' =>
+                           map (fun v0 => cvcons (fst x) v0) (perm (snd x))) d1 in
+                  concat d2
       end.
 
     (** show it is a proper morphism *)
@@ -223,7 +223,7 @@ Module Export Perm_with_vector.
       (* unfold perm in *. *)
       (* Abort. *)
       (* simpl. *)
-      Admitted.
+    Admitted.
 
 
     Section test.
@@ -271,10 +271,10 @@ Module Export Perm_with_vector.
 
       (* Context {A : Type}. *)
       Definition cvexchg {n} (v : @cvec A n) (i0 i1 : nat) : @cvec A n :=
-        mk_cvec (fun i =>
-                   if i =? i0
-                   then v$i1
-                   else (if i =? i1 then v$i0 else v$i)).
+        f2cv (fun i =>
+                if i =? i0
+                then v$i1
+                else (if i =? i1 then v$i0 else v$i)).
 
       (** 对换相邻位置改变排列的奇偶性 *)
       Theorem cvexchg_swap2close_parity : forall {n} (v : @cvec A n) i0 i1,
@@ -284,7 +284,7 @@ Module Export Perm_with_vector.
         (* 教科书上的证明很巧妙，难以形式化的描述出来 *)
         intros. unfold cvexchg, perm_parity_diff.
         unfold PermutationExt.perm_parity_diff, PermutationExt.odd_perm.
-        cvec_to_fun. unfold cv2l. simpl.
+        cvec2fun. unfold cv2l. simpl.
         (* key part *)
         destruct H1; subst.
         - rename i1 into j.
@@ -298,7 +298,8 @@ Module Export Perm_with_vector.
       
       (** 对换改变排列的奇偶性 *)
       Theorem cvexchg_swap2_parity : forall {n} (v : @cvec A n),
-          (forall i0 i1, i0 < n -> i1 < n -> i0 <> i1 -> perm_parity_diff v (cvexchg v i0 i1)).
+          (forall i0 i1, i0 < n -> i1 < n -> i0 <> i1 ->
+                    perm_parity_diff v (cvexchg v i0 i1)).
       Proof.
         (* 教科书上的证明很巧妙，难以形式化的描述出来 *)
       Admitted.
@@ -321,12 +322,12 @@ Section det_try.
   Variable a0 a1 : A.
   Variable a11 a12 a13 a21 a22 a23 a31 a32 a33 : A.
   Let m1 : mat 3 3 :=
-    mk_mat_3_3 (A0:=a0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
+        mk_mat_3_3 (A0:=a0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
   (* Compute m2l m1. *)
 
   (** 计算行列式的一个步骤：取矩阵元素，第一个下标固定，第二个下标是全排列 *)
   (** 尝试构造下标 *)
-  Let v1 : cvec 3 := mk_cvec (fun i => i).
+  Let v1 : cvec 3 := f2cv (fun i => i).
   (* Compute cv2l v1. *)
   Let idx2 := perm 0 v1.
   (* Compute map cv2l idx2. *)
@@ -360,7 +361,7 @@ Section det.
   
   (** Determinant of a square matrix *)
   Definition det {n} (m : smat A n) : A :=
-    let col_ids : list (cvec n) := perm 0 (mk_cvec (fun i => i)) in
+    let col_ids : list (cvec n) := perm 0 (f2cv (fun i => i)) in
     let F :=
       fun (col_id : cvec n) =>
         (sign4idx col_id) *
@@ -369,7 +370,7 @@ Section det.
 
   (** Determinant of a square matrix (by row index) *)
   Definition det' {n} (m : smat A n) : A :=
-    let row_ids : list (cvec n) := perm 0 (mk_cvec (fun i => i)) in
+    let row_ids : list (cvec n) := perm 0 (f2cv (fun i => i)) in
     let F :=
       fun (row_id : cvec n) =>
         (sign4idx row_id) *

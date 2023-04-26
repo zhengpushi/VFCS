@@ -308,7 +308,7 @@ Definition qPLUS (q : quat) : mat 4 4 :=
   let pv : cvec 3 := t2cv_3 (Im q) in
   let m1 : mat 4 4 := (p0 c* mat1)%M in
   let m2a : mat 1 4 := mconsc (mk_mat_1_1 0) (-(pv\T))%M in
-  let m2b : mat 3 4 := mconsc pv (cv3_skew_sym_mat pv) in
+  let m2b : mat 3 4 := mconsc pv (cv3skew pv) in
   let m2 : mat 4 4 := mconsr m2a m2b in
     madd m1 m2.
 
@@ -325,7 +325,7 @@ Definition qMINUS (q : quat) : mat 4 4 :=
   let qv : cvec 3 := t2cv_3 (Im q) in
   let m1 : mat 4 4 := (q0 c* mat1)%M in
   let m2a : mat 1 4 := mconsc (mk_mat_1_1 0) (-(qv\T))%M in
-  let m2b : mat 3 4 := mconsc qv (-(cv3_skew_sym_mat qv))%M in
+  let m2b : mat 3 4 := mconsc qv (-(cv3skew qv))%M in
   let m2 : mat 4 4 := mconsr m2a m2b in
     madd m1 m2.
 

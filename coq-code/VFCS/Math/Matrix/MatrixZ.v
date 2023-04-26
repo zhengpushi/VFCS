@@ -9,23 +9,23 @@
 *)
 
 Require Export ZExt.
-Require Import MatrixModule.
+Require Export MatrixModule.
 
 
 (* ======================================================================= *)
-(** ** Matrix theory come from common implementations *)
+(** * Matrix theory come from common implementations *)
 
-Module Export BasicMatrixTheoryZ := RingMatrixTheory RingElementTypeZ.
+Module Export MatrixTheoryZ := RingMatrixTheory RingElementTypeZ.
 
 
 (* ======================================================================= *)
-(** ** Matrix theory applied to this type *)
+(** * Matrix theory applied to this type *)
 Open Scope Z_scope.
 Open Scope mat_scope.
 
 
 (* ======================================================================= *)
-(** ** Usage demo *)
+(** * Usage demo *)
 Section test.
   Let l1 := [[1;2];[3;4]].
   Let m1 := @l2m 2 2 l1.

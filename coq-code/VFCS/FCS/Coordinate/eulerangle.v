@@ -92,7 +92,17 @@ Open Scope cvec_scope.
 Section BasicRotationMatrics.
   
   (** Orthogormal rotation matrices for rotation of θ aobout 
-     the x-,y- and z- axes *)
+     the x-,y- and z- axes.
+
+     Notes:
+     1. Give a column-vector v1 respect to this coordinate, when actively rotate it 
+     about the x-axes, we could get a new vector v1' respect to this coordinate by
+     this formula:
+          v1' = Rx(θ) v1
+     2. If give a row-vector v2, ..., v2' ...
+         v2' = v2 (Rx(θ))\T
+
+   *)
   Definition Rx (θ : R) : mat 3 3 :=
     l2m _ _
       [[1; 0; 0];
@@ -485,6 +495,105 @@ Module AxisAngle.
   (* Open Scope R_scope. *)
   Open Scope mat_scope.
 
+  (** 推导一个绕任意轴 k̂ 旋转 θ 角度的矩阵 R(k̂,θ)，使得 v' = R(k̂,θ) * v *)
+  Section derive_AxisAngleMatrix.
+
+    (** Rotate a vector v in R^3 by an axis described with a unit vector k and 
+        an angle θ according to right handle rule, we got the rotated vector as
+        follows. This formula is known as Rodrigues formula. *)
+    Definition rot_by_AaxisAngle (θ : R) (k : cvec 3) (v : cvec 3) : cvec 3 :=
+      v *c (cos θ) + (k×v) *c (sin θ) + k *c <v,k> * (1 - cos θ).
+
+    (** Proof its correctness *)
+    Lemma rot_by_AxisAngle_spec : forall (θ : R) (k : cvec 3) (v : cvec 3),
+        let v_para : cvec 3 := cvproj v k in
+        let v_perp : cvec 3 := cvperp v k in
+        let w : cvec 3 := k × v_perp in
+        let v_perp' : cvec 3 := (cos θ) c* v_perp + (sin θ) c* w in
+        let v' : cvec 3 := v_para + v_perp' in
+        v' == rot_by_AaxisAngle θ k v.
+    Proof.
+      intros. cvec_to_fun.
+                                      
+?    
+      
+      v' == v *c (cos θ) + (n×v) *c (sin θ) + n *c <v,n> * (1 - cos θ).
+      
+    
+    (* Let n be a unit vector defining a rotation axis *)
+    Variable n : cvec 3.
+    Hypotheses n_unit : cvunit n.
+
+    (* Let v be any vector to rotate about n by angle θ (right hand rule) *)
+    Variable θ : R.
+    Variable v : cvec 3.
+
+    Definition v_para : cvec 3 := cvproj v n.
+    Definition v_perp : cvec 3 := cvperp v n.
+
+    Definition w : cvec 3 := n × v_perp.
+    Definition v_perp' : cvec 3 := (cos θ) c* v_perp + (sin θ) c* w.
+
+    Definition v' : cvec 3 := v_para + v_perp'.
+
+    (** Also known as Rodrigues formula. *)
+    Lemma v'_formula :
+      v' == v *c (cos θ) + (n×v) *c (sin θ) + n *c <v,n> * (1 - cos θ).
+    Proof.
+      clear.
+      destruct v as [vf], n as [nf]. hnf. intros.
+      cbv; simpl.
+      simpl in *. cbv.
+      lva.
+      destruct v as [v]. n. [n].
+      cvec_to_fun.
+      cvec_to_fun.
+      lva.
+      lva.
+      cbv
+                         + <v,n> c* n.
+    Lemma v'_formula : v' ==
+                         (cos θ) c* (v - <v,n> c* n)
+                         + (sin θ) c* (n × v)
+                         + <v,n> c* n.
+      
+                              
+
+    
+                                   Rot2dC θ  
+
+    
+
+    Check cvproj.
+    (** The scalar projection of a on b is a scalar defined here, where θ is
+          the angle between a and b *)
+    Definition vsproj {n} (a b : cvec n) := <a, cvnormalize b>.
+
+    (** The scalar projection of a on b is a simple triangle relation *) ?
+      Lemma vsproj_spec : forall {n} (a b : cvec n), vsproj a b = `|a| * cvangle.
+    
+    (** The vector projection of a on b is a vector whose magnitude is the scalar 
+          projection of a on b
+      Definition vproj {n} (a b : cvec n)
+
+      (** The component parallel to k is called the vector projection of v on k *)
+      Definition v1 := (v ⋅ k) c* k.
+      (** The component perpendicular to k is called the vector rejection of v on k *)
+      Definition v2 := v - v1 (v ⋅ k) c* k.
+                   
+
+  End derive_AxisAngleMatrix.
+  Section Rrod_derivation.
+
+      
+
+      
+      
+
+    End Rrod_derivation.
+    
+
+
   (** Rodrigues' rotation formula *)
   Section Rodrigues.
 
@@ -494,18 +603,18 @@ Module AxisAngle.
       mat1 + sin θ c* K + (1 - cos θ) c* (K * K).
 
     (** Three basic rotation matrix are the special case of Rrod. *)
-    Theorem Rrod_eq_Rx : forall θ : R, Rrod θ v3i == Rx θ.
+    Theorem Rrod_eq_Rx : forall θ : R, Rrod θ cv3i == Rx θ.
     Proof. lma. Qed.
 
-    Theorem Rrod_eq_Ry : forall θ : R, Rrod θ v3j == Ry θ.
+    Theorem Rrod_eq_Ry : forall θ : R, Rrod θ cv3j == Ry θ.
     Proof. lma. Qed.
 
-    Theorem Rrod_eq_Rz : forall θ : R, Rrod θ v3k == Rz θ.
+    Theorem Rrod_eq_Rz : forall θ : R, Rrod θ cv3k == Rz θ.
     Proof. lma. Qed.
 
     (** 最初的一种带有向量作用效果的表达式，请确保 k 是单位向量 *)
     Definition Rrodv (θ : R) (k : cvec 3) (v : cvec 3) : cvec 3 :=
-      v *c cos θ + (cv3cross k v) *c sin θ + k *c (k ⋅ v) *c (1 - cos θ).
+      v *c cos θ + (cv3cross k v) *c sin θ + (k *c <k,v>) *c (1 - cos θ).
 
     (* Theorem Rrodv_eq : forall θ k v, cvunit k -> Rrodv θ k v == (Rrod θ k) * v. *)
     (* Proof. *)
@@ -533,41 +642,6 @@ Module AxisAngle.
         replace (k`00 ²) with (1 - k`10² - k`20²)%R by lra; field.
     Qed.
 
-    (** Derivation of Rrod *)
-    Section Rrod_derivation.
-
-      (* Let k be a unit vector defining a rotation axis *)
-      Variable k : cvec 3.
-      Hypotheses kunit : cvunit k.
-
-      (* , and let v be any vector to rotate about k by angle θ (right hand rule, 
-         anticlockwise) *)
-      Variable θ : R.
-      Variable v : cvec 3.
-
-      (** The scalar projection of a on b is a scalar defined here, where θ is
-          the angle between a and b *)
-      Definition vsproj {n} (a b : cvec n) := a ⋅ cvnormalize b.
-
-      (** The scalar projection of a on b is a simple triangle relation *) ?
-      Lemma vsproj_spec : forall {n} (a b : cvec n), vsproj a b = `|a| * cvangle.
-      
-      (** The vector projection of a on b is a vector whose magnitude is the scalar 
-          projection of a on b
-      Definition vproj {n} (a b : cvec n)
-
-      (** The component parallel to k is called the vector projection of v on k *)
-      Definition v1 := (v ⋅ k) c* k.
-      (** The component perpendicular to k is called the vector rejection of v on k *)
-      Definition v2 := v - v1 (v ⋅ k) c* k.
-                   
-      
-
-      
-      
-
-    End Rrod_derivation.
-    
     
   End Rodrigues.
   

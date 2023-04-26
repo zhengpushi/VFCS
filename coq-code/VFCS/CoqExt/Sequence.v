@@ -506,6 +506,27 @@ Section Sum.
   
 End Sum.
 
+
+
+(* ======================================================================= *)
+(** ** Sequence on R type *)
+Section Seq_R.
+
+  Import Reals.
+  Open Scope R.
+  
+  Notation seqsum := (@seqsum _ Rplus R0).
+
+  (** If all elements is >= 0, then the sum is >= 0 *)
+  Lemma seqsum_ge0 : forall (f : nat -> R) n,
+      (forall i, (i < n)%nat -> 0 <= f i) -> 0 <= seqsum f n.
+  Proof. intros. induction n; simpl. lra. apply Rplus_le_le_0_compat; auto. Qed.
+  
+End Seq_R.
+
+
+(* ======================================================================= *)
+(** ** Usage demo *)
 Section test.
   Import RExt.
 

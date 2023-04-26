@@ -9,30 +9,34 @@
 *)
 
 Require Export QExt.
-Require Import MatrixModule.
+Require Export MatrixModule.
 
 
 (* ======================================================================= *)
-(** ** Matrix theory come from common implementations *)
+(** * Matrix theory come from common implementations *)
 
-Module Export FieldMatrixTheoryQ := FieldMatrixTheory FieldElementTypeQ.
+Module Export MatrixTheoryQ :=
+  DecidableFieldMatrixTheory DecidableFieldElementTypeQ.
 
 Open Scope Q_scope.
 Open Scope mat_scope.
 
 
 (* ======================================================================= *)
-(** ** Matrix theory applied to this type *)
+(** * Matrix theory applied to this type *)
 
 
 (* ======================================================================= *)
-(** ** Usage demo *)
+(** * Usage demo *)
 Section test.
   Let l1 := [[1;-3;-2];[-2;1;-4];[-1;4;-1]]%Q.
   Let m1 := @l2m 3 3 l1.
   (* Compute m2l m1. *)
   (* Compute m2l (mmap Qopp m1). *)
   (* Compute m2l (m1 * m1). *)
+  
+  (* Eval cbn in (minv_gauss m1). *)
+  (* Compute minv_gauss m1. *)
 
   Variable a11 a12 a21 a22 : Q.
   Variable f : Q -> Q.

@@ -44,6 +44,10 @@ Section def.
       the rows and columns of a matrix. *)
   Record mat {A} (r c : nat) : Type :=
     mk_mat { matf : nat -> nat -> A }.
+
+  (** Convert between function and matrix *)
+  Definition f2m {A} {r c} (f : nat -> nat -> A) : mat r c := mk_mat A r c f.
+  Definition m2f {A} {r c} (m : mat r c) : nat -> nat -> A := matf r c m.
   
 End def.
 
@@ -204,8 +208,8 @@ Ltac solve_end :=
 (** Convert mat to function *)
 Ltac mat_to_fun :=
   repeat match goal with
-  | m : mat ?r ?c |- _ => destruct m as [m]; simpl in *
-  end.
+    | m : mat ?r ?c |- _ => destruct m as [m]; simpl in *
+    end.
 
 (** Solve mnth *)
 Ltac solve_mnth :=
@@ -273,7 +277,7 @@ Global Ltac lma :=
 (*     intros. unfold mrow. rewrite nth_map_seq; auto. *)
 (*     rewrite Nat.add_0_r. rewrite mnth_eq_mnth_raw; auto. easy. *)
 (*   Qed. *)
-  
+
 (* End mrow. *)
 
 
@@ -281,24 +285,24 @@ Global Ltac lma :=
 (** Convert between dlist and mat (version 1, l2m is strict) *)
 
 (* Section l2m_m2l. *)
-  
+
 (*   Context {A : Type} (A0 : A). *)
 (*   (* Notation "m ! i ! j " := (mnth (A0:=A0) m i j) : mat_scope. *) *)
-  
+
 (*   (** dlist to matrix with specified row and column numbers *) *)
 (*   Definition l2m {r c} (dl : dlist A) : mat r c := *)
 (*     mk_mat (fun i j => *)
 (*               if (i <? r) && (j <? c) *)
 (*               then nth j (nth i dl []) A0 *)
 (*               else A0). *)
-  
+
 (*   (** mat to dlist *) *)
 (*   Definition m2l {r c} (m : mat r c) : dlist A := *)
 (*     map (fun i => (map (fun j => m$i$j) (seq 0 c))) (seq 0 r). *)
 
 (*   Lemma m2l_length : forall {r c} (m : mat r c), length (m2l m) = r. *)
 (*   Proof. intros. unfold m2l. rewrite map_length, seq_length. auto. Qed. *)
-  
+
 (*   Lemma m2l_width : forall {r c} (m : mat r c), width (m2l m) c. *)
 (*   Proof. *)
 (*     intros. unfold width,m2l. apply Forall_map. *)
@@ -326,10 +330,10 @@ Global Ltac lma :=
 (*     rewrite (dlist_eq_iff_nth r c (A0:=A0)); auto. *)
 (*     intros. specialize (H4 i j H3 H5). solve_mnth. *)
 (*   Qed. *)
-  
+
 (*   Lemma l2m_surj : forall {r c} (m : mat r c), (exists d, l2m d == m). *)
 (*   Proof. intros. exists (@m2l r c m). apply l2m_m2l_id. Qed. *)
-  
+
 (*   Lemma m2l_inj : forall {r c} (m1 m2 : mat r c), ~(m1 == m2) -> m2l m1 <> m2l m2. *)
 (*   Proof. *)
 (*     intros. destruct m1 as [m1], m2 as [m2]. unfold meq in *; simpl in *. *)
@@ -342,7 +346,7 @@ Global Ltac lma :=
 (*     - apply width_map. intros. autorewrite with list; auto. *)
 (*     - apply width_map. intros. autorewrite with list; auto. *)
 (*   Qed. *)
-  
+
 (*   Lemma m2l_surj : forall {r c} (d : dlist A), *)
 (*       length d = r -> width d c -> (exists m : mat r c, m2l m = d). *)
 (*   Proof. intros. exists (l2m d). apply m2l_l2m_id; auto. Qed. *)
@@ -368,7 +372,7 @@ Section l2m_m2l.
   
   (** dlist to matrix with specified row and column numbers *)
   Definition l2m {r c} (dl : dlist A) : mat r c :=
-    mk_mat (fun i j => nth j (nth i dl []) A0).
+    f2m (fun i j => nth j (nth i dl []) A0).
   
   (** mat to dlist *)
   Definition m2l {r c} (m : mat r c) : dlist A :=
@@ -446,7 +450,7 @@ Arguments l2m {A} A0 {r c}.
 (** ** Get column (deprecated) *)
 (* Section mcol. *)
 (*   Context {A : Type} {A0 : A}. *)
-  
+
 (*   Definition mcol {r c : nat} (m : mat r c) (j : nat) : list A := *)
 (*     let fix f r i0 := *)
 (*       match r with *)
@@ -454,7 +458,7 @@ Arguments l2m {A} A0 {r c}.
 (*       | S r' => m $ i0 $ j :: (f r' (S i0)) *)
 (*       end in *)
 (*     f r 0. *)
-  
+
 (* End mcol. *)
 
 (* Let m1 := @l2m _ 0 3 3 [[1;2;3];[4;5;6];[7;8;9]]. *)
@@ -475,21 +479,21 @@ Section mshift.
   (** left shift column.
       [[1;2;3];[4;5;6];[7;8;9] ==1==> [[2;3;0];[5;6;0];[8;9;0] *)
   Definition mcshl {r c} (m : @mat A r c) (k : nat) : mat r c :=
-    mk_mat (fun i j => m $ i $ (j + k)).
+    f2m (fun i j => m $ i $ (j + k)).
 
   (** right shift column.
       [[1;2;3];[4;5;6];[7;8;9] ==1==> [[0;1;2];[0;4;5];[0;7;8] *)
   Definition mcshr {r c} (m : @mat A r c) (k : nat) : mat r c :=
-    mk_mat (fun i j => if j <? k then A0 else (m $ i $ (j - k))).
+    f2m (fun i j => if j <? k then A0 else (m $ i $ (j - k))).
 
   (** left loop shift column.
       [[1;2;3];[4;5;6];[7;8;9] ==1==> [[2;3;1];[5;6;4];[8;9;7] *)
   Definition mclshl {r c} (m : @mat A r c) (k : nat) : mat r c :=
-    mk_mat (fun i j => m $ i $ (nat_lshl c j k)).
+    f2m (fun i j => m $ i $ (nat_lshl c j k)).
 
   (** right shift column *)
   Definition mclshr {r c} (m : @mat A r c) (k : nat) : mat r c :=
-    mk_mat (fun i j => m $ i $ (nat_lshr c j k)).
+    f2m (fun i j => m $ i $ (nat_lshr c j k)).
 
 End mshift.
 
@@ -512,7 +516,7 @@ Section mdiagonal.
 
   (** Construct a diagonal matrix *)
   Definition mk_diag {n} (l : list A) : smat A n :=
-    mk_mat (fun i j => if i =? j then nth i l A0 else A0).
+    f2m (fun i j => if i =? j then nth i l A0 else A0).
 
   (** mk_diag is correct *)
   Lemma mk_diag_spec : forall {n} (l : list A), mdiag (@mk_diag n l).
@@ -539,19 +543,19 @@ Section mcons.
 
   (** Construct a matrix by rows, i.e., a row vector and a matrix *)
   Definition mconsr {r c} (v : rvec c) (m : mat r c) : mat (S r) c :=
-    mk_mat (fun i j => match i with
-                     | O => v $ 0 $ j
-                     | S i' => m $ i' $ j
-                     end).
+    f2m (fun i j => match i with
+                    | O => v $ 0 $ j
+                    | S i' => m $ i' $ j
+                    end).
   
   (** Construct a matrix by columns, i.e., a column vector and a matrix *)
   Definition mconsc {r c} (v : cvec r) (m : mat r c) : mat r (S c) :=
-    mk_mat (fun i j => match j with
-                     | O => v $ i $ 0
-                     | S j' => m $ i $ j'
-                     end).
+    f2m (fun i j => match j with
+                    | O => v $ i $ 0
+                    | S j' => m $ i $ j'
+                    end).
 
-      
+  
   (** mconsr rewrite *)
   (* Lemma mconsr_eq {r c} (v : vecr c) (m : mat r c) : mconsr v m == (v, m). *)
   (* Proof. unfold mconsr. auto. Qed. *)
@@ -576,11 +580,11 @@ Section mapp.
   
   (** Append matrix by row *)
   Definition mappr {r1 r2 c} (m1 : mat r1 c) (m2 : mat r2 c) : @mat A (r1 + r2) c :=
-    mk_mat (fun i j => if i <? r1 then m1 $ i $ j else m2 $ (i - r1) $ j).
+    f2m (fun i j => if i <? r1 then m1 $ i $ j else m2 $ (i - r1) $ j).
   
   (** Append matrix by column *)
   Definition mappc {r c1 c2} (m1 : mat r c1) (m2 : mat r c2) : @mat A r (c1 + c2) :=
-    mk_mat (fun i j => if j <? c1 then m1 $ i $ j else m2 $ i $ (j - c1)).
+    f2m (fun i j => if j <? c1 then m1 $ i $ j else m2 $ i $ (j - c1)).
 End mapp.
 
 
@@ -614,7 +618,7 @@ Section mk_mat.
     l2m [[a11;a12;a13;a14]; [a21;a22;a23;a24];[a31;a32;a33;a34]; [a41;a42;a43;a44]].
   
   Definition mk_mat_r_1 r (l : list A) : mat r 1 :=
-    mk_mat (fun i j : nat => if (j =? 0)%nat then (nth i l A0) else A0).
+    f2m (fun i j : nat => if (j =? 0)%nat then (nth i l A0) else A0).
 End mk_mat.
 
 
@@ -667,18 +671,18 @@ Section Map.
   (* Notation "m ! i ! j " := (mnth (A0:=A0) m i j) : mat_scope. *)
 
   Definition mmap {r c} (f : A -> A) (m : mat r c) : mat r c :=
-    mk_mat (fun i j => f (m $ i $ j)).
+    f2m (fun i j => f (m $ i $ j)).
   
   Definition mmap2 {r c} (f : A -> A -> A) (m1 m2 : mat r c) : mat r c :=
-    mk_mat (fun i j => f (m1 $ i $ j) (m2 $ i $ j)).
+    f2m (fun i j => f (m1 $ i $ j) (m2 $ i $ j)).
   
   Lemma mmap2_comm : forall {r c} (f : A -> A -> A) (m1 m2 : mat r c)
-                       {Comm : Commutative f Aeq}, 
+                            {Comm : Commutative f Aeq}, 
       mmap2 f m1 m2 == mmap2 f m2 m1.
   Proof. intros. intros i j Hi Hj. apply Comm. Qed.
   
   Lemma mmap2_assoc : forall {r c} (f : A -> A -> A) (m1 m2 m3 : mat r c)
-                        {Assoc : Associative f Aeq}, 
+                             {Assoc : Associative f Aeq}, 
       mmap2 f (mmap2 f m1 m2) m3 == mmap2 f m1 (mmap2 f m2 m3).
   Proof. intros. intros i j Hi Hj. apply Assoc. Qed.
   
@@ -693,7 +697,7 @@ Section mtrans.
   Notation meq := (meq (Aeq:=Aeq)).
   Infix "==" := meq : mat_scope.
 
-  Definition mtrans {r c} (m : @mat A r c): mat c r := mk_mat (fun i j => m$j$i).
+  Definition mtrans {r c} (m : @mat A r c): mat c r := f2m (fun i j => m$j$i).
   Notation "m \T" := (mtrans m) : mat_scope.
 
   (** show it is a proper morphism *)
@@ -723,11 +727,11 @@ Section mat0_mat1.
   Infix "==" := (meq (Aeq:=Aeq)) : mat_scope.
 
   (** Zero matrix *)
-  Definition mat0 {r c : nat} : mat r c := mk_mat (fun _ _ => A0).
+  Definition mat0 {r c : nat} : mat r c := f2m (fun _ _ => A0).
 
   (** Identity matrix *)
   Definition mat1 {n : nat} : mat n n :=
-    mk_mat (fun i j => if (i =? j)%nat then A1 else A0).
+    f2m (fun i j => if (i =? j)%nat then A1 else A0).
 
   (** mat1 is diagonal matrix *)
   Lemma mat1_is_diag : forall {n : nat}, @mdiag _ Aeq A0 n mat1.
@@ -797,7 +801,7 @@ Section malg.
 
   (** Note that, we use "m$i$j" instead of "m!i!i" to get element, for simplicity. *)
   Definition madd {r c} (m1 m2 : mat r c) : mat r c :=
-    mk_mat (fun i j => m1$i$j + m2$i$j).
+    f2m (fun i j => m1$i$j + m2$i$j).
   Infix "+" := madd : mat_scope.
 
   (** show it is a proper morphism *)
@@ -870,7 +874,7 @@ Section malg.
   (** *** Matrix opposition *)
   
   Definition mopp {r c} (m : mat r c) : mat r c :=
-    mk_mat (fun i j => - (m$i$j)).
+    f2m (fun i j => - (m$i$j)).
   Notation "- a" := (mopp a) : mat_scope.
 
   (** show it is a proper morphism *)
@@ -995,7 +999,7 @@ Section malg.
 
   (** Left scalar multiplication of matrix *)
   Definition mcmul {r c} (a : A) (m : mat r c) : mat r c :=
-    mk_mat (fun i j => (a * m$i$j)).
+    f2m (fun i j => (a * m$i$j)).
   Infix "c*" := mcmul : mat_scope.
 
   (** show it is a proper morphism *)
@@ -1019,7 +1023,7 @@ Section malg.
 
   (** a c* mat1 equal to a diagonal matrix which main diagonal elements all are a *)
   Lemma mcmul_1_r : forall {n} a,
-      a c* (@mat1 _ A0 A1 n) == mk_mat (fun i j => if (i =? j)%nat then a else A0).
+      a c* (@mat1 _ A0 A1 n) == f2m (fun i j => if (i =? j)%nat then a else A0).
   Proof.
     lma. unfold mcmul,mat1. destruct (i =? j); ring.
   Qed.
@@ -1065,7 +1069,7 @@ Section malg.
 
   (** Right scalar multiplication of matrix *)
   Definition mmulc {r c} (m : mat r c) (a : A) : mat r c :=
-    mk_mat (fun i j => (m$i$j * a)).
+    f2m (fun i j => (m$i$j * a)).
   Infix "*c" := mmulc : mat_scope.
   
   (** m *c a = a c* m *)
@@ -1079,7 +1083,7 @@ Section malg.
   
   (** *** Matrix multiplication *)
   Definition mmul {r c s : nat} (m1 : mat r c) (m2 : mat c s) : mat r s :=
-    mk_mat (fun i k => seqsum (fun j => m1$i$j * m2$j$k) c).
+    f2m (fun i k => seqsum (fun j => m1$i$j * m2$j$k) c).
   Infix "*" := mmul : mat_scope.
 
   (** show it is a proper morphism *)
@@ -1198,7 +1202,7 @@ Section malg.
 
       The hardmard product is associative, distribute and commutative *)
   Definition mhp {n : nat} (m1 m2 : smat n) : smat n :=
-    mk_mat (fun i j => (m1$i$j * m2$i$j)%A).
+    f2m (fun i j => (m1$i$j * m2$i$j)%A).
   Infix "⦿" := mhp : mat_scope.
   
 End malg.
@@ -1279,7 +1283,7 @@ Section det.
   (** Get the sub square matrix which remove r-th row and c-th column
         from a square matrix. *)
   Definition submat {n} (m : smat (S n)) (r c : nat) : smat n :=
-    mk_mat
+    f2m
       (fun i j =>
          let i' := (if i <? r then i else S i) in
          let j' := (if j <? c then j else S j) in
@@ -1384,8 +1388,8 @@ Section det.
     Lemma det3_neq0_iff : forall (m : smat 3),
         det m != A0 <->
           (m.11 * m.22 * m.33 - m.11 * m.23 * m.32 - 
-            m.12 * m.21 * m.33 + m.12 * m.23 * m.31 + 
-            m.13 * m.21 * m.32 - m.13 * m.22 * m.31 != A0)%A.
+             m.12 * m.21 * m.33 + m.12 * m.23 * m.31 + 
+             m.13 * m.21 * m.32 - m.13 * m.22 * m.31 != A0)%A.
     Proof. intros. split; intros; mat_to_fun; reverse_neq0_neq0. Qed.
 
   End det_2d_3d.
@@ -1465,10 +1469,10 @@ Section matrix_inversion.
       | O => fun m => m 
       | S n' =>
           fun m =>
-            mk_mat (fun i j =>
-                      let s := if Nat.even (i + j) then A1 else (-A1)%A in
-                      let d := det (submat m j i) in 
-                      (s * d)%A)
+            f2m (fun i j =>
+                   let s := if Nat.even (i + j) then A1 else (-A1)%A in
+                   let d := det (submat m j i) in 
+                   (s * d)%A)
       end.
 
     Global Instance madj_mor (n:nat) :
@@ -1493,13 +1497,13 @@ Section matrix_inversion.
     
     (** Exchange one column of a square matrix *)
     Definition mchgcol {n} (m : smat n) (k : nat) (v : mat n 1) : smat n :=
-      mk_mat (fun i j => if (Nat.eqb j k) then (v$i$0)%nat else m$i$j).
+      f2m (fun i j => if (Nat.eqb j k) then (v$i$0)%nat else m$i$j).
     
     (** Cramer rule, which can slving the equation with form of A*x=b.
       Note, the result is valid only when D is not zero *)
     Definition cramerRule {n} (A : smat n) (b : mat n 1) : mat n 1 :=
       let D := det A in
-      mk_mat (fun i j => let Di := det (mchgcol A i b) in (Di / D)).
+      f2m (fun i j => let Di := det (mchgcol A i b) in (Di / D)).
     
   End cramer_rule.
 
@@ -1513,7 +1517,7 @@ Section matrix_inversion.
     Global Instance minv_mor (n : nat) :
       Proper (meq (Aeq:=Aeq) ==> meq (Aeq:=Aeq)) (@minv n).
     Proof. simp_proper. intros. unfold minv. rewrite H. easy. Qed.
-      
+    
     (** m * p = mat1 -> m ⁻¹ = p *)
     Lemma mmul_eq1_imply_minv_l : forall {n} (m p : smat n),
         m * p == mat1 -> minv m == p.
@@ -1694,7 +1698,7 @@ Section gauss_elimination.
    *)
   (* A matrix which only one element is non-zero *)
   Definition brt_e {r c} (ri rj : nat) (k : A) : mat r c :=
-    mk_mat (fun i j => if (i =? ri) && (j =? rj) then k else A0).
+    f2m (fun i j => if (i =? ri) && (j =? rj) then k else A0).
 
   
   (* Multiply k times of a row *)
@@ -1704,7 +1708,7 @@ Section gauss_elimination.
     0 0 1
    *)
   Definition brt_cmul {r c} (ri : nat) (k : A) : mat r c :=
-    mk_mat (fun i j => if i =? j then (if i =? ri then k else A1) else A0).
+    f2m (fun i j => if i =? j then (if i =? ri then k else A1) else A0).
 
   (* 第 y 行的 k 倍加到第 x 行 *)
   (* 
@@ -1717,7 +1721,7 @@ Section gauss_elimination.
 
   (** Add k times of rj-th row to rj-th row *)
   Definition brt_add {n} (ri rj : nat) (k : A) : mat n n :=
-    (* mk_mat (fun i j => *)
+    (* f2m (fun i j => *)
     (*           if (i =? ri) && (j =? rj) *)
     (*           then k *)
     (*           else (if i =? j then A1 else A0)). *)
@@ -1736,7 +1740,7 @@ Section gauss_elimination.
   (*   mat1 + (e x x (-A1)) + (e y y (-A1)) + (e x y A1) + (e y x A1). *)
 
   Definition brt_swap {n} (ri rj : nat) : mat n n :=
-    (* mk_mat (fun i j => *)
+    (* f2m (fun i j => *)
     (*           if i =? ri *)
     (*           then (if j =? rj then A1 else A0) *)
     (*           else (if i =? rj *)
@@ -1834,7 +1838,7 @@ Section test.
   Definition z_brt_swap := (@brt_swap _ Z.add 0 Z.opp 1).
   (* Compute m2l (z_brt_swap 3 0 2). *)
   (* Compute m2l (z_brt_swap 3 1 2). *)
-    
+  
   Definition z_elem_change_down {n} (m:mat n n) i j :=
     @elem_change_down _ Z.add 0 Z.opp Z.mul 1 _ m i j. 
 

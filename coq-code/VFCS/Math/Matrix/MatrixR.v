@@ -13,18 +13,20 @@ Require Import MatrixModule.
 
 
 (* ======================================================================= *)
-(** ** Matrix theory come from common implementations *)
+(** * Matrix theory come from common implementations *)
 
-Module Export FieldMatrixTheoryR := FieldMatrixTheory FieldElementTypeR.
+Module Export MatrixTheoryR :=
+  DecidableFieldMatrixTheory DecidableFieldElementTypeR.
 
 Open Scope R_scope.
 Open Scope mat_scope.
 
 
 (* ======================================================================= *)
-(** ** Matrix theory applied to this type *)
+(** * Matrix theory applied to this type *)
 
-(** *** Orthogonal matrix *)
+(* ==================================== *)
+(** ** Orthogonal matrix *)
 Section OrthogonalMatrix.
 
   (*
@@ -142,7 +144,7 @@ Section OrthogonalMatrix.
   Lemma morthogonal_mul : forall {n} (m p : smat n),
       morthogonal m -> morthogonal p -> morthogonal (m * p).
   Proof.
-    intros. red. red in H, H0. rewrite mtrans_mul.
+    intros. red. red in H, H0. rewrite mtrans_mmul.
     rewrite mmul_assoc. rewrite <- (mmul_assoc _ m).
     rewrite H. rewrite mmul_1_l. rewrite H0. easy.
   Qed.
@@ -172,7 +174,9 @@ Section OrthogonalMatrix.
 
 End OrthogonalMatrix.
 
-(** *** SO(n): Special Orthogonal Group *)
+
+(* ==================================== *)
+(** ** SO(n): Special Orthogonal Group *)
 Section SOn.
 
   (** The set of SOn *)
@@ -187,7 +191,7 @@ Section SOn.
     refine (Build_SOn n (s1 * s2) _).
     destruct s1 as [s1 [H1 H1']], s2 as [s2 [H2 H2']]. simpl. split.
     - apply morthogonal_mul; auto.
-    - rewrite det_mul. rewrite H1', H2'. ring.
+    - rewrite det_mul. rewrite H1', H2'. simpA2; ring.
   Defined.
 
   Definition SOn_1 {n} : SOn n.
@@ -262,7 +266,9 @@ Section SOn.
 
 End SOn.
 
-(** *** SO(3): special orthogonal group *)
+
+(* ==================================== *)
+(** ** SO(3): special orthogonal group *)
 Section SO3.
 
   (** If a matrix is SO3? *)
@@ -274,20 +280,18 @@ Section SO3.
 End SO3.
 
 
-
-(* ======================================================================= *)
+(* ==================================== *)
 (** ** Usage demo *)
-
 Section test.
   Let l1 := [[1;2];[3;4]].
-  Let m1 := l2m 2 2 l1.
+  Let m1 := @l2m 2 2 l1.
   (* Compute m2l m1. *)
   (* Compute m2l (mmap Ropp m1). *)
   (* Compute m2l (m1 * m1). *)
 
   Variable a11 a12 a21 a22 : R.
   Variable f : R -> R.
-  Let m2 := l2m 2 2 [[a11;a12];[a21;a22]].
+  Let m2 := @l2m 2 2 [[a11;a12];[a21;a22]].
   (* Compute m2l m2.       (* = [[a11; a12]; [a21; a22]] *) *)
   (* Compute m2l (mmap f m2).       (* = [[f a11; f a12]; [f a21; f a22]] *) *)
   (* Compute m2l (m2 * m2). *)
@@ -297,14 +301,14 @@ Section test.
 
   (** Outer/inner product of two vectors *)
   Variables a1 a2 a3 b1 b2 b3 : A.
-  Let m10 := l2m 3 1 [[a1];[a2];[a3]].
-  Let m11 := l2m 1 3 [[b1;b2;b3]].
+  Let m10 := @l2m 3 1 [[a1];[a2];[a3]].
+  Let m11 := @l2m 1 3 [[b1;b2;b3]].
   (* Compute m2l (m10 * m11). *)
   (* Compute m2l (m11 * m10). *)
 
   (** mmul_sub_distr_r *)
   Goal forall r c s (m1 m2 : mat r c) (m3 : mat c s), (m1 - m2) * m3 == m1 * m3 - m2 * m3.
-    intros. rewrite mmul_sub_distr_r. easy. Qed.
+    intros. rewrite mmul_msub_distr_r. easy. Qed.
 
   (* test rewriting *)
   Goal forall r c (m1 m2 : mat r c) x, m1 == m2 -> x c* m1 == x c* m2.
@@ -313,25 +317,23 @@ Section test.
   Goal forall r c (m1 m2 m3 m4 : mat r c), m1 == m2 -> m3 == m4 -> m1 - m3 == m2 - m4.
   Proof. clear. intros. f_equiv. easy. easy. Qed.
 
-End test.
-
-Section test_monoid.
+  (* test_monoid. *)
   Goal forall r c (m1 m2 : mat r c), mat0 + m1 == m1.
     monoid_simp. Qed.
-End test_monoid.
+End test.
 
 
 Section Example4CoordinateSystem.
   Variable ψ θ φ: R.
-  Let Rx := mk_mat_3_3 1 0 0 0 (cos φ) (sin φ) 0 (-sin φ) (cos φ).
-  Let Ry := mk_mat_3_3 (cos θ) 0 (-sin θ) 0 1 0 (sin θ) 0 (cos θ).
-  Let Rz := mk_mat_3_3 (cos ψ) (sin ψ) 0 (-sin ψ) (cos ψ) 0 0 0 1.
-  Let Rbe := mk_mat_3_3
-    (cos θ * cos ψ) (cos ψ * sin θ * sin φ - sin ψ * cos φ)
-    (cos ψ * sin θ * cos φ + sin φ * sin ψ) (cos θ * sin ψ)
-    (sin ψ * sin θ * sin φ + cos ψ * cos φ)
-    (sin ψ * sin θ * cos φ - cos ψ * sin φ)
-    (-sin θ) (sin φ * cos θ) (cos φ * cos θ).
+  Let Rx := (mk_mat_3_3 1 0 0 0 (cos φ) (sin φ) 0 (-sin φ) (cos φ))%R.
+  Let Ry := (mk_mat_3_3 (cos θ) 0 (-sin θ) 0 1 0 (sin θ) 0 (cos θ))%R.
+  Let Rz := (mk_mat_3_3 (cos ψ) (sin ψ) 0 (-sin ψ) (cos ψ) 0 0 0 1)%R.
+  Let Rbe := (mk_mat_3_3
+                (cos θ * cos ψ) (cos ψ * sin θ * sin φ - sin ψ * cos φ)
+                (cos ψ * sin θ * cos φ + sin φ * sin ψ) (cos θ * sin ψ)
+                (sin ψ * sin θ * sin φ + cos ψ * cos φ)
+                (sin ψ * sin θ * cos φ - cos ψ * sin φ)
+                (-sin θ) (sin φ * cos θ) (cos φ * cos θ))%R.
   Lemma Rbe_ok : (Rbe == Rz\T * Ry\T * Rx\T).
   Proof. lma. Qed.
     
@@ -349,33 +351,27 @@ Module Exercise_Ch1_Symbol.
   Notation "4" := ((R1 + R1) * (R1 + R1))%R.
   
   Example ex6_1 : forall a b : R,
-      let m := mk_mat_3_3 (a*a) (a*b) (b*b) (2*a) (a+b) (2*b) 1 1 1 in
-      (det m = (a - b)^3)%R.
-  Proof.
-    intros. cbv. ring.
-  Qed.
+      (let m := mk_mat_3_3 (a*a) (a*b) (b*b) (2*a) (a+b) (2*b) 1 1 1 in
+      det m = (a - b)^3)%R.
+  Proof. intros. cbv. ring. Qed.
   
   Example ex6_2 : forall a b x y z : A,
-      let m1 := mk_mat_3_3
-                  (a*x+b*y) (a*y+b*z) (a*z+b*x)
-                  (a*y+b*z) (a*z+b*x) (a*x+b*y)
-                  (a*z+b*x) (a*x+b*y) (a*y+b*z) in
-      let m2 := mk_mat_3_3 x y z y z x z x y in
-      (det m1 = (a^3 + b^3) * det m2)%R.
-  Proof.
-    intros. cbv. ring.
-  Qed.
+      (let m1 := mk_mat_3_3
+                   (a*x+b*y) (a*y+b*z) (a*z+b*x)
+                   (a*y+b*z) (a*z+b*x) (a*x+b*y)
+                   (a*z+b*x) (a*x+b*y) (a*y+b*z) in
+       let m2 := mk_mat_3_3 x y z y z x z x y in
+       det m1 = (a^3 + b^3) * det m2)%R.
+  Proof. intros. cbv. ring. Qed.
   
   Example ex6_3 : forall a b e d : A,
-      let m := mk_mat_4_4
+      (let m := mk_mat_4_4
                  (a*a) ((a+1)^2) ((a+2)^2) ((a+3)^2)
                  (b*b) ((b+1)^2) ((b+2)^2) ((b+3)^2)
                  (e*e) ((e+1)^2) ((e+2)^2) ((e+3)^2)
                  (d*d) ((d+1)^2) ((d+2)^2) ((d+3)^2) in
-      det m = 0.
-  Proof.
-    intros. cbv. ring.
-  Qed.
+      det m = 0)%R.
+  Proof. intros. cbv. ring. Qed.
   
   Example ex6_4 : forall a b e d : A,
       let m := mk_mat_4_4
@@ -384,9 +380,7 @@ Module Exercise_Ch1_Symbol.
                  (a^2) (b^2) (e^2) (d^2)
                  (a^4) (b^4) (e^4) (d^4) in
       (det m = (a-b)*(a-e)*(a-d)*(b-e)*(b-d)*(e-d)*(a+b+e+d))%R.
-  Proof.
-    intros. cbv. ring.
-  Qed.
+  Proof. intros. cbv. ring. Qed.
   
   (* (** 6.(5), it is an infinite structure, need more work, later... *) *)
 

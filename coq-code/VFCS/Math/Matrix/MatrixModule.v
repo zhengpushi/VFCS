@@ -59,8 +59,8 @@ Module BasicMatrixTheory (E : ElementType).
   Notation smat n := (smat A n).
 
   (** Convert between function and matrix *)
-  Definition f2m {r c} (f : nat -> nat -> A) : mat r c := mk_mat f.
-  Definition m2f {r c} (m : mat r c) : nat -> nat -> A := matf m.
+  Definition f2m {r c} (f : nat -> nat -> A) : mat r c := f2m f.
+  Definition m2f {r c} (m : mat r c) : nat -> nat -> A := m2f m.
 
   (** matrix equality *)
   Definition meq {r c} (m1 m2 : mat r c) : Prop := meq (Aeq:=Aeq) m1 m2.
@@ -185,7 +185,7 @@ Module BasicMatrixTheory (E : ElementType).
 
   (** Construct a matrix by columns, i.e., a column vector and a matrix *)
   Definition mconsc {r c} (v : mat r 1) (m : mat r c) : mat r (S c) := mconsc v m.
-      
+  
   (** mconsr rewrite *)
   (* Lemma mconsr_eq {r c} (v : vecr c) (m : mat r c) : mconsr v m == (v, m). *)
   (* Proof. unfold mconsr. auto. Qed. *)
@@ -280,12 +280,12 @@ Module BasicMatrixTheory (E : ElementType).
     mmap2 f m1 m2.
 
   Lemma mmap2_comm : forall {r c} (f : A -> A -> A) (m1 m2 : mat r c)
-                       {Comm : Commutative f Aeq}, 
+                            {Comm : Commutative f Aeq}, 
       mmap2 f m1 m2 == mmap2 f m2 m1.
   Proof. intros. apply mmap2_comm; auto. Qed.
   
   Lemma mmap2_assoc : forall {r c} (f : A -> A -> A) (m1 m2 m3 : mat r c)
-                        {Assoc : Associative f Aeq}, 
+                             {Assoc : Associative f Aeq}, 
       mmap2 f (mmap2 f m1 m2) m3 == mmap2 f m1 (mmap2 f m2 m3).
   Proof. intros. apply mmap2_assoc; auto. Qed.
 
@@ -890,7 +890,7 @@ Module FieldMatrixTheory (E : FieldElementType).
   
 
   (* ==================================== *)
-  (** *** Inversion matrix of common finite dimension *)
+  (** ** Inversion matrix of common finite dimension *)
   
   (** Inversion matrix of dimension-1 *)
   Definition minv1 (m : smat 1) : smat 1 := @minv1 _ A0 Amul A1 Ainv m.
@@ -938,18 +938,14 @@ Module FieldMatrixTheory (E : FieldElementType).
   Lemma minv3_correct_r : forall (m : smat 3), (det m != A0)%A -> m * (minv3 m) == mat1.
   Proof. intros. apply minv3_correct_r; auto. Qed.
 
+  (* (** k * m = 0 -> (m = 0) \/ (k = 0) *) *)
+  (* Axiom mcmul_eq0_imply_m0_or_k0 : forall {r c} (m : mat r c) k, *)
+  (*     let m0 := mat0 r c in *)
+  (*     (k c* m == m0) -> (m == m0) \/ (k == A0)%A. *)
 
-(* (** meq is decidable *) *)
-(* Axiom meq_dec : forall (r c : nat), Decidable (meq (r:=r) (c:=c)). *)
-
-(* (** k * m = 0 -> (m = 0) \/ (k = 0) *) *)
-(* Axiom mcmul_eq0_imply_m0_or_k0 : forall {r c} (m : mat r c) k, *)
-(*     let m0 := mat0 r c in *)
-(*     (k c* m == m0) -> (m == m0) \/ (k == A0)%A. *)
-
-(* (** (m <> 0 \/ k * m = 0) -> k = 0 *) *)
-(* Axiom mcmul_mnonzero_eq0_imply_k0 : forall {r c} (m : mat r c) k, *)
-(*     let m0 := mat0 r c in *)
+  (* (** (m <> 0 \/ k * m = 0) -> k = 0 *) *)
+  (* Axiom mcmul_mnonzero_eq0_imply_k0 : forall {r c} (m : mat r c) k, *)
+  (*     let m0 := mat0 r c in *)
   (*     ~(m == m0) -> k c* m == m0 -> (k == A0)%A. *)
 
   (* (** k * m = m -> k = 1 \/ m = 0 *) *)
@@ -963,51 +959,36 @@ Module FieldMatrixTheory (E : FieldElementType).
   
 End FieldMatrixTheory.
 
-(* (* ######################################################################### *) *)
-(* (** * Decidable matrix theory *) *)
 
-(* Module Type DecidableMatrixTheory (E : DecidableElementType) <: BasicMatrixTheory E. *)
+(* ######################################################################### *)
+(** * Decidable matrix theory *)
 
-(*   Include (BasicMatrixTheory E). *)
+Module DecidableMatrixTheory (E : DecidableElementType).
+  Include (BasicMatrixTheory E).
 
-(*   (* (** the equality of matrix element should be decidable *) *) *)
-(*   (* Context `{Dec_Aeq:Decidable A Aeq}. *) *)
+  (** equality of two matrices is decidable *)
+  Lemma meq_dec : forall {r c}, Decidable (meq (r:=r) (c:=c)).
+  Proof. intros. apply meq_dec. Qed.
 
-(*   (** equality of two matrices is decidable *) *)
-(*   Axiom meq_dec : forall {r c}, Decidable (meq (r:=r) (c:=c)). *)
-
-(* End DecidableMatrixTheory. *)
+End DecidableMatrixTheory.
 
 
-(* (* ######################################################################### *) *)
-(* (** * Decidable field matrix theory *) *)
+(* ######################################################################### *)
+(** * Decidable field matrix theory *)
 
-(* Module Type DecidableFieldMatrixTheory (E : DecidableFieldElementType) *)
-(* <: RingMatrixTheory E *)
-(* <: DecidableMatrixTheory E. *)
+Module DecidableFieldMatrixTheory (E : DecidableFieldElementType).
 
-(*   Include (RingMatrixTheory E). *)
+  Include (FieldMatrixTheory E).
 
-(*   (** meq is decidable *) *)
-(*   Axiom meq_dec : forall (r c : nat), Decidable (meq (r:=r) (c:=c)). *)
+  (** equality of two matrices is decidable *)
+  Lemma meq_dec : forall {r c}, Decidable (meq (r:=r) (c:=c)).
+  Proof. intros. apply meq_dec. Qed.
 
-(*   (* (** k * m = 0 -> (m = 0) \/ (k = 0) *) *) *)
-(*   (* Axiom mcmul_eq0_imply_m0_or_k0 : forall {r c} (m : mat r c) k, *) *)
-(*   (*     let m0 := mat0 r c in *) *)
-(*   (*     (k c* m == m0) -> (m == m0) \/ (k == A0)%A. *) *)
+  (* ==================================== *)
+  (** ** Gauss elimination *)
 
-(*   (* (** (m <> 0 \/ k * m = 0) -> k = 0 *) *) *)
-(*   (* Axiom mcmul_mnonzero_eq0_imply_k0 : forall {r c} (m : mat r c) k, *) *)
-(*   (*     let m0 := mat0 r c in *) *)
-(*   (*     ~(m == m0) -> k c* m == m0 -> (k == A0)%A. *) *)
-
-(*   (* (** k * m = m -> k = 1 \/ m = 0 *) *) *)
-(*   (* Axiom mcmul_same_imply_coef1_or_mzero : forall {r c} k (m : mat r c), *) *)
-(*   (*     k c* m == m -> (k == A1)%A \/ (m == mat0 r c). *) *)
-
-(*   (* (** (m1 <> 0 /\ m2 <> 0 /\ k * m1 = m2) -> k <> 0 *) *) *)
-(*   (* Axiom mcmul_eq_mat_implfy_not_k0 : forall {r c} (m1 m2 : mat r c) k, *) *)
-(*   (*     let m0 := mat0 r c in *) *)
-(*   (*     ~(m1 == m0) -> ~(m2 == m0) -> k c* m1 == m2 -> ~(k == A0)%A. *) *)
+  (** inverse matrix by gauss elimination *)
+  Definition minv_gauss {n} (m : mat n n) : option (mat n n) :=
+    @minv_gauss A Aadd A0 Aopp Amul A1 Ainv _ _ _ m.
   
-(* End DecidableFieldMatrixTheory. *)
+End DecidableFieldMatrixTheory.

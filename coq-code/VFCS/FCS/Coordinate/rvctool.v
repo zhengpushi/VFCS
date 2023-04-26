@@ -19,24 +19,20 @@ Require Import VectorR.
 
 Open Scope cvec_scope.
 
-(** Another name for R type *)
+(* Another name for R type *)
 Notation Real := R.
-Notation matC := MatrixC.mat.
-Notation matR := MatrixR.mat.
-Notation cvecC := ColVectorC.cvec.
-Notation cvecR := ColVectorR.cvec.
-Notation mcolC := ColVectorC.mcol.
-
+(* short name for vector theory on complex number *)
+Module C := VectorTheoryC.
 
 (** Convert cvecC to cvecR *)
-Definition cvecC_to_cvecR {n} (v : cvecC n) (f : Complex.C -> R) : cvecR n :=
-  mk_cvec (fun i => f (v$i)).
+Definition cvecC_to_cvecR {n} (v : C.cvec n) (f : Complex.C -> R) : cvec n :=
+  f2cv (fun i => f (C.cv2f v i)).
 
 (** Calculate engenvalues and eigenvectors of a matrix.
     if [x,e] = eig(R), then:
     the eigenvalues are returned on the diagonal of the matrix e,
     and the corresponding eigenvectors are the corresponding columns of x *)
-Parameter eig : forall {n : nat} (m : matR n n), matC n n * matC n n.
+Parameter eig : forall {n : nat} (m : mat n n), C.mat n n * C.mat n n.
   
 
 (** A matrix is orthonormal:
@@ -103,9 +99,8 @@ Module SO2.
   Section rot2.
     (*  列向量表示该新坐标系的坐标轴在参考坐标系中的单位向量 *)
     Definition R (θ : R) : mat 2 2 :=
-      l2m _ _
-        [[cos θ; - sin θ];
-         [sin θ; cos θ]]%R.
+      l2m [[cos θ; - sin θ];
+           [sin θ; cos θ]]%R.
 
     (** Note that: pure rotation is commutative in 2D, but noncommutative in 3D *)
     
@@ -119,7 +114,7 @@ Module SO2.
     Proof. intros. cbv. autorewrite with R. auto. Qed.
 
     Lemma rot2_inv_eq_trans : forall θ, minv2 (rot2 θ) == (rot2 θ)\T.
-    Proof. lma; rewrite det2_eq_det, rot2_det1; ra. Qed.
+    Proof. lma; rewrite det2_eq_det, rot2_det1; simpA2; ra. Qed.
   End rot2.
 
   (** Skew-symmetric matrix of 2-dimensions *)
@@ -139,7 +134,7 @@ Module SO2.
     Qed.
 
     (** Convert a value to its corresponding skew-symmetric matrix *)
-    Definition skew (a : Real) : mat 2 2 := l2m _ _ [[0; -a];[a; 0]]%R.
+    Definition skew (a : Real) : mat 2 2 := l2m [[0; -a];[a; 0]]%R.
 
     (** Convert a skew-symmetric matrix to its corresponding value *)
     Definition vex (m : mat 2 2) : option Real := Some (m.21).
@@ -172,10 +167,9 @@ Module SE2.
 
   (** 2D homogeneous transformation, to represent relative pose *)
   Definition T (θ : R) (x y : R) : mat 3 3 :=
-    l2m _ _
-      [[cos θ; - sin θ; x];
-       [sin θ; cos θ; y];
-       [0; 0; 1]]%R.
+    l2m [[cos θ; - sin θ; x];
+         [sin θ; cos θ; y];
+         [0; 0; 1]]%R.
 
   (** create a relative pose with a finite translation but zero rotation *)
   Definition transl2 (P : cvec 2) : mat 3 3 := T 0 (P.1) (P.2).
@@ -225,22 +219,19 @@ Module SO3.
   (* Orthogormal rotation matrices for rotation of θ aobout 
      the x-,y- and z- axes *)
   Definition Rx (θ : R) : mat 3 3 :=
-    l2m _ _
-      [[1; 0; 0];
-       [0; cos θ; - sin θ];
-       [0; sin θ; cos θ]]%R.
+    l2m [[1; 0; 0];
+         [0; cos θ; - sin θ];
+         [0; sin θ; cos θ]]%R.
 
   Definition Ry (θ : R) : mat 3 3 :=
-    l2m _ _
-      [[cos θ; 0; sin θ];
-       [0; 1; 0];
-       [- sin θ; 0; cos θ]]%R.
+    l2m [[cos θ; 0; sin θ];
+         [0; 1; 0];
+         [- sin θ; 0; cos θ]]%R.
 
   Definition Rz (θ : R) : mat 3 3 :=
-    l2m _ _
-      [[cos θ; - sin θ; 0];
-       [sin θ; cos θ; 0];
-       [0; 0; 1]]%R.
+    l2m [[cos θ; - sin θ; 0];
+         [sin θ; cos θ; 0];
+         [0; 0; 1]]%R.
 
   Lemma Rx_orthonormal : forall θ, orthonormal3 (Rx θ).
   Proof. intros. cbv. split_intro; autorewrite with R; ra. Qed.
@@ -249,7 +240,8 @@ Module SO3.
   Proof. intros. cbv. autorewrite with R. auto. Qed.
 
   Lemma Rx_inv_eq_trans : forall θ, minv3 (Rx θ) == (Rx θ)\T.
-  Proof. lma; try rewrite det3_eq_det, Rx_det1; ra. autorewrite with R; ra. Qed.
+  Proof. lma; try rewrite det3_eq_det, Rx_det1; simpA2; ra.
+         autorewrite with R; ra. Qed.
 
   (** Create a rotation matrix of dimension 3 about the x-axis *)
   Definition rotx (θ : angle) : mat 3 3 := Rx (angle_radian θ).
@@ -261,12 +253,12 @@ Module SO3.
   Definition rotz (θ : angle) : mat 3 3 := Rz (angle_radian θ).
 
   Example ex1 : rotx((PI/2) 'rad) * roty((PI/2) 'rad) ==
-                  l2m 3 3 [[0;0;1];[1;0;0];[0;1;0]].
-  Proof. lma; try autorewrite with R; ra. Qed.
+                  l2m [[0;0;1];[1;0;0];[0;1;0]].
+  Proof. lma; try autorewrite with R; simpA2; ra. Qed.
 
   Example ex2 : roty((PI/2) 'rad) * rotx((PI/2) 'rad) ==
-                  l2m 3 3 [[0;1;0];[0;0;-1];[-1;0;0]].
-  Proof. lma; try autorewrite with R; ra. Qed.
+                  l2m [[0;1;0];[0;0;-1];[-1;0;0]].
+  Proof. lma; try autorewrite with R; simpA2; ra. Qed.
 
   
   (** ** The angle representations *)
@@ -306,7 +298,7 @@ Module SO3.
     (** If θ = 0, then ϕ and ψ can not be uniquely decided *)
     (* The author's convension choice is : let ϕ = 0 *)
     Lemma R_theta0 : forall (ϕ θ ψ : Real), θ = 0 -> R ϕ θ ψ == Rz (ϕ + ψ).
-    Proof. lma; rewrite H; autorewrite with R; ra. Qed.
+    Proof. lma; rewrite H; autorewrite with R; simpA2; ra. Qed.
 
     (** Convert rotation matrix to equivalent Euler angles. *)
     (* Definition r2eul (m : mat 3 3) : cvec 3 := ? *)
@@ -343,7 +335,7 @@ Module SO3.
         R roll pitch yaw == Rz (PI/2) * Rx (pitch + yaw).
     Proof. lma;
              (* destruct H as [H | H]; *)
-             rewrite H; autorewrite with R; ra; try easy.
+             rewrite H; autorewrite with R; simpA2; ra; try easy.
     Qed.
     (** 丢失了一个自由度，在数学上意味着我们无法反转这个变换，只能建立两个角的线性关系 *)
     (** 本例中，我们只能得到pitch和yaw这两个角的和。*)
@@ -362,117 +354,63 @@ Module SO3.
 
     (** Rotations obey the cyclic rotation rules *)
     Lemma Ry_Rz : forall θ, Rx (PI/2) * Ry θ * (Rx (PI/2))\T == Rz θ.
-    Proof. lma; autorewrite with R; ra. Qed.
+    Proof. lma; autorewrite with R; simpA2; ra. Qed.
 
     Lemma Rz_Rx : forall θ, Ry (PI/2) * Rz θ * (Ry (PI/2))\T == Rx θ.
-    Proof. lma; autorewrite with R; ra. Qed.
+    Proof. lma; autorewrite with R; simpA2; ra. Qed.
 
     Lemma Rx_Ry : forall θ, Rz (PI/2) * Rx θ * (Rz (PI/2))\T == Ry θ.
-    Proof. lma; autorewrite with R; ra. Qed.
+    Proof. lma; autorewrite with R; simpA2; ra. Qed.
 
     (** Rotations obey the anti-cyclic rotation rules *)
     Lemma Rz_Ry : forall θ, (Rx (PI/2))\T * Rz θ * Rx (PI/2) == Ry θ.
-    Proof. lma; autorewrite with R; ra. Qed.
+    Proof. lma; autorewrite with R; simpA2; ra. Qed.
 
     Lemma Rx_Rz : forall θ, (Ry (PI/2))\T * Rx θ * Ry (PI/2) == Rz θ.
-    Proof. lma; autorewrite with R; ra. Qed.
+    Proof. lma; autorewrite with R; simpA2; ra. Qed.
 
     Lemma Ry_Rx : forall θ, (Rz (PI/2))\T * Ry θ * Rz (PI/2) == Rx θ.
-    Proof. lma; autorewrite with R; ra. Qed.
+    Proof. lma; autorewrite with R; simpA2; ra. Qed.
 
   End Singularities.
-
-  (** Skew-symmetric matrix of 3-dimensions *)
-  Section skew.
-    
-    (** Given matrix is skew-symmetric matrices *)
-    Definition is_skew (m : mat 3 3) : Prop := (- m)%M == m\T.
-
-    Lemma is_skew_spec : forall m : mat 3 3,
-        is_skew m ->
-        let '((a11,a12,a13),(a21,a22,a23),(a31,a32,a33)) := m2t_3_3 m in
-        (a11 = 0) /\ (a22 = 0) /\ (a33 = 0) /\
-          (a12 = -a21 /\ a13 = -a31 /\ a23 = -a32)%R.
-    Proof.
-      intros. destruct m as [m]; simpl in *. cbv in H. split_intro.
-      - epose proof (H 0 0 _ _)%nat. ra.
-      - epose proof (H 1 1 _ _)%nat. ra.
-      - epose proof (H 2 2 _ _)%nat. ra.
-      - epose proof (H 0 1 _ _)%nat. ra.
-      - epose proof (H 0 2 _ _)%nat. ra.
-      - epose proof (H 1 2 _ _)%nat. ra.
-        Unshelve. all: ra.
-    Qed.
-
-    (** Convert a vector to its corresponding skew-symmetric matrix *)
-    Definition skew (v : cvec 3) : mat 3 3 :=
-      let x := v.1 in
-      let y := v.2 in
-      let z := v.3 in
-      l2m _ _ [[0; -z; y]; [z; 0; -x]; [-y; x; 0]]%R.
-
-    (** Convert a skew-symmetric matrix to its corresponding vector *)
-    Definition vex (m : mat 3 3) : option (cvec 3) :=
-      Some (l2cv 3 [m.32; m.13; m.21]).
-
-    Lemma skew_vex_id : forall (m : mat 3 3), is_skew m -> 
-                                         match vex m with
-                                         | Some v => skew v == m
-                                         | _ => False
-                                         end.
-    Proof.
-      intros [m]. simpl. intros. apply is_skew_spec in H.
-      do 5 destruct H as [? H]. lma. ra.
-    Qed.
-
-    Lemma vex_skew_id : forall (v : cvec 3),
-        match vex (skew v) with
-        | Some v' => v == v'
-        | _ => False
-        end.
-    Proof.
-      intros. cvec_to_fun. cbv. intros.
-      assert (j = 0%nat) by lia. rewrite H1.
-      destruct i; try easy.
-      destruct i; try easy.
-      destruct i; try easy. lia.
-    Qed.
-    
-  End skew.
 
 
   (** Rotation about an Arbitrary Vector *)
   Section Rotation_about_arbitrary_vector.
 
-    (** The eigenvalue and eigenvectors of an orthonormal rotation matrix always have 
-        one real eigenvalue at λ = 1, and a complex pair λ = cos θ ± i * sin θ where
-        θ is the rotation angle. *)
+    (** The eigenvalue and eigenvectors of an orthonormal rotation matrix 
+        always have one real eigenvalue at λ = 1, and a complex pair 
+        λ = cos θ ± i * sin θ, where θ is the rotation angle. *)
     (* Hypotheses eig_of_SO3 : forall (m : mat 3 3), *)
     (*     orthonormal2 m -> *)
     (*     let (x,e) := eig m in *)
     (*     ? *)
 
-    (** determine an angle and some axis (a vector) of a orthonormal rotation matrix *)
+    (** determine an angle and some axis (a vector) of a orthogonal rotation matrix *)
     Definition r2angvec (m : mat 3 3) : R * cvec 3 :=
       (* The eigenvalues are returned on the diagonal of the matrix e,
          and the corresponding eigenvectors are the corresponding columns of x *)
       let (x,e) := eig m in
       (* e(idx,idx) = cosθ +i sinθ *)
-      let theta_of_idx (idx : nat) := atan ((e $ idx $ idx).b / (e $ idx $ idx).a) in
+      let theta_of_idx (idx : nat) :=
+        (let ele := C.m2f e idx idx in atan (ele.b / ele.a)) in
       (* the idx-th column of x contain the needed vector, which is the real part *)
-      let vec_of_idx (idx : nat) := cvecC_to_cvecR (mcolC x idx) (fun c => c.a) in
+      let vec_of_idx (idx : nat) := cvecC_to_cvecR (C.mcol x idx) (fun c => c.a) in
       (* find the angle and the vector *)
-      if x.11 ==? 1
+      let x11 := (C.m2f x 0 0) in
+      let x22 := (C.m2f x 1 1) in
+      if x11 ==? Complex.C1
+      (* if x.11 ==? 1 *)
       then (theta_of_idx 1%nat, vec_of_idx 0%nat)
-      else (if x.22 ==? 1
+      else (if x22 ==? Complex.C1
             then (theta_of_idx 2%nat, vec_of_idx 1%nat)
             else (theta_of_idx 1%nat, vec_of_idx 2%nat)).
 
     (** Converting from angle and a unit vector to a rotation matrix, 
         i.e. Rodrigues' rotation formula. *)
     Definition angvec2r (θ : R) (axis : cvec 3) : mat 3 3 :=
-      let ssm := skew axis in
-      (mat1 + (sin θ) c* ssm + (1 - cos θ) c* (ssm * ssm))%M.
+      let ssm := cv3skew axis in
+      (mat1 + (sin θ) c* ssm + (1 - cos θ)%R c* (ssm * ssm))%M.
 
   End Rotation_about_arbitrary_vector.
 
