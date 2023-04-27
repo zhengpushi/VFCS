@@ -110,11 +110,11 @@ Module SO2.
     Lemma rot2_orthonormal : forall θ, orthonormal2 (rot2 θ).
     Proof. intros. cbv. split_intro; autorewrite with R; ra. Qed.
 
-    Lemma rot2_det1 : forall θ, det (rot2 θ) = 1.
+    Lemma rot2_mdet1 : forall θ, mdet (rot2 θ) = 1.
     Proof. intros. cbv. autorewrite with R. auto. Qed.
 
     Lemma rot2_inv_eq_trans : forall θ, minv2 (rot2 θ) == (rot2 θ)\T.
-    Proof. lma; rewrite det2_eq_det, rot2_det1; simpA2; ra. Qed.
+    Proof. lma; rewrite mdet2_eq_mdet, rot2_mdet1; simpA2; ra. Qed.
   End rot2.
 
   (** Skew-symmetric matrix of 2-dimensions *)
@@ -236,11 +236,11 @@ Module SO3.
   Lemma Rx_orthonormal : forall θ, orthonormal3 (Rx θ).
   Proof. intros. cbv. split_intro; autorewrite with R; ra. Qed.
 
-  Lemma Rx_det1 : forall θ, det (Rx θ) = 1.
+  Lemma Rx_mdet1 : forall θ, mdet (Rx θ) = 1.
   Proof. intros. cbv. autorewrite with R. auto. Qed.
 
   Lemma Rx_inv_eq_trans : forall θ, minv3 (Rx θ) == (Rx θ)\T.
-  Proof. lma; try rewrite det3_eq_det, Rx_det1; simpA2; ra.
+  Proof. lma; try rewrite mdet3_eq_mdet, Rx_mdet1; simpA2; ra.
          autorewrite with R; ra. Qed.
 
   (** Create a rotation matrix of dimension 3 about the x-axis *)

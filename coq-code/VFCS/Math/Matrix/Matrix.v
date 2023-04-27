@@ -1224,7 +1224,7 @@ Global Hint Unfold
 (* ======================================================================= *)
 (** ** Determinant of a matrix *)
 
-Section det.
+Section mdet.
   Context `{R : Ring}.
   Add Ring ring_inst : (make_ring_theory R).
   
@@ -1241,7 +1241,7 @@ Section det.
   Notation smat n := (smat A n).
 
   (** *** Determinant of a square matrix (original definition) *)
-  Section det_def.
+  Section def.
 
     (* ? *)
     (* Variable a b c : A. *)
@@ -1252,7 +1252,7 @@ Section det.
     (* Compute map (fun i => (i, nth i l 0)) (seq 0 3). *)
     (* Compute map (fun l => map (fun i => (i, nth i l 0)) (seq 0 3)) dl. *)
 
-  End det_def.
+  End def.
   (* Let dl1 := map (fun l => map (fun i => (i, nth i l 0)) (seq 0 3)) dl. *)
   (* Variable a00 a01 a02 a10 a11 a12 a20 a21 a22 : A. *)
   (* Definition m : smat 3 := mat_3_3 a00 a01 a02 a10 a11 a12 a20 a21 a22. *)
@@ -1282,7 +1282,7 @@ Section det.
 
   (** Get the sub square matrix which remove r-th row and c-th column
         from a square matrix. *)
-  Definition submat {n} (m : smat (S n)) (r c : nat) : smat n :=
+  Definition msubmat {n} (m : smat (S n)) (r c : nat) : smat n :=
     f2m
       (fun i j =>
          let i' := (if i <? r then i else S i) in
@@ -1290,7 +1290,7 @@ Section det.
          m $ i' $ j').
 
   Global Instance submat_mor (n : nat) :
-    Proper (meq (Aeq:=Aeq) ==> eq ==> eq ==> meq (Aeq:=Aeq)) (@submat n).
+    Proper (meq (Aeq:=Aeq) ==> eq ==> eq ==> meq (Aeq:=Aeq)) (@msubmat n).
   Proof. simp_proper. lma. all: apply H; auto; lia. Qed.
   
 
@@ -1305,7 +1305,7 @@ Section det.
     end.
 
   (** Determinant of a square matrix, by expanding the first row *)
-  Fixpoint det {n} : smat n -> A :=
+  Fixpoint mdet {n} : smat n -> A :=
     match n with
     | 0 => fun _ => A1
     | S n' =>
@@ -1313,11 +1313,11 @@ Section det.
           fold_left Aadd
             (map (fun i =>
                     let a := if Nat.even i then (m$0$i) else (-(m$0$i))%A in
-                    let d := det (submat m 0 i) in
+                    let d := mdet (msubmat m 0 i) in
                     (a * d)%A) (seq 0 n)) A0
     end.
 
-  Global Instance det_mor (n : nat) : Proper (meq (Aeq:=Aeq) ==> Aeq) (@det n).
+  Global Instance mdet_mor (n : nat) : Proper (meq (Aeq:=Aeq) ==> Aeq) (@mdet n).
   Proof.
     simp_proper. induction n; intros; try easy. simpl.
     apply fold_left_aeq_mor.
@@ -1332,15 +1332,15 @@ Section det.
   (** *** Properties of determinant *)
   Section props.
 
-    Lemma det_1 : forall {n}, (@det n (mat1 A0 A1) == A1)%A.
+    Lemma mdet_1 : forall {n}, (@mdet n (mat1 A0 A1) == A1)%A.
     Proof.
     Admitted.
 
-    Lemma det_trans : forall {n} (m : smat n), (det (m\T) == det m)%A.
+    Lemma mdet_mtrans : forall {n} (m : smat n), (mdet (m\T) == mdet m)%A.
     Proof.
     Admitted.
 
-    Lemma det_mul : forall {n} (m p : smat n), (det (m * p)%M == det m * det p)%A.
+    Lemma mdet_mmul : forall {n} (m p : smat n), (mdet (m * p)%M == mdet m * mdet p)%A.
     Proof.
     Admitted.
 
@@ -1348,53 +1348,53 @@ Section det.
 
   
   (** *** Determinant on 2-dim or 3-dim *)
-  Section det_2d_3d.
+  Section mdet_2d_3d.
 
     (** Determinant of a matrix of dimension-1 *)
-    Definition det1 (m : smat 1) := m.11.
+    Definition mdet1 (m : smat 1) := m.11.
 
-    (** det1 m = det m *)
-    Lemma det1_eq_det : forall m, (det1 m == det m)%A.
+    (** mdet1 m = mdet m *)
+    Lemma mdet1_eq_mdet : forall m, (mdet1 m == mdet m)%A.
     Proof. intros. mat_to_fun. ring. Qed.
     
-    (** det m <> 0 <-> det_exp <> 0 *)
-    Lemma det1_neq0_iff : forall (m : smat 1),
-        (det m != A0) <-> (m.11 != A0).
+    (** mdet m <> 0 <-> mdet_exp <> 0 *)
+    Lemma mdet1_neq0_iff : forall (m : smat 1),
+        (mdet m != A0) <-> (m.11 != A0).
     Proof. intros. split; intros; mat_to_fun; reverse_neq0_neq0. Qed.
 
     (** Determinant of a matrix of dimension-2 *)
-    Definition det2 (m : smat 2) := (m.11*m.22 - m.12*m.21)%A.
+    Definition mdet2 (m : smat 2) := (m.11*m.22 - m.12*m.21)%A.
 
-    (** det2 m = det m *)
-    Lemma det2_eq_det : forall m, (det2 m == det m)%A.
+    (** mdet2 m = mdet m *)
+    Lemma mdet2_eq_mdet : forall m, (mdet2 m == mdet m)%A.
     Proof. intros. mat_to_fun. cbv. ring. Qed.
 
-    (** det m <> 0 <-> det_exp <> 0 *)
-    Lemma det2_neq0_iff : forall (m : smat 2),
-        det m != A0 <->  (m.11*m.22 - m.12*m.21 != A0)%A.
+    (** mdet m <> 0 <-> mdet_exp <> 0 *)
+    Lemma mdet2_neq0_iff : forall (m : smat 2),
+        mdet m != A0 <->  (m.11*m.22 - m.12*m.21 != A0)%A.
     Proof. intros. split; intros; mat_to_fun; reverse_neq0_neq0. Qed.
 
     (** Determinant of a matrix of dimension-3 *)
-    Definition det3 (m : smat 3) :=
+    Definition mdet3 (m : smat 3) :=
       (m.11 * m.22 * m.33 - m.11 * m.23 * m.32 - 
          m.12 * m.21 * m.33 + m.12 * m.23 * m.31 + 
          m.13 * m.21 * m.32 - m.13 * m.22 * m.31)%A.
 
-    (** det3 m = det m *)
-    Lemma det3_eq_det : forall m, (det3 m == det m)%A.
+    (** mdet3 m = mdet m *)
+    Lemma mdet3_eq_mdet : forall m, (mdet3 m == mdet m)%A.
     Proof. intros. mat_to_fun. cbv. ring. Qed.
     
-    (** det m <> 0 <-> det_exp <> 0 *)
-    Lemma det3_neq0_iff : forall (m : smat 3),
-        det m != A0 <->
+    (** mdet m <> 0 <-> mdet_exp <> 0 *)
+    Lemma mdet3_neq0_iff : forall (m : smat 3),
+        mdet m != A0 <->
           (m.11 * m.22 * m.33 - m.11 * m.23 * m.32 - 
              m.12 * m.21 * m.33 + m.12 * m.23 * m.31 + 
              m.13 * m.21 * m.32 - m.13 * m.22 * m.31 != A0)%A.
     Proof. intros. split; intros; mat_to_fun; reverse_neq0_neq0. Qed.
 
-  End det_2d_3d.
+  End mdet_2d_3d.
 
-End det.
+End mdet.
 
 
 (* ======================================================================= *)
@@ -1418,9 +1418,9 @@ Section matrix_inversion.
   Notation mat1 := (mat1 A0 A1).
   Notation l2m := (@l2m A A0 _ _).
   Notation smat n := (smat A n).
-  Notation det := (det (Aadd:=Aadd)(A0:=A0)(Aopp:=Aopp)(Amul:=Amul)(A1:=A1)).
-  Notation det2 := (det2 (Aadd:=Aadd)(Aopp:=Aopp)(Amul:=Amul)).
-  Notation det3 := (det3 (Aadd:=Aadd)(Aopp:=Aopp)(Amul:=Amul)).
+  Notation mdet := (mdet (Aadd:=Aadd)(A0:=A0)(Aopp:=Aopp)(Amul:=Amul)(A1:=A1)).
+  Notation mdet2 := (mdet2 (Aadd:=Aadd)(Aopp:=Aopp)(Amul:=Amul)).
+  Notation mdet3 := (mdet3 (Aadd:=Aadd)(Aopp:=Aopp)(Amul:=Amul)).
 
   (** Try to prove a proposition such as:
       "~(exp1 == 0) -> ~(exp2 == 0)" *)
@@ -1442,8 +1442,8 @@ Section matrix_inversion.
   Admitted.
 
   (** A square matrix is invertible, if its determinant is nonzero *)
-  Lemma minvertible_iff_det_n0 : forall {n} (m : smat n),
-      minvertible m <-> det m <> A0.
+  Lemma minvertible_iff_mdet_n0 : forall {n} (m : smat n),
+      minvertible m <-> mdet m <> A0.
   Proof.
   Admitted.
 
@@ -1471,7 +1471,7 @@ Section matrix_inversion.
           fun m =>
             f2m (fun i j =>
                    let s := if Nat.even (i + j) then A1 else (-A1)%A in
-                   let d := det (submat m j i) in 
+                   let d := mdet (msubmat m j i) in 
                    (s * d)%A)
       end.
 
@@ -1502,8 +1502,8 @@ Section matrix_inversion.
     (** Cramer rule, which can slving the equation with form of A*x=b.
       Note, the result is valid only when D is not zero *)
     Definition cramerRule {n} (A : smat n) (b : mat n 1) : mat n 1 :=
-      let D := det A in
-      f2m (fun i j => let Di := det (mchgcol A i b) in (Di / D)).
+      let D := mdet A in
+      f2m (fun i j => let Di := mdet (mchgcol A i b) in (Di / D)).
     
   End cramer_rule.
 
@@ -1511,7 +1511,7 @@ Section matrix_inversion.
   (** *** Matrix Inversion *)
   Section inv.
 
-    Definition minv {n} (m : smat n) := (A1 / det m) c* (madj m).
+    Definition minv {n} (m : smat n) := (A1 / mdet m) c* (madj m).
     Notation "m ⁻¹" := (minv m) : mat_scope.
 
     Global Instance minv_mor (n : nat) :
@@ -1536,34 +1536,38 @@ Section matrix_inversion.
     Admitted.
 
     (** m * m⁻¹ = mat1 *)
-    Lemma mmul_minv_r : forall n (m : smat n), m * m⁻¹ == mat1.
+    Lemma mmul_minv_r : forall {n} (m : smat n), m * m⁻¹ == mat1.
     Proof.
     Admitted.
 
     (** m⁻¹ * m = mat1 *)
-    Lemma mmul_minv_l : forall n (m : smat n), (minv m) * m == mat1.
+    Lemma mmul_minv_l : forall {n} (m : smat n), (minv m) * m == mat1.
     Proof.
     Admitted.
 
     (** mat1 ⁻¹ = mat1 *)
-    Lemma minv_1 : forall n, @minv n mat1 == mat1.
+    Lemma minv_1 : forall {n}, @minv n mat1 == mat1.
     Proof.
     Admitted.
 
     (** m ⁻¹ ⁻¹ = m *)
-    Lemma minv_inv : forall n (m : smat n), minvertible m -> m ⁻¹ ⁻¹ == m.
+    Lemma minv_minv : forall {n} (m : smat n), minvertible m -> m ⁻¹ ⁻¹ == m.
     Proof.
     Admitted.
 
     (** (m * m') ⁻¹ = m' ⁻¹ * m ⁻¹ *)
-    Lemma minv_mul : forall n (m m' : smat n),
+    Lemma minv_mmul : forall {n} (m m' : smat n),
         minvertible m -> minvertible m' -> (m * m')⁻¹ == m' ⁻¹ * m ⁻¹.
     Proof.
     Admitted.
 
     (** (m\T) ⁻¹ = (m ⁻¹)\T *)
-    Lemma minv_trans : forall n (m : smat n), minvertible m -> (m\T) ⁻¹ = (m ⁻¹)\T.
+    Lemma minv_mtrans : forall {n} (m : smat n), minvertible m -> (m\T) ⁻¹ = (m ⁻¹)\T.
     Proof.
+    Admitted.
+
+    (** mdet (m⁻¹) = 1 / (mdet m) *)
+    Lemma mdet_minv : forall {n} (m : smat n), (mdet (m ⁻¹) == A1 / (mdet m))%A.
     Admitted.
     
   End inv.
@@ -1574,62 +1578,62 @@ Section matrix_inversion.
       let a00 := m.11 in
       l2m [[A1/a00]].
 
-    (** det m <> 0 -> minv1 m = inv m *)
-    Lemma minv1_eq_inv : forall m, det m != A0 -> minv1 m == minv m.
+    (** mdet m <> 0 -> minv1 m = inv m *)
+    Lemma minv1_eq_inv : forall m, mdet m != A0 -> minv1 m == minv m.
     Proof. lma. reverse_neq0_neq0. Qed.
 
     (** minv1 m * m = mat1 *)
     Lemma minv1_correct_l : forall (m : smat 1),
-        det m != A0 -> (minv1 m) * m == mat1.
+        mdet m != A0 -> (minv1 m) * m == mat1.
     Proof. lma. reverse_neq0_neq0. Qed.
 
     (** m * minv1 m = mat1 *)
     Lemma minv1_correct_r : forall (m : smat 1),
-        det m != A0 -> m * (minv1 m) == mat1.
+        mdet m != A0 -> m * (minv1 m) == mat1.
     Proof. lma. reverse_neq0_neq0. Qed.
 
     (* ======================================================================= *)
     (** ** Inversion matrix of dimension-2 *)
     Definition minv2 (m : smat 2) : smat 2 :=
-      let d := det2 m in
+      let d := mdet2 m in
       (l2m [[m.22/d; -m.12/d]; [-m.21/d; m.11/d]])%A.
 
-    (** det m <> 0 -> minv2 m = inv m *)
-    Lemma minv2_eq_inv : forall m, det m != A0 -> minv2 m == minv m.
+    (** mdet m <> 0 -> minv2 m = inv m *)
+    Lemma minv2_eq_inv : forall m, mdet m != A0 -> minv2 m == minv m.
     Proof. lma; reverse_neq0_neq0. Qed.
     
     (** minv2 m * m = mat1 *)
     Lemma minv2_correct_l : forall (m : smat 2),
-        det m != A0 -> (minv2 m) * m == mat1.
+        mdet m != A0 -> (minv2 m) * m == mat1.
     Proof. lma; reverse_neq0_neq0. Qed.
     
     (** m * minv2 m = mat1 *)
     Lemma minv2_correct_r : forall (m : smat 2),
-        det m != A0 -> m * (minv2 m) == mat1.
+        mdet m != A0 -> m * (minv2 m) == mat1.
     Proof. lma; reverse_neq0_neq0. Qed.
     
     (* ======================================================================= *)
     (** ** Inversion matrix of dimension-3 *)
     (* Note, this formula could be provided from matlab, thus avoiding manual work *)
     Definition minv3 (m : smat 3) : smat 3 :=
-      let d := det3 m in
+      let d := mdet3 m in
       (l2m
          [[(m.22*m.33-m.23*m.32)/d; -(m.12*m.33-m.13*m.32)/d; (m.12*m.23-m.13*m.22)/d];
           [-(m.21*m.33-m.23*m.31)/d; (m.11*m.33-m.13*m.31)/d; -(m.11*m.23-m.13*m.21)/d];
           [(m.21*m.32-m.22*m.31)/d; -(m.11*m.32-m.12*m.31)/d; (m.11*m.22-m.12*m.21)/d]])%A.
     
-    (** det m <> 0 -> minv3 m = inv m *)
-    Lemma minv3_eq_inv : forall m, det m != A0 -> minv3 m == minv m.
+    (** mdet m <> 0 -> minv3 m = inv m *)
+    Lemma minv3_eq_inv : forall m, mdet m != A0 -> minv3 m == minv m.
     Proof. lma; reverse_neq0_neq0. Qed.
     
     (** minv3 m * m = mat1 *)
     Lemma minv3_correct_l : forall (m : smat 3),
-        det m != A0 -> (minv3 m) * m == mat1.
+        mdet m != A0 -> (minv3 m) * m == mat1.
     Proof. lma; reverse_neq0_neq0. Qed.
     
     (** m * minv3 m = mat1 *)
     Lemma minv3_correct_r : forall (m : smat 3),
-        det m != A0 -> m * (minv3 m) == mat1.
+        mdet m != A0 -> m * (minv3 m) == mat1.
     Proof. lma; reverse_neq0_neq0. Qed.
   End concrete.
   
@@ -1658,9 +1662,9 @@ Section test.
   Import ZArith.
   Open Scope Z.
   Let m1 := @l2m _ 0 4 4 [[2;2;4;5];[5;8;9;3];[1;2;8;5];[6;6;7;1]].
-  Notation det := (det (Aadd:=Z.add) (Aopp:=Z.opp) (Amul:=Z.mul) (A0:=0) (A1:=1)).
-  (* Compute det m1. *)
-  (* Check det. *)
+  Notation mdet := (mdet (Aadd:=Z.add) (Aopp:=Z.opp) (Amul:=Z.mul) (A0:=0) (A1:=1)).
+  (* Compute mdet m1. *)
+  (* Check mdet. *)
 End test.
 
 

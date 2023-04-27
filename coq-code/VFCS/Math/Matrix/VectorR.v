@@ -821,7 +821,7 @@ Section cv3mixed.
         则混合积的符号为正；若组成左手系，则符号为负。*)
   Definition cv3mixed (a b c : cvec 3) :=
     let m := l2m [[a$0; a$1; a$2]; [b$0; b$1; b$2]; [c$0; c$1; c$2]] in
-    det3 m.
+    mdet3 m.
 
   (** A equivalent form *)
   Lemma cv3mixed_eq : forall a b c : cvec 3, cv3mixed a b c = <a × b, c>.

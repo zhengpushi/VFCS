@@ -164,11 +164,11 @@ Section OrthogonalMatrix.
 
   (** orthogonal m -> |m| = ± 1 *)
   Lemma morthogonal_det : forall {n} (m : smat n),
-      morthogonal m -> (det m = 1 \/ det m = -1).
+      morthogonal m -> (mdet m = 1 \/ mdet m = -1).
   Proof.
     intros. red in H.
-    assert (det (m\T * m) = @det n mat1). { rewrite H. auto. }
-    rewrite det_mul in H0. rewrite det_trans, det_1 in H0.
+    assert (mdet (m\T * m) = @mdet n mat1). { rewrite H. auto. }
+    rewrite mdet_mmul in H0. rewrite mdet_mtrans, mdet_1 in H0.
     apply Rsqr_eq1 in H0. auto.
   Qed.
 
@@ -182,7 +182,7 @@ Section SOn.
   (** The set of SOn *)
   Record SOn (n: nat) := {
       SOn_mat :> smat n;
-      SOn_props : morthogonal SOn_mat /\ det SOn_mat = 1
+      SOn_props : morthogonal SOn_mat /\ mdet SOn_mat = 1
     }.
 
   Definition SOn_eq {n} (s1 s2 : SOn n) : Prop := SOn_mat _ s1 == SOn_mat _ s2.
@@ -191,17 +191,17 @@ Section SOn.
     refine (Build_SOn n (s1 * s2) _).
     destruct s1 as [s1 [H1 H1']], s2 as [s2 [H2 H2']]. simpl. split.
     - apply morthogonal_mul; auto.
-    - rewrite det_mul. rewrite H1', H2'. simpA2; ring.
+    - rewrite mdet_mmul. rewrite H1', H2'. simpA2; ring.
   Defined.
 
   Definition SOn_1 {n} : SOn n.
     refine (Build_SOn n mat1 _). split.
-    apply morthogonal_1. apply det_1.
+    apply morthogonal_1. apply mdet_1.
   Defined.
 
   Definition SOn_inv {n} (s : SOn n) : SOn n.
     refine (Build_SOn n (s\T) _). destruct s as [s [H1 H2]]. simpl. split.
-    apply morthogonal_trans; auto. rewrite det_trans. auto.
+    apply morthogonal_trans; auto. rewrite mdet_mtrans. auto.
   Defined.
 
   (** SOn_eq is equivalence relation *)
@@ -274,8 +274,8 @@ Section SO3.
   (** If a matrix is SO3? *)
   Definition so3 (m : smat 3) : Prop := 
     let so3_mul_unit : Prop := m\T * m == mat1 in
-    let so3_det : Prop := (det3 m) = 1 in
-    so3_mul_unit /\ so3_det.
+    let so3_mdet : Prop := (mdet3 m) = 1 in
+    so3_mul_unit /\ so3_mdet.
 
 End SO3.
 
@@ -352,7 +352,7 @@ Module Exercise_Ch1_Symbol.
   
   Example ex6_1 : forall a b : R,
       (let m := mk_mat_3_3 (a*a) (a*b) (b*b) (2*a) (a+b) (2*b) 1 1 1 in
-      det m = (a - b)^3)%R.
+      mdet m = (a - b)^3)%R.
   Proof. intros. cbv. ring. Qed.
   
   Example ex6_2 : forall a b x y z : A,
@@ -361,7 +361,7 @@ Module Exercise_Ch1_Symbol.
                    (a*y+b*z) (a*z+b*x) (a*x+b*y)
                    (a*z+b*x) (a*x+b*y) (a*y+b*z) in
        let m2 := mk_mat_3_3 x y z y z x z x y in
-       det m1 = (a^3 + b^3) * det m2)%R.
+       mdet m1 = (a^3 + b^3) * mdet m2)%R.
   Proof. intros. cbv. ring. Qed.
   
   Example ex6_3 : forall a b e d : A,
@@ -370,7 +370,7 @@ Module Exercise_Ch1_Symbol.
                  (b*b) ((b+1)^2) ((b+2)^2) ((b+3)^2)
                  (e*e) ((e+1)^2) ((e+2)^2) ((e+3)^2)
                  (d*d) ((d+1)^2) ((d+2)^2) ((d+3)^2) in
-      det m = 0)%R.
+      mdet m = 0)%R.
   Proof. intros. cbv. ring. Qed.
   
   Example ex6_4 : forall a b e d : A,
@@ -379,7 +379,7 @@ Module Exercise_Ch1_Symbol.
                  a b e d
                  (a^2) (b^2) (e^2) (d^2)
                  (a^4) (b^4) (e^4) (d^4) in
-      (det m = (a-b)*(a-e)*(a-d)*(b-e)*(b-d)*(e-d)*(a+b+e+d))%R.
+      (mdet m = (a-b)*(a-e)*(a-d)*(b-e)*(b-d)*(e-d)*(a+b+e+d))%R.
   Proof. intros. cbv. ring. Qed.
   
   (* (** 6.(5), it is an infinite structure, need more work, later... *) *)

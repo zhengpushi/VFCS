@@ -721,63 +721,62 @@ Module RingMatrixTheory (E : RingElementType).
   (** ** Determinant of a matrix *)
 
   (** Determinant of a square matrix *)
-  Definition det {n} (m : smat n) : A := @det _ Aadd A0 Aopp Amul A1 _ m.
+  Definition mdet {n} (m : smat n) : A := @mdet _ Aadd A0 Aopp Amul A1 _ m.
 
   (** it is a proper morphism *)
-  Global Instance det_mor (n : nat) : Proper (meq ==> Aeq) (@det n).
-  Proof. apply det_mor. Qed.
+  Global Instance mdet_mor (n : nat) : Proper (meq ==> Aeq) (@mdet n).
+  Proof. apply mdet_mor. Qed.
 
   (** *** Properties of determinant *)
-  Lemma det_1 : forall {n}, (@det n mat1 == A1)%A.
-  Proof. intros. apply det_1. Qed.
+  Lemma mdet_1 : forall {n}, (@mdet n mat1 == A1)%A.
+  Proof. intros. apply mdet_1. Qed.
 
-  Lemma det_trans : forall {n} (m : smat n), (det (m\T) == det m)%A.
-  Proof. intros. apply det_trans. Qed.
+  Lemma mdet_mtrans : forall {n} (m : smat n), (mdet (m\T) == mdet m)%A.
+  Proof. intros. apply mdet_mtrans. Qed.
 
-  Lemma det_mul : forall {n} (m p : smat n), (det (m * p)%M == det m * det p)%A.
-  Proof. intros. apply det_mul. Qed.
+  Lemma mdet_mmul : forall {n} (m p : smat n), (mdet (m * p)%M == mdet m * mdet p)%A.
+  Proof. intros. apply mdet_mmul. Qed.
 
-  
   (* ==================================== *)
   (** ** Determinant on matrix of 1-,2-, or 3-dim*)
 
   (** Determinant of a matrix of dimension-1 *)
-  Definition det1 (m : smat 1) := det1 m.
+  Definition mdet1 (m : smat 1) := mdet1 m.
 
-  (** det1 m = det m *)
-  Lemma det1_eq_det : forall m, (det1 m == det m)%A.
-  Proof. intros. apply det1_eq_det. Qed.
+  (** mdet1 m = mdet m *)
+  Lemma mdet1_eq_mdet : forall m, (mdet1 m == mdet m)%A.
+  Proof. intros. apply mdet1_eq_mdet. Qed.
   
-  (** det m <> 0 <-> det_exp <> 0 *)
-  Lemma det1_neq0_iff : forall (m : smat 1), (det m != A0 <-> m.11 != A0)%A.
-  Proof. intros. apply det1_neq0_iff. Qed.
+  (** mdet m <> 0 <-> mdet_exp <> 0 *)
+  Lemma mdet1_neq0_iff : forall (m : smat 1), (mdet m != A0 <-> m.11 != A0)%A.
+  Proof. intros. apply mdet1_neq0_iff. Qed.
 
   (** Determinant of a matrix of dimension-2 *)
-  Definition det2 (m : smat 2) := @det2 _ Aadd Aopp Amul m.
+  Definition mdet2 (m : smat 2) := @mdet2 _ Aadd Aopp Amul m.
 
-  (** det2 m = det m *)
-  Lemma det2_eq_det : forall m, (det2 m == det m)%A.
-  Proof. intros. apply det2_eq_det. Qed.
+  (** mdet2 m = mdet m *)
+  Lemma mdet2_eq_mdet : forall m, (mdet2 m == mdet m)%A.
+  Proof. intros. apply mdet2_eq_mdet. Qed.
 
-  (** det m <> 0 <-> det_exp <> 0 *)
-  Lemma det2_neq0_iff : forall (m : smat 2),
-      (det m != A0 <-> m.11*m.22 - m.12*m.21 != A0)%A.
-  Proof. intros. apply det2_neq0_iff. Qed.
+  (** mdet m <> 0 <-> mdet_exp <> 0 *)
+  Lemma mdet2_neq0_iff : forall (m : smat 2),
+      (mdet m != A0 <-> m.11*m.22 - m.12*m.21 != A0)%A.
+  Proof. intros. apply mdet2_neq0_iff. Qed.
 
   (** Determinant of a matrix of dimension-3 *)
-  Definition det3 (m : smat 3) := @det3 _ Aadd Aopp Amul m.
+  Definition mdet3 (m : smat 3) := @mdet3 _ Aadd Aopp Amul m.
 
-  (** det3 m = det m *)
-  Lemma det3_eq_det : forall m, (det3 m == det m)%A.
-  Proof. intros. apply det3_eq_det. Qed.
+  (** mdet3 m = mdet m *)
+  Lemma mdet3_eq_mdet : forall m, (mdet3 m == mdet m)%A.
+  Proof. intros. apply mdet3_eq_mdet. Qed.
   
-  (** det m <> 0 <-> det_exp <> 0 *)
-  Lemma det3_neq0_iff : forall (m : smat 3),
-      (det m != A0 <->
+  (** mdet m <> 0 <-> mdet_exp <> 0 *)
+  Lemma mdet3_neq0_iff : forall (m : smat 3),
+      (mdet m != A0 <->
          m.11 * m.22 * m.33 - m.11 * m.23 * m.32 - 
            m.12 * m.21 * m.33 + m.12 * m.23 * m.31 + 
            m.13 * m.21 * m.32 - m.13 * m.22 * m.31 != A0)%A.
-  Proof. intros. apply det3_neq0_iff. Qed.
+  Proof. intros. apply mdet3_neq0_iff. Qed.
   
   
   (* ==================================== *)
@@ -802,9 +801,9 @@ Module RingMatrixTheory (E : RingElementType).
   Proof. apply minvertible_1. Qed.
 
   (** A square matrix is invertible, if its determinant is nonzero *)
-  Lemma minvertible_iff_det_n0 : forall {n} (m : smat n),
-      minvertible m <-> det m <> A0.
-  Proof. intros. apply minvertible_iff_det_n0. Qed.
+  Lemma minvertible_iff_mdet_n0 : forall {n} (m : smat n),
+      minvertible m <-> mdet m <> A0.
+  Proof. intros. apply minvertible_iff_mdet_n0. Qed.
 
   (** invertible m -> invertible (m\T) *)
   Lemma minvertible_trans : forall n (m : smat n),
@@ -877,16 +876,20 @@ Module FieldMatrixTheory (E : FieldElementType).
 
   (** m ⁻¹ ⁻¹ = m *)
   Lemma minv_minv : forall n (m : smat n), minvertible m -> m ⁻¹ ⁻¹ == m.
-  Proof. intros. apply minv_inv; auto. Qed.
+  Proof. intros. apply minv_minv; auto. Qed.
 
   (** (m * m') ⁻¹ = m' ⁻¹ * m ⁻¹ *)
   Lemma minv_mmul : forall n (m m' : smat n),
       minvertible m -> minvertible m' -> (m * m')⁻¹ == m' ⁻¹ * m ⁻¹.
-  Proof. intros. apply minv_mul; auto. Qed.
+  Proof. intros. apply minv_mmul; auto. Qed.
 
   (** (m\T) ⁻¹ = (m ⁻¹)\T *)
   Lemma minv_trans : forall n (m : smat n), minvertible m -> (m\T) ⁻¹ = (m ⁻¹)\T.
-  Proof. intros. apply minv_trans; auto. Qed.
+  Proof. intros. apply minv_mtrans; auto. Qed.
+  
+  (** mdet (m⁻¹) = 1 / (mdet m) *)
+  Lemma mdet_minv : forall {n} (m : smat n), (mdet (m⁻¹) == A1 / (mdet m))%A.
+  Proof. intros. apply mdet_minv; auto. Qed.
   
 
   (* ==================================== *)
@@ -895,47 +898,47 @@ Module FieldMatrixTheory (E : FieldElementType).
   (** Inversion matrix of dimension-1 *)
   Definition minv1 (m : smat 1) : smat 1 := @minv1 _ A0 Amul A1 Ainv m.
 
-  (** det m <> 0 -> minv1 m = inv m *)
-  Lemma minv1_eq_inv : forall m, (det m != A0)%A -> minv1 m == minv m.
+  (** mdet m <> 0 -> minv1 m = inv m *)
+  Lemma minv1_eq_inv : forall m, (mdet m != A0)%A -> minv1 m == minv m.
   Proof. intros. apply minv1_eq_inv; auto. Qed.
 
   (** minv1 m * m = mat1 *)
-  Lemma minv1_correct_l : forall (m : smat 1), (det m != A0)%A -> (minv1 m) * m == mat1.
+  Lemma minv1_correct_l : forall (m : smat 1), (mdet m != A0)%A -> (minv1 m) * m == mat1.
   Proof. intros. apply minv1_correct_l; auto. Qed.
 
   (** m * minv1 m = mat1 *)
-  Lemma minv1_correct_r : forall (m : smat 1), (det m != A0)%A -> m * (minv1 m) == mat1.
+  Lemma minv1_correct_r : forall (m : smat 1), (mdet m != A0)%A -> m * (minv1 m) == mat1.
   Proof. intros. apply minv1_correct_r; auto. Qed.
 
   
   (** Inversion matrix of dimension-2 *)
   Definition minv2 (m : smat 2) : smat 2 := @minv2 _ Aadd A0 Aopp Amul Ainv m.
 
-  (** det m <> 0 -> minv2 m = inv m *)
-  Lemma minv2_eq_inv : forall m, (det m != A0)%A -> minv2 m == minv m.
+  (** mdet m <> 0 -> minv2 m = inv m *)
+  Lemma minv2_eq_inv : forall m, (mdet m != A0)%A -> minv2 m == minv m.
   Proof. intros. apply minv2_eq_inv; auto. Qed.
   
   (** minv2 m * m = mat1 *)
-  Lemma minv2_correct_l : forall (m : smat 2), (det m != A0)%A -> (minv2 m) * m == mat1.
+  Lemma minv2_correct_l : forall (m : smat 2), (mdet m != A0)%A -> (minv2 m) * m == mat1.
   Proof. intros. apply minv2_correct_l; auto. Qed.
   
   (** m * minv2 m = mat1 *)
-  Lemma minv2_correct_r : forall (m : smat 2), (det m != A0)%A -> m * (minv2 m) == mat1.
+  Lemma minv2_correct_r : forall (m : smat 2), (mdet m != A0)%A -> m * (minv2 m) == mat1.
   Proof. intros. apply minv2_correct_r; auto. Qed.
   
   (** Inversion matrix of dimension-3 *)
   Definition minv3 (m : smat 3) : smat 3 := @minv3 _ Aadd A0 Aopp Amul Ainv m.
   
-  (** det m <> 0 -> minv3 m = inv m *)
-  Lemma minv3_eq_inv : forall m, (det m != A0)%A -> minv3 m == minv m.
+  (** mdet m <> 0 -> minv3 m = inv m *)
+  Lemma minv3_eq_inv : forall m, (mdet m != A0)%A -> minv3 m == minv m.
   Proof. intros. apply minv3_eq_inv; auto. Qed.
   
   (** minv3 m * m = mat1 *)
-  Lemma minv3_correct_l : forall (m : smat 3), (det m != A0)%A -> (minv3 m) * m == mat1.
+  Lemma minv3_correct_l : forall (m : smat 3), (mdet m != A0)%A -> (minv3 m) * m == mat1.
   Proof. intros. apply minv3_correct_l; auto. Qed.
   
   (** m * minv3 m = mat1 *)
-  Lemma minv3_correct_r : forall (m : smat 3), (det m != A0)%A -> m * (minv3 m) == mat1.
+  Lemma minv3_correct_r : forall (m : smat 3), (mdet m != A0)%A -> m * (minv3 m) == mat1.
   Proof. intros. apply minv3_correct_r; auto. Qed.
 
   (* (** k * m = 0 -> (m = 0) \/ (k = 0) *) *)
