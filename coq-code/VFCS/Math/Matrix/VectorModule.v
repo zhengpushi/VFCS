@@ -581,6 +581,11 @@ Module RingVectorTheory (E : RingElementType).
   Definition cvcmul {n} a (v : cvec n) : cvec n := @cvcmul _ Amul _ a v.
   Infix "c*" := cvcmul : cvec_scope.
 
+  (** (a * v)[i] = a * [i] *)
+  Lemma cvcmul_nth : forall {n} (v : cvec n) (a : A) i,
+      i < n -> (a c* v)$i = (a * (v$i))%A.
+  Proof. intros. apply cvcmul_nth; auto. Qed.
+
   (** a c* (b c* v) = (a * b) c* v *)
   Lemma cvcmul_assoc : forall {n} a b (v : cvec n), a c* (b c* v) == (a * b)%A c* v.
   Proof. intros. apply cvcmul_assoc. Qed.
@@ -681,12 +686,12 @@ Module RingVectorTheory (E : RingElementType).
   (** <a c* v1, v2> = a * <v1,v2> *)
   Lemma cvdot_vcmul_l : forall {n} (v1 v2 : cvec n) (a : A),
       (<a c* v1, v2> == a * <v1,v2>)%A.
-  Proof. intros. apply cvdot_cmul_l. Qed.
+  Proof. intros. apply cvdot_vcmul_l. Qed.
 
   (** <v1, a c* v2> == a * <v1,v2> *)
-  Lemma cvdot_cmul_r : forall {n} (v1 v2 : cvec n) (a : A),
+  Lemma cvdot_vcmul_r : forall {n} (v1 v2 : cvec n) (a : A),
       (<v1, a c* v2> == a * <v1,v2>)%A.
-  Proof. intros. apply cvdot_cmul_r. Qed.
+  Proof. intros. apply cvdot_vcmul_r. Qed.
 
   (** <0,v> = 0 *)
   Lemma cvdot_0_l : forall {n} (v : cvec n), (<cvec0,v> == Azero)%A.

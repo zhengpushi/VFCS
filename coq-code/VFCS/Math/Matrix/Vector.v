@@ -794,6 +794,11 @@ Section vec_ring.
   (* Global Instance cvcmul_mor : forall n, Proper (Aeq ==> meq ==> meq) (cvcmul (n:=n)). *)
   (* Proof. intros. apply mcmul_mor. Qed. *)
 
+  (** (a * v)[i] = a * [i] *)
+  Lemma cvcmul_nth : forall {n} (v : cvec n) (a : A) i,
+      i < n -> (a c* v)$i = (a * (v$i))%A.
+  Proof. intros. auto. Qed.
+
   (** a c* (b c* v) = (a * b) c* v *)
   Lemma cvcmul_assoc : forall {n} a b (v : cvec n), a c* (b c* v) == (a * b)%A c* v.
   Proof. intros. apply mcmul_assoc. Qed.
@@ -919,7 +924,7 @@ Section vec_ring.
   Qed.
 
   (** <a c* v1, v2> = a * <v1,v2> *)
-  Lemma cvdot_cmul_l : forall {n} (v1 v2 : cvec n) (a : A),
+  Lemma cvdot_vcmul_l : forall {n} (v1 v2 : cvec n) (a : A),
       (<a c* v1, v2> == a * <v1,v2>)%A.
   Proof.
     intros n [v1] [v2] a. unfold cvdot; simpl.
@@ -927,7 +932,7 @@ Section vec_ring.
   Qed.
   
   (** <v1, a c* v2> == a * <v1,v2> *)
-  Lemma cvdot_cmul_r : forall {n} (v1 v2 : cvec n) (a : A),
+  Lemma cvdot_vcmul_r : forall {n} (v1 v2 : cvec n) (a : A),
       (<v1, a c* v2> == a * <v1,v2>)%A.
   Proof.
     intros n [v1] [v2] a. unfold cvdot; simpl.
