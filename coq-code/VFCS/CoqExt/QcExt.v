@@ -9,6 +9,7 @@
 *)
 
 
+Require Import Basic.
 Require Export QExt Qcanon.
 Open Scope Qc.
 
@@ -37,7 +38,7 @@ Definition Q2Qc_dlist dl := List.map Q2Qc_list dl.
 
 
 (* ######################################################################### *)
-(** * Properties for Qeqb and Qeq *)
+(** ** Properties for Qeqb and Qeq *)
 
 Notation Qceqdec := Qc_eq_dec.
 
@@ -65,7 +66,29 @@ Qed.
 
 
 (* ######################################################################### *)
-(** * Others *)
+(** ** Well-defined (or compatible, or proper morphism) of operations on Qc. *)
+
+Lemma Qcplus_wd : Proper (eq ==> eq ==> eq) Qcplus.
+Proof. simp_proper. intros; subst; ring. Qed.
+
+Lemma Qcopp_wd : Proper (eq ==> eq) Qcopp.
+Proof. simp_proper. intros; subst; ring. Qed.
+
+Lemma Qcminus_wd : Proper (eq ==> eq ==> eq) Qcminus.
+Proof. simp_proper. intros; subst; ring. Qed.
+
+Lemma Qcmult_wd : Proper (eq ==> eq ==> eq) Qcmult.
+Proof. simp_proper. intros; subst; ring. Qed.
+
+Lemma Qcinv_wd : Proper (eq ==> eq) Qcinv.
+Proof. simp_proper. intros; subst; ring. Qed.
+
+Lemma Qcdiv_wd : Proper (eq ==> eq ==> eq) Qcdiv.
+Proof. simp_proper. intros; subst; ring. Qed.
+
+
+(* ######################################################################### *)
+(** ** Others *)
 
 
 (** ** sqrt of Q *)

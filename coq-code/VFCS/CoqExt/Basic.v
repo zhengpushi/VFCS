@@ -33,6 +33,8 @@ Require Export Field.                     (* field *)
 Require Export Coq.Logic.Classical.
 Require Export Coq.Logic.FunctionalExtensionality.
 
+Require Arith ZArith QArith Qcanon Reals List SetoidList.
+
 
 (* ######################################################################### *)
 (** * Reserved Notations *)
@@ -84,43 +86,32 @@ Reserved Notation "v ! i"      (at level 20, i at next level).    (* nth of vec 
 Reserved Notation "m $ i $ j"  (at level 20, i at next level).    (* nth of mat, raw *)
 Reserved Notation "v $ i"      (at level 20, i at next level).    (* nth of vec, raw *)
 
-Reserved Notation "m .11"      (at level 20, format "m .11").     (* m $ 0 $ 0 *)
+(* index-of-matrix or index-of-nat-nat-function.
+ Note, there are two style of start number to count index, 0 or 1.
+ Many programming language use 0, but MATLAB and many mathematical textbook use 1.
+ Maybe it is a convention problem, we choose 0. *)
+Reserved Notation "m .00"      (at level 20, format "m .00").     (* m[0,0] *)
+Reserved Notation "m .01"      (at level 20, format "m .01").
+Reserved Notation "m .02"      (at level 20, format "m .02").
+Reserved Notation "m .03"      (at level 20, format "m .03").
+Reserved Notation "m .10"      (at level 20, format "m .10").
+Reserved Notation "m .11"      (at level 20, format "m .11").
 Reserved Notation "m .12"      (at level 20, format "m .12").
 Reserved Notation "m .13"      (at level 20, format "m .13").
-Reserved Notation "m .14"      (at level 20, format "m .14").
+Reserved Notation "m .20"      (at level 20, format "m .20").
 Reserved Notation "m .21"      (at level 20, format "m .21").
 Reserved Notation "m .22"      (at level 20, format "m .22").
 Reserved Notation "m .23"      (at level 20, format "m .23").
-Reserved Notation "m .24"      (at level 20, format "m .24").
+Reserved Notation "m .30"      (at level 20, format "m .30").
 Reserved Notation "m .31"      (at level 20, format "m .31").
 Reserved Notation "m .32"      (at level 20, format "m .32").
 Reserved Notation "m .33"      (at level 20, format "m .33").
-Reserved Notation "m .34"      (at level 20, format "m .34").
-Reserved Notation "m .41"      (at level 20, format "m .41").
-Reserved Notation "m .42"      (at level 20, format "m .42").
-Reserved Notation "m .43"      (at level 20, format "m .43").
-Reserved Notation "m .44"      (at level 20, format "m .44").
-Reserved Notation "v .1"       (at level 20, format "v .1").      (* v $ 0 *)
+
+(* index-of-vector or index-of-nat-function. We choose 0 as start number. *)
+Reserved Notation "v .0"       (at level 20, format "v .0").      (* v[0] *)
+Reserved Notation "v .1"       (at level 20, format "v .1").
 Reserved Notation "v .2"       (at level 20, format "v .2").
 Reserved Notation "v .3"       (at level 20, format "v .3").
-Reserved Notation "v .4"       (at level 20, format "v .4").
-
-Reserved Notation "f `00"      (at level 20, format "f `00").     (* f 0 0 *)
-Reserved Notation "f `01"      (at level 20, format "f `01").
-Reserved Notation "f `02"      (at level 20, format "f `02").
-Reserved Notation "f `03"      (at level 20, format "f `03").
-Reserved Notation "f `10"      (at level 20, format "f `10").
-Reserved Notation "f `11"      (at level 20, format "f `11").
-Reserved Notation "f `12"      (at level 20, format "f `12").
-Reserved Notation "f `13"      (at level 20, format "f `13").
-Reserved Notation "f `20"      (at level 20, format "f `20").
-Reserved Notation "f `21"      (at level 20, format "f `21").
-Reserved Notation "f `22"      (at level 20, format "f `22").
-Reserved Notation "f `23"      (at level 20, format "f `23").
-Reserved Notation "f `30"      (at level 20, format "f `30").
-Reserved Notation "f `31"      (at level 20, format "f `31").
-Reserved Notation "f `32"      (at level 20, format "f `32").
-Reserved Notation "f `33"      (at level 20, format "f `33").
 
 
 (* this level is consistent with coq.ssr.ssrbool.v *)
@@ -175,10 +166,9 @@ Ltac bdestruct X :=
   let e := fresh "e" in
   evar (e: Prop);
   assert (H: reflect e X); subst e;
-  [eauto with bdestruct
+  [ try eauto with bdestruct
   | destruct H as [H|H]].
 (* [ | try first [apply not_lt in H | apply not_le in H]]]. *)
-
 
 
 (* ######################################################################### *)
@@ -213,6 +203,91 @@ Qed.
 
 
 (* ######################################################################### *)
+(** * A relation is decidable *)
+
+(** ** Class *)
+
+Class Dec {A : Type} (Aeq : relation A) := {
+    dec : forall (a b : A), {Aeq a b} + {~(Aeq a b)};
+  }.
+Infix "==?" := (dec).
+Infix "<>?" := (fun a b => sumbool_not _ _ (a ==? b)).
+
+(** ** Instances *)
+
+Section Instances.
+  Import Nat Arith ZArith QArith Qcanon Reals SetoidList.
+  
+  Global Instance Dec_NatEq : Dec (@eq nat).
+  Proof. constructor. apply Nat.eq_dec. Defined.
+
+  Global Instance Dec_Z : Dec (@eq Z).
+  Proof. constructor. apply Z.eq_dec. Defined.
+
+  Global Instance Dec_Q_Qeq : Dec Qeq.
+  Proof. constructor. apply Qeq_dec. Defined.
+
+  Global Instance Dec_Qc : Dec (@eq Qc).
+  Proof. constructor. apply Qc_eq_dec. Defined.
+
+  Global Instance Dec_R : Dec (@eq R).
+  Proof. constructor. apply Req_EM_T. Defined.
+
+  Global Instance Dec_list `{D:Dec} : Dec (eqlistA Aeq).
+  Proof.
+  constructor. intros l1. induction l1.
+    - intros l2. destruct l2; auto.
+      right. intro. easy.
+    - intros l2. destruct l2.
+      + right. intro. easy.
+      + destruct (dec a a0), (IHl1 l2); auto.
+        * right. intro. inversion H. easy.
+        * right. intro. inversion H. easy.
+        * right. intro. inversion H. easy.
+  Defined.
+
+  Global Instance Dec_dlist `{D:Dec} : Dec (eqlistA (eqlistA Aeq)).
+  Proof. constructor. intros. apply dec. Defined.
+
+End Instances.
+
+(** ** Extra Theories *)
+Section Dec_theory.
+
+  Context `{D : Dec}.
+  Infix "==" := Aeq.
+
+  (** Tips: these theories are useful for R type *)
+  
+  (** Calculate equality to boolean, with the help of equality decidability *)
+  Definition Aeqb (a b : A) : bool := if a ==? b then true else false.
+  Infix "=?" := Aeqb.
+
+  (** Aeqb is true iff equal. *)
+  Lemma Aeqb_true : forall a b, a =? b = true <-> a == b.
+  Proof.
+    intros. unfold Aeqb. destruct dec; split; intros; easy.
+  Qed.
+
+  (** Aeqb is false iff not equal *)
+  Lemma Aeqb_false : forall a b, a =? b = false <-> ~(a == b).
+  Proof.
+    intros. unfold Aeqb. destruct dec; split; intros; easy.
+  Qed.
+
+  Lemma Aeq_reflect : forall a b : A, reflect (a == b) (a =? b).
+  Proof.
+    intros. unfold Aeqb. destruct (dec a b); constructor; auto.
+  Qed.
+
+End Dec_theory.
+
+(** ** Examples *)
+Goal forall a b : nat, {a = b} + {a <> b}.
+  apply dec. Qed.
+
+
+(* ######################################################################### *)
 (** * Usually used scopes *)
 
 (** Scope for matrix/vector/list element type *)
@@ -229,6 +304,11 @@ Open Scope list.
 Declare Scope dlist_scope.
 Delimit Scope dlist_scope with dlist.
 Open Scope dlist.
+
+(** Scope for function (nat-indexed) *)
+Declare Scope fun_scope.
+Delimit Scope fun_scope with F.
+Open Scope fun_scope.
 
 (** Scope for matrix type *)
 Declare Scope mat_scope.

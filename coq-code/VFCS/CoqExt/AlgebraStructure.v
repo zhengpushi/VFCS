@@ -34,20 +34,21 @@
      (4) https://math.okstate.edu/people/binegar/3613/3613-l21.pdf
  *)
 
-Require Export BasicConfig.   (* reserved notation *)
+Require Export Basic.   (* reserved notation, etc. *)
 Require Export Coq.Classes.RelationClasses. (* binary_relation *)
 Require Import Coq.Logic.Description. (* constructive_definite_description *)
 Require Export List SetoidList. Import ListNotations.
 Require Export Lia Lra.
 Require Export Ring Field.
 
-Require Arith ZArith QArith Qcanon Reals.
+Require Import Arith ZArith QArith QcExt RExt.
+
+Open Scope nat_scope.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-(* Meanwhile, like A0,A1,... also be availble *)
-Generalizable Variables A Aeq Aadd Aopp Amul Ainv Adiv.
+Generalizable Variables A Aeq Aadd Azero Aopp Amul Aone Ainv Adiv.
 
 
 (* ######################################################################### *)
@@ -104,120 +105,16 @@ Proof. apply eqlistA_equiv. auto. Defined.
 
 
 (* ######################################################################### *)
-(** * A relation is decidable *)
-
-(** ** Class *)
-
-Class Decidable {A : Type} (Aeq : relation A) := {
-    decidable : forall (a b : A), {Aeq a b} + {~(Aeq a b)};
-  }.
-Infix "==?" := (decidable).
-Infix "<>?" := (fun a b => sumbool_not _ _ (a ==? b)).
-
-
-(* Global Hint Constructors Decidable : core. *)
-
-(** ** Instances *)
-
-Section Instances.
-  Import Arith ZArith QArith Qcanon Reals.
-
-  Global Instance Decidable_NatEq : Decidable (@eq nat).
-  Proof. constructor. apply Nat.eq_dec. Defined.
-
-  Global Instance Decidable_Positive : Decidable (@eq positive).
-  Proof. constructor. apply Pos.eq_dec. Defined.
-
-  Global Instance Decidable_Z : Decidable (@eq Z).
-  Proof. constructor. apply Z.eq_dec. Defined.
-
-  Global Instance Decidable_Q : Decidable (@eq Q).
-  Proof.
-    constructor.
-    intros [a1 a2] [b1 b2].
-    destruct (a1 ==? b1), (a2 ==? b2); subst; auto.
-    all: right; intro H; inv H; auto.
-  Defined.
-
-  Global Instance Decidable_Q_Qeq : Decidable Qeq.
-  Proof. constructor. apply Qeq_dec. Defined.
-
-  Global Instance Decidable_Qc : Decidable (@eq Qc).
-  Proof. constructor. apply Qc_eq_dec. Defined.
-
-  Global Instance Decidable_R : Decidable (@eq R).
-  Proof. constructor. apply Req_EM_T. Defined.
-
-  Global Instance Decidable_list `{Dec:Decidable} : Decidable (eqlistA Aeq).
-  Proof.
-    constructor. intros l1. induction l1.
-    - intros l2. destruct l2; auto.
-      right. intro. easy.
-    - intros l2. destruct l2.
-      + right. intro. easy.
-      + destruct (decidable a a0), (IHl1 l2); auto.
-        * right. intro. inversion H. easy.
-        * right. intro. inversion H. easy.
-        * right. intro. inversion H. easy.
-  Defined.
-
-  Global Instance Decidable_dlist `{Dec:Decidable} : Decidable (eqlistA (eqlistA Aeq)).
-  Proof.
-    constructor. intros l1. induction l1.
-    - intros l2. destruct l2; auto.
-      right. intro. easy.
-    - intros l2. destruct l2.
-      + right. intro. easy.
-      + destruct (decidable a l), (IHl1 l2); auto.
-        * right. intro. inversion H. easy.
-        * right. intro. inversion H. easy.
-        * right. intro. inversion H. easy.
-  Defined.
-
-End Instances.
-
-(** ** Extra Theories *)
-Section Dec_theory.
-
-  Context `{Dec : Decidable}.
-  Infix "==" := Aeq.
-
-  (** Tips: these theories are useful for R type *)
-  
-  (** Calculate equality to boolean, with the help of equality decidability *)
-  Definition Aeqb (a b : A) : bool := if a ==? b then true else false.
-  Infix "=?" := Aeqb.
-
-  (** Aeqb is true iff equal. *)
-  Lemma Aeqb_true : forall a b, a =? b = true <-> a == b.
-  Proof.
-    intros. unfold Aeqb. destruct decidable; split; intros; easy.
-  Qed.
-
-  (** Aeqb is false iff not equal *)
-  Lemma Aeqb_false : forall a b, a =? b = false <-> ~(a == b).
-  Proof.
-    intros. unfold Aeqb. destruct decidable; split; intros; easy.
-  Qed.
-
-  Lemma Aeq_reflect : forall a b : A, reflect (a == b) (a =? b).
-  Proof.
-    intros. unfold Aeqb. destruct (decidable a b); constructor; auto.
-  Qed.
-
-End Dec_theory.
-
-(** ** Examples *)
-Goal forall a b : nat, {a = b} + {a <> b}.
-  apply decidable. Qed.
-
-
-(* ######################################################################### *)
-(** * Respect: an operation respect a relation *)
+(** * Respect: an operation respect a relation (also known as "well-defined") *)
 
 (** deprecated, replaced with "Proper" in Coq *)
+(** Note that, the naming could be any of them:
+    1. "add_wd", means "add" is well defined.
+    2. "add_aeq_mor", means "add" is a proper morphism about "aeq".
+    3. "Qplus_comp", means "Qplus" is compatible to "Qeq".
+*)
 
-(* (** ** Class *) *)
+(** ** Class *)
 
 (* (** A unary operation is respect to the equality relation *) *)
 (* Class RespectUnary {A B:Type} (op:A->B) (Aeq:A -> A->Prop) (Beq:B->B->Prop) := { *)
@@ -232,12 +129,34 @@ Goal forall a b : nat, {a = b} + {a <> b}.
 (*       Aeq x y -> forall x0 y0 : B, Beq x0 y0 -> Ceq (op x x0) (op y y0) *)
 (*   }. *)
 
-(* (** ** Instances *) *)
+(** ** Instances *)
 
-(* (** ** Extra Theories *) *)
+(** Prove the "Proper" property, method 1 *)
+#[global] Instance NatAdd_wd : Proper (eq ==> eq ==> eq) Nat.add.
+Proof. simp_proper. intros; subst; auto. Qed.
 
-(* (** ** Examples *) *)
+(** Prove the "Proper" property, method 2, come from Coq.Arith.PeanoNat *)
+Local Obligation Tactic := simpl_relation.
+#[global] Program Instance add_wd : Proper (eq==>eq==>eq) plus.
 
+(** The "Respect" properties on common operations have been provided by StdLib,
+    so we can use them.
+    1. add needed properties to Hint database "wd" to automate the proof.
+    2. register them to Coq, to enable rewrite. (maybe needn't to do it). *)
+
+Hint Resolve
+  Nat.add_wd Nat.mul_wd  (* nat *)
+  Z.add_wd Z.opp_wd Z.sub_wd Z.mul_wd (* Z *)
+  Qplus_comp Qopp_comp Qminus_comp Qmult_comp Qinv_comp Qdiv_comp (* Q *)
+  Qcplus_wd Qcopp_wd Qcminus_wd Qcmult_wd Qcinv_wd Qcdiv_wd (* Qc *)
+  Rplus_wd Ropp_wd Rminus_wd Rmult_wd Rinv_wd Rdiv_wd (* R *)
+  : wd.
+
+(* Search Proper. ? *)
+
+(** ** Extra Theories *)
+
+(** ** Examples *)
 
 
 (* ######################################################################### *)
@@ -357,7 +276,6 @@ Class DistributiveRight {A : Type} (Aadd Amul : A -> A -> A) (Aeq : relation A) 
 (** ** Examples *)
 
 
-
 (* ######################################################################### *)
 (** * Involution Law *)
 
@@ -421,7 +339,6 @@ End theory.
 (** ** Examples *)
 
 
-
 (* ######################################################################### *)
 (** * Surjective *)
 
@@ -436,7 +353,6 @@ Class Surjective {A B : Type} {Beq: relation B} (phi: A -> B) := {
 (** ** Extra Theories *)
 
 (** ** Examples *)
-
 
 
 (* ######################################################################### *)
@@ -523,12 +439,10 @@ Section theory.
   (*   intros. destruct H as [H1 H2]. *)
   (*   (* I can't prove now. *) *)
   (*   Abort. *)
-    
 
 End theory.
 
 (** ** Examples *)
-
 
 
 (* ######################################################################### *)
@@ -553,7 +467,6 @@ Class Homomorphic {A B : Type} {Beq: relation B}
 (*   homomorphic ϕ /\ surjective ϕ. *)
 
 (** ** Examples *)
-
 
 
 (* ######################################################################### *)
@@ -591,7 +504,6 @@ Class Homomorphism2 {A B : Type} {Aeq: relation A} {Beq: relation B}
 (** ** Examples *)
 
 
-
 (* ######################################################################### *)
 (** * Isomorphism *)
 
@@ -627,66 +539,257 @@ Class Isomorphism2 {A B : Type} {Aeq: relation A} {Beq: relation B}
 (** ** Examples *)
 
 
-
 (* ######################################################################### *)
-(** * Monoid *)
+(** * Semigroup 半群 *)
 
 (** ** Class *)
-Class Monoid {A:Type} (Aadd : A -> A -> A) (A0 : A) (Aeq:A->A->Prop) := {
+Class SGroup {A:Type} (Aadd : A -> A -> A) (Aeq:A->A->Prop) := {
+    sgroupAaddProper :> Proper (Aeq ==> Aeq ==> Aeq) Aadd;
+    sgroupEquiv :> Equivalence Aeq;
+    sgroupAssoc :> Associative Aadd Aeq;
+  }.
+
+(** Get parameter of this structure *)
+Definition sgroupAadd `{SG:SGroup} : A -> A -> A := Aadd.
+
+(** ** Instances *)
+Section Instances.
+  
+  Global Instance SGroup_NatAdd : SGroup Nat.add eq.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
+
+  Global Instance SGroup_NatMul : SGroup Nat.mul eq.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
+  
+End Instances.
+
+(** ** Extra Theories *)
+
+(** ** Examples *)
+
+
+(* ######################################################################### *)
+(** * Abelian semigroup 交换半群 *)
+
+(** ** Class *)
+Class ASGroup {A:Type} (Aadd : A -> A -> A) (Aeq:A->A->Prop) := {
+    asgroup_sgroup :> SGroup Aadd Aeq;
+    asgroupComm :> Commutative Aadd Aeq
+  }.
+
+(** Get parameter of this structure *)
+Definition asgroupAadd `{ASG : ASGroup} : A -> A -> A := Aadd.
+
+(** ** Instances *)
+Section Instances.
+  
+  Global Instance ASGroup_NatAdd : ASGroup Nat.add eq.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
+
+  Global Instance ASGroup_NatMul : SGroup Nat.mul eq.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
+  
+End Instances.
+
+(** ** Extra Theories *)
+
+(** In a commutative semigroup, adjust a term in the equation to the head,
+    and use full right associative form for next step of elimination.
+    From: a1 + ... + c + ... + an    (with parentheses of any form)
+    To  : c + (a1 + (... + an))
+ *)
+(** 在交换半群中，将等式里的一个项调整到头部，并使用完全的右结合形式以便下一步消去。 *)
+Ltac move2h c :=
+  rewrite <- ?associative;
+  try rewrite (commutative _ c);
+  rewrite ?associative.
+
+(** In a commutative semigroup, adjust a term in the equation to the tail,
+    and use full left associative form for next step of elimination.
+    From: a1 + ... + c + ... + an    (with parentheses of any form)
+    To  : (...(a1 + ... + an)...) + c 
+*)
+(** 在交换半群中，将等式里的一个项调整到尾部，并使用完全的左结合形式以便下一步消去。 *)
+Ltac move2t c :=
+  rewrite ?associative;
+  try rewrite (commutative c);
+  rewrite <- ?associative.
+
+(** In a commutative semigroup, eliminate first common head.
+    From: c + a1 + ... + an = c + b1 + ... + bm   (with parentheses of any form)
+    To  : a1 + (a2 + (... + an)) = b1 + (b2 + (... + bm))
+ *)
+(** 在交换半群中，消去第一个相同的头部。 *)
+Ltac elimh1 :=
+  rewrite ?associative; (* assure fully right-associative form *)
+  match goal with
+  | |- ?aeq (?f ?c ?a) (?f ?c ?b) => f_equiv (* elim head on setoid *)
+  end.
+
+(** In a commutative semigroup, eliminate first common tail.
+    From: c + a1 + ... + an = c + b1 + ... + bm   (with parentheses of any form)
+    To  : ((a1 + a2) + ...) + an = ((b1 + b2) + ...) + bm
+ *)
+(** 在交换半群中，消去第一个相同的尾部。 *)
+Ltac elimt1 :=
+  rewrite <- ?associative; (* assure fullly left-associative form *)
+  match goal with
+  | |- ?aeq (?f ?a ?c) (?f ?b ?c) => f_equiv (* elim tail on setoid *)
+  end.
+
+(** In a commutative semigroup, automatically simplify and prove equality.
+    An example shoing the detail process:
+    a0 + a1 + a2 + a3 = a3 + a0 + a2 + a1
+    => a0 + a1 + a2 + a3 = a0 + a3 + a2 + a1
+    => a1 + a2 + a3 = a3 + a2 + a1
+    => a1 + a2 + a3 = a1 + a3 + a2
+    => a2 + a3 = a3 + a2
+    => a2 + a3 = a2 + a3
+    => a3 + a3
+    => True
+ *)
+(** 在交换半群中，自动消去左式中所有可能相同的头部 *)
+Ltac elimh :=
+  rewrite ?associative; (* assure fully right-associative form *)
+  repeat match goal with
+    | |- ?aeq (?f ?c _) (?f _ _) => move2h c; elimh1
+    end.
+
+(** 在交换半群中，自动消去左式中所有可能相同的尾部 *)
+Ltac elimt :=
+  rewrite <- ?associative; (* assure fully left-associative form *)
+  repeat match goal with
+    | |- ?aeq (?f _ ?c) (?f _ _) => move2t c; elimt1
+    end.
+
+(** 在交换半群中，自动消去左式和右式中所有可能相同的头部和尾部 *)
+Ltac elim_auto :=
+  elimh; elimt; (* 消去左式的头部和尾部 *)
+  symmetry;
+  elimh; elimt. (* 消去右式的头部和尾部 *)
+
+Section test.
+  Context `{ASG : ASGroup}. Infix "+" := Aadd. Infix "==" := Aeq.
+  Variable a0 a1 a2 a3 a4 a5 a6 : A.
+
+  (** 第一种情形，等式两侧完全相同 *)
+  Let eq1 : Prop := a0 + (a1 + a2) + a3 == a3 + (a0 + a2) + a1.
+
+  (* 这个例子表明，任何的项都可以调整到头部，多步调整后得到了相同形式 *)
+  Goal eq1.
+    unfold eq1. move2h a0. move2h a0. move2h a1. move2h a1.
+    move2h a2. move2h a2.  move2h a3. move2h a3. easy. Qed.
+  
+  (* 这个例子表明，任何的项都可以调整到尾部，多步调整后得到了相同形式 *)
+  Goal eq1.
+    unfold eq1. move2t a0. move2t a0. move2t a1. move2t a1.
+    move2t a2. move2t a2.  move2t a3. move2t a3. easy. Qed.
+
+  (* 这个例子表明，调整到头部+消去头部，可确保化简能够进行 *)
+  Goal eq1.
+    unfold eq1.
+    do 2 move2h a0; elimh1.
+    do 2 move2h a1; elimh1.
+    do 2 move2h a2; elimh1.
+  Qed.
+
+  (* 这个例子表明，调整到尾部+消去尾部，可确保化简能够进行 *)
+  Goal eq1.
+    unfold eq1.
+    do 2 move2t a0; elimt1.
+    do 2 move2t a1; elimt1.
+    do 2 move2t a2; elimt1.
+  Qed.
+
+  (* 这个例子表明，可自动化（以左式头部消除为例） *)
+  Goal eq1. Proof. unfold eq1. elimh. Qed.
+  (* 这个例子表明，可自动化（以左式尾部消除为例） *)
+  Goal eq1. Proof. unfold eq1. elimt. Qed.
+  (* 这个例子表明，可自动化（以右式头部消除为例） *)
+  Goal eq1. Proof. unfold eq1. symmetry. elimh. Qed.
+  (* 这个例子表明，可自动化（以右式尾部消除为例） *)
+  Goal eq1. Proof. unfold eq1. symmetry. elimt. Qed.
+
+  (** 第二种情形，等式两侧不完全相同，因为可能需要额外的证明 *)
+  Let eq2 : Prop := a0 + (a1 + a2 + a3) + a4 + a5 == a2 + a0 + a6 + a4.
+
+  (* 自动消去所有左式中可能的头部 *)
+  Goal eq2. unfold eq2. elimh. Abort.
+  (* 自动消去所有左式中可能的尾部 *)
+  Goal eq2. unfold eq2. elimt. Abort.
+  (* 自动消去所有右式中可能的头部 *)
+  Goal eq2. unfold eq2. symmetry. elimh. Abort.
+  (* 自动消去所有右式中可能的尾部 *)
+  Goal eq2. unfold eq2. symmetry. elimt. Abort.
+
+  (** 在不确定左右两侧中哪一侧更“合适”时，可以两侧都做一遍。
+      而且需要同时处理头部和尾部。*)
+  Goal eq2. unfold eq2. elim_auto. Abort.
+
+  (** 还有一种可能，某个相同的项出现中中间，既不在头部，也不在尾部 *)
+  Let eq3 : Prop := a1 + a0 + a2 == a3 + a0 + a4.
+
+  (* 可以发现，上面的方法不能处理这种情况 *)
+  Goal eq3. unfold eq3. elim_auto. Abort.
+
+  (* 也许能够设计一种方法来遍历左侧或右侧的所有的项，但暂时可以手工来做。
+     比如，可以手工调用 move2h 或 move2t 来移动一个项，然后调用 elimh 或
+     elimt 或 elim_auto 来消除它 *)
+  Goal eq3. unfold eq3. move2h a0. elim_auto. Abort.
+  Goal eq3. unfold eq3. move2t a0. elim_auto. Abort.
+  
+End test.
+
+(** ** Examples *)
+
+
+(* ######################################################################### *)
+(** * Monoid 幺半群、独异点 *)
+
+(** ** Class *)
+Class Monoid {A:Type} (Aadd : A -> A -> A) (Azero : A) (Aeq:A->A->Prop) := {
     monoidAaddProper :> Proper (Aeq ==> Aeq ==> Aeq) Aadd;
     monoidEquiv :> Equivalence Aeq;
     monoidAssoc :> Associative Aadd Aeq;
-    monoidIdL :> IdentityLeft Aadd A0 Aeq;
-    monoidIdR :> IdentityRight Aadd A0 Aeq;
+    monoidIdL :> IdentityLeft Aadd Azero Aeq;
+    monoidIdR :> IdentityRight Aadd Azero Aeq;
   }.
 
 (** Get parameter of a monoid *)
 Definition monoidAadd `{M:Monoid} : A -> A -> A := Aadd.
-Definition monoidA0 `{M:Monoid} : A := A0.
+Definition monoidAzero `{M:Monoid} : A := Azero.
 
 (** ** Instances *)
 Section Instances.
-  Import Arith ZArith QArith Qcanon Reals.
-  
   Global Instance Monoid_NatAdd : Monoid Nat.add 0%nat eq.
-  repeat constructor; intros; auto with arith.
-  simp_proper; intros; subst; auto. apply eq_equivalence. Qed.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
   Global Instance Monoid_NatMul : Monoid Nat.mul 1%nat eq.
-  repeat constructor; intros; auto with arith.
-  simp_proper; intros; subst; auto. apply eq_equivalence. Qed.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
   Global Instance Monoid_ZAdd : Monoid Z.add 0%Z eq.
-  repeat constructor; intros; auto with zarith.
-  simp_proper; intros; subst; auto. Qed.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
   Global Instance Monoid_ZMul : Monoid Z.mul 1%Z eq.
-  repeat constructor; intros; auto with zarith.
-  simp_proper; intros; subst; auto. Qed.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
-  Global Instance Monoid_QAdd : Monoid Qplus 0 Qeq.
-  repeat constructor; intros; simpl; try ring.
-  simp_proper; intros. f_equiv; auto. all: apply Q_Setoid. Qed.
+  Global Instance Monoid_QAdd : Monoid Qplus 0%Q Qeq.
+  repeat constructor; auto with wd; try apply Q_Setoid; intros; ring. Qed.
 
-  Global Instance Monoid_QMul : Monoid Qmult 1 Qeq.
-  repeat constructor; intros; simpl; try ring.
-  simp_proper; intros. f_equiv; auto. all: apply Q_Setoid. Qed.
+  Global Instance Monoid_QMul : Monoid Qmult 1%Q Qeq.
+  repeat constructor; auto with wd; try apply Q_Setoid; intros; ring. Qed.
 
-  Global Instance Monoid_QcAdd : Monoid Qcplus 0 eq.
-  repeat constructor; intros; try ring.
-  simp_proper; intros; subst; auto. all: apply eq_equivalence. Qed.
+  Global Instance Monoid_QcAdd : Monoid Qcplus 0%Qc eq.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
-  Global Instance Monoid_QcMul : Monoid Qcmult 1 eq.
-  repeat constructor; intros; try ring.
-  simp_proper; intros; subst; auto. all: apply eq_equivalence. Qed.
+  Global Instance Monoid_QcMul : Monoid Qcmult 1%Qc eq.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
   Global Instance Monoid_RAdd : Monoid Rplus 0%R eq.
-  repeat constructor; intros; try ring.
-  simp_proper; intros; subst; auto. all: apply eq_equivalence. Qed.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
   Global Instance Monoid_RMul : Monoid Rmult 1%R eq.
-  repeat constructor; intros; try ring.
-  simp_proper; intros; subst; auto. all: apply eq_equivalence. Qed.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
   
 End Instances.
 
@@ -711,7 +814,6 @@ Ltac monoid_rw_strict M :=
 Ltac monoid_simp_strict M := intros; monoid_rw_strict M; auto.
 
 Section tac_example.
-  Import Reals.
   Open Scope R.
   Goal forall a b c : R, a + (0 + b + 0) = a + b.
     intros.
@@ -724,7 +826,6 @@ End tac_example.
 (** ** Examples *)
 
 Section Examples.
-  Import Reals.
   Open Scope R.
 
   Goal forall a b c : R, (a * b) * c = a * (b * c).
@@ -744,26 +845,24 @@ End Examples.
 (** * Abelian monoid *)
 
 (** ** Class *)
-Class AMonoid {A} Aadd A0 Aeq := {
-    amonoidMonoid :> @Monoid A Aadd A0 Aeq;
+Class AMonoid {A} Aadd Azero Aeq := {
+    amonoidMonoid :> @Monoid A Aadd Azero Aeq;
     amonoidComm :> Commutative Aadd Aeq;
   }.
 
 (** ** Instances *)
 Section Instances.
-  Import Qcanon Reals.
-  
-  Global Instance AMonoid_QcAdd : AMonoid Qcplus 0 eq.
-  split_intro; subst; ring. Defined.
+  Global Instance AMonoid_QcAdd : AMonoid Qcplus 0%Qc eq.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
-  Global Instance AMonoid_QcMul : AMonoid Qcmult 1 eq.
-  split_intro; subst; ring. Defined.
+  Global Instance AMonoid_QcMul : AMonoid Qcmult 1%Qc eq.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
   Global Instance AMonoid_RAdd : AMonoid Rplus 0%R eq.
-  split_intro; subst; ring. Defined.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
   Global Instance AMonoid_RMul : AMonoid Rmult 1%R eq.
-  split_intro; subst; ring. Defined.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
 End Instances.
 
@@ -774,18 +873,6 @@ Ltac amonoid_simp :=
   monoid_simp;
   apply commutative.
 
-
-(** 交换幺半群中，将任意单个元素移动到整个表达式的头部
-    转换 a1 + (... + (... + c) ...)
-    到   c + (a1 + (... + ...) ...) *)
-Ltac am_move2h c :=
-  rewrite <- ?associative;
-  try rewrite (commutative _ c);
-  rewrite ?associative.
-
-(* 在 Kalmanfilter 中，我还多加了一些策略，能够调用上面的策略来自动化简表达式，
-   有需要时可移植到这里来 *)
-
 Section Theory.
 
   Context `(AM : AMonoid).
@@ -794,13 +881,7 @@ Section Theory.
 
   (* 如何证明这类复杂表达式（表示很复杂时，不方便使用结合律、交换律）*)
   Goal forall a b c d e : A, a + (b + c) + (d + e) == (c + e) + (d + a + b).
-  Proof.
-    intros.
-    am_move2h a; f_equiv.
-    am_move2h b; f_equiv.
-    am_move2h c; f_equiv.
-    am_move2h d; f_equiv.
-  Qed.
+  Proof. intros. elim_auto. Qed.
   
 (*   Lemma amonoid_comm : forall a b, a * b = b * a. *)
 (*   Proof. apply comm. Qed. *)
@@ -823,15 +904,14 @@ Section Examples.
 End Examples.
 
 
-
 (* ######################################################################### *)
 (** * Group *)
 
 (** ** Class *)
-Class Group {A} Aadd A0 (Aopp : A -> A) Aeq := {
-    groupMonoid :> @Monoid A Aadd A0 Aeq;
-    groupInvL :> InverseLeft Aadd A0 Aopp Aeq;
-    groupInvR :> InverseRight Aadd A0 Aopp Aeq;
+Class Group {A} Aadd Azero (Aopp : A -> A) Aeq := {
+    groupMonoid :> @Monoid A Aadd Azero Aeq;
+    groupInvL :> InverseLeft Aadd Azero Aopp Aeq;
+    groupInvR :> InverseRight Aadd Azero Aopp Aeq;
     groupAaddProper :> Proper (Aeq ==> Aeq ==> Aeq) Aadd;
     groupAoppProper :> Proper (Aeq ==> Aeq) Aopp;
     (* groupDistrAinv :> DistributiveUnary Aop Ainv Aeq; *)
@@ -841,13 +921,11 @@ Class Group {A} Aadd A0 (Aopp : A -> A) Aeq := {
 (** ** Instances *)
 Section Instances.
 
-  Import Qcanon Reals.
-  
-  Global Instance Group_QcAdd : Group Qcplus 0 Qcopp eq.
-  split_intro; subst; ring. Defined.
+  Global Instance Group_QcAdd : Group Qcplus 0%Qc Qcopp eq.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
   Global Instance Group_RAdd : Group Rplus 0%R Ropp eq.
-  split_intro; subst; ring. Defined.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
 End Instances.
 
@@ -881,7 +959,6 @@ Ltac group_simp_strict G :=
   auto.
 
 Section tac_example.
-  Import Reals.
   Open Scope R_scope.
   
   Goal forall a b : R, a + (b + (a + (-a))) = a + b.
@@ -905,7 +982,7 @@ Section GroupTheory.
   Context `{G:Group}.
   Infix "==" := Aeq.
   Infix "+" := Aadd.
-  Notation "0" := A0.
+  Notation "0" := Azero.
   Notation "- a" := (Aopp a).
   Notation Asub := (fun x y => x + (-y)).
   Infix "-" := Asub.
@@ -1152,8 +1229,6 @@ End GroupTheory.
 
 (** ** Examples *)
 Section Examples.
-  
-  Import Reals.
   Open Scope R.
 
   Goal (- 0 = 0).
@@ -1176,9 +1251,9 @@ End Examples.
 (* ======================================================================= *)
 (** ** Definition and theory *)
 
-Class AGroup {A} Aadd A0 Aopp Aeq := {
-    agroupGroup :> @Group A Aadd A0 Aopp Aeq;
-    agroupAM :> @AMonoid A Aadd A0 Aeq;
+Class AGroup {A} Aadd Azero Aopp Aeq := {
+    agroupGroup :> @Group A Aadd Azero Aopp Aeq;
+    agroupAM :> @AMonoid A Aadd Azero Aeq;
     agroupComm :> Commutative Aadd Aeq;
   }.
 
@@ -1218,24 +1293,21 @@ End Theory.
 (** ** Instances *)
 Section Instances.
 
-  Import ZArith QArith Qcanon Reals.
-  
   Global Instance AGroup_ZAdd : AGroup Z.add 0%Z Z.opp eq.
-  split_intro; subst; ring. Qed.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
-  Global Instance AGroup_QAdd : AGroup Qplus 0 Qopp Qeq.
-  split_intro; try rewrite ?H,?H0; simpl; try easy; try ring. Qed.
+  Global Instance AGroup_QAdd : AGroup Qplus 0%Q Qopp Qeq.
+  repeat constructor; auto with wd; try apply Q_Setoid; intros; ring. Qed.
 
-  Global Instance AGroup_QcAdd : AGroup Qcplus 0 Qcopp eq.
-  split_intro; subst; ring. Qed.
+  Global Instance AGroup_QcAdd : AGroup Qcplus 0%Qc Qcopp eq.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
   Global Instance AGroup_RAdd : AGroup Rplus 0%R Ropp eq.
-  split_intro; subst; ring. Qed.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
 End Instances.
 
 Section example.
-  Import Reals.
   Open Scope R.
   
   Goal forall a b c : R, ((a - b) - c = a - (b + c))%R.
@@ -1253,30 +1325,32 @@ End example.
 (** ** Class *)
 
 (* Note that, in mathematics, mul needn't commutative, but ring_theory in Coq 
-   need it. Because we want use ring tactic, so add this properties. *)
-Class Ring {A} Aadd A0 Aopp Amul A1 Aeq := {
-    ringAddAG :> @AGroup A Aadd A0 Aopp Aeq;
-    ringMulAM :> @AMonoid A Amul A1 Aeq;
+   need it. Because we want use ring tactic, so add this properties.
+   
+   Another issue about "Aone", the initial name is "A1", but we found it is 
+   conflicted with Reals.A1 later. So, we use "Aone" instead of "A1", also 
+   "Azero" instead of "A0".
+ *)
+Class Ring {A} Aadd Azero Aopp Amul Aone Aeq := {
+    ringAddAG :> @AGroup A Aadd Azero Aopp Aeq;
+    ringMulAM :> @AMonoid A Amul Aone Aeq;
     ringDistrL :> DistributiveLeft Aadd Amul Aeq;
     ringDistrR :> DistributiveRight Aadd Amul Aeq;
   }.
 
 (** ** Instances *)
 Section Instances.
-
-  Import ZArith QArith Qcanon Reals.
-  
   Global Instance Ring_Z : Ring Z.add 0%Z Z.opp Z.mul 1%Z eq.
-  split_intro; subst; ring. Qed.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
-  Global Instance Ring_Q : Ring Qplus 0 Qopp Qmult 1 Qeq.
-  split_intro; rewrite ?H, ?H0; simpl; try ring. Qed.
+  Global Instance Ring_Q : Ring Qplus 0%Q Qopp Qmult 1%Q Qeq.
+  repeat constructor; auto with wd; try apply Q_Setoid; intros; ring. Qed.
 
-  Global Instance Ring_Qc : Ring Qcplus 0 Qcopp Qcmult 1 eq.
-  split_intro; subst; ring. Qed.
+  Global Instance Ring_Qc : Ring Qcplus 0%Qc Qcopp Qcmult 1%Qc eq.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
   Global Instance Ring_R : Ring Rplus R0 Ropp Rmult R1 eq.
-  split_intro; subst; ring. Qed.
+  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
 End Instances.
 
@@ -1284,7 +1358,7 @@ End Instances.
 
 (** make a coq ring object from our Ring object *)
 Lemma make_ring_theory `(R : Ring) :
-  ring_theory A0 A1 Aadd Amul (fun a b => Aadd a (Aopp b)) Aopp Aeq.
+  ring_theory Azero Aone Aadd Amul (fun a b => Aadd a (Aopp b)) Aopp Aeq.
 Proof.
   constructor; intros;
     try (rewrite ?identityLeft,?associative; reflexivity);
@@ -1311,13 +1385,10 @@ End Theory.
 
 Section Examples.
 
-  Import Reals.
-  
   Goal forall a b c : R, (a * (b + c) = a * b + a * c)%R.
     apply distributiveLeft. Qed.
 
 End Examples.
-
 
 (** This example declares an abstract ring structure, and shows how to use fewer code 
     to enable "ring" tactic. *)
@@ -1326,8 +1397,8 @@ Module Demo_AbsRing.
   Infix "==" := Aeq.
   Infix "+" := Aadd.
   Infix "*" := Amul.
-  Notation "0" := A0.
-  Notation "1" := A1.
+  Notation "0" := Azero.
+  Notation "1" := Aone.
 
   Add Ring ring_thy_inst : (make_ring_theory R).
 
@@ -1405,21 +1476,19 @@ End Demo_ConcrateRing.
 (** * Field *)
 
 (** ** Class *)
-Class Field {A} Aadd A0 Aopp Amul A1 Ainv Aeq := {
+Class Field {A} Aadd Azero Aopp Amul Aone Ainv Aeq := {
     (** Field: Ring + mult inversion + (1≠0) *)
-    fieldRing :> @Ring A Aadd A0 Aopp Amul A1 Aeq;
-    field_mulInvL : forall a, ~(Aeq a A0) -> Aeq (Amul (Ainv a) a) A1;
-    field_1_neq_0 : ~(Aeq A1 A0);
+    fieldRing :> @Ring A Aadd Azero Aopp Amul Aone Aeq;
+    field_mulInvL : forall a, ~(Aeq a Azero) -> Aeq (Amul (Ainv a) a) Aone;
+    field_1_neq_0 : ~(Aeq Aone Azero);
     (** additional: Ainv is proper morphism *)
     fieldAinvProper :> Proper (Aeq ==> Aeq) Ainv
   }.
 
 (** ** Instances *)
 Section Instances.
-
-  Import Qcanon Reals.
   
-  Global Instance Field_Qc : Field Qcplus 0 Qcopp Qcmult 1 Qcinv eq.
+  Global Instance Field_Qc : Field Qcplus 0%Qc Qcopp Qcmult 1%Qc Qcinv eq.
   split_intro; subst; (try (field; reflexivity)); try easy. field. auto. Qed.
 
   Global Instance Field_R : Field Rplus R0 Ropp Rmult R1 Rinv eq.
@@ -1428,12 +1497,11 @@ Section Instances.
 
 End Instances.
 
-
 (** ** Extra Theories *)
 
 (** make a coq field object from our Field object *)
 Lemma make_field_theory `(F : Field):
-  field_theory A0 A1 Aadd Amul
+  field_theory Azero Aone Aadd Amul
                (fun a b => Aadd a (Aopp b)) Aopp
                (fun a b => Amul a (Ainv b)) Ainv Aeq.
 Proof.
@@ -1447,17 +1515,19 @@ Qed.
 
 Section Theory.
 
+  Open Scope A_scope.
+
   Context `{F:Field}.
   Infix "==" := Aeq : A_scope.
   Infix "!=" := (fun x y => ~ x == y)%A : A_scope.
   Infix "+" := Aadd : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
   Notation Asub := (fun a b => a + -b).
-  Notation "0" := A0 : A_scope.
-  Notation "1" := A1 : A_scope.
+  Notation "0" := Azero : A_scope.
+  Notation "1" := Aone : A_scope.
   Infix "*" := Amul : A_scope.
   Notation "/ a" := (Ainv a) : A_scope.
-  Notation Adiv := (fun a b => a * (/b)).
+  Notation Adiv := (fun a b => a * (/b))%A.
   Infix "/" := Adiv : A_scope.
 
   Add Field field_inst : (make_field_theory F).
@@ -1501,7 +1571,7 @@ Section Theory.
   Qed.
 
   (** a * b = 0 -> a = 0 \/ b = 0 *)
-  Lemma field_mul_eq0_imply_a0_or_b0 : forall (a b : A) (HDec : Decidable Aeq),
+  Lemma field_mul_eq0_imply_a0_or_b0 : forall (a b : A) (HDec : Dec Aeq),
       a * b == 0 -> (a == 0) \/ (b == 0).
   Proof.
     intros.
@@ -1513,7 +1583,7 @@ Section Theory.
   Qed.
 
   (** a * b = b -> a = 1 \/ b = 0 *)
-  Lemma field_mul_eq_imply_a1_or_b0 : forall (a b : A) (HDec : Decidable Aeq),
+  Lemma field_mul_eq_imply_a1_or_b0 : forall (a b : A) (HDec : Dec Aeq),
       a * b == b -> (a == 1) \/ (b == 0).
   Proof.
     intros. destruct (a ==? 1), (b ==? 0); auto.
@@ -1528,8 +1598,6 @@ End Theory.
 (** ** Examples *)
 Section Examples.
 
-  Import Reals.
-  
   Goal forall a b : R, ((a <> 0) -> /a * a = 1)%R.
     intros. apply field_mulInvL. auto. Qed.
 
@@ -1541,13 +1609,13 @@ End Examples.
 
 (** ** Class *)
 Class LinearSpace `{F : Field} {V : Type}
-  (Vadd : V -> V -> V) (V0 : V) (Vopp : V -> V) (Vcmul : A -> V -> V)
+  (Vadd : V -> V -> V) (Vzero : V) (Vopp : V -> V) (Vcmul : A -> V -> V)
   (Veq : relation V) := {
     ls_addC : Commutative Vadd Veq;
     ls_addA : Associative Vadd Veq;
-    ls_add_0_r : IdentityRight Vadd V0 Veq;
-    ls_add_inv_r : InverseRight Vadd V0 Vopp Veq;
-    ls_cmul_1_l : forall u : V, Veq (Vcmul A1 u) u;
+    ls_add_0_r : IdentityRight Vadd Vzero Veq;
+    ls_add_inv_r : InverseRight Vadd Vzero Vopp Veq;
+    ls_cmul_1_l : forall u : V, Veq (Vcmul Aone u) u;
     lc_cmul_assoc : forall a b u, Veq (Vcmul (Amul a b) u) (Vcmul a (Vcmul b u));
     lc_cmul_aadd_distr : forall a b u,
       Veq (Vcmul (Aadd a b) u) (Vadd (Vcmul a u) (Vcmul b u));
@@ -1563,7 +1631,7 @@ Section Instances.
     Context `{F : Field}.
     Add Field field_inst : (make_field_theory F).
     
-    Global Instance LinearSpace_Field : LinearSpace Aadd A0 Aopp Amul Aeq.
+    Global Instance LinearSpace_Field : LinearSpace Aadd Azero Aopp Amul Aeq.
     split_intro; try field. Qed.
     
   End field_is_linearspace.
@@ -1575,6 +1643,8 @@ End Instances.
 
 Section Theory.
 
+  Open Scope A_scope.
+  
   Context `{LS : LinearSpace}.
   Infix "==" := Aeq : A_scope.
   Infix "+" := Aadd : A_scope.
@@ -1598,7 +1668,7 @@ Section Theory.
   (** V中每个元素的负元是唯一的。已内置 *)
 
   (** 0 * v = 0 *)
-  Theorem LS_cmul_0_l : forall v : V, A0 c* v == V0.
+  Theorem LS_cmul_0_l : forall v : V, (Azero c* v == Vzero)%LS.
   Proof. Abort.
   
 End Theory.

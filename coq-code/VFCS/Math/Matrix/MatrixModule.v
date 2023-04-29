@@ -72,26 +72,28 @@ Module BasicMatrixTheory (E : ElementType).
   Proof. apply meq_equiv. Qed.
 
   (** Get element of a matrix (nth means n-th) *)
-  Definition mnth {r c} (m : mat r c) (i j : nat) : A := mnth A0 m i j.
+  Definition mnth {r c} (m : mat r c) (i j : nat) : A := mnth Azero m i j.
   Notation "m $ i $ j " := (matf (A:=A) m i j) : mat_scope.
   Notation "m ! i ! j " := (mnth m i j) : mat_scope.
 
-  Notation "m .11" := (m $ 0 $ 0).
-  Notation "m .12" := (m $ 0 $ 1).
-  Notation "m .13" := (m $ 0 $ 2).
-  Notation "m .14" := (m $ 0 $ 3).
-  Notation "m .21" := (m $ 1 $ 0).
-  Notation "m .22" := (m $ 1 $ 1).
-  Notation "m .23" := (m $ 1 $ 2).
-  Notation "m .24" := (m $ 1 $ 3).
-  Notation "m .31" := (m $ 2 $ 0).
-  Notation "m .32" := (m $ 2 $ 1).
-  Notation "m .33" := (m $ 2 $ 2).
-  Notation "m .34" := (m $ 2 $ 3).
-  Notation "m .41" := (m $ 3 $ 0).
-  Notation "m .42" := (m $ 3 $ 1).
-  Notation "m .43" := (m $ 3 $ 2).
-  Notation "m .44" := (m $ 3 $ 3).
+  Notation "m .00" := (m $ 0 $ 0) : mat_scope.
+  Notation "m .00" := (m $ 0 $ 0) : mat_scope.
+  Notation "m .01" := (m $ 0 $ 1) : mat_scope.
+  Notation "m .02" := (m $ 0 $ 2) : mat_scope.
+  Notation "m .03" := (m $ 0 $ 3) : mat_scope.
+  Notation "m .10" := (m $ 1 $ 0) : mat_scope.
+  Notation "m .11" := (m $ 1 $ 1) : mat_scope.
+  Notation "m .12" := (m $ 1 $ 2) : mat_scope.
+  Notation "m .13" := (m $ 1 $ 3) : mat_scope.
+  Notation "m .20" := (m $ 2 $ 0) : mat_scope.
+  Notation "m .21" := (m $ 2 $ 1) : mat_scope.
+  Notation "m .22" := (m $ 2 $ 2) : mat_scope.
+  Notation "m .23" := (m $ 2 $ 3) : mat_scope.
+  Notation "m .30" := (m $ 3 $ 0) : mat_scope.
+  Notation "m .31" := (m $ 3 $ 1) : mat_scope.
+  Notation "m .32" := (m $ 3 $ 2) : mat_scope.
+  Notation "m .33" := (m $ 3 $ 3) : mat_scope.
+
 
   (** mnth is equal to mnthRaw *)
   Lemma mnth_eq_mnthRaw : forall {r c : nat} (m : mat r c),
@@ -108,7 +110,7 @@ Module BasicMatrixTheory (E : ElementType).
   (** ** Convert between list list and matrix *)
 
   (** dlist to matrix with specified row and column numbers *)
-  Definition l2m {r c} (dl : dlist A) : mat r c := l2m A0 dl.
+  Definition l2m {r c} (dl : dlist A) : mat r c := l2m Azero dl.
   
   (** mat to dlist *)
   Definition m2l {r c} (m : mat r c) : dlist A := m2l m.
@@ -135,11 +137,11 @@ Module BasicMatrixTheory (E : ElementType).
   Proof. intros. apply l2m_surj. Qed.
   
   Lemma m2l_inj : forall {r c} (m1 m2 : mat r c), ~(m1 == m2) -> ~(m2l m1 == m2l m2)%dlist.
-  Proof. intros. apply (m2l_inj (A0:=A0)); auto. Qed.
+  Proof. intros. apply (m2l_inj (Azero:=Azero)); auto. Qed.
   
   Lemma m2l_surj : forall {r c} (d : dlist A),
       length d = r -> width d c -> (exists m : mat r c, (m2l m == d)%dlist).
-  Proof. intros. apply (m2l_surj (A0:=A0)); auto. Qed.
+  Proof. intros. apply (m2l_surj (Azero:=Azero)); auto. Qed.
 
   
   (* ==================================== *)
@@ -151,7 +153,7 @@ Module BasicMatrixTheory (E : ElementType).
 
   (** right shift column.
       [[1;2;3];[4;5;6];[7;8;9] ==1==> [[0;1;2];[0;4;5];[0;7;8] *)
-  Definition mcshr {r c} (m : mat r c) (k : nat) : mat r c := mcshr m k (A0:=A0).
+  Definition mcshr {r c} (m : mat r c) (k : nat) : mat r c := mcshr m k (Azero:=Azero).
 
   (** left loop shift column.
       [[1;2;3];[4;5;6];[7;8;9] ==1==> [[2;3;1];[5;6;4];[8;9;7] *)
@@ -165,10 +167,10 @@ Module BasicMatrixTheory (E : ElementType).
   (** ** Diagonal matrix *)
 
   (** A matrix is a diagonal matrix *)
-  Definition mdiag {n} (m : smat n) : Prop := mdiag m (Aeq:=Aeq)(A0:=A0).
+  Definition mdiag {n} (m : smat n) : Prop := mdiag m (Aeq:=Aeq)(Azero:=Azero).
 
   (** Construct a diagonal matrix *)
-  Definition mk_diag {n} (l : list A) : smat n := mk_diag l (A0:=A0).
+  Definition mk_diag {n} (l : list A) : smat n := mk_diag l (Azero:=Azero).
 
   (** mk_diag is correct *)
   Lemma mk_diag_spec : forall {n} (l : list A), mdiag (@mk_diag n l).
@@ -215,50 +217,50 @@ Module BasicMatrixTheory (E : ElementType).
   (** ** Make concrete matrix *)
 
   Definition mk_mat_0_c c : mat 0 c :=
-    mk_mat_0_c c (A0:=A0).
+    mk_mat_0_c c (Azero:=Azero).
   Definition mk_mat_1_1 (a11 : A) : mat 1 1 :=
-    mk_mat_1_1 a11 (A0:=A0).
+    mk_mat_1_1 a11 (Azero:=Azero).
   Definition mk_mat_1_2 (a11 a12 : A) : mat 1 2 :=
-    mk_mat_1_2 a11 a12 (A0:=A0).
+    mk_mat_1_2 a11 a12 (Azero:=Azero).
   Definition mk_mat_1_3 (a11 a12 a13 : A) : mat 1 3 :=
-    mk_mat_1_3 a11 a12 a13 (A0:=A0).
+    mk_mat_1_3 a11 a12 a13 (Azero:=Azero).
   Definition mk_mat_1_4 (a11 a12 a13 a14 : A) : mat 1 4 :=
-    mk_mat_1_4 a11 a12 a13 a14 (A0:=A0).
+    mk_mat_1_4 a11 a12 a13 a14 (Azero:=Azero).
   Definition mk_mat_1_c c (l : list A) : mat 1 c :=
-    mk_mat_1_c c l (A0:=A0).
+    mk_mat_1_c c l (Azero:=Azero).
   
   Definition mk_mat_r_0 r : mat r 0 :=
-    mk_mat_r_0 r (A0:=A0).
+    mk_mat_r_0 r (Azero:=Azero).
   Definition mk_mat_2_1 (a11 a21 : A) : mat 2 1 :=
-    mk_mat_2_1 a11 a21 (A0:=A0).
+    mk_mat_2_1 a11 a21 (Azero:=Azero).
   Definition mk_mat_3_1 (a11 a21 a31 : A) : mat 3 1 :=
-    mk_mat_3_1 a11 a21 a31 (A0:=A0).
+    mk_mat_3_1 a11 a21 a31 (Azero:=Azero).
   Definition mk_mat_4_1 (a11 a21 a31 a41 : A) : mat 4 1 :=
-    mk_mat_4_1 a11 a21 a31 a41 (A0:=A0).
+    mk_mat_4_1 a11 a21 a31 a41 (Azero:=Azero).
   Definition mk_mat_r_1 r (l : list A) : mat r 1 :=
-    mk_mat_r_1 r l (A0:=A0).
+    mk_mat_r_1 r l (Azero:=Azero).
 
   Definition mk_mat_2_2 (a11 a12 a21 a22 : A) : mat 2 2 :=
-    mk_mat_2_2 a11 a12 a21 a22 (A0:=A0).
+    mk_mat_2_2 a11 a12 a21 a22 (Azero:=Azero).
   Definition mk_mat_3_3 (a11 a12 a13 a21 a22 a23 a31 a32 a33 : A) : mat 3 3 :=
-    mk_mat_3_3 a11 a12 a13 a21 a22 a23 a31 a32 a33 (A0:=A0).
+    mk_mat_3_3 a11 a12 a13 a21 a22 a23 a31 a32 a33 (Azero:=Azero).
   Definition mk_mat_4_4 (a11 a12 a13 a14 a21 a22 a23 a24
                            a31 a32 a33 a34 a41 a42 a43 a44 : A) : mat 4 4 :=
     mk_mat_4_4
       a11 a12 a13 a14
       a21 a22 a23 a24
       a31 a32 a33 a34
-      a41 a42 a43 a44 (A0:=A0).
+      a41 a42 a43 a44 (Azero:=Azero).
 
   
   (* ==================================== *)
   (** ** Convert between tuples and matrix *)
   
   (** Tuples 2x2 -> mat_2x2 *)
-  Definition t2m_2_2 (t : @T_2_2 A) : mat 2 2 := t2m_2_2 A0 t.
+  Definition t2m_2_2 (t : @T_2_2 A) : mat 2 2 := t2m_2_2 Azero t.
 
   (** Tuples 3x3 -> mat_3x3 *)
-  Definition t2m_3_3 (t : @T_3_3 A) : mat 3 3 := t2m_3_3 A0 t.
+  Definition t2m_3_3 (t : @T_3_3 A) : mat 3 3 := t2m_3_3 Azero t.
 
   (** m[0,0]: mat_1x1 -> A *)
   Definition m2t_1_1 (m : mat 1 1) := m2t_1_1 m.
@@ -301,12 +303,12 @@ Module BasicMatrixTheory (E : ElementType).
   Proof. apply mtrans_mor. Qed.
 
   (** Transpose twice keep unchanged. *)
-  Lemma mtrans_trans : forall {r c} (m : mat r c), m \T \T == m.
-  Proof. intros. apply mtrans_trans. Qed.
+  Lemma mtrans_mtrans : forall {r c} (m : mat r c), m \T \T == m.
+  Proof. intros. apply mtrans_mtrans. Qed.
 
   (** Transpose of a diagonal matrix keep unchanged *)
   Lemma mtrans_diag : forall {n} (m : smat n), mdiag m -> m\T == m.
-  Proof. intros. apply (mtrans_diag (A0:=A0)); auto. Qed.
+  Proof. intros. apply (mtrans_diag (Azero:=Azero)); auto. Qed.
 
 End BasicMatrixTheory.
 
@@ -318,17 +320,17 @@ Module RingMatrixTheory (E : RingElementType).
   Include (BasicMatrixTheory E).
 
   Infix "+" := (ladd (Aadd:=Aadd)) : list_scope.
-  Notation seqsum := (seqsum (Aadd:=Aadd) (A0:=A0)).
+  Notation seqsum := (seqsum (Aadd:=Aadd) (Azero:=Azero)).
 
   
   (* ==================================== *)
   (** ** Zero matrirx and identity matrix *)
 
   (** Zero matrix *)
-  Definition mat0 {r c : nat} : mat r c := mat0 A0.
+  Definition mat0 {r c : nat} : mat r c := mat0 Azero.
 
   (** Identity matrix *)
-  Definition mat1 {n : nat} : mat n n := mat1 A0 A1.
+  Definition mat1 {n : nat} : mat n n := mat1 Azero Aone.
 
   (** mat1 is diagonal matrix *)
   Lemma mat1_is_diag : forall {n : nat}, mdiag (@mat1 n).
@@ -344,17 +346,17 @@ Module RingMatrixTheory (E : RingElementType).
 
   (** i < n -> j < n -> i <> j -> mat1[i,j] = 0 *)
   Lemma mnth_mat1_diff : forall {n} i j,
-      i < n -> j < n -> i <> j -> ((@mat1 n) $ i $ j == A0)%A.
+      i < n -> j < n -> i <> j -> ((@mat1 n) $ i $ j == Azero)%A.
   Proof. intros. apply mnth_mat1_diff; auto. Qed.
 
   (** i < n -> mat1[i,i] = 1 *)
-  Lemma mnth_mat1_same : forall {n} i, i < n -> ((@mat1 n) $ i $ i == A1)%A.
+  Lemma mnth_mat1_same : forall {n} i, i < n -> ((@mat1 n) $ i $ i == Aone)%A.
   Proof. intros. apply mnth_mat1_same; auto. Qed.
 
 
   (* ==================================== *)
   (** ** Matrix trace *)
-  Definition mtrace {n : nat} (m : smat n) : A := mtrace m (Aadd:=Aadd)(A0:=A0).
+  Definition mtrace {n : nat} (m : smat n) : A := mtrace m (Aadd:=Aadd)(Azero:=Azero).
   Notation "'tr' m" := (mtrace m) : mat_scope.
   
   (** show it is a proper morphism *)
@@ -552,7 +554,7 @@ Module RingMatrixTheory (E : RingElementType).
   Proof. apply mcmul_mor. Qed.
 
   (** 0 c* m = mat0 *)
-  Lemma mcmul_0_l : forall {r c} (m : mat r c), A0 c* m == mat0.
+  Lemma mcmul_0_l : forall {r c} (m : mat r c), Azero c* m == mat0.
   Proof. intros. apply mcmul_0_l. Qed.
 
   (** a c* mat0 = mat0 *)
@@ -560,12 +562,12 @@ Module RingMatrixTheory (E : RingElementType).
   Proof. intros. apply mcmul_0_r. Qed.
 
   (** 1 c* m = m *)
-  Lemma mcmul_1_l : forall {r c} (m : mat r c), A1 c* m == m.
+  Lemma mcmul_1_l : forall {r c} (m : mat r c), Aone c* m == m.
   Proof. intros. apply mcmul_1_l. Qed.
 
   (** a c* mat1 equal to a diagonal matrix which main diagonal elements all are a *)
   Lemma mcmul_1_r : forall {n} a,
-      a c* (@mat1 n) == mk_mat (fun i j => if (i =? j)%nat then a else A0).
+      a c* (@mat1 n) == mk_mat (fun i j => if (i =? j)%nat then a else Azero).
   Proof. intros. apply mcmul_1_r. Qed.
 
   (** a c* (b c* m) = (a * b) c* m *)
@@ -606,20 +608,28 @@ Module RingMatrixTheory (E : RingElementType).
   (** Right scalar multiplication of matrix *)
   Definition mmulc {r c} (m : mat r c) (a : A) : mat r c := mmulc m a (Amul:=Amul).
   Infix "*c" := mmulc : mat_scope.
-  
-  (** m *c a = a c* m *)
-  Lemma mmulc_eq_mcmul : forall {r c} (a : A) (m : mat r c), m *c a == a c* m.
-  Proof. intros. apply mmulc_eq_mcmul. Qed.
 
   (** show it is a proper morphism *)
   Global Instance mmulc_mor : forall r c, Proper (meq ==> Aeq ==> meq) (mmulc (r:=r)(c:=c)).
   Proof. apply mmulc_mor. Qed.
 
+  (** m *c a = a c* m *)
+  Lemma mmulc_eq_mcmul : forall {r c} (a : A) (m : mat r c), m *c a == a c* m.
+  Proof. intros. apply mmulc_eq_mcmul. Qed.
+
+    (** (m *c a) *c b = m *c (a * b) *)
+  Lemma mmulc_assoc : forall {r c} (m : mat r c) (a b : A), (m *c a) *c b == m *c (a * b).
+  Proof. intros. apply mmulc_assoc. Qed.
+
+  (** (m *c a) *c b = (m *c b) c* a *)
+  Lemma mmulc_perm : forall {r c} (m : mat r c) (a b : A), (m *c a) *c b == (m *c b) *c a.
+  Proof. intros. apply mmulc_perm. Qed.
+
   
   (* ==================================== *)
   (** ** Matrix multiplication *)
   Definition mmul {r c s : nat} (m1 : mat r c) (m2 : mat c s) : mat r s :=
-    mmul m1 m2 (Amul:=Amul)(A0:=A0)(Aadd:=Aadd).
+    mmul m1 m2 (Amul:=Amul)(Azero:=Azero)(Aadd:=Aadd).
   Infix "*" := mmul : mat_scope.
 
   (** show it is a proper morphism *)
@@ -721,14 +731,14 @@ Module RingMatrixTheory (E : RingElementType).
   (** ** Determinant of a matrix *)
 
   (** Determinant of a square matrix *)
-  Definition mdet {n} (m : smat n) : A := @mdet _ Aadd A0 Aopp Amul A1 _ m.
+  Definition mdet {n} (m : smat n) : A := @mdet _ Aadd Azero Aopp Amul Aone _ m.
 
   (** it is a proper morphism *)
   Global Instance mdet_mor (n : nat) : Proper (meq ==> Aeq) (@mdet n).
   Proof. apply mdet_mor. Qed.
 
   (** *** Properties of determinant *)
-  Lemma mdet_1 : forall {n}, (@mdet n mat1 == A1)%A.
+  Lemma mdet_1 : forall {n}, (@mdet n mat1 == Aone)%A.
   Proof. intros. apply mdet_1. Qed.
 
   Lemma mdet_mtrans : forall {n} (m : smat n), (mdet (m\T) == mdet m)%A.
@@ -748,7 +758,7 @@ Module RingMatrixTheory (E : RingElementType).
   Proof. intros. apply mdet1_eq_mdet. Qed.
   
   (** mdet m <> 0 <-> mdet_exp <> 0 *)
-  Lemma mdet1_neq0_iff : forall (m : smat 1), (mdet m != A0 <-> m.11 != A0)%A.
+  Lemma mdet1_neq0_iff : forall (m : smat 1), (mdet m != Azero <-> m.00 != Azero)%A.
   Proof. intros. apply mdet1_neq0_iff. Qed.
 
   (** Determinant of a matrix of dimension-2 *)
@@ -760,7 +770,7 @@ Module RingMatrixTheory (E : RingElementType).
 
   (** mdet m <> 0 <-> mdet_exp <> 0 *)
   Lemma mdet2_neq0_iff : forall (m : smat 2),
-      (mdet m != A0 <-> m.11*m.22 - m.12*m.21 != A0)%A.
+      (mdet m != Azero <-> m.00*m.11 - m.01*m.10 != Azero)%A.
   Proof. intros. apply mdet2_neq0_iff. Qed.
 
   (** Determinant of a matrix of dimension-3 *)
@@ -772,10 +782,10 @@ Module RingMatrixTheory (E : RingElementType).
   
   (** mdet m <> 0 <-> mdet_exp <> 0 *)
   Lemma mdet3_neq0_iff : forall (m : smat 3),
-      (mdet m != A0 <->
-         m.11 * m.22 * m.33 - m.11 * m.23 * m.32 - 
-           m.12 * m.21 * m.33 + m.12 * m.23 * m.31 + 
-           m.13 * m.21 * m.32 - m.13 * m.22 * m.31 != A0)%A.
+      (mdet m != Azero <->
+         m.00 * m.11 * m.22 - m.00 * m.12 * m.21 - 
+           m.01 * m.10 * m.22 + m.01 * m.12 * m.20 + 
+           m.02 * m.10 * m.21 - m.02 * m.11 * m.20 != Azero)%A.
   Proof. intros. apply mdet3_neq0_iff. Qed.
   
   
@@ -783,7 +793,7 @@ Module RingMatrixTheory (E : RingElementType).
   (** ** Adjoint matrix (Adjugate matrix, adj(A), A* ) *)
   
   (** Adjoint matrix: adj(A)[i,j] = algebraic remainder of A[j,i]. *)
-  Definition madj {n} (m : smat n) : smat n := @madj _ Aadd A0 Aopp Amul A1 _ m.
+  Definition madj {n} (m : smat n) : smat n := @madj _ Aadd Azero Aopp Amul Aone _ m.
 
   Global Instance madj_mor (n:nat) : Proper (meq ==> meq) (@madj n).
   Proof. apply madj_mor. Qed.
@@ -802,7 +812,7 @@ Module RingMatrixTheory (E : RingElementType).
 
   (** A square matrix is invertible, if its determinant is nonzero *)
   Lemma minvertible_iff_mdet_n0 : forall {n} (m : smat n),
-      minvertible m <-> mdet m <> A0.
+      minvertible m <-> mdet m <> Azero.
   Proof. intros. apply minvertible_iff_mdet_n0. Qed.
 
   (** invertible m -> invertible (m\T) *)
@@ -836,27 +846,27 @@ Module FieldMatrixTheory (E : FieldElementType).
   (** Cramer rule, which can slving the equation with form of A*x=b.
       Note, the result is valid only when D is not zero *)
   Definition cramerRule {n} (a : smat n) (b : mat n 1) : mat n 1 :=
-    @cramerRule _ Aadd A0 Aopp Amul A1 Ainv _ a b.
+    @cramerRule _ Aadd Azero Aopp Amul Aone Ainv _ a b.
 
   
   (* ==================================== *)
   (** ** Matrix Inversion *)
 
-  Definition minv {n} (m : smat n) := @minv _ Aadd A0 Aopp Amul A1 Ainv _ m.
+  Definition minv {n} (m : smat n) := @minv _ Aadd Azero Aopp Amul Aone Ainv _ m.
   Notation "m ⁻¹" := (minv m) : mat_scope.
 
   Global Instance minv_mor (n : nat) : Proper (meq ==> meq) (@minv n).
   Proof. apply minv_mor. Qed.
   
-  (** m * p = mat1 -> m ⁻¹ = p *)
-  Lemma mmul_eq1_imply_minv_l : forall {n} (m p : smat n),
-      m * p == mat1 -> minv m == p.
-  Proof. intros. apply mmul_eq1_imply_minv_l; auto. Qed.
+  (** m * p = mat1 <-> m ⁻¹ = p *)
+  Lemma mmul_eq1_iff_minv_l : forall {n} (m p : smat n),
+      m * p == mat1 <-> minv m == p.
+  Proof. intros. apply mmul_eq1_iff_minv_l; auto. Qed.
 
-  (** m * p = mat1 -> p ⁻¹ = m *)
-  Lemma mmul_eq1_imply_minv_r : forall {n} (m p : smat n),
-      m * p == mat1 -> minv p == m.
-  Proof. intros. apply mmul_eq1_imply_minv_r; auto. Qed.
+  (** m * p = mat1 <-> p ⁻¹ = m *)
+  Lemma mmul_eq1_iff_minv_r : forall {n} (m p : smat n),
+      m * p == mat1 <-> minv p == m.
+  Proof. intros. apply mmul_eq1_iff_minv_r; auto. Qed.
 
   (** invertible m -> invertible (m⁻¹) *)
   Lemma minvertible_inv : forall {n} (m : smat n), minvertible m -> minvertible (m⁻¹).
@@ -884,11 +894,11 @@ Module FieldMatrixTheory (E : FieldElementType).
   Proof. intros. apply minv_mmul; auto. Qed.
 
   (** (m\T) ⁻¹ = (m ⁻¹)\T *)
-  Lemma minv_trans : forall n (m : smat n), minvertible m -> (m\T) ⁻¹ = (m ⁻¹)\T.
+  Lemma minv_mtrans : forall n (m : smat n), minvertible m -> (m\T) ⁻¹ == (m ⁻¹)\T.
   Proof. intros. apply minv_mtrans; auto. Qed.
   
   (** mdet (m⁻¹) = 1 / (mdet m) *)
-  Lemma mdet_minv : forall {n} (m : smat n), (mdet (m⁻¹) == A1 / (mdet m))%A.
+  Lemma mdet_minv : forall {n} (m : smat n), (mdet (m⁻¹) == Aone / (mdet m))%A.
   Proof. intros. apply mdet_minv; auto. Qed.
   
 
@@ -896,69 +906,84 @@ Module FieldMatrixTheory (E : FieldElementType).
   (** ** Inversion matrix of common finite dimension *)
   
   (** Inversion matrix of dimension-1 *)
-  Definition minv1 (m : smat 1) : smat 1 := @minv1 _ A0 Amul A1 Ainv m.
+  Definition minv1 (m : smat 1) : smat 1 := @minv1 _ Azero Amul Aone Ainv m.
 
   (** mdet m <> 0 -> minv1 m = inv m *)
-  Lemma minv1_eq_inv : forall m, (mdet m != A0)%A -> minv1 m == minv m.
+  Lemma minv1_eq_inv : forall m, (mdet m != Azero)%A -> minv1 m == minv m.
   Proof. intros. apply minv1_eq_inv; auto. Qed.
 
   (** minv1 m * m = mat1 *)
-  Lemma minv1_correct_l : forall (m : smat 1), (mdet m != A0)%A -> (minv1 m) * m == mat1.
+  Lemma minv1_correct_l : forall (m : smat 1), (mdet m != Azero)%A -> (minv1 m) * m == mat1.
   Proof. intros. apply minv1_correct_l; auto. Qed.
 
   (** m * minv1 m = mat1 *)
-  Lemma minv1_correct_r : forall (m : smat 1), (mdet m != A0)%A -> m * (minv1 m) == mat1.
+  Lemma minv1_correct_r : forall (m : smat 1), (mdet m != Azero)%A -> m * (minv1 m) == mat1.
   Proof. intros. apply minv1_correct_r; auto. Qed.
 
   
   (** Inversion matrix of dimension-2 *)
-  Definition minv2 (m : smat 2) : smat 2 := @minv2 _ Aadd A0 Aopp Amul Ainv m.
+  Definition minv2 (m : smat 2) : smat 2 := @minv2 _ Aadd Azero Aopp Amul Ainv m.
 
   (** mdet m <> 0 -> minv2 m = inv m *)
-  Lemma minv2_eq_inv : forall m, (mdet m != A0)%A -> minv2 m == minv m.
+  Lemma minv2_eq_inv : forall m, (mdet m != Azero)%A -> minv2 m == minv m.
   Proof. intros. apply minv2_eq_inv; auto. Qed.
   
   (** minv2 m * m = mat1 *)
-  Lemma minv2_correct_l : forall (m : smat 2), (mdet m != A0)%A -> (minv2 m) * m == mat1.
+  Lemma minv2_correct_l : forall (m : smat 2), (mdet m != Azero)%A -> (minv2 m) * m == mat1.
   Proof. intros. apply minv2_correct_l; auto. Qed.
   
   (** m * minv2 m = mat1 *)
-  Lemma minv2_correct_r : forall (m : smat 2), (mdet m != A0)%A -> m * (minv2 m) == mat1.
+  Lemma minv2_correct_r : forall (m : smat 2), (mdet m != Azero)%A -> m * (minv2 m) == mat1.
   Proof. intros. apply minv2_correct_r; auto. Qed.
   
   (** Inversion matrix of dimension-3 *)
-  Definition minv3 (m : smat 3) : smat 3 := @minv3 _ Aadd A0 Aopp Amul Ainv m.
+  Definition minv3 (m : smat 3) : smat 3 := @minv3 _ Aadd Azero Aopp Amul Ainv m.
   
   (** mdet m <> 0 -> minv3 m = inv m *)
-  Lemma minv3_eq_inv : forall m, (mdet m != A0)%A -> minv3 m == minv m.
+  Lemma minv3_eq_inv : forall m, (mdet m != Azero)%A -> minv3 m == minv m.
   Proof. intros. apply minv3_eq_inv; auto. Qed.
   
   (** minv3 m * m = mat1 *)
-  Lemma minv3_correct_l : forall (m : smat 3), (mdet m != A0)%A -> (minv3 m) * m == mat1.
+  Lemma minv3_correct_l : forall (m : smat 3), (mdet m != Azero)%A -> (minv3 m) * m == mat1.
   Proof. intros. apply minv3_correct_l; auto. Qed.
   
   (** m * minv3 m = mat1 *)
-  Lemma minv3_correct_r : forall (m : smat 3), (mdet m != A0)%A -> m * (minv3 m) == mat1.
+  Lemma minv3_correct_r : forall (m : smat 3), (mdet m != Azero)%A -> m * (minv3 m) == mat1.
   Proof. intros. apply minv3_correct_r; auto. Qed.
+
+  (** Inversion matrix of dimension-4 *)
+  Definition minv4 (m : smat 4) : smat 4 := @minv4 _ Aadd Azero Aopp Amul Ainv m.
+  
+  (** mdet m <> 0 -> minv4 m = inv m *)
+  Lemma minv4_eq_inv : forall m, (mdet m != Azero)%A -> minv4 m == minv m.
+  Proof. intros. apply minv4_eq_inv; auto. Qed.
+  
+  (** minv4 m * m = mat1 *)
+  Lemma minv4_correct_l : forall (m : smat 4), (mdet m != Azero)%A -> (minv4 m) * m == mat1.
+  Proof. intros. apply minv4_correct_l; auto. Qed.
+  
+  (** m * minv4 m = mat1 *)
+  Lemma minv4_correct_r : forall (m : smat 4), (mdet m != Azero)%A -> m * (minv4 m) == mat1.
+  Proof. intros. apply minv4_correct_r; auto. Qed.
 
   (* (** k * m = 0 -> (m = 0) \/ (k = 0) *) *)
   (* Axiom mcmul_eq0_imply_m0_or_k0 : forall {r c} (m : mat r c) k, *)
   (*     let m0 := mat0 r c in *)
-  (*     (k c* m == m0) -> (m == m0) \/ (k == A0)%A. *)
+  (*     (k c* m == m0) -> (m == m0) \/ (k == Azero)%A. *)
 
   (* (** (m <> 0 \/ k * m = 0) -> k = 0 *) *)
   (* Axiom mcmul_mnonzero_eq0_imply_k0 : forall {r c} (m : mat r c) k, *)
   (*     let m0 := mat0 r c in *)
-  (*     ~(m == m0) -> k c* m == m0 -> (k == A0)%A. *)
+  (*     ~(m == m0) -> k c* m == m0 -> (k == Azero)%A. *)
 
   (* (** k * m = m -> k = 1 \/ m = 0 *) *)
   (* Axiom mcmul_same_imply_coef1_or_mzero : forall {r c} k (m : mat r c), *)
-  (*     k c* m == m -> (k == A1)%A \/ (m == mat0 r c). *)
+  (*     k c* m == m -> (k == Aone)%A \/ (m == mat0 r c). *)
 
   (* (** (m1 <> 0 /\ m2 <> 0 /\ k * m1 = m2) -> k <> 0 *) *)
   (* Axiom mcmul_eq_mat_implfy_not_k0 : forall {r c} (m1 m2 : mat r c) k, *)
   (*     let m0 := mat0 r c in *)
-  (*     ~(m1 == m0) -> ~(m2 == m0) -> k c* m1 == m2 -> ~(k == A0)%A. *)
+  (*     ~(m1 == m0) -> ~(m2 == m0) -> k c* m1 == m2 -> ~(k == Azero)%A. *)
   
 End FieldMatrixTheory.
 
@@ -970,7 +995,7 @@ Module DecidableMatrixTheory (E : DecidableElementType).
   Include (BasicMatrixTheory E).
 
   (** equality of two matrices is decidable *)
-  Lemma meq_dec : forall {r c}, Decidable (meq (r:=r) (c:=c)).
+  Lemma meq_dec : forall {r c}, Dec (meq (r:=r) (c:=c)).
   Proof. intros. apply meq_dec. Qed.
 
 End DecidableMatrixTheory.
@@ -984,7 +1009,7 @@ Module DecidableFieldMatrixTheory (E : DecidableFieldElementType).
   Include (FieldMatrixTheory E).
 
   (** equality of two matrices is decidable *)
-  Lemma meq_dec : forall {r c}, Decidable (meq (r:=r) (c:=c)).
+  Lemma meq_dec : forall {r c}, Dec (meq (r:=r) (c:=c)).
   Proof. intros. apply meq_dec. Qed.
 
   (* ==================================== *)
@@ -992,6 +1017,6 @@ Module DecidableFieldMatrixTheory (E : DecidableFieldElementType).
 
   (** inverse matrix by gauss elimination *)
   Definition minv_gauss {n} (m : mat n n) : option (mat n n) :=
-    @minv_gauss A Aadd A0 Aopp Amul A1 Ainv _ _ _ m.
+    @minv_gauss A Aadd Azero Aopp Amul Aone Ainv _ _ _ m.
   
 End DecidableFieldMatrixTheory.

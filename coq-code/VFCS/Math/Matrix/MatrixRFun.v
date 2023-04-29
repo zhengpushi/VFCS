@@ -42,21 +42,21 @@ Open Scope mat_scope.
 (** * Usage demo *)
 
 Section test.
-  Let f11 : A := fun t => 1.
-  Let f12 : A := fun t => 2.
-  Let f21 : A := fun t => 3.
-  Let f22 : A := fun t => 4.
-  Let l1 := [[f11;f12];[f21;f22]].
+  Let f00 : A := fun t => 1.
+  Let f01 : A := fun t => 2.
+  Let f10 : A := fun t => 3.
+  Let f11 : A := fun t => 4.
+  Let l1 := [[f00;f01];[f10;f11]].
   Let m1 := @l2m 2 2 l1.
   (* Compute m2l m1. *)
   (* Compute m2l (mmap Aopp m1). *)
   (* Compute m2l (m1 * m1). *)
 
-  Variable a11 a12 a21 a22 : A.
+  Variable a00 a01 a10 a11 : A.
   Variable f : A -> A.
-  Let m2 := @l2m 2 2 [[a11;a12];[a21;a22]].
-  (* Compute m2l m2.       (* = [[a11; a12]; [a21; a22]] *) *)
-  (* Compute m2l (mmap f m2).       (* = [[f a11; f a12]; [f a21; f a22]] *) *)
+  Let m2 := @l2m 2 2 [[a00;a01];[a10;a11]].
+  (* Compute m2l m2.       (* = [[a00; a01]; [a10; a11]] *) *)
+  (* Compute m2l (mmap f m2).     (* = [[f a00; f a01]; [f a10; f a11]] *) *)
   (* Compute m2l (m2 * m2). *)
 
   Goal forall r c (m1 m2 : mat r c), m1 + m2 == m2 + m1.
@@ -73,8 +73,8 @@ End test.
 
 Section Example4CoordinateSystem.
   Open Scope fun_scope.
-  Notation "1" := A1 : fun_scope.
-  Notation "0" := A0 : fun_scope.
+  Notation "1" := Aone : fun_scope.
+  Notation "0" := Azero : fun_scope.
   (* Infix "+" := Aadd : fun_scope. *)
   (* Notation "- a" := (Aopp a) : fun_scope. *)
   (* Infix "*" := Amul : fun_scope. *)
@@ -99,7 +99,7 @@ Section Example4CoordinateSystem.
           (sψ * sθ * cϕ - cψ * sϕ)
           (-sθ) (sϕ * cθ) (cϕ * cθ).
   Lemma Rbe_ok : (Rbe == Rz\T * Ry\T * Rx\T)%M.
-  Proof. lma; unfold Aadd,A0,Amul,A1,Aeq,A; ring_simplify; auto. Qed.
+  Proof. lma; unfold Aadd,Azero,Amul,Aone,Aeq,A; ring_simplify; auto. Qed.
     
 End Example4CoordinateSystem.
 

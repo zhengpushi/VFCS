@@ -29,7 +29,7 @@ Section general_useful_props.
   Qed.
 
   (** Inequality of two pairs, iff at least one of components are not equal. *)
-  Lemma prod_neq_iff : forall {A B} {Aeqdec:Decidable (@eq A)} {Beqdec:Decidable (@eq B)}
+  Lemma prod_neq_iff : forall {A B} {ADec:Dec (@eq A)} {BDec:Dec (@eq B)}
                          (z1 z2 : A * B),
       z1 <> z2 <-> fst z1 <> fst z2 \/ snd z1 <> snd z2.
   Proof.
@@ -208,7 +208,7 @@ Section def.
   Qed.
 
   (** Equality on C is decidable *)
-  Global Instance Decidable_Ceq : Decidable (@eq C).
+  Global Instance Dec_Complex : Dec (@eq C).
   Proof.
     constructor. intros (a1,b1) (a2,b2).
     destruct (a1 ==? a2), (b1 ==? b2); subst.

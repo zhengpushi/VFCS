@@ -8,7 +8,7 @@
   date      : 2021.05
  *)
 
-Require Export BasicConfig.
+Require Export Basic.
 Require Export Init.Nat.
 Require Export Arith.
 Require Export PeanoNat.

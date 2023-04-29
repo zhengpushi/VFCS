@@ -33,11 +33,11 @@ Section test.
   (* Compute m2l (mmap Z.opp m1).       (* = [[-1; -2]; [-3; -4]] *) *)
   (* Compute m2l (m1 * m1).     (* = [[7; 10]; [15; 22]] *) *)
 
-  Variable a11 a12 a21 a22 : Z.
-  Variable f : Z -> Z.
-  Let m2 := @l2m 2 2 [[a11;a12];[a21;a22]].
-  (* Compute m2l m2.       (* = [[a11; a12]; [a21; a22]] *) *)
-  (* Compute m2l (mmap f m2).       (* = [[f a11; f a12]; [f a21; f a22]] *) *)
+  Variable a00 a01 a10 a11 : A.
+  Variable f : A -> A.
+  Let m2 := @l2m 2 2 [[a00;a01];[a10;a11]].
+  (* Compute m2l m2.       (* = [[a00; a01]; [a10; a11]] *) *)
+  (* Compute m2l (mmap f m2).     (* = [[f a00; f a01]; [f a10; f a11]] *) *)
   (* Eval cbn in m2l (m2 * m2). *)
   
 End test.

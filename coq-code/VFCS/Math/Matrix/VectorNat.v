@@ -31,18 +31,18 @@ Section test.
   (* Compute cv2l v2. *)
 
   (* Compute v1$0. *)
-  (* Compute v1.1. *)
+  (* Compute v1.0. *)
   (* Compute (v1!0)%RV. *)
   
-  (* Compute v2$1. *)
-  (* Compute v2.1. *)
-  (* Compute v2!1. *)
+  (* Compute v2$0. *)
+  (* Compute v2.0. *)
+  (* Compute v2!0. *)
 
-  Variable a1 a2 a3 : A.
-  Let v3 := t2rv_3 (a1,a2,a3).
+  Variable a0 a1 a2 : A.
+  Let v3 := t2rv_3 (a0,a1,a2).
   (* Compute rv2l (rvmap v3 S). *)
 
-  Let v4 := t2cv_3 (a1,a2,a3).
+  Let v4 := t2cv_3 (a0,a1,a2).
   (* Compute cv2l (cvmap v4 S). *)
   
 End test.

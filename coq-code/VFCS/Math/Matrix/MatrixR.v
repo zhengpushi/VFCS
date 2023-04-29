@@ -118,9 +118,14 @@ Section OrthogonalMatrix.
   Proof. intros. hnf in *. exists (m\T). auto. Qed.
 
   (** orthogonal m -> m⁻¹ = m\T *)
-  Lemma morthogonal_inv_eq_trans : forall {n} (m : smat n),
+  Lemma morthogonal_imply_inv_eq_trans : forall {n} (m : smat n),
       morthogonal m -> m⁻¹ == m\T.
-  Proof. intros. red in H. apply mmul_eq1_imply_minv_r in H. auto. Qed.
+  Proof. intros. red in H. apply mmul_eq1_iff_minv_r in H. auto. Qed.
+
+  (** m⁻¹ = m\T -> orthogonal m*)
+  Lemma minv_eq_trans_imply_morthogonal : forall {n} (m : smat n),
+      m⁻¹ == m\T -> morthogonal m.
+  Proof. intros. apply mmul_eq1_iff_minv_r in H. auto. Qed.
 
   (** orthogonal m <-> m\T * m = mat1 *)
   Lemma morthogonal_iff_mul_trans_l : forall {n} (m : smat n),
@@ -132,8 +137,8 @@ Section OrthogonalMatrix.
       morthogonal m <-> m * m\T == mat1.
   Proof.
     intros. split; intros H.
-    - apply mmul_eq1_imply_minv_r in H. rewrite <- H. apply mmul_minv_r.
-    - red. apply mmul_eq1_imply_minv_l in H. rewrite <- H. apply mmul_minv_l.
+    - apply mmul_eq1_iff_minv_r in H. rewrite <- H. apply mmul_minv_r.
+    - red. apply mmul_eq1_iff_minv_l in H. rewrite <- H. apply mmul_minv_l.
   Qed.
 
   (** orthogonal mat1 *)
@@ -150,20 +155,21 @@ Section OrthogonalMatrix.
   Qed.
 
   (** orthogonal m -> orthogonal m\T *)
-  Lemma morthogonal_trans : forall {n} (m : smat n), morthogonal m -> morthogonal (m\T).
+  Lemma morthogonal_mtrans : forall {n} (m : smat n), morthogonal m -> morthogonal (m\T).
   Proof.
-    intros. red. rewrite mtrans_trans. apply morthogonal_iff_mul_trans_r in H. auto.
+    intros. red. rewrite mtrans_mtrans. apply morthogonal_iff_mul_trans_r in H. auto.
   Qed.
 
   (** orthogonal m -> orthogonal m⁻¹ *)
-  Lemma morthogonal_inv : forall {n} (m : smat n), morthogonal m -> morthogonal (m⁻¹).
+  Lemma morthogonal_minv : forall {n} (m : smat n), morthogonal m -> morthogonal (m⁻¹).
   Proof.
-    intros. red. rewrite morthogonal_inv_eq_trans; auto.
-    rewrite mtrans_trans. apply morthogonal_iff_mul_trans_r in H. auto.
+    intros. red.
+    rewrite morthogonal_imply_inv_eq_trans; auto. rewrite mtrans_mtrans.
+    apply morthogonal_iff_mul_trans_r; auto.
   Qed.
 
   (** orthogonal m -> |m| = ± 1 *)
-  Lemma morthogonal_det : forall {n} (m : smat n),
+  Lemma morthogonal_mdet : forall {n} (m : smat n),
       morthogonal m -> (mdet m = 1 \/ mdet m = -1).
   Proof.
     intros. red in H.
@@ -191,7 +197,7 @@ Section SOn.
     refine (Build_SOn n (s1 * s2) _).
     destruct s1 as [s1 [H1 H1']], s2 as [s2 [H2 H2']]. simpl. split.
     - apply morthogonal_mul; auto.
-    - rewrite mdet_mmul. rewrite H1', H2'. simpA2; ring.
+    - rewrite mdet_mmul. rewrite H1', H2'. cbv. ring.
   Defined.
 
   Definition SOn_1 {n} : SOn n.
@@ -201,7 +207,7 @@ Section SOn.
 
   Definition SOn_inv {n} (s : SOn n) : SOn n.
     refine (Build_SOn n (s\T) _). destruct s as [s [H1 H2]]. simpl. split.
-    apply morthogonal_trans; auto. rewrite mdet_mtrans. auto.
+    apply morthogonal_mtrans; auto. rewrite mdet_mtrans. auto.
   Defined.
 
   (** SOn_eq is equivalence relation *)
@@ -289,22 +295,22 @@ Section test.
   (* Compute m2l (mmap Ropp m1). *)
   (* Compute m2l (m1 * m1). *)
 
-  Variable a11 a12 a21 a22 : R.
-  Variable f : R -> R.
-  Let m2 := @l2m 2 2 [[a11;a12];[a21;a22]].
-  (* Compute m2l m2.       (* = [[a11; a12]; [a21; a22]] *) *)
-  (* Compute m2l (mmap f m2).       (* = [[f a11; f a12]; [f a21; f a22]] *) *)
+  Variable a00 a01 a10 a11 : A.
+  Variable f : A -> A.
+  Let m2 := @l2m 2 2 [[a00;a01];[a10;a11]].
+  (* Compute m2l m2.       (* = [[a00; a01]; [a10; a11]] *) *)
+  (* Compute m2l (mmap f m2).     (* = [[f a00; f a01]; [f a10; f a11]] *) *)
   (* Compute m2l (m2 * m2). *)
 
   Goal forall r c (m1 m2 : mat r c), m1 + m2 == m2 + m1.
   Proof. intros. apply madd_comm. Qed.
 
-  (** Outer/inner product of two vectors *)
-  Variables a1 a2 a3 b1 b2 b3 : A.
-  Let m10 := @l2m 3 1 [[a1];[a2];[a3]].
-  Let m11 := @l2m 1 3 [[b1;b2;b3]].
-  (* Compute m2l (m10 * m11). *)
-  (* Compute m2l (m11 * m10). *)
+  (** Simulate Outer/inner product of two vectors *)
+  Variables a0 a1 a2 b0 b1 b2 : A.
+  Let m31 := @l2m 3 1 [[a0];[a1];[a2]].
+  Let m13 := @l2m 1 3 [[b0;b1;b2]].
+  (* Compute m2l (m31 * m13). *)
+  (* Compute m2l (m13 * m31). *)
 
   (** mmul_sub_distr_r *)
   Goal forall r c s (m1 m2 : mat r c) (m3 : mat c s), (m1 - m2) * m3 == m1 * m3 - m2 * m3.

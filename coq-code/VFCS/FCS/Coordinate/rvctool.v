@@ -114,7 +114,7 @@ Module SO2.
     Proof. intros. cbv. autorewrite with R. auto. Qed.
 
     Lemma rot2_inv_eq_trans : forall θ, minv2 (rot2 θ) == (rot2 θ)\T.
-    Proof. lma; rewrite mdet2_eq_mdet, rot2_mdet1; simpA2; ra. Qed.
+    Proof. lma; rewrite mdet2_eq_mdet, rot2_mdet1; autounfold with A; ra. Qed.
   End rot2.
 
   (** Skew-symmetric matrix of 2-dimensions *)
@@ -137,14 +137,14 @@ Module SO2.
     Definition skew (a : Real) : mat 2 2 := l2m [[0; -a];[a; 0]]%R.
 
     (** Convert a skew-symmetric matrix to its corresponding value *)
-    Definition vex (m : mat 2 2) : option Real := Some (m.21).
+    Definition vex (m : mat 2 2) : option Real := Some (m.10).
 
     Lemma skew_vex_id : forall (m : mat 2 2), is_skew m -> 
                                          match vex m with
                                          | Some a => skew a == m
                                          | _ => False
                                          end.
-    Proof. intros [m]. simpl. intros. apply is_skew_spec in H. lma. Qed.
+    Proof. intros [m]. simpl. intros. apply is_skew_spec in H. simpl in *. lma. Qed.
 
     Lemma vex_skew_id : forall (a : Real), vex (skew a) = Some a.
     Proof. intros. cbv. auto. Qed.
@@ -240,7 +240,7 @@ Module SO3.
   Proof. intros. cbv. autorewrite with R. auto. Qed.
 
   Lemma Rx_inv_eq_trans : forall θ, minv3 (Rx θ) == (Rx θ)\T.
-  Proof. lma; try rewrite mdet3_eq_mdet, Rx_mdet1; simpA2; ra.
+  Proof. lma; try rewrite mdet3_eq_mdet, Rx_mdet1; autounfold with A; ra.
          autorewrite with R; ra. Qed.
 
   (** Create a rotation matrix of dimension 3 about the x-axis *)
@@ -254,11 +254,11 @@ Module SO3.
 
   Example ex1 : rotx((PI/2) 'rad) * roty((PI/2) 'rad) ==
                   l2m [[0;0;1];[1;0;0];[0;1;0]].
-  Proof. lma; try autorewrite with R; simpA2; ra. Qed.
+  Proof. lma; try autorewrite with R; autounfold with A; ra. Qed.
 
   Example ex2 : roty((PI/2) 'rad) * rotx((PI/2) 'rad) ==
                   l2m [[0;1;0];[0;0;-1];[-1;0;0]].
-  Proof. lma; try autorewrite with R; simpA2; ra. Qed.
+  Proof. lma; try autorewrite with R; autounfold with A; ra. Qed.
 
   
   (** ** The angle representations *)
@@ -298,7 +298,7 @@ Module SO3.
     (** If θ = 0, then ϕ and ψ can not be uniquely decided *)
     (* The author's convension choice is : let ϕ = 0 *)
     Lemma R_theta0 : forall (ϕ θ ψ : Real), θ = 0 -> R ϕ θ ψ == Rz (ϕ + ψ).
-    Proof. lma; rewrite H; autorewrite with R; simpA2; ra. Qed.
+    Proof. lma; rewrite H; autorewrite with R; autounfold with A; ra. Qed.
 
     (** Convert rotation matrix to equivalent Euler angles. *)
     (* Definition r2eul (m : mat 3 3) : cvec 3 := ? *)
@@ -335,7 +335,7 @@ Module SO3.
         R roll pitch yaw == Rz (PI/2) * Rx (pitch + yaw).
     Proof. lma;
              (* destruct H as [H | H]; *)
-             rewrite H; autorewrite with R; simpA2; ra; try easy.
+             rewrite H; autorewrite with R; autounfold with A; ra; try easy.
     Qed.
     (** 丢失了一个自由度，在数学上意味着我们无法反转这个变换，只能建立两个角的线性关系 *)
     (** 本例中，我们只能得到pitch和yaw这两个角的和。*)
@@ -354,23 +354,23 @@ Module SO3.
 
     (** Rotations obey the cyclic rotation rules *)
     Lemma Ry_Rz : forall θ, Rx (PI/2) * Ry θ * (Rx (PI/2))\T == Rz θ.
-    Proof. lma; autorewrite with R; simpA2; ra. Qed.
+    Proof. lma; autorewrite with R; autounfold with A; ra. Qed.
 
     Lemma Rz_Rx : forall θ, Ry (PI/2) * Rz θ * (Ry (PI/2))\T == Rx θ.
-    Proof. lma; autorewrite with R; simpA2; ra. Qed.
+    Proof. lma; autorewrite with R; autounfold with A; ra. Qed.
 
     Lemma Rx_Ry : forall θ, Rz (PI/2) * Rx θ * (Rz (PI/2))\T == Ry θ.
-    Proof. lma; autorewrite with R; simpA2; ra. Qed.
+    Proof. lma; autorewrite with R; autounfold with A; ra. Qed.
 
     (** Rotations obey the anti-cyclic rotation rules *)
     Lemma Rz_Ry : forall θ, (Rx (PI/2))\T * Rz θ * Rx (PI/2) == Ry θ.
-    Proof. lma; autorewrite with R; simpA2; ra. Qed.
+    Proof. lma; autorewrite with R; autounfold with A; ra. Qed.
 
     Lemma Rx_Rz : forall θ, (Ry (PI/2))\T * Rx θ * Ry (PI/2) == Rz θ.
-    Proof. lma; autorewrite with R; simpA2; ra. Qed.
+    Proof. lma; autorewrite with R; autounfold with A; ra. Qed.
 
     Lemma Ry_Rx : forall θ, (Rz (PI/2))\T * Ry θ * Rz (PI/2) == Rx θ.
-    Proof. lma; autorewrite with R; simpA2; ra. Qed.
+    Proof. lma; autorewrite with R; autounfold with A; ra. Qed.
 
   End Singularities.
 

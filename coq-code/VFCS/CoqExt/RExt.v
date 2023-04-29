@@ -61,19 +61,41 @@
  *)
 
 
-(* Require Export BasicConfig. *)
-Require Import AlgebraStructure.
+Require Import Basic.
+(* Require Import AlgebraStructure. *)
 
 Require Export ZExt.
 (* Require Export Psatz. *)
-Require Export Lia Lra.
-Require Export Reals.
+Require Export Lia Lra Reals.
+
 Open Scope R_scope.
 
 
 (** ** Notations for R *)
 
 Notation "| r |" := (Rabs r) : R_scope.
+
+
+(* ######################################################################### *)
+(** ** Well-defined (or compatible, or proper morphism) of operations on R. *)
+
+Lemma Rplus_wd : Proper (eq ==> eq ==> eq) Rplus.
+Proof. simp_proper. intros; subst; ring. Qed.
+
+Lemma Ropp_wd : Proper (eq ==> eq) Ropp.
+Proof. simp_proper. intros; subst; ring. Qed.
+
+Lemma Rminus_wd : Proper (eq ==> eq ==> eq) Rminus.
+Proof. simp_proper. intros; subst; ring. Qed.
+
+Lemma Rmult_wd : Proper (eq ==> eq ==> eq) Rmult.
+Proof. simp_proper. intros; subst; ring. Qed.
+
+Lemma Rinv_wd : Proper (eq ==> eq) Rinv.
+Proof. simp_proper. intros; subst; ring. Qed.
+
+Lemma Rdiv_wd : Proper (eq ==> eq ==> eq) Rdiv.
+Proof. simp_proper. intros; subst; ring. Qed.
 
 
 (* ######################################################################### *)
@@ -224,7 +246,7 @@ Ltac ra :=
 (* ######################################################################### *)
 (** * Reqb,Rleb,Rltb: Boolean comparison of R *)
 
-Definition Reqb (r1 r2 : R) : bool := AlgebraStructure.Aeqb r1 r2.
+Definition Reqb (r1 r2 : R) : bool := Basic.Aeqb r1 r2.
 Definition Rleb (r1 r2 : R) : bool := if Rle_lt_dec r1 r2 then true else false.
 Definition Rltb (r1 r2 : R) : bool := if Rlt_le_dec r1 r2 then true else false.
 Infix "=?"  := Reqb : R_scope.
@@ -234,6 +256,7 @@ Infix ">?"  := (fun x y => y <? x) : R_scope.
 Infix ">=?" := (fun x y => y <=? x) : R_scope.
 
 (** Reflection of (=) and (=?) *)
+Hint Resolve eq_refl : bdestruct.
 Lemma Reqb_true : forall x y, x =? y = true <-> x = y.
 Proof. apply Aeqb_true. Qed.
 
@@ -242,7 +265,7 @@ Proof. apply Aeqb_false. Qed.
     
 Lemma Reqb_reflect : forall x y, reflect (x = y) (x =? y).
 Proof.
-  intros. unfold Reqb,Aeqb. destruct (decidable); constructor; auto.
+  intros. unfold Reqb,Aeqb. destruct dec; constructor; auto.
 Qed.
 
 Lemma Reqb_refl : forall r, r =? r = true.
@@ -255,7 +278,7 @@ Proof.
   intros. destruct (Reqb_reflect r1 r2),(Reqb_reflect r2 r1); auto. subst. easy.
 Qed.
 
-Lemma Reqb_trans : forall r1 r2 r3, r1 =? r2 = true -> 
+Lemma Reqb_trans : forall r1 r2 r3, r1 =? r2 = true ->
   r2 =? r3 = true -> r1 =? r3 = true.
 Proof.
   intros.
@@ -377,28 +400,39 @@ Proof. intros. subst. lra. Qed.
 (* Qed. *)
 (* #[export] Hint Rewrite R1_eq_1 : R. *)
 
+(** (R1)² = 1 *)
 Lemma Rsqr_R1 : (R1)² = 1.
-Proof.
-  ra.
-Qed.
-#[export] Hint Rewrite Rsqr_R1 : R.
-Global Hint Resolve Rsqr_R1 : R.
+Proof. ra. Qed.
 
-(** /1 = 1 *)
-#[export] Hint Rewrite Rinv_1 : R.
-Global Hint Resolve Rinv_1 : R.
-
+(** 0 <= 1 *)
 Lemma zero_le_1 : 0 <= 1.
-Proof.
-  auto with R.
-Qed.
-Global Hint Resolve zero_le_1 : R.
+Proof. auto with R. Qed.
 
+(** 0 <> 1 *)
 Lemma zero_neq_1 : 0 <> 1.
-Proof.
-  auto with R.
-Qed.
-Global Hint Resolve zero_neq_1 : R.
+Proof. auto with R. Qed.
+
+(** / R1 = 1 *)
+Lemma Rinv_R1 : / R1 = 1.
+Proof. ra. Qed.
+
+(** a / 1 = a *)
+Lemma Rdiv_1 : forall a, a / 1 = a.
+Proof. ra. Qed.
+
+#[export] Hint Rewrite
+  Rsqr_R1           (* (R1)² = 1 *)
+  Rinv_1            (* / 1 = 1 *)
+  Rinv_R1           (* / R1 = 1 *)
+  Rdiv_1            (* a / 1 = 1 *)
+  : R.
+
+#[export] Hint Resolve
+  Rsqr_R1           (* (R1)² = 1 *)
+  Rinv_1            (* / 1 = 1 *)
+  zero_le_1         (* 0 <= 1 *)
+  zero_neq_1        (* 0 <> 1 *)
+  : R.
 
 Module TEST_R1_and_1.
   Goal 1 = R1. auto with R. Qed.

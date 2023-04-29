@@ -36,12 +36,12 @@ Section test.
   (* Compute rv2l v1. *)
   (* Compute cv2l v2. *)
 
-  Variable a1 a2 a3 : A.
-  Let v3 := t2rv_3 (a1,a2,a3).
+  Variable a0 a1 a2 : A.
+  Let v3 := t2rv_3 (a0,a1,a2).
   (* Compute rv2l (rvmap v3 Qcopp). *)
   (* Eval cbn in rv2l (rvmap v3 Qcopp). *)
 
-  Let v4 := t2cv_3 (a1,a2,a3).
+  Let v4 := t2cv_3 (a0,a1,a2).
   (* Compute cv2l (cvmap v4 Qopp). *)
   (* Eval cbn in cv2l (cvmap v4 Qcopp). *)
 End test.

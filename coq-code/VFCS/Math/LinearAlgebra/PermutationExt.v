@@ -66,15 +66,15 @@ Module Perm_with_list.
 
   (** ** Permutation of a list of n elements *)
   Section perm.
-    Context {A : Type} {A0 : A}.
+    Context {A : Type} {Azero : A}.
 
     (** Get k-th element and remaining elements from a list *)
     Fixpoint pick (l : list A) (k : nat) : A * list A :=
       match k with
-      | 0 => (hd A0 l, tl l)
+      | 0 => (hd Azero l, tl l)
       | S k' =>
           match l with
-          | [] => (A0, [])
+          | [] => (Azero, [])
           | x :: l' =>
               let (a,l0) := pick l' k' in
               (a, [x] ++ l0)
@@ -87,7 +87,7 @@ Module Perm_with_list.
       (* Compute pick l 0.     (* = (a, [b; c]) *) *)
       (* Compute pick l 1.     (* = (b, [a; c]) *) *)
       (* Compute pick l 2.     (* = (c, [a; b]) *) *)
-      (* Compute pick l 3.     (* = (A0, [a; b; c]) *) *)
+      (* Compute pick l 3.     (* = (Azero, [a; b; c]) *) *)
     End test.
 
     (** Get permutation of a list with a special level number *)
@@ -167,15 +167,15 @@ End Perm_with_list.
 (** * Permutation of a vector *)
 Module Export Perm_with_vector.
 
-  (* Context {A : Type} {A0 : A}. *)
+  (* Context {A : Type} {Azero : A}. *)
   Open Scope cvec_scope.
   
   (** ** Permutation of a list of n elements *)
   Section perm.
 
-    Context {A : Type} (A0 : A).
+    Context {A : Type} (Azero : A).
     Infix "==" := (meq (Aeq:=eq)) : mat_scope.
-    (* Infix "!" := (cvnth A0) : cvec_scope. *)
+    (* Infix "!" := (cvnth Azero) : cvec_scope. *)
     
     (** Get k-th element and remaining elements from a vector *)
     Definition pick {n : nat} (v : @cvec A (S n)) (k : nat) : A * (cvec n) :=
@@ -191,13 +191,13 @@ Module Export Perm_with_vector.
       (* Compute show_pick (pick v 0).     (* = (a, [b; c]) *) *)
       (* Compute show_pick (pick v 1).     (* = (b, [a; c]) *) *)
       (* Compute show_pick (pick v 2).     (* = (c, [a; b]) *) *)
-      (* Compute show_pick (pick v 3).     (* = (A0, [a; b; c]) *) *)
+      (* Compute show_pick (pick v 3).     (* = (Azero, [a; b; c]) *) *)
     End test.
 
     (** Get permutation of a vector *)
     Fixpoint perm {n : nat} : @cvec A n -> list (@cvec A n) :=
       match n with
-      | 0 => fun _ => [cvec0 (A0:=A0)]
+      | 0 => fun _ => [cvec0 (Azero:=Azero)]
       | S n' => fun (v : cvec (S n')) =>
                   let d1 := map (fun i => pick v i) (seq 0 n) in
                   let d2 :=
@@ -322,7 +322,7 @@ Section det_try.
   Variable a0 a1 : A.
   Variable a11 a12 a13 a21 a22 a23 a31 a32 a33 : A.
   Let m1 : mat 3 3 :=
-        mk_mat_3_3 (A0:=a0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
+        mk_mat_3_3 (Azero:=a0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
   (* Compute m2l m1. *)
 
   (** 计算行列式的一个步骤：取矩阵元素，第一个下标固定，第二个下标是全排列 *)
@@ -357,7 +357,7 @@ Section det.
   (** Get sign of column-index's reverse-order-no.
       i.e. if odd-permutation then -1 else 1 *)
   Let sign4idx {n} (ids : @cvec nat n) : A :=
-        if odd_perm (Altb:=Nat.ltb) ids then -A1 else A1.
+        if odd_perm (Altb:=Nat.ltb) ids then -Aone else Aone.
   
   (** Determinant of a square matrix *)
   Definition det {n} (m : smat A n) : A :=
@@ -365,8 +365,8 @@ Section det.
     let F :=
       fun (col_id : cvec n) =>
         (sign4idx col_id) *
-          cvfold col_id (fun a i => a * (m $ i $ (col_id$i))) A1 in
-    fold_left Aadd (map F col_ids) A0.
+          cvfold col_id (fun a i => a * (m $ i $ (col_id$i))) Aone in
+    fold_left Aadd (map F col_ids) Azero.
 
   (** Determinant of a square matrix (by row index) *)
   Definition det' {n} (m : smat A n) : A :=
@@ -374,8 +374,8 @@ Section det.
     let F :=
       fun (row_id : cvec n) =>
         (sign4idx row_id) *
-          cvfold row_id (fun a j => a * (m $ (row_id$j) $ j)) A1 in
-    fold_left Aadd (map F row_ids) A0.
+          cvfold row_id (fun a j => a * (m $ (row_id$j) $ j)) Aone in
+    fold_left Aadd (map F row_ids) Azero.
 
 End det.
 
@@ -418,7 +418,7 @@ Section det_props.
 
   Context `{R : Ring}.
   Infix "==" := Aeq : A_scope.
-  Notation det := (@det A Aadd A0 Aopp Amul A1).
+  Notation det := (@det A Aadd Azero Aopp Amul Aone).
 
   Lemma det_trans : forall {n} (m : smat A n), det (m\T) == det m.
   Admitted.

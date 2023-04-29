@@ -102,30 +102,6 @@ Proof.
   split;intro;intros;try easy. rewrite H;try easy.
 Qed.
 
-(** ( + ) is proper function about (==) *)
-Lemma Qplus_Qeq_proper : Proper (Qeq ==> Qeq ==> Qeq) Qplus.
-Proof.
-  intro;intros. intro;intros. rewrite H,H0;easy.
-Qed.
-
-(** ( * ) is proper function about (==) *)
-Lemma Qmult_Qeq_proper : Proper (Qeq ==> Qeq ==> Qeq) Qmult.
-Proof.
-  intro;intros. intro;intros. rewrite H,H0;easy.
-Qed.
-
-(** ( - a) is proper function about (==) *)
-Lemma Qopp_Qeq_proper : Proper (Qeq ==> Qeq) Qopp.
-Proof.
-  intro; intros. rewrite H; easy.
-Qed.
-
-(** ( / a) is proper function about (==) *)
-Lemma Qinv_Qeq_proper : Proper (Qeq ==> Qeq) Qinv.
-Proof.
-  intro; intros. rewrite H; easy.
-Qed.
-
 
 (* ######################################################################### *)
 (** ** Instance of classes which defined in HierarchySetoid *)

@@ -9,10 +9,10 @@
  *)
 
 Require Export NatExt.
-Require Export BasicConfig AlgebraStructure.
+Require Export Basic AlgebraStructure.
 Require RExt.
 
-Generalizable Variable A B Aeq Beq Aadd Aopp Amul Ainv.
+Generalizable Variable A B Aeq Beq Aadd Azero Aopp Amul Aone Ainv.
 
 
 (* ######################################################################### *)
@@ -29,24 +29,23 @@ Declare Scope seq2_scope.
 Delimit Scope seq2_scope with seq2.
 Open Scope seq2_scope.
 
-(** Notations for concrete element of a double indexed sequence *)
-Notation "f `00" := (f 0 0).
-Notation "f `00" := (f 0 0).
-Notation "f `01" := (f 0 1).
-Notation "f `02" := (f 0 2).
-Notation "f `03" := (f 0 3).
-Notation "f `10" := (f 1 0).
-Notation "f `11" := (f 1 1).
-Notation "f `12" := (f 1 2).
-Notation "f `13" := (f 1 3).
-Notation "f `20" := (f 2 0).
-Notation "f `21" := (f 2 1).
-Notation "f `22" := (f 2 2).
-Notation "f `23" := (f 2 3).
-Notation "f `30" := (f 3 0).
-Notation "f `31" := (f 3 1).
-Notation "f `32" := (f 3 2).
-Notation "f `33" := (f 3 3).
+Notation "f .00" := (f 0%nat 0%nat) : fun_scope.
+Notation "f .00" := (f 0%nat 0%nat) : fun_scope.
+Notation "f .01" := (f 0%nat 1%nat) : fun_scope.
+Notation "f .02" := (f 0%nat 2%nat) : fun_scope.
+Notation "f .03" := (f 0%nat 3%nat) : fun_scope.
+Notation "f .10" := (f 1%nat 0%nat) : fun_scope.
+Notation "f .11" := (f 1%nat 1%nat) : fun_scope.
+Notation "f .12" := (f 1%nat 2%nat) : fun_scope.
+Notation "f .13" := (f 1%nat 3%nat) : fun_scope.
+Notation "f .20" := (f 2%nat 0%nat) : fun_scope.
+Notation "f .21" := (f 2%nat 1%nat) : fun_scope.
+Notation "f .22" := (f 2%nat 2%nat) : fun_scope.
+Notation "f .23" := (f 2%nat 3%nat) : fun_scope.
+Notation "f .30" := (f 3%nat 0%nat) : fun_scope.
+Notation "f .31" := (f 3%nat 1%nat) : fun_scope.
+Notation "f .32" := (f 3%nat 2%nat) : fun_scope.
+Notation "f .33" := (f 3%nat 3%nat) : fun_scope.
 
 
 (* ======================================================================= *)
@@ -98,7 +97,7 @@ Section seqeq.
   Qed.
   
   (** seqeq is decidable  *)
-  Global Instance seqeq_dec {Dec_Aeq : Decidable Aeq} : forall n, Decidable (seqeq n).
+  Global Instance seqeq_dec {Dec_Aeq : Dec Aeq} : forall n, Dec (seqeq n).
   Proof.
     induction n; constructor; intros.
     - left. unfold seqeq. easy.
@@ -112,7 +111,7 @@ Section seqeq.
 
   (** *** seqeq is decidable with the help of bool equality *)
   Section seqeq_dec_with_eqb.
-    Context {Dec: Decidable Aeq}.
+    Context {HDec: Dec Aeq}.
 
     (** Boolean equality of two sequence *)
     Fixpoint seqeqb n (f g : nat -> A) : bool :=
@@ -152,7 +151,7 @@ Section seqeq.
     Qed.
     
     (** seqeq is decidable (with the help of eqb)  *)
-    Global Instance seqeq_dec_with_eqb : forall n, Decidable (seqeq n).
+    Global Instance seqeq_dec_with_eqb : forall n, Dec (seqeq n).
     Proof.
       intros. constructor. intros f g. destruct (seqeqb n f g) eqn:E1.
       - left. apply seqeqb_true_iff in E1. auto.
@@ -225,18 +224,18 @@ Section seq2eq.
   
   (** *** seq2eq is decidable with the help of bool equality *)
   Section seq2eq_dec_with_eqb.
-    Context {Dec: Decidable Aeq}.
+    Context {HDec: Dec Aeq}.
 
     (** seq2eq is decidable  *)
-    Lemma seq2eq_dec : forall r c, Decidable (seq2eq r c).
+    Lemma seq2eq_dec : forall r c, Dec (seq2eq r c).
     Proof.
       induction r; constructor; intros f g.
       - left. unfold seq2eq. intros. easy.
       - unfold seq2eq in *. specialize (IHr c).
         destruct (f ==? g).
         + (* Tips: need to construct a prop *)
-          assert (Decidable (fun f g : nat -> nat -> A =>
-                               forall ci, ci < c -> f r ci == g r ci)) as H.
+          assert (Dec (fun f g : nat -> nat -> A =>
+                         forall ci, ci < c -> f r ci == g r ci)) as H.
           { constructor. intros. apply seqeq_dec. }
           destruct (f ==? g).
           * left. intros. destruct (Aeq_reflect ri r); subst; auto.
@@ -281,7 +280,7 @@ Section seq2eq.
     Qed.
 
     (** seq2eq is decidable (with the help of eqb)  *)
-    Lemma seq2eq_dec_with_eqb : forall r c, Decidable (seq2eq r c).
+    Lemma seq2eq_dec_with_eqb : forall r c, Dec (seq2eq r c).
     Proof.
       intros. constructor. intros f g. destruct (seq2eqb r c f g) eqn:E1.
       - left. apply seq2eqb_true_iff in E1. auto.
@@ -331,18 +330,18 @@ Section Sum.
   (** Sum of a sequence *)
   Fixpoint seqsum (f : nat -> A) (n : nat) : A := 
     match n with
-    | O => A0
+    | O => Azero
     | S n' => seqsum f n' + f n'
     end.
 
   (** seqsum is equivalent to seqfold *)
   Lemma seqsum_eq_seqfold : forall (f : nat -> A) (n : nat),
-      seqsum f n == seqfold f n Aadd A0.
+      seqsum f n == seqfold f n Aadd Azero.
   Proof. induction n; simpl; try easy. f_equiv. auto. Qed.
     
   (** Sum of a sequence which every element is zero get zero. *)
   Lemma seqsum_seq0 : forall (f : nat -> A) (n : nat), 
-      (forall i, i < n -> f i == A0) -> seqsum f n == A0.
+      (forall i, i < n -> f i == Azero) -> seqsum f n == Azero.
   Proof.
     intros f n H. induction n; simpl. easy.
     rewrite H; auto. rewrite IHn; auto. monoid_simp.
@@ -358,7 +357,7 @@ Section Sum.
   Qed.
   
   (** Let's have an abelian monoid structure *)
-  Context {AM : AMonoid Aadd A0 Aeq}.
+  Context {AM : AMonoid Aadd Azero Aeq}.
 
   (** Sum with plus of two sequence equal to plus with two sum. *)
   Lemma seqsum_add : forall (f g : nat -> A) (n : nat),
@@ -370,7 +369,7 @@ Section Sum.
   Qed.
 
   (** Let's have a group structure *)
-  Context `{G : Group A Aadd A0 Aopp Aeq}.
+  Context `{G : Group A Aadd Azero Aopp Aeq}.
   Notation "- a" := (Aopp a) : A_scope.
 
   (** Opposition of the sum of a sequence. *)
@@ -382,7 +381,7 @@ Section Sum.
   Qed.
 
   (** Let's have an ring structure *)
-  Context `{R : Ring A Aadd A0 Aopp Amul A1 Aeq}.
+  Context `{R : Ring A Aadd Azero Aopp Amul Aone Aeq}.
   Add Ring ring_inst : (make_ring_theory R).
   
   Infix "*" := Amul : A_scope.
@@ -406,16 +405,16 @@ Section Sum.
 
   (** Sum a sequence which only one item in nonzero, then got this item. *)
   Lemma seqsum_unique : forall (f : nat -> A) (k : A) (n i : nat), 
-      i < n -> f i == k -> (forall j, i <> j -> f j == A0) -> seqsum f n == k.
+      i < n -> f i == k -> (forall j, i <> j -> f j == Azero) -> seqsum f n == k.
   Proof.
     (* key idea: induction n, and case {x =? n} *)
     intros f k n. induction n; intros. easy. simpl.
     destruct (Aeq_reflect i n).
     - subst.
-      assert (seqsum f n == A0) as H2.
+      assert (seqsum f n == Azero) as H2.
       + apply seqsum_seq0. intros. apply H1. lia.
       + rewrite H2. rewrite H0. ring.
-    - assert (f n == A0) as H2.
+    - assert (f n == Azero) as H2.
       + apply H1; auto.
       + rewrite H2. monoid_simp. apply IHn with i; auto. lia.
   Qed.
@@ -531,7 +530,7 @@ Section test.
   Import RExt.
 
   Example seq1 := fun n => Z2R (Z.of_nat n).
-  Notation seqsum := (seqsum (Aadd:=Rplus) (A0:=R0)).
+  Notation seqsum := (seqsum (Aadd:=Rplus) (Azero:=R0)).
 
   (* Compute seqsum seq1 3. *)
   (* Eval simpl in seqeqb 5 seq1 seq1. *)

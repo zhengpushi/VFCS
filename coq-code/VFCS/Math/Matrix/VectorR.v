@@ -74,8 +74,8 @@ Open Scope cvec_scope.
 (* ==================================== *)
 (** ** Kronecker delta function *)
 
-Definition kronecker_fun {A} {A0 A1 : A} (i j : nat) :=
-  if (i =? j)%nat then A1 else A0.
+Definition kronecker_fun {A} {Azero Aone : A} (i j : nat) :=
+  if (i =? j)%nat then Aone else Azero.
 
 
 (* ==================================== *)
@@ -83,7 +83,7 @@ Definition kronecker_fun {A} {A0 A1 : A} (i j : nat) :=
 
 (** If k times a non-zero vector equal to zero, then k must be zero *)
 Lemma cvcmul_nonzero_eq_zero_imply_k0 : forall {n} (v : cvec n) k,
-    cvnonzero v -> k c* v == cvec0 -> (k == A0)%A.
+    cvnonzero v -> k c* v == cvec0 -> (k == Azero)%A.
 Proof.
   (* idea:
     v <> 0 ==> ~(∀ i, v[i] = 0)
@@ -93,10 +93,10 @@ Proof.
     ∃ i, v[i] <> 0, then, k*v[i] <> 0, thus, contradict.
    *)
   intros. destruct v as [v]. cbv in *.
-  destruct (k ==? A0); auto.
+  destruct (k ==? Azero); auto.
   (* idea: from "~(∀ij(v i j = 0)" to "∃ij(v i j≠0)" *)
   (* Tips, a good practice of logic proposition *)
-  assert (exists (ij:nat*nat), let (i,j) := ij in (i<n)%nat /\ (j<1)%nat /\ (v i j != A0)%A).
+  assert (exists (ij:nat*nat), let (i,j) := ij in (i<n)%nat /\ (j<1)%nat /\ (v i j != Azero)%A).
   { clear k H0 n0.
     apply not_all_not_ex. intro.
     destruct H. intros. specialize (H0 (i,0)%nat). simpl in H0.
@@ -146,7 +146,7 @@ Qed.
 Lemma cvdot_ge0 : forall {n} (v : cvec n), 0 <= <v,v>.
 Proof.
   intros. cvec2fun. unfold cvdot,Vector.cvdot. simpl.
-  revert v. induction n; intros; simpl; simpA1; ra.
+  revert v. induction n; intros; simpl; autounfold with A; ra.
 Qed.
 
 (** <v,v> = 0 <-> v = 0 *)
@@ -181,6 +181,84 @@ Lemma cvdot_row_row : forall {n} (m : smat n) i j,
     (i < n)%nat -> (j < n)%nat ->
     rvdot (mrow m i) (mrow m j) = (m * m\T) $ i $ j.
 Admitted.
+
+
+(* ==================================== *)
+(** ** Cross product (vector product) of two 3-dim vectors *)
+(**
+   1. 外积的三角学的意义
+      ||P×Q|| = ||P|| * ||Q|| * sin α
+   2. 外积若不为零，则其与这两个向量都垂直。有两个向量，方向相反。
+      根据所选左/右手系来确定方向。
+   3. 3D坐标系中的x,y,z轴正方向用 i,j,k 表示，并按 i,j,k 顺序组成一个循环，则：
+   (1) 相邻两个向量按相同次序的外积为第三个向量，即 i×j=k, j×k=i, k×i=j。
+   (2) 相邻两个向量按相反次序的外积为第三个向量的取反，即 j×i=-k, etc.
+ *)
+Definition cv3cross (a b : cvec 3) : cvec 3 :=
+  l2cv [a.1 * b.2 - a.2 * b.1;
+        a.2 * b.0 - a.0 * b.2;
+        a.0 * b.1 - a.1 * b.0]%R.
+
+Infix "×" := cv3cross : cvec_scope.
+
+#[export] Instance cv3corss_mor : Proper (meq ==> meq ==> meq) cv3cross.
+Proof.
+  simp_proper. intros. hnf in *. mat2fun. intros. rewrite !H,!H0; auto. easy.
+Qed.
+
+(** v × v = 0 *)
+Lemma cv3cross_self : forall v : cvec 3, v × v == cvec0.
+Proof. lma. Qed.
+
+(** v1 × v2 = - (v2 × v1) *)
+Lemma cv3cross_anticomm : forall v1 v2 : cvec 3, v1 × v2 == -(v2 × v1).
+Proof. lma. Qed.
+
+(** (v1 + v2) × v3 = (v1 × v3) + (v2 × v3) *)
+Lemma cv3cross_add_distr_l : forall v1 v2 v3 : cvec 3,
+    (v1 + v2) × v3 == (v1 × v3) + (v2 × v3).
+Proof. lma. Qed.
+
+(** v1 × (v2 + v3) = (v1 × v2) + (v1 × v3) *)
+Lemma cv3cross_add_distr_r : forall v1 v2 v3 : cvec 3,
+    v1 × (v2 + v3) == (v1 × v2) + (v1 × v3).
+Proof. lma. Qed.
+
+(** (a c* v1) × v2 = a c* (v1 × v2) *)
+Lemma cv3cross_cmul_assoc_l : forall (a : R) (v1 v2 : cvec 3),
+    (a c* v1) × v2 == a c* (v1 × v2).
+Proof. lma. Qed.
+
+(** v1 × (a c* v2) = a c* (v1 × v2) *)
+Lemma cv3cross_cmul_assoc_r : forall (a : R) (v1 v2 : cvec 3),
+    v1 × (a c* v2) == a c* (v1 × v2).
+Proof. lma. Qed.
+
+(** <v1 × v2, v3> = <v3 × v1, v2> *)
+Lemma cv3cross_dot_l : forall v1 v2 v3 : cvec 3, <v1 × v2, v3> = <v3 × v1, v2>.
+Proof. intros. cbv. field. Qed.
+
+(** <v1 × v2, v3> = <v2 × v3, v1> *)
+Lemma cv3cross_dot_r : forall v1 v2 v3 : cvec 3, <v1 × v2, v3> = <v2 × v3, v1>.
+Proof. intros. cbv. field. Qed.
+
+(** <v1 × v2, v1> = 0 *)
+Lemma cv3cross_dot_same_l : forall v1 v2 : cvec 3, <v1 × v2, v1> = 0.
+Proof. intros. cbv. field. Qed.
+
+(** <v1 × v2, v2> = 0 *)
+Lemma cv3cross_dot_same_r : forall v1 v2 : cvec 3, <v1 × v2, v2> = 0.
+Proof. intros. cbv. field. Qed.
+
+(** (v1 × v2) × v1 = v1 × (v2 × v1) *)
+Lemma cv3cross_cross_form1 : forall v1 v2 : cvec 3,
+    (v1 × v2) × v1 == v1 × (v2 × v1).
+Proof. lma. Qed.
+
+(** (v1 × v2) × v1 = <v1,v1> c* v2 - <v1,v2> c* v1 *)
+Lemma cv3cross_cross_form2 : forall v1 v2 : cvec 3,
+    (v1 × v2) × v1 == <v1,v1> c* v2 - <v1,v2> c* v1.
+Proof. lma. Qed.
 
 
 (* ==================================== *)
@@ -291,6 +369,24 @@ Definition cvangle {n} (v1 v2 : cvec n) : R :=
 
 Infix "∠" := cvangle (at level 60) : cvec_scope.
 
+(** A theorem about the angle between two vectors and its dot product in 2D *)
+Section cosine_dot.
+  Variable a b : cvec 2.
+  Variable θ : R. (* this is angle between a and b *)
+  (* The law of cosine *)
+  Hypotheses cosine_law : ((||(a - b)%CV||)² = ||a||² + ||b||² - 2 * ||a|| * ||b|| * cos θ)%R.
+  
+  Theorem cosine_dot : <a,b> = (||a|| * ||b|| * cos θ)%R.
+  Proof.
+    assert (||(a-b)%CV||² = ||a||² + ||b||² - 2 * <a,b>)%R.
+    { rewrite !cvlen_sqr.
+      unfold cvsub.
+      rewrite !cvdot_vadd_distr_l, !cvdot_vadd_distr_r.
+      rewrite !cvdot_vopp_l, !cvdot_vopp_r. rewrite (cvdot_comm b a).
+      autounfold with A; ring. } ra.
+  Qed.
+End cosine_dot.
+
 (* (** Angle equal iff dot-product equal *) *)
 (* Lemma cvangle_eq_if_dot_eq : forall {n} (u1 u2 v1 v2 : cvec n), *)
 (*     <u1,v1> = <u2,v2> -> u1 ∠ v1 = u2 ∠ v2. *)
@@ -312,17 +408,11 @@ Abort.
 (** First vector project to second vector *)
 Definition cvproj {n} (u v : cvec n) : cvec n := (<u,v> / <v,v>) c* v.
 
-(** The perpendicular vector followed the cvproj *)
-Definition cvperp {n} (u v : cvec n) : cvec n := u - cvproj u v.
-
-(* (** The scalar projection of a on b is a simple triangle relation *) *)
-(* Lemma cvsproj_spec : forall {n} (a b : cvec n), cvsproj a b == `|a| * cvangle. *)
-
 (** The matrix form of cvproj in 3-dim *)
 Definition cv3proj (u v : cvec 3) : cvec 3 :=
-  let x := v.1 in
-  let y := v.2 in
-  let z := v.3 in
+  let x := v.0 in
+  let y := v.1 in
+  let z := v.2 in
   let M : mat 3 3 :=
     l2m [[x * x; x * y; x * z];
          [x * y; y * y; y * z];
@@ -331,6 +421,31 @@ Definition cv3proj (u v : cvec 3) : cvec 3 :=
 
 Lemma cv3proj_spec : forall u v : cvec 3, cv3proj u v == cvproj u v.
 Proof. lma. Qed.
+
+(* (** The scalar projection of a on b is a simple triangle relation *) *)
+(* Lemma cvsproj_spec : forall {n} (a b : cvec n), cvsproj a b == `|a| * cvangle. *)
+
+(** The perpendicular vector followed the cvproj *)
+Definition cvperp {n} (u v : cvec n) : cvec n := u - cvproj u v.
+
+(** The perpendicular vector has a equivalent formula, which is found from 
+    geometry. See: https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula.
+    此式在几何上容易理解，但代数上不是很显然 *)
+Section cvperp_props.
+  Open Scope fun_scope.
+  
+  Lemma cvperp_eq : forall (u v : cvec 3), cvunit v -> cvperp u v == - (v × (v × u)).
+  Proof.
+    intros. unfold cvperp. unfold cvproj. rewrite H. autorewrite with R.
+    (* Why this formula correct at algebra form? I'm confused. 
+       Just a bruce proof here. *)
+    cvec2fun.
+    assert (v.00 ^ 2 = R1 - v.10 ^ 2 - v.20 ^ 2)%R as H1.
+    { cbv in H. rewrite <- H. field. }
+    lma; cbv; ring_simplify; ring_simplify in H1; rewrite H1; field.
+  Qed.
+    
+End cvperp_props.
 
 
 (* ==================================== *)
@@ -368,12 +483,12 @@ Abort.
     each pairing of them is orthogonal. Such a set is called an orthogonal set.
     Note: each pair means {(vi,vj)|i≠j}  *)
 Definition cvorthogonalset {r c} (m : mat r c) : Prop :=
-  forall j1 j2, (j1 < c)%nat -> (j2 < c)%nat -> (j1 <> j2) -> <mcol m j1, mcol m j2> = A0.
+  forall j1 j2, (j1 < c)%nat -> (j2 < c)%nat -> (j1 <> j2) -> <mcol m j1, mcol m j2> = Azero.
 
 (** (bool version) *)
 Definition cvorthogonalsetb {r c} (m : mat r c) : bool :=
   (* two column vectors is orthogonal *)
-  let orth (i j : nat) : bool := (<mcol m i, mcol m j> =? A0)%R in
+  let orth (i j : nat) : bool := (<mcol m i, mcol m j> =? Azero)%R in
   (* remain column indexes after this column *)
   let cids (i : nat) : list nat := seq (S i) (c - S i) in
   (* the column is orthogonal to right-side remain columns *)
@@ -408,7 +523,7 @@ Definition mcolsOrthogonal {r c} (m : mat r c) : Prop :=
   
 (** bool version *)
 Definition mcolsOrthogonalb {r c} (m : mat r c) : bool :=
-  let is_orth (i j : nat) : bool := (<mcol m i, mcol m j> =? A0)%R in
+  let is_orth (i j : nat) : bool := (<mcol m i, mcol m j> =? Azero)%R in
   let cids (i : nat) : list nat := seq (S i) (c - S i) in
   let chk_col (j : nat) : bool := and_blist (map (fun k => is_orth j k) (cids j)) in
   and_blist (map (fun j => chk_col j) (seq 0 c)).
@@ -419,12 +534,12 @@ Proof.
 Admitted.
 
 Section test.
-  Variable a11 a12 a13 a21 a22 a23 a31 a32 a33 : R.
-  Let m1 : mat 2 3 := l2m [[a11;a12;a13];[a21;a22;a23]].
-  Let m2 : mat 3 2 := l2m [[a11;a12];[a21;a22];[a31;a32]].
+  Variable a00 a01 a02 a10 a11 a12 a20 a21 a22 : R.
+  Let m1 : mat 1 3 := l2m [[a00;a01;a02];[a10;a11;a12]].
+  Let m2 : mat 3 1 := l2m [[a00;a01];[a10;a11];[a20;a21]].
 
   (* Compute mcolsOrthogonalb m1. *)
-  (* Compute mcolsOrthogonalb m2. *)
+  (* Compute mcolsOrthogonalb m2. (* because only one column, needn't be check *) *)
 End test.
 
 
@@ -634,107 +749,28 @@ Definition cv3i : cvec 3 := mk_cvec3 1 0 0.
 Definition cv3j : cvec 3 := mk_cvec3 0 1 0.
 Definition cv3k : cvec 3 := mk_cvec3 0 0 1.
 
+Definition rv3i : rvec 3 := mk_rvec3 1 0 0.
+Definition rv3j : rvec 3 := mk_rvec3 0 1 0.
+Definition rv3k : rvec 3 := mk_rvec3 0 0 1.
 
 (** Dot product (inner-product) of two 3-dim vectors *)
-Definition cv3dot (a b : cvec 3) :=
-  let '(a1,a2,a3) := cv2t_3 a in 
-  let '(b1,b2,b3) := cv2t_3 b in
-  (a1*b1 + a2*b2 + a3*b3)%R.
+Definition cv3dot (a b : cvec 3) := (a.0*b.0 + a.1*b.1 + a.2*b.2)%R.
 
 Lemma cvdot3_spec : forall v1 v2 : cvec 3, cv3dot v1 v2 = <v1,v2>.
 Proof. intros. cbv. ring. Qed.
 
 
 (** Cross product (vector product) of two 3-dim vectors *)
-Section cv3cross.
-  (**
-   1. 外积的三角学的意义
-      ||P×Q|| = ||P|| * ||Q|| * sin α
-   2. 外积若不为零，则其与这两个向量都垂直。有两个向量，方向相反。
-      根据所选左/右手系来确定方向。
-   3. 3D坐标系中的x,y,z轴正方向用 i,j,k 表示，并按 i,j,k 顺序组成一个循环，则：
-   (1) 相邻两个向量按相同次序的外积为第三个向量，即 i×j=k, j×k=i, k×i=j。
-   (2) 相邻两个向量按相反次序的外积为第三个向量的取反，即 j×i=-k, etc.
-   *)
-  Definition cv3cross (v1 v2 : cvec 3) : cvec 3 :=
-    let '(a0,a1,a2) := cv2t_3 v1 in
-    let '(b0,b1,b2) := cv2t_3 v2 in
-    t2cv_3 (a1 * b2 - a2 * b1, a2 * b0 - a0 * b2, a0 * b1 - a1 * b0)%R.
 
-  Infix "×" := cv3cross : cvec_scope.
+(** i×j=k, j×k=i, k×i=j *)
+Lemma cv3cross_ij : cv3i × cv3j == cv3k. Proof. lma. Qed.
+Lemma cv3cross_jk : cv3j × cv3k == cv3i. Proof. lma. Qed.
+Lemma cv3cross_ki : cv3k × cv3i == cv3j. Proof. lma. Qed.
 
-  #[export] Instance cv3corss_mor : Proper (meq ==> meq ==> meq) cv3cross.
-  Proof.
-    simp_proper. intros. hnf in *. mat_to_fun. intros. rewrite !H,!H0; auto. easy.
-  Qed.
-
-  (** v × v = 0 *)
-  Lemma cv3cross_self : forall v : cvec 3, v × v == cvec0.
-  Proof. lma. Qed.
-
-  (** v1 × v2 = - (v2 × v1) *)
-  Lemma cv3cross_anticomm : forall v1 v2 : cvec 3, v1 × v2 == -(v2 × v1).
-  Proof. lma. Qed.
-
-  (** (v1 + v2) × v3 = (v1 × v3) + (v2 × v3) *)
-  Lemma cv3cross_add_distr_l : forall v1 v2 v3 : cvec 3,
-      (v1 + v2) × v3 == (v1 × v3) + (v2 × v3).
-  Proof. lma. Qed.
-
-  (** v1 × (v2 + v3) = (v1 × v2) + (v1 × v3) *)
-  Lemma cv3cross_add_distr_r : forall v1 v2 v3 : cvec 3,
-      v1 × (v2 + v3) == (v1 × v2) + (v1 × v3).
-  Proof. lma. Qed.
-
-  (** (a c* v1) × v2 = a c* (v1 × v2) *)
-  Lemma cv3cross_cmul_assoc_l : forall (a : R) (v1 v2 : cvec 3),
-      (a c* v1) × v2 == a c* (v1 × v2).
-  Proof. lma. Qed.
-
-  (** v1 × (a c* v2) = a c* (v1 × v2) *)
-  Lemma cv3cross_cmul_assoc_r : forall (a : R) (v1 v2 : cvec 3),
-      v1 × (a c* v2) == a c* (v1 × v2).
-  Proof. lma. Qed.
-
-  (** <v1 × v2, v3> = <v3 × v1, v2> *)
-  Lemma cv3cross_dot_l : forall v1 v2 v3 : cvec 3, <v1 × v2, v3> = <v3 × v1, v2>.
-  Proof. intros. cbv. field. Qed.
-
-  (** <v1 × v2, v3> = <v2 × v3, v1> *)
-  Lemma cv3cross_dot_r : forall v1 v2 v3 : cvec 3, <v1 × v2, v3> = <v2 × v3, v1>.
-  Proof. intros. cbv. field. Qed.
-
-  (** <v1 × v2, v1> = 0 *)
-  Lemma cv3cross_dot_same_l : forall v1 v2 : cvec 3, <v1 × v2, v1> = 0.
-  Proof. intros. cbv. field. Qed.
-
-  (** <v1 × v2, v2> = 0 *)
-  Lemma cv3cross_dot_same_r : forall v1 v2 : cvec 3, <v1 × v2, v2> = 0.
-  Proof. intros. cbv. field. Qed.
-
-  (** (v1 × v2) × v1 = v1 × (v2 × v1) *)
-  Lemma cv3cross_cross_form1 : forall v1 v2 : cvec 3,
-      (v1 × v2) × v1 == v1 × (v2 × v1).
-  Proof. lma. Qed.
-
-  (** (v1 × v2) × v1 = <v1,v1> c* v2 - <v1,v2> c* v1 *)
-  Lemma cv3cross_cross_form2 : forall v1 v2 : cvec 3,
-      (v1 × v2) × v1 == <v1,v1> c* v2 - <v1,v2> c* v1.
-  Proof. lma. Qed.
-
-  (** i×j=k, j×k=i, k×i=j *)
-  Lemma cv3cross_ij : cv3i × cv3j == cv3k. Proof. lma. Qed.
-  Lemma cv3cross_jk : cv3j × cv3k == cv3i. Proof. lma. Qed.
-  Lemma cv3cross_ki : cv3k × cv3i == cv3j. Proof. lma. Qed.
-
-  (** j×i=-k, k×j=-i, i×k=-j *)
-  Lemma cv3cross_ji : cv3j × cv3i == -cv3k. Proof. lma. Qed.
-  Lemma cv3cross_kj : cv3k × cv3j == -cv3i. Proof. lma. Qed.
-  Lemma cv3cross_ik : cv3i × cv3k == -cv3j. Proof. lma. Qed.
-
-End cv3cross.
-  Infix "×" := cv3cross : cvec_scope.
-
+(** j×i=-k, k×j=-i, i×k=-j *)
+Lemma cv3cross_ji : cv3j × cv3i == -cv3k. Proof. lma. Qed.
+Lemma cv3cross_kj : cv3k × cv3j == -cv3i. Proof. lma. Qed.
+Lemma cv3cross_ik : cv3i × cv3k == -cv3j. Proof. lma. Qed.
 
 
 (** Two 3-dim vectors are parallel, can be quickly checked by cross-product. *)
@@ -772,16 +808,15 @@ Section skew.
 
   (** Convert a vector to its corresponding skew-symmetric matrix *)
   Definition cv3skew (v : cvec 3) : mat 3 3 :=
-    let x := v.1 in
-    let y := v.2 in
-    let z := v.3 in
-    l2m [[0; -z; y]; [z; 0; -x]; [-y; x; 0]]%R.
+    l2m [[0; -v.2; v.1];
+         [v.2; 0; -v.0];
+         [-v.1; v.0; 0]]%R.
   
   Notation "`| v |ₓ" := (cv3skew v).
 
   (** Convert a skew-symmetric matrix to its corresponding vector *)
   Definition cv3skew2v (m : mat 3 3) : option (cvec 3) :=
-    Some (l2cv [m.32; m.13; m.21]).
+    Some (l2cv [m.21; m.02; m.10]).
 
   Lemma cv3skew_skew2v_id : forall (m : mat 3 3),
       cv3skewP m -> 
@@ -791,7 +826,8 @@ Section skew.
       end.
   Proof.
     intros [m]. simpl. intros. apply cv3skewP_spec in H.
-    do 5 destruct H as [? H]. lma. simpA2. ra.
+    do 5 destruct H as [? H]. lma. simpl in *.
+    autounfold with A. ra.
   Qed.
 
   Lemma cv3skew2v_skew_id : forall (v : cvec 3),
@@ -807,7 +843,7 @@ Section skew.
     destruct i; try easy. lia.
   Qed.
   
-  Lemma cv3cross_eq_skew : forall (v1 v2 : cvec 3), v1 × v2 == `|v1|ₓ * v2.
+  Lemma cv3cross_eq_skew_mul : forall (v1 v2 : cvec 3), v1 × v2 == `|v1|ₓ * v2.
   Proof. lma. Qed.
 
 End skew.
@@ -818,13 +854,12 @@ Notation "`| v |ₓ" := (cv3skew v).
 Section cv3mixed.
   
   (** 几何意义：绝对值表示以向量a,b,c为棱的平行六面体的体积，另外若a,b,c组成右手系，
-        则混合积的符号为正；若组成左手系，则符号为负。*)
-  Definition cv3mixed (a b c : cvec 3) :=
-    let m := l2m [[a$0; a$1; a$2]; [b$0; b$1; b$2]; [c$0; c$1; c$2]] in
-    mdet3 m.
+      则混合积的符号为正；若组成左手系，则符号为负。*)
+  Definition cv3mixed (a b c : cvec 3) := <a × b, c>.
 
-  (** A equivalent form *)
-  Lemma cv3mixed_eq : forall a b c : cvec 3, cv3mixed a b c = <a × b, c>.
+  (** The mixed product is equal to the determinant *)
+  Lemma cv3mixed_eq_det : forall a b c : cvec 3,
+      cv3mixed a b c = mdet3 (mconsc a (mconsc b c)).
   Proof. intros [a] [b] [c]. cbv. ring. Qed.
 
   (** 若混合积≠0，则三向量可构成平行六面体，即三向量不共面，反之也成立。
@@ -867,7 +902,7 @@ Section rotAxisAngle.
     intros.
     unfold rotAxisAngle.
     assert (v_para == <v,k> c* k) as H1.
-    { unfold v_para, cvproj. rewrite H. f_equiv. simpA2. field. }
+    { unfold v_para, cvproj. rewrite H. f_equiv. autounfold with A. field. }
     assert (v_perp == v - <v,k> c* k) as H2.
     { unfold v_perp. rewrite H1. easy. }
     assert (w == k × v) as H3.
@@ -890,10 +925,11 @@ Section rotAxisAngle.
     rewrite <- cvadd_assoc. rewrite cvadd_perm. rewrite cvadd_comm. f_equiv.
     unfold Rminus. rewrite Rmult_plus_distr_l. autorewrite with R.
     rewrite cvcmul_add_distr. rewrite cvadd_comm. f_equiv.
-    rewrite cvopp_vcmul. rewrite cvcmul_assoc. f_equiv. simpA2. ring.
+    rewrite cvopp_vcmul. rewrite cvcmul_assoc. f_equiv. autounfold with A. ring.
   Qed.
 
   (** Matrix formula of roation with axis-angle *)
+  (* https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula *)
   Definition rotAxisAngleMat (θ : R) (k : cvec 3) : smat 3 :=
     let K := cv3skew k in
     (mat1 + (sin θ) c* K + (1 - cos θ)%R c* K * K)%M.
@@ -902,23 +938,33 @@ Section rotAxisAngle.
       cvunit k -> (rotAxisAngleMat θ k) * v == rotAxisAngle θ k v.
   Proof.
     intros.
-    rewrite rotAxisAngle_form1. unfold rotAxisAngleMat.
-    rewrite cv3cross_eq_skew.
+    (* unfold rotAxisAngleMat. *)
+    rewrite rotAxisAngle_form1.
+    (* v * cosθ + (k × v) * sinθ + k *c (<k,v> * (1-cosθ)) *)
+    rewrite <- cvmulc_assoc.
+    (* v * cosθ + (k × v) * sinθ + (k *c <k,v>) *c (1-cosθ) *)
     remember (cv3skew k) as K.
+    assert ((k *c <k,v>) == v + K * (K * v)).
+    {
+      assert ((k *c <k,v>) == v - cvperp v k).
+      { unfold cvperp. unfold cvproj. rewrite H. rewrite cvdot_comm. lma. }
+      rewrite H0. rewrite cvperp_eq; auto.
+      rewrite !cv3cross_eq_skew_mul. rewrite <- HeqK.
+      unfold cvsub. rewrite ?cvopp_vopp. easy. }
+    rewrite (cvdot_comm v k). rewrite H0.
+    (* v * cosθ + (k × v) * sinθ + (v + K * (K * v)) * (1 - cosθ) *)
     rewrite !cvmulc_eq_vcmul.
-    rewrite !mmul_madd_distr_r.
-    am_move2h (sin θ c* K * v)%M.
-    am_move2h (sin θ c* (K * v)). f_equiv.
-    { rewrite cvcmul_mmul_assoc_l. easy. }
-    rewrite Rmult_comm.
-    (* rewrite <- cvcmul_mmul_assoc_l. *)
-    
-    (*   rewrite <- mcmul_mul_assoc_l. *)
-    (*   Set Printing All. *)
-  Abort.
+    rewrite !cvcmul_vadd_distr.
+    rewrite cv3cross_eq_skew_mul.
+    rewrite !cvcmul_mmul_assoc_l. rewrite <- !mmul_assoc.
+    move2h ((1 - cos θ)%R c* v). rewrite <- !associative.
+    assert ((1 - cos θ)%R c* v + cos θ c* v == v) by lma. rewrite H1.
+    (* right side is ready *)
+    unfold rotAxisAngleMat.
+    rewrite !mmul_madd_distr_r. rewrite <- HeqK. f_equiv. f_equiv. apply mmul_1_l.
+  Qed.
 
-
-  (** Direct formula of rotation with axis-angle *)
+  (* (** Direct formula of rotation with axis-angle *) *)
   (* Definition rotAxisAngle_direct (θ : R) (k : cvec 3) (v : cvec 3) : cvec 3 := *)
   (*   l2cv 3 *)
   (*     [? *)
@@ -926,7 +972,23 @@ Section rotAxisAngle.
 End rotAxisAngle.
 
 
-(** Exercise in textbook *)
+(* ==================================== *)
+(** ** 4D vector theory *)
+
+(** Standard unit vector in space of 4-dimensions *)
+Definition cv4i : cvec 4 := mk_cvec4 1 0 0 0.
+Definition cv4j : cvec 4 := mk_cvec4 0 1 0 0.
+Definition cv4k : cvec 4 := mk_cvec4 0 0 1 0.
+Definition cv4l : cvec 4 := mk_cvec4 0 0 0 1.
+
+Definition rv4i : rvec 4 := mk_rvec4 1 0 0 0.
+Definition rv4j : rvec 4 := mk_rvec4 0 1 0 0.
+Definition rv4k : rvec 4 := mk_rvec4 0 0 1 0.
+Definition rv4l : rvec 4 := mk_rvec4 0 0 0 1.
+
+
+(* ==================================== *)
+(** ** Exercise in textbook *)
 Section exercise.
   (** 习题8.2第12题, page 23, 高等数学，第七版 *)
   (** 利用向量来证明不等式，并指出等号成立的条件 *)
@@ -972,12 +1034,12 @@ Section test.
   (* Compute rv2l v1. *)
   (* Compute cv2l v2. *)
 
-  Variable a1 a2 a3 : A.
-  Let v3 := t2rv_3 (a1,a2,a3).
+  Variable a0 a1 a2 : A.
+  Let v3 := t2rv_3 (a0,a1,a2).
   (* Compute rv2l (rvmap v3 fopp). *)
   (* Eval cbn in rv2l (rvmap v3 fopp). *)
 
-  Let v4 := t2cv_3 (a1,a2,a3).
+  Let v4 := t2cv_3 (a0,a1,a2).
   (* Compute cv2l (cvmap v4 fopp). *)
   (* Eval cbn in cv2l (cvmap v4 fopp). *)
 End test.

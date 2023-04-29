@@ -13,7 +13,7 @@
 -arg -w -arg -local-declaration
 
 # ====== CoqExt ======================================================
-VFCS/CoqExt/BasicConfig.v
+VFCS/CoqExt/Basic.v
 VFCS/CoqExt/FuncExt.v
 VFCS/CoqExt/AlgebraStructure.v
 VFCS/CoqExt/BoolExt.v
@@ -44,7 +44,7 @@ VFCS/Math/Matrix/MatrixZ.v
 VFCS/Math/Matrix/MatrixQ.v
 VFCS/Math/Matrix/MatrixQc.v
 VFCS/Math/Matrix/MatrixR.v
-VFCS/Math/Matrix/MatrixRfun.v
+VFCS/Math/Matrix/MatrixRFun.v
 VFCS/Math/Matrix/MatrixC.v
 VFCS/Math/Matrix/Vector.v
 VFCS/Math/Matrix/VectorModule.v
@@ -53,7 +53,7 @@ VFCS/Math/Matrix/VectorZ.v
 VFCS/Math/Matrix/VectorQ.v
 VFCS/Math/Matrix/VectorQc.v
 VFCS/Math/Matrix/VectorR.v
-VFCS/Math/Matrix/VectorRfun.v
+VFCS/Math/Matrix/VectorRFun.v
 VFCS/Math/Matrix/VectorC.v
 
 VFCS/Math/LinearAlgebra/PermutationExt.v
