@@ -12,7 +12,7 @@
      page 96
 *)
 
-Require Import VectorR.
+Require Export VectorR.
 
 Open Scope R.
 Open Scope mat_scope.
@@ -727,10 +727,13 @@ Definition v3_non_colinear (v0 v1 : cvec 3) : Prop :=
 Let ex1 : (R*R*R) := Eval cbv in
       cv2t_3 (rot_axis_by_twovec (t2cv_3 (0.23,0.43,0)) (t2cv_3 (1.25,3.1,4.7))).
 
+(* Require Import ExtrOcamlBasic. *)
+(* Require Import MyExtrOCamlR. *)
 Extraction "quat.ml"
   mk_quat quat_of_ssss quat_of_t4
   qmul qconj qinv qnorm rot_by_quat
   ex1.
+
 
 (* 两个不共线的单位向量确定了一个旋转。*)
 

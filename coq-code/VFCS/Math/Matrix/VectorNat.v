@@ -8,8 +8,8 @@
   date      : 2021.12
  *)
 
-Require Import VectorModule.
-
+Require Export VectorModule.
+Require Export MatrixNat.
 
 (* ======================================================================= *)
 (** * Vector theory come from common implementations *)

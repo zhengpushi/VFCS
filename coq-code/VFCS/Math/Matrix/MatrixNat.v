@@ -15,10 +15,11 @@ Require Export MatrixModule.
 (* ======================================================================= *)
 (** * Matrix theory come from common implementations *)
 
+Module Export MatrixTheoryNat := BasicMatrixTheory ElementTypeNat.
+
 Open Scope nat_scope.
 Open Scope mat_scope.
 
-Module Export MatrixTheoryNat := BasicMatrixTheory ElementTypeNat.
 
 (* ======================================================================= *)
 (** * Matrix theory applied to this type *)

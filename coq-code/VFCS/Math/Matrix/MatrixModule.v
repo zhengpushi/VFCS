@@ -8,7 +8,8 @@
   date      : 2023.04
 
   remark    :
-  1. use functor to generate many similiar modules
+  1. use functor to generate many similiar modules, and help the type inference
+     at specify domain, so that simplify the coding.
   2. The matrix theory is orgainized at several levels
   (1) BasicMatrixTheory
       matrix theory on element with equivalence relaton.

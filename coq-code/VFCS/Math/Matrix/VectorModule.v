@@ -24,7 +24,9 @@
 
 Require Export Vector.
 Require Export ElementType.
-Require Export MatrixModule.
+
+(** Note: use lower-level Matrix instead of BasicMatrixTheory/RingMatrixtheory.
+    To avoiding type confusion *)
 
 
 (* ######################################################################### *)
@@ -33,7 +35,23 @@ Module BasicVectorTheory (E : ElementType).
 
   (* ==================================== *)
   (** ** Matrix theroy *)
-  Module Export BasicMatrixTheory_inst := BasicMatrixTheory E.
+  (* Module Export BasicMatrixTheory_inst := BasicMatrixTheory E. *)
+
+  (* ==================================== *)
+  (** ** Vector element type *)
+  Export E.
+  
+  Infix "==" := (eqlistA Aeq) : list_scope.
+  Infix "!=" := (fun l1 l2 => ~(l1 == l2)%list) : list_scope.
+  Infix "==" := (eqlistA (eqlistA Aeq)) : dlist_scope.
+  Infix "!=" := (fun d1 d2 => ~(d1 == d2)%dlist) : dlist_scope.
+
+  Notation "m ! i ! j " := (mnth Azero m i j) : mat_scope.
+  Infix "==" := (meq (Aeq:=Aeq)) : mat_scope.
+
+  Open Scope nat_scope.
+  Open Scope A_scope.
+  Open Scope mat_scope.
   
 
   (** ######################################################################### *)
@@ -338,9 +356,14 @@ End BasicVectorTheory.
 (* ######################################################################### *)
 (** * Ring vector theory *)
 Module RingVectorTheory (E : RingElementType).
-  Include (RingMatrixTheory E).
+
+  (* Include (RingMatrixTheory E). *)
+  
   Include (BasicVectorTheory E).
 
+  Infix "*" := (mmul (Aadd:=Aadd)(Azero:=Azero)(Amul:=Amul)) : mat_scope.
+  Infix "c*" := (mcmul (Amul:=Amul)) : mat_scope.
+  
   
   (** ######################################################################### *)
   (** * (Row Vector part) *)
@@ -424,7 +447,7 @@ Module RingVectorTheory (E : RingElementType).
   Lemma rvcmul_0_l : forall {n} (v : rvec n), Azero c* v == rvec0.
   Proof. intros. apply rvcmul_0_l. Qed.
 
-  Definition rvmulc {n} (v : rvec n) a : rvec n := mmulc v a.
+  Definition rvmulc {n} (v : rvec n) a : rvec n := mmulc (Amul:=Amul) v a.
   Infix "*c" := rvmulc : rvec_scope.
 
   (** v *c a = a c* v *)
@@ -750,16 +773,17 @@ End RingVectorTheory.
 (* ######################################################################### *)
 (** * Field vector theory *)
 Module FieldVectorTheory (E : FieldElementType).
-  Include (RingVectorTheory E).
+  
   (* Include (FieldMatrixTheory E). *)
-
+  
+  Include (RingVectorTheory E).
+  
   
   (** ######################################################################### *)
   (** * (Row Vector part) *)
 
   Open Scope rvec_scope.
   
-
   
   (** ######################################################################### *)
   (** * (Column Vector part) *)

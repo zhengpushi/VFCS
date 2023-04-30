@@ -6,10 +6,10 @@
   purpose   : Matrix theory on R.
   author    : ZhengPu Shi
   date      : 2021.12
-*)
+ *)
 
 Require Export RExt.
-Require Import MatrixModule.
+Require Export MatrixModule.
 
 
 (* ======================================================================= *)

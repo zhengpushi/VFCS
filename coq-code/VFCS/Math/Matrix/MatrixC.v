@@ -6,10 +6,10 @@
   purpose   : Matrix theory on Complex.
   author    : ZhengPu Shi
   date      : 2023.04
-*)
+ *)
 
 Require Export Complex.
-Require Import MatrixModule.
+Require Export MatrixModule.
 
 
 (* ======================================================================= *)

@@ -6,7 +6,7 @@
   purpose   : Matrix theory on Z.
   author    : ZhengPu Shi
   date      : 2021.12
-*)
+ *)
 
 Require Export ZExt.
 Require Export MatrixModule.
@@ -17,11 +17,12 @@ Require Export MatrixModule.
 
 Module Export MatrixTheoryZ := RingMatrixTheory RingElementTypeZ.
 
+Open Scope Z_scope.
+Open Scope mat_scope.
+
 
 (* ======================================================================= *)
 (** * Matrix theory applied to this type *)
-Open Scope Z_scope.
-Open Scope mat_scope.
 
 
 (* ======================================================================= *)

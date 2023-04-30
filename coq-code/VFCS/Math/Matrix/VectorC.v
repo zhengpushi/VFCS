@@ -8,7 +8,8 @@
   date      : 2023.04
  *)
 
-Require Import VectorModule.
+Require Export VectorModule.
+Require Export MatrixC.
 
 
 (* ======================================================================= *)

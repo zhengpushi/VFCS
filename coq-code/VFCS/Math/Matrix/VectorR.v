@@ -58,7 +58,6 @@ Require Export MatrixR.
 
 (* ======================================================================= *)
 (** * Vector theory come from common implementations *)
-
 Module Export VectorTheoryR := RingVectorTheory RingElementTypeR.
 
 Open Scope R_scope.
@@ -255,6 +254,8 @@ Section vdot.
       (i < n)%nat -> (j < n)%nat ->
       rvdot (mrow m i) (mrow m j) = (m * m\T) $ i $ j.
   Admitted.
+
+  
 End vdot.
 
 
@@ -590,7 +591,8 @@ Section morthogonal.
   Theorem morthogonal_keep_dot : forall {n} (m : smat n) (v1 v2 : cvec n),
       morthogonal m -> <m * v1, m * v2> = <v1, v2>.
   Proof.
-    intros. rewrite cvdot_eq_mul_trans.
+    intros.
+    rewrite cvdot_eq_mul_trans.
     unfold scalar_of_mat, Matrix.scalar_of_mat.
     rewrite (matf_mor _ (v1\T * v2)); auto.
     rewrite mtrans_mmul. rewrite mmul_assoc. rewrite <- (mmul_assoc _ m).

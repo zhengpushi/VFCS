@@ -22,17 +22,18 @@ Open Scope cvec_scope.
 (* Another name for R type *)
 Notation Real := R.
 (* short name for vector theory on complex number *)
-Module C := VectorTheoryC.
+Module CV := VectorTheoryC.
+Module CM := MatrixTheoryC.
 
 (** Convert cvecC to cvecR *)
-Definition cvecC_to_cvecR {n} (v : C.cvec n) (f : Complex.C -> R) : cvec n :=
-  f2cv (fun i => f (C.cv2f v i)).
+Definition cvecC_to_cvecR {n} (v : CV.cvec n) (f : Complex.C -> R) : cvec n :=
+  f2cv (fun i => f (CV.cv2f v i)).
 
 (** Calculate engenvalues and eigenvectors of a matrix.
     if [x,e] = eig(R), then:
     the eigenvalues are returned on the diagonal of the matrix e,
     and the corresponding eigenvectors are the corresponding columns of x *)
-Parameter eig : forall {n : nat} (m : mat n n), C.mat n n * C.mat n n.
+Parameter eig : forall {n : nat} (m : mat n n), CM.mat n n * CM.mat n n.
   
 
 (** A matrix is orthonormal:
@@ -393,12 +394,12 @@ Module SO3.
       let (x,e) := eig m in
       (* e(idx,idx) = cosθ +i sinθ *)
       let theta_of_idx (idx : nat) :=
-        (let ele := C.m2f e idx idx in atan (ele.b / ele.a)) in
+        (let ele := CM.m2f e idx idx in atan (ele.b / ele.a)) in
       (* the idx-th column of x contain the needed vector, which is the real part *)
-      let vec_of_idx (idx : nat) := cvecC_to_cvecR (C.mcol x idx) (fun c => c.a) in
+      let vec_of_idx (idx : nat) := cvecC_to_cvecR (CV.mcol x idx) (fun c => c.a) in
       (* find the angle and the vector *)
-      let x11 := (C.m2f x 0 0) in
-      let x22 := (C.m2f x 1 1) in
+      let x11 := (CM.m2f x 0 0) in
+      let x22 := (CM.m2f x 1 1) in
       if x11 ==? Complex.C1
       (* if x.11 ==? 1 *)
       then (theta_of_idx 1%nat, vec_of_idx 0%nat)

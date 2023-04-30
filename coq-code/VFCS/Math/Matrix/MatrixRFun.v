@@ -6,10 +6,9 @@
   purpose   : Matrix theory on function of R to R.
   author    : ZhengPu Shi
   date      : 2023.04
-*)
+ *)
 
 Require Export RExt.
-(* Require Export RealFunction. *)
 Require Export Calculus.
 Require Export MatrixModule.
 
