@@ -622,15 +622,6 @@ Qed.
 (** vector v is rotated by a quaternion q *)
 Definition rot_by_quat (q : quat) (v : quat) : quat := q * v * (qinv q).
 
-Require Import Extraction.
-Require Import ExtrOcamlBasic.
-Require Import MyExtrOCamlR.
-(* Extract Constant Rabst => "__". *)
-(* Extract Constant Rrepr => "__". *)
-(* Search quat. *)
-(* Recursive Extraction mk_quat quat_of_ssss quat_of_t4 qmul qconj qinv qnorm rot_by_quat. *)
-(* Extraction "quat.ml" mk_quat quat_of_ssss quat_of_t4  qmul qconj qinv qnorm rot_by_quat. *)
-
 (** 四元数p经过单位四元数q作用后得到四元数p'，其标量部分保持不变。公式5.26 *)
 Lemma rot_by_unit_quat_keep_s : forall (q p : quat) (H1 : qunit q),
   W p = W (rot_by_quat q p).
@@ -727,13 +718,6 @@ Definition v3_non_colinear (v0 v1 : cvec 3) : Prop :=
 Let ex1 : (R*R*R) := Eval cbv in
       cv2t_3 (rot_axis_by_twovec (t2cv_3 (0.23,0.43,0)) (t2cv_3 (1.25,3.1,4.7))).
 
-(* Require Import ExtrOcamlBasic. *)
-(* Require Import MyExtrOCamlR. *)
-Extraction "quat.ml"
-  mk_quat quat_of_ssss quat_of_t4
-  qmul qconj qinv qnorm rot_by_quat
-  ex1.
-
 
 (* 两个不共线的单位向量确定了一个旋转。*)
 
@@ -809,3 +793,15 @@ Proof.
   (* Compute (m2l (qMINUS(quat_of_ssss q0 q1 q2 q3))). *)
   lma.
 Qed.
+
+
+
+Require Import Extraction.
+Require Import ExtrOcamlBasic.
+Require Import MyExtrOCamlR.
+(* Extract Constant Rabst => "__". *)
+(* Extract Constant Rrepr => "__". *)
+(* Extraction "quat.ml" mk_mat_3_1. (* Why so many warning? *) *)
+(* Recursive Extraction mk_quat quat_of_ssss quat_of_t4 qmul qconj qinv qnorm rot_by_quat. *)
+(* Extraction "quat.ml" mk_quat quat_of_ssss quat_of_t4 qmul qconj qinv. qnorm rot_by_quat. *)
+

@@ -112,6 +112,10 @@ Reserved Notation "v .0"       (at level 20, format "v .0").      (* v[0] *)
 Reserved Notation "v .1"       (at level 20, format "v .1").
 Reserved Notation "v .2"       (at level 20, format "v .2").
 Reserved Notation "v .3"       (at level 20, format "v .3").
+Reserved Notation "v .x"       (at level 20, format "v .x").      (* v[0] *)
+Reserved Notation "v .y"       (at level 20, format "v .y").
+Reserved Notation "v .z"       (at level 20, format "v .z").
+Reserved Notation "v .w"       (at level 20, format "v .w").
 
 
 (* this level is consistent with coq.ssr.ssrbool.v *)
@@ -305,9 +309,9 @@ Declare Scope dlist_scope.
 Delimit Scope dlist_scope with dlist.
 Open Scope dlist.
 
-(** Scope for function (nat-indexed) *)
+(** Scope for function (especially for nat-indexed function such as "nat -> A") *)
 Declare Scope fun_scope.
-Delimit Scope fun_scope with F.
+Delimit Scope fun_scope with F. (* Note that, Ranalysis1 defined Rfun_scope with F *)
 Open Scope fun_scope.
 
 (** Scope for matrix type *)
@@ -315,19 +319,15 @@ Declare Scope mat_scope.
 Delimit Scope mat_scope with M.
 Open Scope mat_scope.
 
-(** Scope for column-vector type *)
-Declare Scope cvec_scope.
-Delimit Scope cvec_scope with CV.
-Open Scope cvec_scope.
-
 (** Scope for row-vector type *)
 Declare Scope rvec_scope.
 Delimit Scope rvec_scope with RV.
 Open Scope rvec_scope.
 
-(* Declare Scope vec_scope. *)
-(* Delimit Scope vec_scope with V. *)
-(* Open Scope vec_scope. *)
+(** Scope for column-vector type *)
+Declare Scope cvec_scope.
+Delimit Scope cvec_scope with CV.
+Open Scope cvec_scope.
 
 (** Scope for linear-space type *)
 Declare Scope LinearSpace_scope.

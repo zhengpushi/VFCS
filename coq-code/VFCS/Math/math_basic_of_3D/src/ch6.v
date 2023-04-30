@@ -1,7 +1,9 @@
 
 Require Import VectorR.
 
-(** ch6 本章讨论一些有趣和有用的矩阵运算来结束矩阵主题 *)
+(** ch6 矩阵详解：*)
+
+(* 本章讨论一些有趣和有用的矩阵运算来结束矩阵主题 *)
 
 (** * 6.1 矩阵的行列式 *)
 
@@ -359,47 +361,89 @@ Section sec_6_4_3.
   Proof.
     intros.
     assert ((mtransl3 p) * (mtransl3 (-p)) == mat1) by lma.
-    (* Import MatrixTheoryR.  *)
-    apply mmul_eq1_iff_minv_l. ? auto.
-    Check mmul.
-    PEauto.
+    apply mmul_eq1_iff_minv_l. auto.
   Qed.
-    Search (minv).
-    
-    lma.
-
-    intros. rewrite <- minv4_eq_inv. lma.
-    Search morthogonal.
-    assert (minv4 (mtransl3 p) == mtransl3 p⁻¹).
-    Search minv3.
-    apply minv3_eq_inv.
-    rewrite minv3
-    lma. cbv. intros. autorewrite with R. ?
-    simpl. by_cell.
-
-    by_cell; autorewrite with R.
-    simpl.
-    - autorewrite with R.
-    
-    Print minv.
-    Print Matrix.minv.
-    Compute (mdet 
-    Print Matrix.madj 
-    lma.
+  
   (* 仿射变换的额外平移仅改变矩阵最后一列，而旋转部分不受影响 *)
   Goal forall (R : smat 3) (p : cvec 3),
       let T := mtransl3 p in
       let R4 := m324 R in
       T * R4 * (T⁻¹) == mrottransl R (p - R * p).
   Proof.
-    (* Tips: 这个证明比较困难 *)
-    intros. unfold T,R4. unfold mrottransl, mtransl3,m324. simpl.
-    
-    Opaque minv. lma. cbv.
-    cbn.
-    lma.
+    intros. unfold T,R4. unfold mrottransl, mtransl3,m324.
+    (* 首先用4维上的逆矩阵公式展开，以简化公式。证明大约耗时3秒 *)
+  (*   rewrite <- minv4_eq_inv. lma. *)
+  (*   (* prove "det m <> 0" *) *)
+  (*   cbv; autorewrite with R. ra. *)
+    (* Qed. *)
+  Admitted. (* 为提供编译速度，暂时注释掉 *)
       
-
 End sec_6_4_3.
+
+
+(** * 6.5 关于4x4矩阵和透视投影 *)
+
+(** 将三维空间投影到二维平面，该平面称为投影平面。
+    正交投影也称为正投影或平行投影，因为投影线是平行的。
+    投影线（Projector）是从初始点到平面上的最终投影点的线。
+    三维中的透视投影（Perspective Projection）也投影到二维平面上，但投影线不平行。
+    实际上，它们在一个点上相交，该点称为投影中心（Center of Projection）。
+
+    由于投影中心位于投影迎面的前方，投影线在撞击平面之前交叉，因此图像被反转。
+    在投影中心固定时，物体离投影中心越远，其正交投影保持不变，而透视投影a越小，
+    这称为透视缩小（Perspective Foreshortening）。 *)
+
+(** ** 6.5.1 针孔相机 *)
+Section sec_6_5_1.
+  (* 透视投影模拟了人类视觉系统。但人的视觉系统更复杂，有两只眼镜，且眼镜的投影表面
+     （视网膜）都不是平的。
+     一个更简单的例子是针孔相机（Pinhole Camera）：光线进入针孔后投影到盒子另一端,
+     即投影平面。此时，投影出的图像是反转的，因为光线在针孔（投影中心）相遇时交叉。
+     
+     考虑针孔相机透视投影背后的几何问题。
+     一个三维空间，原点位于针孔（投影中心），给定投影平面 z = -d，那么可以计算其投影。*)
+
+  (** 投影到 z = -d 平面上的 *)
+  Let proj_point_to_neg_z (d : R) (p : cvec 3) : cvec 3 :=
+        l2cv [- d * p.x / p.z; - d * p.y / p.z; (-d)%R].
+
+  (** 实践中，减号会产生额外的复杂性，可将投影平面移动到 z = d。
+      虽然真正的针孔相机不可能是这样。然而，计算机内部的数学处理是完全有效的。*)
+
+  (** 投影到 z = d 平面上的 *)
+  Let proj_point_to_z (d : R) (p : cvec 3) : cvec 3 :=
+        l2cv [d * p.x / p.z; d * p.y / p.z; d].
+  
+End sec_6_5_1.
+
+(** ** 6.5.2 透视投影矩阵 *)
+Section sec_6_5_2.
+  (* 在 6.5.1 中推导出的转换公式含有除法，可以在4x4矩阵中编码透视投影。
+     将齐次矢量 [x y z 1] 投影到 [x y z z/d] *)
+
+  (** 使用 4x4 矩阵投影到 z = d 平面上 *)
+  Definition proj4 (d : R) : smat 4 :=
+    l2m [[1; 0; 0; 0];
+         [0; 1; 0; 0];
+         [0; 0; 1; 0];
+         [0; 0; (1/d); 0]].
+
+  Lemma proj4_spec : forall d (p : cvec 3),
+      let p' := cv324 p in
+      (proj4 d) * p' == l2cv [p.x; p.y; p.z; p.z / d].
+  Proof. lma. Qed.
+
+  (** 这个 4x4 投影矩阵的一些说明：
+      1. 矩阵乘法并不真正执行透视变换，它计算w。当将四维转换到3维时，才会真正执行透视除法
+      2. 可以有许多变体。例如，投影平面z=0，投影中心在 [0 0 d]，这会得到一个稍不同的公式
+      3. 此过程看起来似乎只是将三维坐标的各分量除以z，而不必使用矩阵。那么，为什么
+         要使用齐次空间呢？首先，4x4矩阵提供的这个变换可以和其他变换连接。其次，也可能会
+         投影到非轴对称平面。
+      4. 真实图形几何管道中的投影矩阵（Projection Matrix）——更准确地被称为剪辑矩阵
+         （Clip Matrix）——不仅仅是将z复制到w，它还会有些额外的工作。
+
+         在 10.3.2 会有技术细节，以及实际应用。*)
+
+End sec_6_5_2.
 
 

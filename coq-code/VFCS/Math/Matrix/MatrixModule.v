@@ -34,10 +34,6 @@ Require Export ElementType.
 
 Module BasicMatrixTheory (E : ElementType).
 
-  (** Basic library *)
-  (* Export BasicConfig TupleExt. *)
-
-  
   (* ==================================== *)
   (** ** Matrix element type *)
   Export E.
@@ -312,7 +308,6 @@ Module BasicMatrixTheory (E : ElementType).
   Proof. intros. apply (mtrans_diag (Azero:=Azero)); auto. Qed.
 
 End BasicMatrixTheory.
-
 
 
 (* ######################################################################### *)
@@ -835,7 +830,6 @@ End RingMatrixTheory.
 Module FieldMatrixTheory (E : FieldElementType).
   
   Include (RingMatrixTheory E).
-
   
   (* ==================================== *)
   (** ** Cramer rule *)

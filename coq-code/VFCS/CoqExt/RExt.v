@@ -61,12 +61,9 @@
  *)
 
 
-Require Import Basic.
-(* Require Import AlgebraStructure. *)
-
-Require Export ZExt.
-(* Require Export Psatz. *)
 Require Export Lia Lra Reals.
+Require Export ZExt.
+Require Export Basic.
 
 Open Scope R_scope.
 
@@ -938,8 +935,6 @@ Rpower rules:
  *)
 Lemma Rpower_neq0 x y : x <> 0 -> Rpower x y <> 0.
 Proof.
-  zify.
-  
   Abort.
 
 
@@ -1527,6 +1522,4 @@ Qed.
 (** * Temporarily added lemmas, need to be arranged to proper places *)
 
 Lemma mult_PI_gt0 : forall r, 0 < r -> 0 < r * PI.
-Proof.
-  ra.
-Qed.  
+Proof. ra. Qed.  

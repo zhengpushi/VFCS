@@ -14,7 +14,7 @@
   1. Vector Calculus - Michael Corral
   2. https://github.com/coq/coq/blob/master/test-suite/success/Nsatz.v
      Note: there are geometrys in coq, including point, parallel, collinear, etc.
-  3. (in Chinese) Higher Mathematics Study Manual - Xu Xiao Zhan, p173
+n  3. (in Chinese) Higher Mathematics Study Manual - Xu Xiao Zhan, p173
      《高等数学学习手册》徐小湛，p173
  *)
 
@@ -346,8 +346,12 @@ Section vec_ring.
   (** dot production of two vectors. *)
   Definition rvdot {n : nat} (v1 v2 : rvec n) : A :=
     seqsum (fun i => v1$i * v2$i) n (Aadd:=Aadd) (Azero:=Azero).
-  
   Notation "< a , b >" := (rvdot a b) : rvec_scope.
+  
+  #[export] Instance rvdot_mor {n} : Proper (meq ==> meq ==> Aeq) (@rvdot n).
+  Proof.
+    simp_proper. intros. unfold rvdot. apply seqsum_eq. intros. f_equiv; auto.
+  Qed.
 
   (** <v1,v2> = <v2,v1> *)
   Lemma rvdot_comm : forall {n} (v1 v2 : rvec n), (<v1,v2> == <v2,v1>)%A.

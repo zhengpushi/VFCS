@@ -53,12 +53,21 @@
  *)
 
 Require Export VectorModule.
-Require Export MatrixR.
+Require MatrixR.
 
 
 (* ======================================================================= *)
 (** * Vector theory come from common implementations *)
-Module Export VectorTheoryR := RingVectorTheory RingElementTypeR.
+
+Module VectorTheoryR := RingVectorTheory RingElementTypeR.
+
+(* Note: The VectorTheoryR will contain basic matrix theory, but we need more 
+   matrix theory which have been developped in module MatrixR.
+   So, we should use this sequence to import the extended matrix theory.
+   I think the manual controlling work is a disadvantage of Module style
+ *)
+Export VectorTheoryR.
+Export MatrixR.
 
 Open Scope R_scope.
 Open Scope mat_scope.
@@ -704,9 +713,22 @@ Section v3.
 
   (** Standard basis vector in Euclidean space of 3-dimensions *)
   Section basis_vector.
+    
+    Open Scope rvec_scope.
+    
     Definition rv3i : rvec 3 := mk_rvec3 1 0 0.
     Definition rv3j : rvec 3 := mk_rvec3 0 1 0.
     Definition rv3k : rvec 3 := mk_rvec3 0 0 1.
+    
+    (** <v,i> = v.0, <v,j> = v.1, <v,k> = v.2 *)
+    Lemma rvdot_v3i_l : forall v : rvec 3, <rv3i, v> = v.0. Proof. intros. cbv; ring. Qed.
+    Lemma rvdot_v3j_l : forall v : rvec 3, <rv3j, v> = v.1. Proof. intros. cbv; ring. Qed.
+    Lemma rvdot_v3k_l : forall v : rvec 3, <rv3k, v> = v.2. Proof. intros. cbv; ring. Qed.
+    Lemma rvdot_v3i_r : forall v : rvec 3, <v, rv3i> = v.0. Proof. intros. cbv; ring. Qed.
+    Lemma rvdot_v3j_r : forall v : rvec 3, <v, rv3j> = v.1. Proof. intros. cbv; ring. Qed.
+    Lemma rvdot_v3k_r : forall v : rvec 3, <v, rv3k> = v.2. Proof. intros. cbv; ring. Qed.
+
+    Open Scope cvec_scope.
 
     Definition cv3i : cvec 3 := mk_cvec3 1 0 0.
     Definition cv3j : cvec 3 := mk_cvec3 0 1 0.
@@ -881,7 +903,7 @@ Section v3.
     ref: https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula.
     利用两次叉乘得到垂直分量的表示。此式在几何上容易理解，但代数上不是很显然。*)
     Definition cv3perp (a b : cvec 3) : cvec 3 := - ((a × b) × b).
-    
+
     Lemma cv3perp_spec : forall (a b : cvec 3), cvunit b -> cvperp a b == cv3perp a b.
     Proof.
       intros. unfold cvperp,cvproj,cv3perp. rewrite H. autorewrite with R.
