@@ -772,7 +772,7 @@ Section Cinv.
 
   Lemma Cmul_inv_l : forall z : C, z <> 0 -> / z * z = 1.
   Proof.
-    Ceq. cbv. field. apply Rplus_sqr_neq0_iff2. apply Cneq_iff in H. auto.
+    Ceq. cbv. field. apply Rplus2_sqr_neq0. apply Cneq_iff in H. auto.
   Qed.
 
   Lemma Cmul_inv_r : forall z:C, z <> C0 -> z * /z = 1.

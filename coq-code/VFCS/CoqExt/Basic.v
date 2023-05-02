@@ -112,10 +112,10 @@ Reserved Notation "v .0"       (at level 20, format "v .0").      (* v[0] *)
 Reserved Notation "v .1"       (at level 20, format "v .1").
 Reserved Notation "v .2"       (at level 20, format "v .2").
 Reserved Notation "v .3"       (at level 20, format "v .3").
-Reserved Notation "v .x"       (at level 20, format "v .x").      (* v[0] *)
-Reserved Notation "v .y"       (at level 20, format "v .y").
-Reserved Notation "v .z"       (at level 20, format "v .z").
-Reserved Notation "v .w"       (at level 20, format "v .w").
+(* Reserved Notation "v .x"       (at level 20, format "v .x").      (* v[0] *) *)
+(* Reserved Notation "v .y"       (at level 20, format "v .y"). *)
+(* Reserved Notation "v .z"       (at level 20, format "v .z"). *)
+(* Reserved Notation "v .w"       (at level 20, format "v .w"). *)
 
 
 (* this level is consistent with coq.ssr.ssrbool.v *)

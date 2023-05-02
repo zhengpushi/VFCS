@@ -84,10 +84,10 @@ Module BasicVectorTheory (E : ElementType).
   Notation "v .1" := (v $ 1) : rvec_scope.
   Notation "v .2" := (v $ 2) : rvec_scope.
   Notation "v .3" := (v $ 3) : rvec_scope.
-  Notation "v .x" := (v $ 0) : rvec_scope.
-  Notation "v .y" := (v $ 1) : rvec_scope.
-  Notation "v .z" := (v $ 2) : rvec_scope.
-  Notation "v .w" := (v $ 3) : rvec_scope.
+  (* Notation "v .x" := (v $ 0) : rvec_scope. *)
+  (* Notation "v .y" := (v $ 1) : rvec_scope. *)
+  (* Notation "v .z" := (v $ 2) : rvec_scope. *)
+  (* Notation "v .w" := (v $ 3) : rvec_scope. *)
   
   
   (** Get element of vector, the index will be restricted to in the bound, safe *)
@@ -225,10 +225,10 @@ Module BasicVectorTheory (E : ElementType).
   Notation "v .1" := (v $ 1) : cvec_scope.
   Notation "v .2" := (v $ 2) : cvec_scope.
   Notation "v .3" := (v $ 3) : cvec_scope.
-  Notation "v .x" := (v $ 0) : cvec_scope.
-  Notation "v .y" := (v $ 1) : cvec_scope.
-  Notation "v .z" := (v $ 2) : cvec_scope.
-  Notation "v .w" := (v $ 3) : cvec_scope.
+  (* Notation "v .x" := (v $ 0) : cvec_scope. *)
+  (* Notation "v .y" := (v $ 1) : cvec_scope. *)
+  (* Notation "v .z" := (v $ 2) : cvec_scope. *)
+  (* Notation "v .w" := (v $ 3) : cvec_scope. *)
   
   (** Get element of vector, the index will be restricted to in the bound, safe *)
   Definition cvnth {n} (v : cvec n) i : A := v ! i ! 0.

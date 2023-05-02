@@ -711,6 +711,21 @@ End v2.
 (** ** 3D vector theory *)
 Section v3.
 
+  (** Equality and Inequality *)
+  Section cv3eq_cv3neq.
+
+    (** Convert equality of vector to equality of its components *)
+    Lemma cv3eq_iff : forall (v1 v2 : cvec 3),
+        v1 == v2 <-> (v1.0 = v2.0 /\ v1.1 = v2.1 /\ v1.2 = v2.2).
+    Proof. intros. split; intros. repeat (split; try apply H; auto). lma. Qed.
+
+    (** Convert inequality of vector to inequality of its components *)
+    Lemma cv3neq_iff : forall (v1 v2 : cvec 3),
+        v1 != v2 <-> (v1.0 <> v2.0 \/ v1.1 <> v2.1 \/ v1.2 <> v2.2).
+    Proof. intros. unfold not. rewrite cv3eq_iff. lra. Qed.
+
+  End cv3eq_cv3neq.
+
   (** Standard basis vector in Euclidean space of 3-dimensions *)
   Section basis_vector.
     
@@ -751,6 +766,17 @@ Section v3.
     Lemma cv3dot_spec : forall v1 v2 : cvec 3, cv3dot v1 v2 = <v1,v2>.
     Proof. intros. cbv. ring. Qed.
   End cv3dot.
+
+  (** Unit vector in 3D *)
+  Section cvunit.
+
+    (** A unit vector has a algebra equation relation *)
+    Lemma cv3unit_eq1 : forall (n : cvec 3),
+        cvunit n -> n.00 ^ 2 = (1 - n.10 ^ 2 - n.20 ^ 2)%R.
+    Proof. intros. cvec2fun. cbv in *. ring_simplify in H. ring_simplify. lra. Qed.
+
+  End cvunit.
+    
 
   (** Normalization in 3D *)
   Section cv3normalize.
@@ -1158,6 +1184,21 @@ Notation "`| v |ₓ" := (cv3skew v).
 (* ==================================== *)
 (** ** 4D vector theory *)
 Section v4.
+
+  (** Equality and Inequality *)
+  Section cv4eq_cv4neq.
+
+    (** Convert equality of vector to equality of its components *)
+    Lemma cv4eq_iff : forall (v1 v2 : cvec 4),
+        v1 == v2 <-> (v1.0 = v2.0 /\ v1.1 = v2.1 /\ v1.2 = v2.2 /\ v1.3 = v2.3).
+    Proof. intros. split; intros. repeat (split; try apply H; auto). lma. Qed.
+
+    (** Convert inequality of vector to inequality of its components *)
+    Lemma cv4neq_iff : forall (v1 v2 : cvec 4),
+        v1 != v2 <-> (v1.0 <> v2.0 \/ v1.1 <> v2.1 \/ v1.2 <> v2.2 \/ v1.3 <> v2.3).
+    Proof. intros. unfold not. rewrite cv4eq_iff. lra. Qed.
+
+  End cv4eq_cv4neq.
 
   (** Standard unit vector in space of 4-dimensions *)
   Section basis_vector.

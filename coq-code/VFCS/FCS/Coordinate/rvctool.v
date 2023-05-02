@@ -13,7 +13,7 @@
 
 Require Import Lra.
 
-Require Import Quaternion.
+(* Require Import Quaternion. *)
 Require Import VectorC.
 Require Import VectorR.
 
@@ -418,12 +418,12 @@ Module SO3.
   (** Unit Quaternions *)
   Section UnitQuaternion.
 
-    (** rotation matrix to unit quaternion *)
-    (* Definition r2q *)
-    Parameter r2q : mat 3 3 -> quat.
+    (* (** rotation matrix to unit quaternion *) *)
+    (* (* Definition r2q *) *)
+    (* Parameter r2q : mat 3 3 -> quat. *)
 
-    (** unit quaternion to rotation matrix *)
-    Parameter q2r : quat -> mat 3 3.
+    (* (** unit quaternion to rotation matrix *) *)
+    (* Parameter q2r : quat -> mat 3 3. *)
 
   End UnitQuaternion.
 

@@ -207,7 +207,7 @@ Global Hint Resolve
   Rlt_not_eq          (* r1 < r2 -> r1 <> r2 *)
 
   (* inequalities containing "sqrt" *)
-  sqrt_lt_R0          (* 0 < x -> 0 < sqrt x *)
+  sqrt_lt_R0          (* 0 < x -> 0 < sqrt x *) (* THIS should be IFF *)
   sqrt_inj            (* 0 <= x -> 0 <= y -> sqrt x = sqrt y -> x = y *)
   : R.
 
@@ -499,93 +499,101 @@ Proof. intros. field; auto. Qed.
 (* ======================================================================= *)
 (** ** About "square" *)
 
-Lemma Rle_0_xx : forall r, 0 <= r * r.
-Proof.
-  ra.
-Qed.
-
-(** The sum of squares of two real numbers is non-negative *)
-Lemma Rplus_sqr_ge0 : forall r1 r2 : R, 0 <= r1² + r2².
-Proof.
-  ra.
-Qed.
-
-
-(** The sum of squares of two real numbers is non-negative *)
-Lemma Rplus_sqr_ge0_form2 : forall r1 r2 : R, 0 <= r1 * r1 + r2 * r2.
-Proof.
-  ra.
-Qed.
-
-(** The sum of squares of two real numbers is positive, iff they are not both 0 *)
-Lemma Rplus_sqr_gt0 : forall r1 r2 : R, 0 < r1² + r2² <-> (r1 <> 0 \/ r2 <> 0).
-Proof.
-  ra.
-Qed.
-
-Lemma Rplus_sqr_gt0_l : forall r1 r2, r1 <> 0 -> 0 < r1² + r2².
+(* -------------------------------------------- *)
+(** *** r * r *)
+Lemma Rsqr_ge0 : forall r, 0 <= r * r.
 Proof. ra. Qed.
 
-Lemma Rplus_sqr_gt0_r : forall r1 r2, r2 <> 0 -> 0 < r1² + r2².
+(* -------------------------------------------- *)
+(** *** r1² + r2² *)
+
+(** r1² + r2² = 0 <-> r1 = 0 /\ r2 = 0 *)
+Lemma Rplus2_sqr_eq0 : forall r1 r2, r1² + r2² = 0 <-> r1 = 0 /\ r2 = 0.
 Proof. ra. Qed.
 
-(** If the sum of squares of two real numbers is zero, then the second number is 0 *)
-Lemma Rplus_sqr_eq_0_r : forall r1 r2, r1² + r2² = 0 -> r2 = 0.
-Proof.
-  ra.
-Qed.
+(* Lemma Rplus2_sqr_eq0' : forall r1 r2, r1 * r1 + r2 * r2 = 0 <-> r1 = 0 /\ r2 = 0. *)
+(* Proof. ra. Qed. *)
 
-(** Real number inequality: 2 * a * b <= a² + b² *)
-Lemma R_neq1 : forall r1 r2 : R, 2 * r1 * r2 <= r1² + r2².
-Proof.
-  intros. apply Rge_le. apply Rminus_ge.
-  (* (a-b)² = a² + b² - 2ab *)
-  rewrite <- Rsqr_minus. auto with R.
-Qed.
+(** r1² + r2² = 0 -> r1 = 0 *)
+Lemma Rplus2_sqr_eq0_l : forall r1 r2, r1² + r2² = 0 -> r1 = 0.
+Proof. ra. Qed.
 
-(** r1² + r2² = 0 <-> r1 = 0 /\ r2 = 0 *)
-Lemma Rplus_sqr_eq0_iff : forall r1 r2, r1² + r2² = 0 <-> r1 = 0 /\ r2 = 0.
-Proof.
-  ra.
-Qed.
+(** r1² + r2² = 0 -> r2 = 0 *)
+Lemma Rplus2_sqr_eq0_r : forall r1 r2, r1² + r2² = 0 -> r2 = 0.
+Proof. ra. Qed.
 
-(** r1² + r2² = 0 <-> r1 = 0 /\ r2 = 0 *)
-Lemma Rplus_sqr_eq0_iff_form2 : forall r1 r2, r1 * r1 + r2 * r2 = 0 <-> r1 = 0 /\ r2 = 0.
-Proof.
-  ra.
-Qed.
-
-(** r1 <> 0 \/ r2 <> 0 <-> r1² + r2² <> 0 *)
-Lemma Rplus_sqr_neq0_iff2 : forall r1 r2, r1 <> 0 \/ r2 <> 0 <-> r1² + r2² <> 0.
+(** r1² + r2² <> 0 <-> r1 <> 0 \/ r2 <> 0 *)
+Lemma Rplus2_sqr_neq0 : forall r1 r2, r1² + r2² <> 0 <-> r1 <> 0 \/ r2 <> 0.
 Proof. ra. Qed.
 
 (** r1*r1 + r2*r2 <> 0 -> 0 < r1*r1 + r2*r2 *)
-Lemma Rplus_sqr_sqr_neq0_iff_Rplus_sqr_sqr_gt0 : forall r1 r2 : R,
+Lemma Rplus2_sqr_neq0_iff_gt0 : forall r1 r2 : R,
   r1² + r2² <> 0 <-> 0 < r1² + r2².
 Proof. ra. Qed.
 
-(** r1 <> 0 \/ r2 <> 0 \/ r3 <> 0 <-> r1² + r2² + r3² <> 0 *)
-Lemma Rplus_sqr_neq0_iff3 : forall r1 r2 r3 : R,
-  r1 <> 0 \/ r2 <> 0 \/ r3 <> 0 <-> r1² + r2² + r3² <> 0.
+(** 2 * a * b <= a² + b² *)
+Lemma R_neq1 : forall r1 r2 : R, 2 * r1 * r2 <= r1² + r2².
+Proof. intros. apply Rge_le. apply Rminus_ge. rewrite <- Rsqr_minus. auto with R. Qed.
+
+(** 0 <= r1² + r2² *)
+Lemma Rplus2_sqr_ge0 : forall r1 r2 : R, 0 <= r1² + r2².
 Proof. ra. Qed.
 
-(** r1 <> 0 \/ r2 <> 0 \/ r3 <> 0 \/ r4 <> 0 <-> 
-    r1² + r2² + r3² + r4² <> 0 *)
-Lemma Rplus_sqr_neq0_iff4 : forall r1 r2 r3 r4 : R,
-  r1 <> 0 \/ r2 <> 0 \/ r3 <> 0 \/ r4 <> 0 <-> r1² + r2² + r3² + r4² <> 0.
+(* Lemma Rplus2_sqr_ge0' : forall r1 r2 : R, 0 <= r1 * r1 + r2 * r2. *)
+(* Proof. ra. Qed. *)
+
+(** 0 < r1² + r2² <-> (r1 <> 0 \/ r2 <> 0) *)
+Lemma Rplus2_sqr_gt0 : forall r1 r2 : R, 0 < r1² + r2² <-> (r1 <> 0 \/ r2 <> 0).
+Proof. ra. Qed.
+
+(** r1 <> 0 -> 0 < r1² + r2² *)
+Lemma Rplus2_sqr_gt0_l : forall r1 r2, r1 <> 0 -> 0 < r1² + r2².
+Proof. ra. Qed.
+
+(** r2 <> 0 -> 0 < r1² + r2² *)
+Lemma Rplus2_sqr_gt0_r : forall r1 r2, r2 <> 0 -> 0 < r1² + r2².
+Proof. ra. Qed.
+
+
+(* -------------------------------------------- *)
+(** *** r1² + r2² + r3² *)
+
+(** r1² + r2² + r3² = 0 <-> r1 = 0 /\ r2 = 0 /\ r3 = 0 *)
+Lemma Rplus3_sqr_eq0 : forall r1 r2 r3 : R,
+  r1² + r2² + r3² = 0 <-> r1 = 0 /\ r2 = 0 /\ r3 = 0.
+Proof. ra. Qed.
+
+(** r1² + r2² + r3² <> 0 <-> r1 <> 0 \/ r2 <> 0 \/ r3 <> 0 *)
+Lemma Rplus3_sqr_neq0 : forall r1 r2 r3 : R,
+  r1² + r2² + r3² <> 0 <-> r1 <> 0 \/ r2 <> 0 \/ r3 <> 0.
+Proof. ra. Qed.
+
+(* -------------------------------------------- *)
+(** *** r1² + r2² + r3² + r4² *)
+
+(** r1² + r2² + r3² + r4² = 0 <-> r1 = 0 /\ r2 = 0 /\ r3 = 0 /\ r4 = 0 *)
+Lemma Rplus4_sqr_eq0 : forall r1 r2 r3 r4 : R,
+  r1² + r2² + r3² + r4² = 0 <-> r1 = 0 /\ r2 = 0 /\ r3 = 0 /\ r4 = 0.
+Proof. ra. Qed.
+
+(** r1² + r2² + r3² + r4² <> 0 <-> r1 <> 0 \/ r2 <> 0 \/ r3 <> 0 \/ r4 <> 0 *)
+Lemma Rplus4_sqr_neq0 : forall r1 r2 r3 r4 : R,
+  r1² + r2² + r3² + r4² <> 0 <-> r1 <> 0 \/ r2 <> 0 \/ r3 <> 0 \/ r4 <> 0.
 Proof. ra. Qed.
 
 Global Hint Resolve
-  Rle_0_xx             (* 0 <= x * x *)
-  Rplus_sqr_ge0        (* 0 <= r1² + r2² *)
-  Rplus_sqr_ge0_form2  (* 0 <= r1² + r2² *)
-  Rplus_sqr_gt0        (* 0 < r1² + r2² *)
-  Rplus_sqr_eq_0_l     (* r1² + r2² = 0 -> r1 = 0 *)
-  Rplus_sqr_eq_0_r     (* r1² + r2² = 0 -> r2 = 0 *)
-  Rplus_sqr_neq0_iff2  (* r1<>0 \/ r2<>0 <-> r1² + r2²<>0 *)
-  Rplus_sqr_neq0_iff3  (* r1,r2,r3, ... *)
-  Rplus_sqr_neq0_iff4  (* r1,r2,r3,r4, ... *)
-  Rplus_sqr_sqr_neq0_iff_Rplus_sqr_sqr_gt0 (* r1² + r2²<>0 <-> 0 <r1² + r2² *)
+  Rsqr_ge0             (* 0 <= x * x *)
+  Rplus2_sqr_eq0       (* r1² + r2² = 0 <-> r1 = 0 /\ r2 = 0 *)
+  Rplus2_sqr_eq0_l     (* r1² + r2² = 0 -> r1 = 0 *)
+  Rplus2_sqr_eq0_r     (* r1² + r2² = 0 -> r2 = 0 *)
+  Rplus2_sqr_neq0         (* r1² + r2²<>0 <-> r1<>0 \/ r2<>0*)
+  Rplus2_sqr_neq0_iff_gt0 (* r1² + r2²<>0 <-> 0 <r1² + r2² *)
+  Rplus2_sqr_ge0       (* 0 <= r1² + r2² *)
+  Rplus2_sqr_gt0       (* 0 < r1² + r2² *)
+  Rplus3_sqr_eq0       (* r1,r2,r3, ... *)
+  Rplus3_sqr_neq0      (* r1,r2,r3, ... *)
+  Rplus4_sqr_eq0       (* r1,r2,r3,r4 ... *)
+  Rplus4_sqr_neq0      (* r1,r2,r3,r4 ... *)
   R_neq1               (* 2 * a * b <= a² + b² *)
   : R.
 
@@ -630,6 +638,7 @@ Global Hint Resolve
 (* ======================================================================= *)
 (** ** About "sqrt" *)
 
+(** sqrt (r * r) = |r| *)
 Lemma sqrt_square_abs : forall r, sqrt (r * r) = |r|.
 Proof.
   intros. destruct (Rcase_abs r).
@@ -654,13 +663,6 @@ Qed.
 Lemma sqrt_lt0_eq_0 : forall r, r < 0 -> sqrt r = 0.
 Proof.
   intros. apply sqrt_le0_eq_0. auto with R.
-Qed.
-
-Lemma le0_imply_sqrt_eq0 : forall (x : R), x < 0 -> sqrt x = 0.
-Proof.
-  intros. unfold sqrt. destruct (Rcase_abs x); auto.
-  (* although, x < 0, x >= 0, all appear, lra fail to solve it. *)
-  exfalso. lra.
 Qed.
 
 Lemma sqrt_gt0_imply_gt0 : forall (x : R), 0 < sqrt x -> 0 < x.
@@ -689,6 +691,22 @@ Proof.
   intros. rewrite H. rewrite sqrt_1. auto.
 Qed.
 
+(** sqrt x = 0 <-> x <= 0 *)
+Lemma sqrt_eq0_iff : forall r, sqrt r = 0 <-> r <= 0.
+Proof.
+  intros. split; intros.
+  - bdestruct (r <=? 0); ra. apply Rnot_ge_gt in H0. apply sqrt_lt_R0 in H0. ra.
+  - apply sqrt_neg_0; auto.
+Qed.
+
+(** sqrt x <> 0 <-> x > 0 *)
+Lemma sqrt_neq0_iff : forall r, sqrt r <> 0 <-> r > 0.
+Proof.
+  intros. split; intros; ra.
+  bdestruct (r =? 0). subst. autorewrite with R in H. ra.
+  bdestruct (r <? 0); ra. apply sqrt_lt0_eq_0 in H1. ra.
+Qed.
+
 (** ( √ r1 * √ r2)^2 = r1 * r2 *)
 Lemma Rsqr_sqrt_sqrt r1 r2 : 0 <= r1 -> 0 <= r2 ->
   ((sqrt r1) * (sqrt r2))² = r1 * r2.
@@ -704,9 +722,7 @@ Lemma Rsqrt_plus_sqr_eq0_iff : forall r1 r2 : R,
   sqrt (r1² + r2²) = 0 <-> r1 = 0 /\ r2 = 0.
 Proof.
   intros. autorewrite with R. split; intros H.
-  - apply sqrt_eq_0 in H.
-    + split; eauto with R.
-    + apply Rplus_sqr_ge0.
+  - apply sqrt_eq_0 in H; ra.
   - destruct H; subst. autorewrite with R; auto with R.
 Qed.
 
@@ -770,7 +786,6 @@ Global Hint Resolve
   sqrt_1                  (* sqrt 1 = 1 *)
   sqrt_le0_eq_0           (* r <= 0 -> sqrt r = 0 *)
   sqrt_lt0_eq_0           (* r < 0 -> sqrt r = 0 *)
-  le0_imply_sqrt_eq0      (* x < 0 -> sqrt x = 0 *)
   sqrt_gt0_imply_gt0      (* 0 < sqrt x -> 0 < x *)
   sqrt_gt0_imply_ge0      (* 0 < sqrt x -> 0 <= x *)
   sqrt_eq1_imply_eq1      (* sqrt x = 1 -> x = 1 *)

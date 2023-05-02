@@ -8,9 +8,10 @@
   date      : 2022.06
 
   remark    :
-  1. Introduction to Multicopter Design and Control, Springer, Quan Quan
-     page 96
-*)
+  1. Introduction to Multicopter Design and Control, Springer, Quan Quan, page 96
+  2. quat:{w,x,y,z} <==> vec4[w;x;y;z]
+                    <==> vec3[x;y;z]
+ *)
 
 Require Export VectorR.
 
@@ -18,604 +19,515 @@ Open Scope R.
 Open Scope mat_scope.
 Open Scope cvec_scope.
 
+(** Scope for quaternion *)
+Declare Scope quat_scope.
+Delimit Scope quat_scope with q.
+Open Scope quat_scope.
+
+
+(* ######################################################################### *)
+(** * Axis-Angle method *)
+
+(** Axis-Angle representation. (aa: means Axis-Angle) *)
+Record axisangle :=
+  mk_axisangle {
+      aa_angle : R;
+      aa_axis : cvec 3; (* should be a unit vector *)
+    }.
+
 
 (* ######################################################################### *)
 (** * Definition of Quaternion *)
 
-Section quat_def.
+Section def.
 
   (** A quaternion q = w + x i + y j + z k, can be considered as a linear 
     combination with the basis of {1, i, j, k} *)
-  Record quat : Type := mk_quat {
-    W : R;
-    X : R;
-    Y : R;
-    Z : R
-  }.
+  Record quat : Type := mk_quat { W : R; X : R; Y : R; Z : R }.
 
+  Bind Scope quat_scope with quat.
+End def.
+
+Notation "q .W" := (W q) (at level 30, format "q .W") : quat_scope.
+Notation "q .X" := (X q) (at level 30, format "q .X") : quat_scope.
+Notation "q .Y" := (Y q) (at level 30, format "q .Y") : quat_scope.
+Notation "q .Z" := (Z q) (at level 30, format "q .Z") : quat_scope.
+
+(** Construction. *)
+Section construction.
+  
   (** Get the component of a given quaternion number q *)
-  Definition Re (q : quat) : R := W q.
-  Definition Im (q : quat) : T3 := (X q, Y q, Z q).
-  Definition Im1 (q : quat) : R := X q.
-  Definition Im2 (q : quat) : R := Y q.
-  Definition Im3 (q : quat) : R := Z q.
-  Definition v3_of_quat (q : quat) : cvec 3 :=
-    mk_mat_3_1 (X q) (Y q) (Z q).
+  Definition Re (q : quat) : R := q.W.
+  Definition Im1 (q : quat) : R := q.X.
+  Definition Im2 (q : quat) : R := q.Y.
+  Definition Im3 (q : quat) : R := q.Z.
   
-  (** Two quaternions are equal iff all of its components equal *)
-  Lemma quat_eq_iff : forall (w0 x0 y0 z0 w1 x1 y1 z1 : R),
-    mk_quat w0 x0 y0 z0 = mk_quat w1 x1 y1 z1 <->
-    (w0 = w1 /\ x0 = x1 /\ y0 = y1 /\ z0 = z1).
+  Definition Im (q : quat) : cvec 3 := l2cv [q.X; q.Y; q.Z].
+  Notation "q .Im" := (Im q) (at level 30, format "q .Im") : quat_scope.
+  
+  Lemma quat_eq_iff : forall (q1 q2 : quat),
+      q1 = q2 <-> (q1.W = q2.W /\ q1.X = q2.X /\ q1.Y = q2.Y /\ q1.Z = q2.Z).
   Proof.
-    intros. split; intros.
-    - inversion H. subst; auto.
-    - do 3 destruct H as [? H]. subst; auto.
+    intros. split; intros; subst; auto.
+    do 3 destruct H as [? H]. destruct q1,q2; simpl in *. f_equal; auto.
   Qed.
-  
-  (** Two quaternions are not equal iff at least one of its components not equal *)
-  Lemma quat_neq_iff : forall (w0 x0 y0 z0 w1 x1 y1 z1 : R),
-    mk_quat w0 x0 y0 z0 <> mk_quat w1 x1 y1 z1 <->
-    (w0 <> w1 \/ x0 <> x1 \/ y0 <> y1 \/ z0 <> z1).
+
+  Lemma quat_neq_iff : forall (q1 q2 : quat),
+      q1 <> q2 <-> (q1.W <> q2.W \/ q1.X <> q2.X \/ q1.Y <> q2.Y \/ q1.Z <> q2.Z).
   Proof.
     intros. split; intros.
-    - unfold not in H. rewrite quat_eq_iff in H.
-      (* automatic proof *)
-      (* lra. *)
-      (* manual proof *)
-      remember (w0=w1) as a.
-      remember (x0=x1) as b.
-      remember (y0=y1) as c.
-      remember (z0=z1) as d.
-      assert (~a \/ ~(b/\c/\d)).
-      apply Decidable.not_and in H; auto.
-      rewrite Heqa. compute. destruct (Req_EM_T w0 w1); auto.
-      destruct H0. left; auto. right.
-      apply Decidable.not_and in H0.
-      destruct H0. left; auto. right; auto.
-      apply Decidable.not_and in H0; auto.
-      rewrite Heqc. compute. destruct (Req_EM_T y0 y1); auto.
-      rewrite Heqb. compute. destruct (Req_EM_T x0 x1); auto.
-    - intro. inversion H0. subst. lra.
+    - rewrite quat_eq_iff in H. lra.
+    - intro. subst. lra.
   Qed.
 
   (** Construct a quaternion by 4 scalar number *)
-  Definition quat_of_ssss (w x y z : R) : quat :=
-    mk_quat w x y z.
+  Definition quat_of_ssss (w x y z : R) : quat := mk_quat w x y z.
 
   Lemma quat_of_ssss_ok : forall w x y z,
-    let q := quat_of_ssss w x y z in
-      W q = w /\ X q = x  /\ Y q = y /\ Z q = z.
+      let q := quat_of_ssss w x y z in
+      q.W = w /\ q.X = x  /\ q.Y = y /\ q.Z = z.
   Proof. intros. split; auto. Qed.
 
   (** Construct a quaternion by a scalar number and a 3-dim vector *)
-  Definition quat_of_s_v (w : R) (v : cvec 3) :=
-    let '(x,y,z) := cv2t_3 v in
-      mk_quat w x y z.
+  Definition quat_of_s_v (w : R) (v : cvec 3) := mk_quat w (v.0) (v.1) (v.2).
 
   Lemma quat_of_s_v_ok : forall w v,
-    let q := quat_of_s_v w v in
-      W q = w /\ X q = v!0  /\ Y q = v!1 /\ Z q = v!2.
+      let q := quat_of_s_v w v in
+      q.W = w /\ q.X = v.0  /\ q.Y = v.1 /\ q.Z = v.2.
   Proof. intros. split; auto. Qed.
 
   (** Construct a quaternion by a scalar number *)
   Definition quat_of_s (w : R) : quat := mk_quat w 0 0 0.
   
   Lemma quat_of_s_ok : forall w,
-    let q := quat_of_s w in
-      W q = w /\ X q = R0 /\ Y q = R0 /\ Z q = R0.
-  Proof. intros. compute. auto. Qed.
+      let q := quat_of_s w in
+      q.W = w /\ q.X = R0 /\ q.Y = R0 /\ q.Z = R0.
+  Proof. intros. cbv. auto. Qed.
 
   (** Construct a quaternion by a 3-dim vector *)
   Definition quat_of_v3 (v : cvec 3) : quat := quat_of_s_v 0 v.
   
   Lemma quat_of_v3_ok : forall v,
-    let q := quat_of_v3 v in
-      W q = R0 /\ X q = v!0 /\ Y q = v!1 /\ Z q = v!2.
-  Proof. apply quat_of_s_v_ok. Qed.
+      let q := quat_of_v3 v in
+      q.W = R0 /\ q.X = v.0 /\ q.Y = v.1 /\ q.Z = v.2.
+  Proof. intros. apply quat_of_s_v_ok. Qed.
   
-  (** Construct a quaternion by a vec4 *)
-  Definition quat_of_v4 (v : cvec 4) : quat :=
-    let '(w,x,y,z) := cv2t_4 v in
-      mk_quat w x y z.
+  (** Construct a quaternion by a vec4[w;x;y;z] *)
+  Definition cv2q (v : cvec 4) : quat := mk_quat (v.0) (v.1) (v.2) (v.3).
   
-  Lemma quat_of_v4_ok : forall v,
-    let q := quat_of_v4 v in
-      W q = v!0 /\ X q = v!1 /\ Y q = v!2 /\ Z q = v!3.
-  Proof. intros. compute. auto. Qed.
+  Lemma cv2q_ok : forall v,
+      let q := cv2q v in
+      q.W = v.0 /\ q.X = v.1 /\ q.Y = v.2 /\ q.Z = v.3.
+  Proof. intros. cbv. auto. Qed.
   
-  (** Construct a quaternion by tuple4 *)
-  Definition quat_of_t4 (t : T4) : quat :=
-    let '(w,x,y,z) := t in
-      mk_quat w x y z.
-      
-  Lemma quat_of_t4_ok : forall t,
-    let q := quat_of_t4 t in
-    let '(a,b,c,d) := t in
-      W q = a /\ X q = b /\ Y q = c /\ Z q = d.
-  Proof. intros. destruct t as [[[a b] c] d]. compute. auto. Qed.
+  (** Quaternion to vec4[w;x;y;z] *)
+  Definition q2cv (q : quat) : cvec 4 := l2cv [q.W; q.X; q.Y; q.Z].
   
-  (** Quaternion to vec4 *)
-  Definition v4_of_quat (q : quat) : cvec 4 :=
-    let '(w,x,y,z) := (W q, X q, Y q, Z q) in
-      mk_mat_4_1 w x y z.
-  
-  Lemma v4_of_quat_ok : forall q,
-    let v := v4_of_quat q in
-      v!0 = W q /\ v!1 = X q /\ v!2 = Y q /\ v!3 = Z q.
-  Proof. intros. compute. auto. Qed.
-  
-  (** Quaternion to tuple4 *)
-  Definition t4_of_quat (q : quat) : T4 :=
-    (W q, X q, Y q, Z q).
-  
-  Lemma t4_of_quat_ok : forall q,
-    let t := t4_of_quat q in
-      t = (W q, X q, Y q, Z q).
-  Proof. auto. Qed.
-  
-End quat_def.
+  Lemma q2cv_ok : forall q,
+      let v := q2cv q in
+      v.0 = q.W /\ v.1 = q.X /\ v.2 = q.Y /\ v.3 = q.Z.
+  Proof. intros. cbv. auto. Qed.
+
+  (** Construction a quaternion from axis-angle. *)
+  Definition quat_of_aa (a : axisangle) : quat :=
+    let n := aa_axis a in
+    let θ := aa_angle a in
+    let s2 := sin (θ/2) in
+    let c2 := cos (θ/2) in
+    quat_of_s_v c2 (l2cv [s2 * n.0; s2 * n.1; s2 * n.2]%R).
+
+End construction.
+
+Notation "q .Im" := (Im q) (at level 30, format "q .Im") : quat_scope.
 
 
 (* ######################################################################### *)
-(** * Customized tactical for proof *)
-
-(** Auto f_equal apply to some structure, eg: list, pair, record *)
-Ltac f_equal_auto :=
-  repeat match goal with
-  (* (a,b) = (c,d) *)
-  | |- (_,_) = (_,_) => f_equal
-  (* [_;_] = [_;_] *)
-  | |- cons _ _ = cons _ _ => f_equal
-  (* (p : quat) = (q : quat) *)
-  | |- _ = _ => try (apply quat_eq_iff; 
-    (* a /\ b /\ c /\ d *)
-    try repeat split)
-  end.
-
-Example f_equal_auto_test1 : forall A (a b c d : A), 
-  a = c -> b = d -> (a,b) = (c,d).
-Proof. intros. f_equal_auto; auto. Qed.
-
-Example f_equal_auto_test2 : forall A (ha hb : A) (tla tlb : list A), 
-  ha = hb -> tla = tlb -> ha :: tla = hb :: tlb.
-Proof. intros. f_equal_auto; auto. Qed.
-
-Example f_equal_auto_test3 : forall (w0 x0 y0 z0 w1 x1 y1 z1 : R)
-  (H : w0 = w1) (H0 : x0 = x1) (H1 : y0 = y1) (H2 : z0 = z1),
-  mk_quat w0 x0 y0 z0 = mk_quat w1 x1 y1 z1.
-Proof. intros. f_equal_auto; auto. Qed.
+(** * Customized tactic / tactical for proof *)
 
 (** Linear Quaternion Algebra, q1 = q2. *)
 Ltac lqa (* tac *) :=
-(*   tac; *)
-  (* simplify sqrt and pow2 *)
-  simpl_sqrt_pow2;
-  compute;
-  f_equal_auto;
-  try field.
+  cbv; f_equal; ra.
 
 
 (* ######################################################################### *)
 (** * Quaternion operations *)
 
-(** (1) Addition, Subtraction *)
-Definition qadd (q1 q2 : quat) : quat := mk_quat 
-  (Re q1 + Re q2) 
-  (Im1 q1 + Im1 q2) 
-  (Im2 q1 + Im2 q2) 
-  (Im3 q1 + Im3 q2).
+(** ** Quaternion addition 四元数加法 *)
+Section qadd.
+  
+  Definition qadd (q1 q2 : quat) : quat :=
+    mk_quat (q1.W + q2.W) (q1.X + q2.X) (q1.Y + q2.Y) (q1.Z + q2.Z).
+  Notation "p + q" := (qadd p q) : quat_scope.
 
-Definition qsub (q1 q2 : quat) : quat := mk_quat
-  (Re q1 - Re q2) 
-  (Im1 q1 - Im1 q2) 
-  (Im2 q1 - Im2 q2) 
-  (Im3 q1 - Im3 q2).
-
-(** (2) Multiplication *)
-
-
-(** Multiplication of two quaternions *)
-Definition qmul' (p q : quat) : quat :=
-  let p0 := Re p in
-  let p1 := Im1 p in
-  let p2 := Im2 p in
-  let p3 := Im3 p in
-  let q0 := Re q in
-  let q1 := Im1 q in
-  let q2 := Im2 q in
-  let q3 := Im3 q in
-    mk_quat
-      (p0 * q0 - p1 * q1 - p2 * q2 - p3 * q3) 
-      (p0 * q1 + p1 * q0 + p2 * q3 - p3 * q2) 
-      (p0 * q2 - p1 * q3 + p2 * q0 + p3 * q1) 
-      (p0 * q3 + p1 * q2 - p2 * q1 + p3 * q0).
-
-
-Definition qmul (q1 q2 : quat) : quat :=
-  let w1 := Re q1 in
-  let x1 := Im1 q1 in
-  let y1 := Im2 q1 in
-  let z1 := Im3 q1 in
-  let w2 := Re q2 in
-  let x2 := Im1 q2 in
-  let y2 := Im2 q2 in
-  let z2 := Im3 q2 in
-    mk_quat
-      (w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2) 
-      (w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2) 
-      (w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2) 
-      (w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2).
-
-(** Left scalar multiplication *)
-Definition qcmul (s : R) (q : quat) : quat :=
-  let w := (s * Re q)%R in
-  let v := s c* v3_of_quat q in
-  quat_of_s_v w v.
-
-(* s * q = [s q0; s qv]^T *)
-Lemma qcmul_eq : forall (s : R) (q : quat),
-    let pq1 := qmul (quat_of_s s) q in
-    let pq2 := qcmul s q in
-    pq1 = pq2.
-Proof. destruct q. lqa. Qed.
-
-(** Right scalar multiplication *)
-Definition qmulc (q : quat) (s : R) : quat :=
-  let w := (Re q * s)%R in
-  let v := (v3_of_quat q) *c s in
-  quat_of_s_v w v.
-
-(* q * s = [s q0; s qv]^T *)
-Lemma qmulc_eq : forall (q : quat) (s : R),
-    let pq1 := qmul q (quat_of_s s) in
-    let pq2 := qmulc q s in
-    pq1 = pq2.
-Proof. intros. destruct q. lqa. Qed.
-
-(** Scope for quaternion *)
-Declare Scope quat_scope.
-Delimit Scope quat_scope with q.
-Open Scope quat_scope.
-
-Bind Scope quat_scope with quat.
-
-(** Useful notations *)
+End qadd.
 Notation "p + q" := (qadd p q) : quat_scope.
+
+
+(** ** Quaternion negation 四元数取负 *)
+Section qopp.
+  
+  Definition qopp (q : quat) : quat := mk_quat (- q.W) (- q.X) (- q.Y) (- q.Z).
+  Notation "- q" := (qopp q) : quat_scope.
+
+End qopp.
+Notation "- q" := (qopp q) : quat_scope.
+
+
+(** ** Quaternion subtraction 四元数减法 *)
+Section qsub.
+  
+  Definition qsub (q1 q2 : quat) : quat := qadd q1 (qopp q2).
+  Notation "p - q" := (qsub p q) : quat_scope.
+  
+End qsub.
 Notation "p - q" := (qsub p q) : quat_scope.
+
+
+(** ** Quaternion multiplication *)
+Section qmul.
+
+  (* Also called "Hamilton product" *)
+  Definition qmul (q1 q2 : quat) : quat :=
+    mk_quat
+      (q1.W * q2.W - q1.X * q2.X - q1.Y * q2.Y - q1.Z * q2.Z)
+      (q1.W * q2.X + q1.X * q2.W + q1.Y * q2.Z - q1.Z * q2.Y) 
+      (q1.W * q2.Y - q1.X * q2.Z + q1.Y * q2.W + q1.Z * q2.X) 
+      (q1.W * q2.Z + q1.X * q2.Y - q1.Y * q2.X + q1.Z * q2.W).
+  
+  Notation "p * q" := (qmul p q) : quat_scope.
+
+  (** Multiplication of two quaternions by vector form，(p96)
+                |pw|   |qw|   |   pw qw - <pv,qv>      |
+        p * q = |pv| + |qv| = |pv × qv + pw qv + qw pv | *)
+  Definition qmulVEC (p q : quat) : quat :=
+    quat_of_s_v
+      (p.W * q.W - <p.Im, q.Im>)
+      (p.Im × q.Im + p.W c* q.Im + q.W c* p.Im)%M.
+
+  Lemma qmulVEC_eq_qmul (p q : quat) : qmulVEC p q = p * q.
+  Proof. destruct p, q. lqa. Qed.
+
+  (** Quaternion multiplication with PLUS form. page96, p+ *)
+  Definition qPLUS (q : quat) : mat 4 4 :=
+    let m1 : mat 4 4 := (q.W c* mat1)%M in
+    let m2a : mat 1 4 := mconsc (mk_mat_1_1 0) (-(q.Im\T))%M in
+    let m2b : mat 3 4 := mconsc (q.Im) (cv3skew (q.Im)) in
+    let m2 : mat 4 4 := mconsr m2a m2b in
+    (m1 + m2)%M.
+
+  Definition qmulPLUS (p q : quat) : quat :=
+    cv2q ((qPLUS p) * (q2cv q))%M.
+
+  Lemma qmulPLUS_correct (p q : quat) : p * q = qmulPLUS p q.
+  Proof. destruct p, q. lqa. Qed.
+
+  (** Quaternion multiplication with MINUS form. page96, p- *)
+  Definition qMINUS (q : quat) : mat 4 4 :=
+    let m1 : mat 4 4 := (q.W c* mat1)%M in
+    let m2a : mat 1 4 := mconsc (mk_mat_1_1 0) (-(q.Im\T))%M in
+    let m2b : mat 3 4 := mconsc (q.Im) (-(cv3skew (q.Im)))%M in
+    let m2 : mat 4 4 := mconsr m2a m2b in
+    (m1 + m2)%M.
+
+  Definition qmulMINUS (p q : quat) :=
+    cv2q ((qMINUS q) * (q2cv p))%M.
+
+  Lemma qmulMINUS_correct (p q : quat) : p * q = qmulMINUS p q.
+  Proof. destruct p, q. lqa. Qed.
+
+  (** (q * r) * m = q * (r * m) *)
+  Lemma qmul_assoc (q r m : quat) : (q * r) * m = q * (r * m).
+  Proof. destruct q,r,m. lqa. Qed.
+
+  (** The multiplication is non-commutative. That is: p * q <> q * p. *)
+  Lemma qmul_not_comm : exists (p q : quat), p * q <> q * p.
+  Proof.
+    exists (quat_of_ssss 0 1 2 1).
+    exists (quat_of_ssss 0 2 1 2).
+    cbv. intros. inversion H. lra.
+  Qed.
+  
+  (** q * (r + m) = q * r + q * m *)
+  Lemma qmul_qadd_distr_l (q r m : quat) : q * (r + m) = q * r + q * m.
+  Proof. destruct q,r,m. lqa. Qed.
+
+  (** (r + m) * q = r * q + m * q *)
+  Lemma qmul_qadd_distr_r (r m q : quat) : (r + m) * q = r * q + m * q.
+  Proof. destruct r,m,q. lqa. Qed.
+
+  (** multplication of two pure quaternions: (0,u) * (0,v) = (-<u,v>, u × v)  *)
+  Lemma qmul_vec3 (u v : cvec 3) :
+    (quat_of_v3 u) * (quat_of_v3 v) = quat_of_s_v (- <u,v>) (u × v).
+  Proof. lqa. Qed.
+
+  (** Left scalar multiplication *)
+  Definition qcmul (s : R) (q : quat) : quat := (quat_of_s s) * q.
+  Notation "a c* q" := (qcmul a q) : quat_scope.
+
+  (** 1 c* q = q *)
+  Lemma qcmul_1_l : forall q : quat, 1 c* q = q.
+  Proof. intros. destruct q. lqa. Qed.
+
+  (** Right scalar multiplication *)
+  Definition qmulc (q : quat) (s : R) : quat := q * (quat_of_s s).
+  Notation "q *c a" := (qmulc q a) : quat_scope.
+
+  (* s * q = q * s *)
+  Lemma qcmul_eq_qmulc (s : R) (q : quat) : s c* q = q *c s.
+  Proof. destruct q. lqa. Qed.
+
+End qmul.
+
+Notation "p * q" := (qmul p q) : quat_scope.
 Notation "a c* q" := (qcmul a q) : quat_scope.
 Notation "q *c a" := (qmulc q a) : quat_scope.
-Notation "p * q" := (qmul p q) : quat_scope.
-
-(** Multiplication of two quaternions by vector form，(p96)
-        |p0|   |q0|   |p0 q0 - qv^T pv         |
-p ⊗ q = |pv| + |qv| = |pv x qv + p0 qv + q0 pv |
- *)
-Definition qmulVEC (p q : quat) : quat :=
-  let p0 : R := Re p in
-  let q0 : R := Re q in
-  let pv : cvec 3 := t2cv_3 (Im p) in
-  let qv : cvec 3 := t2cv_3 (Im q) in
-  let w : R := (p0 * q0 - scalar_of_mat ((qv \T) * pv)%M)%R in
-  let v : cvec 3 := (cv3cross pv qv + p0 c* qv + q0 c* pv)%M in
-    quat_of_s_v w v.
-
-Lemma qmulVEC_correct (p q : quat) : p * q = qmulVEC p q.
-Proof. destruct p, q. lqa. Qed.
-
-(** Quaternion multiplication with PLUS form. page96, p+ *)
-Definition qPLUS (q : quat) : mat 4 4 :=
-  let p0 : R := Re q in
-  let pv : cvec 3 := t2cv_3 (Im q) in
-  let m1 : mat 4 4 := (p0 c* mat1)%M in
-  let m2a : mat 1 4 := mconsc (mk_mat_1_1 0) (-(pv\T))%M in
-  let m2b : mat 3 4 := mconsc pv (cv3skew pv) in
-  let m2 : mat 4 4 := mconsr m2a m2b in
-    madd m1 m2.
-
-Definition qmulPLUS (p q : quat) : quat :=
-  let PLUS : mat 4 4 := qPLUS p in
-    quat_of_v4 (PLUS * (v4_of_quat q))%M.
-
-Lemma qmulPLUS_correct (p q : quat) : p * q = qmulPLUS p q.
-Proof. destruct p, q. lqa. Qed.
-
-(** Quaternion multiplication with MINUS form. page96, p- *)
-Definition qMINUS (q : quat) : mat 4 4 :=
-  let q0 : R := Re q in
-  let qv : cvec 3 := t2cv_3 (Im q) in
-  let m1 : mat 4 4 := (q0 c* mat1)%M in
-  let m2a : mat 1 4 := mconsc (mk_mat_1_1 0) (-(qv\T))%M in
-  let m2b : mat 3 4 := mconsc qv (-(cv3skew qv))%M in
-  let m2 : mat 4 4 := mconsr m2a m2b in
-    madd m1 m2.
-
-Definition qmulMINUS (p q : quat) :=
-  let MINUS : mat 4 4 := qMINUS q in
-    quat_of_v4 (MINUS * (v4_of_quat p))%M.
-    
-Lemma qmulMINUS_correct (p q : quat) : p * q = qmulMINUS p q.
-Proof. destruct p, q. lqa. Qed.
 
 
-(* ######################################################################### *)
-(** * Properties of quaternion multiplication *)
+(** ** Zero quaternion 零四元数 *)
+Section qzero.
 
-(** <1> It is non-commutative. *)
+  Definition qzero : quat := mk_quat 0 0 0 0.
 
-(* p * q <> q * p. *)
-Lemma qmul_not_comm : exists (p q : quat), p * q <> q * p.
-Proof.
-  exists (quat_of_t4 (0,1,2,1)%R).
-  exists (quat_of_t4 (0,2,1,2)%R).
-  compute. intros. inversion H. lra.
-Qed.
+End qzero.
 
-(** <2> distributive and associative *)
 
-(* q * (r + m) = q * r + q * m *)
-Lemma qmul_qadd_dist_l (q r m : quat) : q * (r + m) = q * r + q * m.
-Proof. destruct q,r,m. lqa. Qed.
+(** ** Identity quaternion 恒等四元数 *)
+Section qone.
 
-(* (r + m) * q = r * q + m * q *)
-Lemma qmul_qadd_dist_r (r m q : quat) : (r + m) * q = r * q + m * q.
-Proof. destruct r,m,q. lqa. Qed.
+  (** 恒定四元数：角位移为0的四元数（因为角位移就是朝向的变换，所以这里就是恒等元）
 
-(* (q * r) * m = q * (r * m) *)
-Lemma qmul_assoc (q r m : quat) : (q * r) * m = q * (r * m).
-Proof. destruct q,r,m. lqa. Qed.
+    几何上有两个恒等四元数：[0̂ 1] 和 [0̂ -1]
+    当 θ 是 2π 的偶数倍时，cos (θ/2) = 1, sin(θ/2) = 0, n̂是任意值
+    当 θ 是 2π 的奇数倍时，cos (θ/2) = -1, sin(θ/2) = 0, n̂是任意值
+    直观上，若旋转角度是绕任何轴转完整的整数圈，则在三维中方向上不会有任何实际的改变。
 
-(** <3> constant multiplication law *)
+    代数上只有一个恒等四元数 [0̂ 1]。因为要求任意 q 乘以单位元后不变。
+   *)
+  Definition qone : quat := mk_quat 1 0 0 0.
 
-(* s * q = q * s *)
-Lemma qcmul_eq_qmulc (s : R) (q : quat) : s c* q = q *c s.
-Proof. destruct q. lqa. Qed.
+  (** 1 * q = q *)
+  Lemma qmul_1_l : forall q : quat, qone * q = q.
+  Proof. intros. destruct q. lqa. Qed.
 
-(** <4> multplication by image part of two quaternions *)
+  (** q * 1 = q *)
+  Lemma qmul_1_r : forall q : quat, q * qone = q.
+  Proof. intros. destruct q. lqa. Qed.
 
-(* [0;u]^T * [0;v]^T = [(-u^T)*v; u×v]^T *)
-Lemma qmul_by_im (u v : cvec 3) :
-  let qu : quat := quat_of_v3 u in
-  let qv : quat := quat_of_v3 v in
-  let q : quat := quat_of_s_v
-                    (- (scalar_of_mat (u\T * v)%M))
-                    (cv3cross u v) in
-  qu * qv = q.
-Proof. lqa. Qed.
+  (** ToDo: 这里最好再证明一下 qone 和 - qone 这二者的唯一性，即，所有恒等四元数都是它 *)
+  
+End qone.
 
-(** (3) Conjugate of quaternion *)
-Definition qconj (q : quat) : quat :=
-  let w : R := Re q in
-  let v : cvec 3 := - (t2cv_3 (Im q)) in
-    quat_of_s_v w v.
+
+(** ** Square of magnitude (Length) of a quaternion *)
+Section qlen2.
+
+  (** Get square of magnitude (length) of a quaternion *)
+  Definition qlen2 (q : quat) : R :=
+    q.W * q.W + q.X * q.X + q.Y * q.Y + q.Z * q.Z.
+  (* || q2cv q ||. *)
+
+  (** 0 <= qlen2 q *)
+  Lemma qlen2_ge0 : forall (q : quat), (0 <= qlen2 q)%R.
+  Proof. intros. destruct q. unfold qlen2. simpl. ra. Qed.
+
+  (** q = qzero <-> qlen2 q = 0 *)
+  Lemma qlen2_eq0_iff : forall q : quat, qlen2 q = 0 <-> q = qzero.
+  Proof.
+    intros. destruct q. rewrite quat_eq_iff. cbv.
+    autorewrite with R. rewrite Rplus4_sqr_eq0. auto.
+  Qed.
+
+  (** q <> qzero <-> qlen2 q <> 0 *)
+  Lemma qlen2_neq0_iff : forall q : quat, qlen2 q <> 0 <-> q <> qzero.
+  Proof. intros. unfold not. rewrite qlen2_eq0_iff. easy. Qed.
+
+End qlen2.
+
+(** ** Magnitude (Length) of a quaternion *)
+Section qlen.
+
+  (** Get magnitude (length) of a quaternion *)
+  Definition qlen (q : quat) : R := sqrt (qlen2 q).
+
+  Notation "|| q ||" := (qlen q) : quat_scope.
+
+  (** (||q||)² = qlen2 q *)
+  Lemma sqr_qlen : forall q : quat, (||q||)² = qlen2 q.
+  Proof. intros. unfold qlen. autorewrite with R sqrt; auto. apply qlen2_ge0. Qed.
+
+  (** 0 <= ||q|| *)
+  Lemma qlen_ge0 : forall q : quat, 0 <= ||q||.
+  Proof. intros. unfold qlen. ra. Qed.
+
+  (** || q || = 0 <-> q = qzero *)
+  Lemma qlen_eq0_iff : forall q : quat, || q || = 0 <-> q = qzero.
+  Proof.
+    intros. unfold qlen.
+    rewrite sqrt_eq0_iff. rewrite <- qlen2_eq0_iff. pose proof (qlen2_ge0 q). ra.
+  Qed.
+
+  (** || q || <> 0 <-> q <> qzero *)
+  Lemma qlen_neq0_iff : forall q : quat, || q || <> 0 <-> q <> qzero.
+  Proof.
+    intros. unfold qlen.
+    rewrite sqrt_neq0_iff. rewrite <- qlen2_eq0_iff. pose proof (qlen2_ge0 q). ra.
+  Qed.
+
+  (** || q1 || = || q2 || <-> qlen2 q1 = qlen2 q2 *)
+  Lemma qlen_eq_iff_qlen2_eq : forall q1 q2 : quat,
+      || q1 || = || q2 || <-> qlen2 q1 = qlen2 q2.
+  Proof.
+    intros. rewrite <- !sqr_qlen. split; intros; ra.
+    apply Rsqr_inj; auto. all: apply qlen_ge0.
+  Qed.
+
+  (** || q1 * q2 || = ||q1|| * ||q2|| *)
+  (* 该引理表明，两个单位四元数相乘后还是一个单位四元数 *)
+  Lemma qlen_qmul : forall (q1 q2 : quat),
+      || q1 * q2 || = (||q1|| * ||q2||)%R.
+  Proof.
+    intros. apply Rsqr_inj. apply qlen_ge0. apply Rmult_le_pos; apply qlen_ge0.
+    autorewrite with R. rewrite !sqr_qlen. destruct q1,q2; cbv; ring.
+  Qed.
+
+End qlen.
+
+Notation "|| q ||" := (qlen q) : quat_scope.
+
+
+(** ** Unit quaternion *)
+Section qunit.
+
+  (** A unit quaternion has a magnitude equal to 1 *)
+  Definition qunit (q : quat) : Prop := ||q|| = 1.
+
+  (** Any quaternion constructed from axis-angle is unit quaternion *)
+  Lemma qunit_rotation : forall (θ : R) (n : cvec 3),
+      let q := quat_of_aa (mk_axisangle θ n) in
+      cvunit n -> qunit q.
+  Proof.
+    intros. unfold qunit, qlen, cvlen.
+    apply sqrt_eq1_imply_eq1_rev.
+    pose proof (cv3unit_eq1 n H).
+    cvec2fun. cbv. ring_simplify in H0. ring_simplify. rewrite H0. ring_simplify.
+    autorewrite with R. auto.
+  Qed.
+
+  (** qunit p -> qunit q -> || p * q || = 1 *)
+  Lemma qlen_qmul_qunit (p q : quat) : qunit p -> qunit q -> || p * q || = 1.
+  Proof. destruct p,q. intros. rewrite qlen_qmul. rewrite H,H0. ring. Qed.
+
+  (** qunit q -> qlen2 q = 1 *)
+  Lemma qunit_imply_qlen2_eq1 : forall q : quat, qunit q -> qlen2 q = 1.
+  Proof. intros. unfold qunit, qlen, qlen2 in *. ra. Qed.
+  
+End qunit.
+
+
+(** ** Quaternion normalization *)
+
+
+(** ** Quaternion conjugate *)
+Section qconj.
+  
+  (** Conjugate of a quaternion *)
+  Definition qconj (q : quat) : quat := quat_of_s_v (q.W) (- q.Im)%CV.
+
+  Notation "q ∗" := (qconj q) (at level 30) : quat_scope.
+  
+  (** q ∗ ∗ = q *)
+  Lemma qconj_qconj (q : quat) : q ∗ ∗ = q.
+  Proof. destruct q. lqa. Qed.
+
+  (** (p * q)∗ = q∗ * p∗ *)
+  Lemma qconj_qmul (p q : quat) : (p * q)∗ = q∗ * p∗.
+  Proof. destruct p,q. lqa. Qed.
+
+  (** (p + q)∗ = p∗ + q∗ *)
+  Lemma qconj_qadd (p q : quat) : (p + q)∗ = p∗ + q∗.
+  Proof. destruct p,q. lqa. Qed.
+
+  (** q * q∗ = q∗ * q *)
+  Lemma qmul_qconj_comm (q : quat) : q * q∗ = q∗ * q.
+  Proof. destruct q. lqa. Qed.
+
+  (** Im (q * q∗) = 0 *)
+  Lemma qmul_qconj_Im0 (q : quat) : Im (q * q∗) == cvec0.
+  Proof. lma. Qed.
+
+  (** || q∗ || = || q || *)
+  Lemma qlen_qconj (q : quat) : || q∗ || = || q ||.
+  Proof.
+    intros. apply Rsqr_inj; try apply qlen_ge0.
+    rewrite !sqr_qlen. destruct q; cbv; ring.
+  Qed.
+
+  (** || q∗ * q || = qlen2 q *)
+  Lemma qlen_qmul_qconj_l : forall (q : quat), || q∗ * q || = qlen2 q.
+  Proof. intros. rewrite qlen_qmul. rewrite qlen_qconj. apply sqr_qlen. Qed.
+  
+  (** || q * q∗ || = qlen2 q *)
+  Lemma qlen_qmul_qconj_r : forall (q : quat), || q * q∗ || = qlen2 q.
+  Proof. intros. rewrite qlen_qmul. rewrite qlen_qconj. apply sqr_qlen. Qed.
+
+End qconj.
 
 Notation "q ∗" := (qconj q) (at level 30) : quat_scope.
 
-(** Properties of conjugate *)
 
-(* q ∗ ∗ = q *)
-Lemma qconj_conj (q : quat) : q ∗ ∗ = q.
-Proof. destruct q. lqa. Qed.
+(** ** Quaternion inverse *)
+Section  qinv.
 
-(* (p * q)∗ = q∗ * p∗ *)
-Lemma qconj_qmul_dist (p q : quat) : (p * q)∗ = q∗ * p∗.
-Proof. destruct p,q. lqa. Qed.
+  (** inversion of quaternion *)
+  
+  Definition qinv (q : quat) : quat := (/ (qlen2 q)) c* (q ∗).
 
-(* (p + q)∗ = q∗ + p∗ *)
-Lemma qconj_qadd_dist (p q : quat) : (p + q)∗ = q∗ + p∗.
-Proof. destruct p,q. lqa. Qed.
+  Notation "q ⁻¹" := (qinv q) : quat_scope.
 
-(* q * q∗ = q∗ * q *)
-Lemma qmul_qconj_comm (q : quat) : q * q∗ = q∗ * q.
-Proof. destruct q. lqa. Qed.
+  (** q ⁻¹ * q = 1 *)
+  Lemma qmul_qinv_l : forall q : quat, q <> qzero -> q ⁻¹ * q = qone.
+  Proof.
+    intros. destruct q. lqa. field. 
+    apply quat_neq_iff in H. apply Rplus4_sqr_neq0. ra.
+  Qed.
+  
+  (** q * q ⁻¹ = 1 *)
+  Lemma qmul_qinv_r : forall q : quat, q <> qzero -> q * q ⁻¹ = qone.
+  Proof.
+    intros. destruct q. lqa. field. 
+    apply quat_neq_iff in H. apply Rplus4_sqr_neq0. ra.
+  Qed.
+  
+  (** qunit q -> q ⁻¹ = q ∗ *)
+  Lemma qinv_eq_qconj : forall q : quat, qunit q -> q ⁻¹ = q ∗.
+  Proof.
+    intros. unfold qinv. apply qunit_imply_qlen2_eq1 in H. rewrite H.
+    autorewrite with R. rewrite qcmul_1_l. auto.
+  Qed.
+  
+  (* 推论：表示旋转的四元数都是单位四元数，此时共轭和逆相等。*)
+  Lemma quat_of_aa_imply_qinv_eq_qconj : forall θ n,
+      let q := quat_of_aa (mk_axisangle θ n) in
+      cvunit n -> q ⁻¹ = q ∗.
+  Proof. intros. apply (qunit_rotation θ n) in H. apply qinv_eq_qconj. auto. Qed.
 
-(* Im (q * q∗) = (0,0,0) *)
-Lemma qmul_qconj_Re_eq_0 (q : quat) : Im (q * q∗) = (0,0,0)%R.
-Proof. destruct q. lqa. Qed.
+  (** p * q = r -> p = r * q⁻¹ *)
+  Lemma qmul_imply_solve_l : forall p q r : quat, q <> qzero -> p * q = r -> p = r * q⁻¹.
+  Proof.
+    intros. rewrite <- H0. rewrite qmul_assoc, qmul_qinv_r, qmul_1_r; auto.
+  Qed.
 
-(** (4) Norm *)
+  (** p * q = r -> q = p⁻¹ * r *)
+  Lemma qmul_imply_solve_r : forall p q r : quat, p <> qzero -> p * q = r -> q = p⁻¹ * r.
+  Proof.
+    intros. rewrite <- H0. rewrite <- qmul_assoc, qmul_qinv_l, qmul_1_l; auto.
+  Qed.
 
-(** ** norm *)
+End qinv.
 
-(** The square of norm of a quaternion *)
-Definition qnorm2 (q : quat) : R :=
-  let '(w0,x0,y0,z0) := t4_of_quat q in
-    (w0 * w0) + (x0 * x0) + (y0 * y0) + (z0 * z0).
+Notation "q ⁻¹" := (qinv q) : quat_scope.
 
-(* 0 <= qnorm2 q *)
-Lemma zero_le_qnorm2 : forall (q : quat), (0 <= qnorm2 q)%R.
-Proof.
-  intros. destruct (t4_of_quat q) as [[[w0 x0] y0] z0].
-  unfold qnorm2. simpl. ra.
-Qed.
-
-Global Hint Resolve zero_le_qnorm2 : fcs.
-
-(** The norm of a quaternion *)
-
-(** Note, there are two methods for square root:
-  1. sqrt，it will generate a proof goal of "the value inside the root sign is >=0",
-     although this is easy to finish.
-  2. Rsqrt，it will generate a proof goal of "Rsqrt_exists".
-  We will use the former way.
-*)
-Definition qnorm (q : quat) : R := sqrt (qnorm2 q).
-
-(** This is the definition using Rsqrt. (This is deprecated) *)
-Definition qnorm_old (q : quat) : R.
-Proof.
-  destruct q as [w x y z].
-  set (w * w + x * x + y * y + z * z)%R as r.
-  refine (Rsqrt (mknonnegreal r _)).
-  unfold r. ra.
-Defined.
-
-Notation "‖ q ‖" := (qnorm q) (at level 50) : quat_scope.
-
-(* ‖ q ‖ * ‖ q ‖ = qnorm2 q *)
-Lemma qnorm_mul_qnorm_eq_qnorm2 : forall (q : quat),
-  (‖ q ‖ * ‖ q ‖)%R = qnorm2 q.
-Proof. intros. destruct q. compute. apply sqrt_sqrt.
-  (* Tips: a good example for tactic ra *)
-  ra.
-Qed.
-
-(* ‖ q ‖² = qnorm2 q *)
-Lemma qnorm_sqr_eq_qnorm2 : forall (q : quat),
-  (‖ q ‖²)%R = qnorm2 q.
-Proof. intros. unfold Rsqr. apply qnorm_mul_qnorm_eq_qnorm2. Qed.
-
-(* 0 <= ‖ q ‖ *)
-Lemma zero_le_qnorm : forall (q : quat), (0 <= qnorm q)%R.
-Proof. intros. destruct q. unfold qnorm. apply sqrt_pos. Qed.
-
-
-(** Properties of norm or square of norm *)
-
-(* (let (a, _) := Rsqrt_exists ?b _ in a) = _ *)
-Ltac case_rsqrt_exists :=
-  match goal with
-  | |- (let (a, _) := Rsqrt_exists ?b _ in a) = _ => 
-    destruct (Rsqrt_exists b) as [r Hr];
-    (* 0 <= r /\ _ *)
-    destruct Hr as [Hr1 Hr2]
-  end.
-
-(* ‖ q ‖²  = ‖ q * q∗ ‖ *)
-Lemma qnorm2_eq1 : forall (q : quat),
-  qnorm2 q = ‖ q * q∗ ‖.
-Proof. destruct q. lqa. apply Rsqr_inj; ra. lqa. ra. Qed.
-
-(** ‖ q ‖² = q0^2 + qv^T * qv *)
-Lemma qnorm2_eq2 : forall (q : quat),
-  let q0 := Re q in
-  let qv := t2cv_3 (Im q) in
-    qnorm2 q = (q0 * q0 + (scalar_of_mat (qv\T * qv)%M))%R.
-Proof. destruct q. lqa. Qed.
-
-(** Norm of the multiplication of two quaternions, equal to the multiplication of 
-    the norms of these two quaternions. *)
-Lemma qnorm_qmul_distr : forall (p q : quat), ‖ p * q ‖ = (‖ p ‖ * ‖ q ‖)%R.
-Proof. intros. destruct p,q. lqa. apply Rsqr_inj; ra. lqa; ra. Qed.
-
-(** The norm of conjugate equal to the norm *)
-Lemma qnorm_qconj (q : quat) : ‖ q∗ ‖ = ‖ q ‖.
-Proof.
-  apply Rsqr_inj.
-  - apply zero_le_qnorm.
-  - apply zero_le_qnorm.
-  - repeat rewrite qnorm_sqr_eq_qnorm2. lqa.
-Qed.
-
-(** The norm is not equal to 0, iff the square norm is not equal to 0 *)
-Lemma qnorm_neq0_iff_qnorm2_neq0 : forall q, ‖ q ‖ <> R0 <-> qnorm2 q <> R0.
-Proof.
-  intros. rewrite <- qnorm_sqr_eq_qnorm2. remember (‖ q ‖). split; intros.
-  - rewrite Rsqr_pow2. apply pow_nonzero. auto.
-  - apply Rsqr_gt_0_0. apply Rlt_0_sqr. intro. rewrite H0 in H. compute in H.
-    ra.
-Qed.
-
-(** A quaternion is not 0, iff its square norm is not 0 *)
-Lemma quat_neq0_iff_qnorm2_neq0 : forall q, (q <> mk_quat 0 0 0 0) <-> (qnorm2 q <> R0).
-Proof.
-  intros. destruct q. rewrite quat_neq_iff. split; intros.
-  - apply Rplus_sqr_neq0_iff4 in H. auto.
-  - apply Rplus_sqr_neq0_iff4. auto.
-Qed.
-
-(** (5) Inversion *)
-
-(* Definition of inversion of quaternion *)
-Definition qinv (q : quat) : quat := (/ (qnorm2 q)) c* q∗.
-
-(* Properties *)
-
-(** Tips: a good example shows that Coq could find the hypthesis, 
-    but the mathematical derivation maybe lost this promise. *)
-Lemma qmul_qinv_unitary : forall (q : quat),
-    ‖ q ‖ <> R0 -> q * (qinv q) = quat_of_s 1.
-Proof. intros. destruct q. rewrite qnorm_neq0_iff_qnorm2_neq0 in H. lqa; auto. Qed.
-
-Lemma qmul_qinv_unitary_rev : forall (q : quat),
-    ‖ q ‖ <> R0 -> (qinv q) * q = quat_of_s 1.
-Proof. intros. destruct q. rewrite qnorm_neq0_iff_qnorm2_neq0 in H. lqa; auto. Qed.
-
-(** (6) Unit quaternion *)
-
-(** q is a unit quaternion, with the help of qnorm *)
-Definition qunit (q : quat) : Prop := ‖ q ‖ = R1.
-
-(** q is a unit quaternion, with the help of qnorm2 *)
-Definition qunit2 (q : quat) : Prop := qnorm2 q = R1.
-
-(** qunit q <-> qunit2 q *)
-Lemma qunit_iff_qunit2 : forall q, qunit q <-> qunit2 q.
-Proof.
-  intros q. unfold qunit,qunit2. rewrite <- qnorm_mul_qnorm_eq_qnorm2.
-  split; intros.
-  - rewrite H. ring.
-  - unfold qnorm in *. rewrite sqrt_def in H.
-    + rewrite H. ra.
-    + apply zero_le_qnorm2.
-Qed.
-
-Lemma qunit_qmul_unit (p q : quat) : qunit p -> qunit q -> ‖ p * q ‖ = R1.
-Proof.
-  destruct p,q. intros. rewrite qnorm_qmul_distr. rewrite H,H0. ring.
-Qed.
-
-(** qunit q -> w0 * w0 + x0 * x0 + y0 * y0 + z0 * z0 = R1 *)
-Lemma qunit_imply_eq_R1 : forall w0 x0 y0 z0,
-  let q := mk_quat w0 x0 y0 z0 in
-    qunit q ->
-    (w0 * w0 + x0 * x0 + y0 * y0 + z0 * z0)%R = R1.
-Proof. intros. apply qunit_iff_qunit2 in H. compute in H. auto. Qed.
-
-(** qunit q -> qinv q = q∗ *)
-Lemma qunit_imply_qinv_eq_qconj : forall q, qunit q -> qinv q = q∗.
-Proof.
-  intros. apply qunit_iff_qunit2 in H. destruct q. unfold qunit2 in *.
-  compute in *. rewrite H. lqa.
-Qed.
-
-(** Division of quaternion *)
-
-(** Division defined by left multiplication. r * p = m => r = m* inv p *) 
-Definition qdivl (p m : quat) : quat := m * (qinv p).
-
-(** Division defined by right multiplication. p * r = m => r = inv p * m *) 
-Definition qdivr (p m : quat) : quat := (qinv p) * m.
-
-(** (qdivl p m) * p = m *)
-Lemma qdivl_correct : forall p m, p <> mk_quat 0 0 0 0 -> (qdivl p m) * p = m.
-Proof.
-  intros. destruct p,m.
-  apply quat_neq_iff in H. lqa; apply Rplus_sqr_neq0_iff4; auto.
-Qed.
-
-(** p * (qdivr p m) = m *)
-Lemma qdivr_correct : forall p m, p <> mk_quat 0 0 0 0 -> p * (qdivr p m) = m.
-Proof.
-  intros. destruct p,m.
-  apply quat_neq_iff in H. lqa; apply Rplus_sqr_neq0_iff4; auto.
-Qed.
-
-
-(* (** Destruct v3 to theee element *) *)
-(* Ltac v3_to_three_ele  v := *)
-(*   destruct v as [vdl vlen vwid]; *)
-(*   destruct vdl as [|l1]; [simpl in *; lia | idtac]; *)
-(*   destruct vdl as [|l2]; [simpl in *; lia | idtac]; *)
-(*   destruct vdl as [|l3]; [simpl in *; lia | idtac]; *)
-(*   (* width *) *)
-(*   destruct vwid as [w1 vwid]; *)
-(*   destruct vwid as [w2 vwid]; *)
-(*   destruct vwid as [w3 vwid]; *)
-(*   (* list -> x *) *)
-(*   destruct l1; [simpl in *; lia |]; *)
-(*   destruct l2; [simpl in *; lia |]; *)
-(*   destruct l3; [simpl in *; lia |]. *)
-
+(*
 
 (** 3. quaterion can represent rotation *)
 
@@ -624,7 +536,7 @@ Definition rot_by_quat (q : quat) (v : quat) : quat := q * v * (qinv q).
 
 (** 四元数p经过单位四元数q作用后得到四元数p'，其标量部分保持不变。公式5.26 *)
 Lemma rot_by_unit_quat_keep_s : forall (q p : quat) (H1 : qunit q),
-  W p = W (rot_by_quat q p).
+    W p = W (rot_by_quat q p).
 Proof.
   intros. destruct p,q. lqa. cbv in *. intros. rewrite H in H1.
   replace R0 with 0 in H1; auto. rewrite sqrt_0 in H1. lra.
@@ -636,13 +548,13 @@ Definition vec_rot_by_quat (q : quat) (v : cvec 3) : quat :=
 
 (** 四元数旋转向量后的四元数第一个分量为0 *)
 Lemma vec_rot_by_quat_w_is_0 : forall q v, 
-  q <> mk_quat 0 0 0 0 ->   (* 非零四元数范数非零，才存在逆 *)
-  Re (vec_rot_by_quat q v) = R0.
+    q <> mk_quat 0 0 0 0 ->   (* 非零四元数范数非零，才存在逆 *)
+    Re (vec_rot_by_quat q v) = R0.
 Proof.
   intros. unfold vec_rot_by_quat. destruct q.
   lqa.
   (* xxx <> 0 *)
-  apply quat_neq0_iff_qnorm2_neq0 in H. auto.
+  apply quat_neq0_iff_qlen2_neq0 in H. auto.
 Qed.
 
 (** 四元数旋转向量后的四元数取出虚部作为向量 *)
@@ -655,7 +567,7 @@ Definition qrot_by_axis_angle (v : cvec 3) (θ : R) : quat :=
 
 (* 若旋转轴 v 是单位向量，则依转轴和转角生成的四元数是单位四元数 *)
 Lemma qrot_by_axis_angle_keep_unitary : forall v θ,
-  cvlen v = 1 -> qunit (qrot_by_axis_angle v θ).
+    cvlen v = 1 -> qunit (qrot_by_axis_angle v θ).
 Proof.
   intros. destruct v as [v]. lqa. cbv in H.
   apply sqrt_eq1_imply_eq1 in H.
@@ -665,7 +577,8 @@ Proof.
   remember (cos (θ * / (R1 + R1))) as r1.
   remember (sin (θ * / (R1 + R1))) as r2.
   rewrite ?Rplus_assoc.
-  assert (v 0%nat 0%nat ^ 2 * r2 ^ 2 + (r2 ^ 2 * v 1%nat 0%nat ^ 2 + r2 ^ 2 * v 2%nat 0%nat ^ 2)
+  assert (v 0%nat 0%nat ^ 2 * r2 ^ 2 + 
+  (r2 ^ 2 * v 1%nat 0%nat ^ 2 + r2 ^ 2 * v 2%nat 0%nat ^ 2)
           = r2 ^ 2)%R; ra.
   rewrite H0. rewrite Heqr1, Heqr2. autorewrite with R. auto.
 Qed.
@@ -679,20 +592,20 @@ Lemma vec_rot_by_quat_keep_norm : forall (pv : cvec 3) (q : quat) (H : qunit q),
     let pv' := v3_of_quat p' in
     cvlen pv = cvlen pv'.
 Proof.
-  intros. destruct q as [w x y z]. destruct pv as [pv].
+  intros. destruct q as [x y z w]. destruct pv as [pv].
   cbv. apply Rsqr_inj; ra; rewrite !sqrt_sqrt; ra. field.
   apply qunit_imply_eq_R1 in H. lra.
 Qed.
 
 (* (2) 任意非零实数s与q相乘，结论仍然成立 *)
 Lemma vec_rot_by_quat_keep_norm_ext : forall (pv : cvec 3) (s : R) (q : quat) 
-  (H : qunit q) (H1 : s <> 0),
-  let q' := s c* q in
-  let p' := vec_rot_by_quat q' pv in
-  let pv' := v3_of_quat p' in
-  cvlen pv = cvlen pv'.
+                                        (H : qunit q) (H1 : s <> 0),
+    let q' := s c* q in
+    let p' := vec_rot_by_quat q' pv in
+    let pv' := v3_of_quat p' in
+    cvlen pv = cvlen pv'.
 Proof.
-  intros. destruct q as [w x y z]. destruct pv as [pv].
+  intros. destruct q as [x y z w]. destruct pv as [pv].
   cbv. apply Rsqr_inj; ra; rewrite !sqrt_sqrt; ra. field.
   apply qunit_imply_eq_R1 in H. nra.
 Qed.
@@ -716,24 +629,24 @@ Definition v3_non_colinear (v0 v1 : cvec 3) : Prop :=
 (* Let ex1 : (R*R*R) := Eval cbv in 
    v2t_3 (rot_axis_by_twovec (t2v_3 (1,0.4,0)) (t2v_3 (0,0.5,0))). *)
 Let ex1 : (R*R*R) := Eval cbv in
-      cv2t_3 (rot_axis_by_twovec (t2cv_3 (0.23,0.43,0)) (t2cv_3 (1.25,3.1,4.7))).
+(* cv2t_3 (rot_axis_by_twovec (t2cv_3 (0.23,0.43,0)) (t2cv_3 (1.25,3.1,4.7))). *)
 
 
-(* 两个不共线的单位向量确定了一个旋转。*)
+      (* 两个不共线的单位向量确定了一个旋转。*)
 
-(* 两个不共线的?? *)
+      (* 两个不共线的?? *)
 
-(* 按旋转轴和旋转角表示的四元数，等于，用旋转轴垂直平面上两个单位向量的运算来构造的
+      (* 按旋转轴和旋转角表示的四元数，等于，用旋转轴垂直平面上两个单位向量的运算来构造的
 四元数 *)
-Definition qrot_by_two_vec_ops (v0 v1 : cvec 3) : quat :=
-  quat_of_s_v (scalar_of_mat (v0\T * v1)%M) (cv3cross v0 v1).
+      Definition qrot_by_two_vec_ops (v0 v1 : cvec 3) : quat :=
+      quat_of_s_v (scalar_of_mat (v0\T * v1)%M) (cv3cross v0 v1).
 
 
 (* (* 若单位向量v0和v1的夹角是 θ/2，且不共线，则由它们生成的垂直方向的向量v有确定形式 *)
 Lemma gen_vec_by_v0_v1_eq : forall (v0 v1 : cvec 3) (θ : R) (H1 : v3norm v0 = 1)
   (H2 : v3norm v1 = 1) (H3 : v3_non_colinear v0 v1),
   v3cross v0 v1 =  *)
-  
+
 
 (** * 4. 四元数与旋转矩阵 *)
 
@@ -741,7 +654,7 @@ Variable q0 q1 q2 q3 : R.
 Definition q_e_b := quat_of_ssss q0 q1 q2 q3.
 
 (* Check qPLUS q_e_b. *)
-(* Compute m2l (qPLUS q_e_b). *)
+(* Cbv m2l (qPLUS q_e_b). *)
 
 Definition qPLUS_direct (q : quat) :=
   let (q0,q1,q2,q3) := q in
@@ -793,15 +706,19 @@ Proof.
   (* Compute (m2l (qMINUS(quat_of_ssss q0 q1 q2 q3))). *)
   lma.
 Qed.
+ *)
 
+(*
 
 
 Require Import Extraction.
 Require Import ExtrOcamlBasic.
 Require Import MyExtrOCamlR.
-(* Extract Constant Rabst => "__". *)
-(* Extract Constant Rrepr => "__". *)
-(* Extraction "quat.ml" mk_mat_3_1. (* Why so many warning? *) *)
-(* Recursive Extraction mk_quat quat_of_ssss quat_of_t4 qmul qconj qinv qnorm rot_by_quat. *)
-(* Extraction "quat.ml" mk_quat quat_of_ssss quat_of_t4 qmul qconj qinv. qnorm rot_by_quat. *)
+ (* Extract Constant Rabst => "__". *)
+ (* Extract Constant Rrepr => "__". *)
+ (* Extraction "quat.ml" mk_mat_3_1. (* Why so many warning? *) *)
+ (* Recursive Extraction mk_quat quat_of_ssss quat_of_t4 qmul qconj qinv qlen rot_by_quat. *)
+ (* Extraction "quat.ml" mk_quat quat_of_ssss quat_of_t4 qmul qconj qinv. qlen rot_by_quat. *)
+
+ *)
 
