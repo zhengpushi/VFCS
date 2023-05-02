@@ -1084,31 +1084,31 @@ Section v3.
   (** Axis-angle representation *)
   Section rotAxisAngle.
 
-    (** 推导绕任意轴 k̂ 旋转 θ 角度的矩阵 R(k̂,θ)，使得 v' = R(k̂,θ) * v *)
+    (** 推导绕任意轴 k̂ 旋转 θ 角度的矩阵 R(n̂,θ)，使得 v' = R(n̂,θ) * v *)
 
-    (** Rotate a vector v in R^3 by an axis described with a unit vector k and 
+    (** Rotate a vector v in R^3 by an axis described with a unit vector n and 
     an angle θ according to right handle rule, we got the rotated vector as
     follows. This formula is known as Rodrigues formula. *)
-    Definition rotAxisAngle (θ : R) (k : cvec 3) (v : cvec 3) : cvec 3 :=
-      (cos θ) c* (v - <v,k> c* k) + (sin θ) c* (k×v) + <v,k> c* k.
+    Definition rotAxisAngle (θ : R) (n : cvec 3) (v : cvec 3) : cvec 3 :=
+      (cos θ) c* (v - <v,n> c* n) + (sin θ) c* (n×v) + <v,n> c* n.
 
     (** Proof its correctness *)
-    Theorem rotAxisAngle_spec : forall (θ : R) (k : cvec 3) (v : cvec 3),
-        let v_para : cvec 3 := cvproj v k in
+    Theorem rotAxisAngle_spec : forall (θ : R) (n : cvec 3) (v : cvec 3),
+        let v_para : cvec 3 := cvproj v n in
         let v_perp : cvec 3 := v - v_para in
-        let w : cvec 3 := k × v_perp in
+        let w : cvec 3 := n × v_perp in
         let v_perp' : cvec 3 := (cos θ) c* v_perp + (sin θ) c* w in
         let v' : cvec 3 := v_perp' + v_para in
-        cvunit k ->
-        v' == rotAxisAngle θ k v.
+        cvunit n ->
+        v' == rotAxisAngle θ n v.
     Proof.
       intros.
       unfold rotAxisAngle.
-      assert (v_para == <v,k> c* k) as H1.
+      assert (v_para == <v,n> c* n) as H1.
       { unfold v_para, cvproj. rewrite H. f_equiv. autounfold with A. field. }
-      assert (v_perp == v - <v,k> c* k) as H2.
+      assert (v_perp == v - <v,n> c* n) as H2.
       { unfold v_perp. rewrite H1. easy. }
-      assert (w == k × v) as H3.
+      assert (w == n × v) as H3.
       { unfold w. rewrite H2.
         (* lma. (* auto solvable. But the detail also be shown below. *) *)
         unfold cvsub, Vector.cvsub. rewrite cv3cross_add_distr_r.
@@ -1118,9 +1118,9 @@ Section v3.
     Qed.
 
     (** Another form of the formula *)
-    Lemma rotAxisAngle_form1 : forall (θ : R) (k : cvec 3) (v : cvec 3),
-        rotAxisAngle θ k v ==
-          v *c (cos θ) + (k × v) *c (sin θ) + k *c (<v,k> * (1 - cos θ))%R.
+    Lemma rotAxisAngle_form1 : forall (θ : R) (n : cvec 3) (v : cvec 3),
+        rotAxisAngle θ n v ==
+          v *c (cos θ) + (n × v) *c (sin θ) + n *c (<v,n> * (1 - cos θ))%R.
     Proof.
       intros. unfold rotAxisAngle.
       rewrite !cvmulc_eq_vcmul. rewrite cvcmul_vsub. rewrite cvsub_rw.
@@ -1133,31 +1133,31 @@ Section v3.
 
     (** Matrix formula of roation with axis-angle *)
     (* https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula *)
-    Definition rotAxisAngleMat (θ : R) (k : cvec 3) : smat 3 :=
-      let K := cv3skew k in
-      (mat1 + (sin θ) c* K + (1 - cos θ)%R c* K * K)%M.
+    Definition rotAxisAngleMat (θ : R) (n : cvec 3) : smat 3 :=
+      let N := cv3skew n in
+      (mat1 + (sin θ) c* N + (1 - cos θ)%R c* N * N)%M.
 
-    Lemma rotAxisAngleMat_spec : forall (θ : R) (k : cvec 3) (v : cvec 3),
-        cvunit k -> (rotAxisAngleMat θ k) * v == rotAxisAngle θ k v.
+    Lemma rotAxisAngleMat_spec : forall (θ : R) (n : cvec 3) (v : cvec 3),
+        cvunit n -> (rotAxisAngleMat θ n) * v == rotAxisAngle θ n v.
     Proof.
       intros.
       (* unfold rotAxisAngleMat. *)
       rewrite rotAxisAngle_form1.
-      (* v * cosθ + (k × v) * sinθ + k *c (<k,v> * (1-cosθ)) *)
+      (* v * cosθ + (n × v) * sinθ + n *c (<v,n> * (1-cosθ)) *)
       rewrite <- cvmulc_assoc.
-      (* v * cosθ + (k × v) * sinθ + (k *c <k,v>) *c (1-cosθ) *)
-      remember (cv3skew k) as K.
-      assert ((k *c <k,v>) == v + K * (K * v)).
+      (* v * cosθ + (n × v) * sinθ + (k *c <v,n>) *c (1-cosθ) *)
+      remember (cv3skew n) as N.
+      assert ((n *c <n,v>) == v + N * (N * v)).
       {
-        assert ((k *c <k,v>) == v - cvperp v k).
+        assert ((n *c <n,v>) == v - cvperp v n).
         { unfold cvperp. unfold cvproj. rewrite H. rewrite cvdot_comm. lma. }
         rewrite H0. rewrite cv3perp_spec; auto. unfold cv3perp.
         rewrite cv3cross_anticomm. rewrite (cv3cross_anticomm v).
         rewrite cv3cross_vopp_r.
-        rewrite !cv3cross_eq_skew_mul. rewrite <- HeqK.
+        rewrite !cv3cross_eq_skew_mul. rewrite <- HeqN.
         unfold cvsub. rewrite ?cvopp_vopp. easy. }
-      rewrite (cvdot_comm v k). rewrite H0.
-      (* v * cosθ + (k × v) * sinθ + (v + K * (K * v)) * (1 - cosθ) *)
+      rewrite (cvdot_comm v n). rewrite H0.
+      (* v * cosθ + (n × v) * sinθ + (v + N * (N * v)) * (1 - cosθ) *)
       rewrite !cvmulc_eq_vcmul.
       rewrite !cvcmul_vadd_distr.
       rewrite cv3cross_eq_skew_mul.
@@ -1166,7 +1166,7 @@ Section v3.
       assert ((1 - cos θ)%R c* v + cos θ c* v == v) by lma. rewrite H1.
       (* right side is ready *)
       unfold rotAxisAngleMat.
-      rewrite !mmul_madd_distr_r. rewrite <- HeqK. f_equiv. f_equiv. apply mmul_1_l.
+      rewrite !mmul_madd_distr_r. rewrite <- HeqN. f_equiv. f_equiv. apply mmul_1_l.
     Qed.
 
     (* (** Direct formula of rotation with axis-angle *) *)

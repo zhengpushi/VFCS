@@ -374,16 +374,11 @@ Open Scope quat_scope.
 (** ** 8.5.1 四元数表示法 (Notation)  *)
 Section sec_8_5_1.
 
-  Let q1 : quat := quat_of_v_s (l2cv [1;2;3]) 4.
+  Let q1 : quat := quat_of_s_v 4 (l2cv [1;2;3]).
   Let q2 : quat := quat_of_ssss 1 2 3 4.
   
-  Goal q1 = q2. auto. Qed.
-  
-  Compute v4_of_quat q1.
-  Compute v4_of_quat q2.
-  
-  Compute t4_of_quat q1.
-  Compute t4_of_quat q2.
+  Compute q2cv q1.
+  Compute cv2q (q2cv q1).
 End sec_8_5_1.
 
 (** ** 8.5.2 这4个数字的意思 *)
@@ -392,21 +387,78 @@ Section sec_8_5_2.
      轴-角表示法：单位矢量 n̂ 定义旋转轴，标量 θ 是绕该轴的旋转量，(θ,n̂)定义了角位移。*)
 
   (** 四元数的几何意义，以及如何与轴角关联：*)
-
+  Print quat_of_aa.
 End sec_8_5_2.
 
 (** ** 8.5.3 四元数取负 *)
 Section sec_8_5_3.
-
-  Variable q1 : quat.
-  Let q1' := qopp q1.
+  Check qopp.
 
   (* 注意，q 和 -q 描述相同的角位移。三维中的任何角位移在四元数格式中有两个表示，互为负数。
      可以这样试验：将 2π 加到 θ，并没有改变三维中的角位移，而q会成为 -q。*)
-
 End sec_8_5_3.
 
-(** ** 8.5.4 单位四元数 *)
+(** ** 8.5.4 四元数单位元 *)
 Section sec_8_5_4.
-
+  Print qone.
 End sec_8_5_4.
+
+(** ** 8.5.5 四元数的大小 *)
+Section sec_8_5_5.
+  Print qlen.
+
+  (** 旋转四元数有单位的大小 *)
+  Check qrotation_imply_qunit.
+End sec_8_5_5.
+
+(** ** 8.5.6 四元数的共轭和逆 *)
+Section sec_8_5_6.
+  Check qconj.
+  Check qinv.
+
+  (* 如果只关注表示旋转的四元数，因它们都是单位四元数，所以其共轭和逆等价 *)
+  Check qrotation_imply_qinv_eq_qconj.
+
+  (* 共轭表示相反的角位移。以为共轭的旋转轴是相反的，它颠倒了正方向。
+     所以，若 q 表示绕某个轴旋转 θ，则 q* 表示绕该轴旋转 -θ *)
+
+End sec_8_5_6.
+
+(** ** 8.5.7 四元数乘法 *)
+Section sec_8_5_7.
+  (* 分量形式的乘法公式 *)
+  Check qmul.
+  (* 矢量形式的乘法公式 *)
+  Check qmulVEC.
+
+  Check qmul_assoc. (* 结合律 *)
+  Check qmul_comm_fail. (* 交换律不成立 *)
+  Check qlen_qmul. (* 乘积的大小等于各自大小的乘积 *)
+  Check qinv_qmul. (* 乘积的逆等于各自逆以相反的顺序相乘 *)
+
+  (* 四元数乘法来旋转三维矢量 
+     p' = q * p * q⁻¹
+     一些讨论：上述紧凑的表示法有各种有点，但它在实际计算中是否有真正的好处？
+     如果进行这个计算，可能发现这个工作量大致等同于“将四元数转换为旋转矩阵，然后做
+     矩阵和矢量的乘法”。使用公式 8.20 做四元数到旋转矩阵的转换。*)
+
+  (* 将多个旋转应用于矢量
+     p' = b (a p a⁻¹) b⁻¹ = (ba) p (ba)⁻¹
+     相当于通过 ba 执行单次旋转 *)
+
+End sec_8_5_7.
+
+(** ** 8.5.8 四元数的“差” *)
+Section sec_8_5_8.
+  (* 不太常用，在 Slerp 时用到 *)
+End sec_8_5_8.
+
+(** ** 8.5.9 四元数点积 *)
+Section sec_8_5_9.
+  (* 不太常用，在 Slerp 时用到 *)
+End sec_8_5_9.
+
+(** ** 8.5.10 四元数的对数、指数和标量乘法 *)
+Section sec_8_5_10.
+  
+End sec_8_5_10.
