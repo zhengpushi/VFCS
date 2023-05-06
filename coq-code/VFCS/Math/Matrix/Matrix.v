@@ -42,17 +42,19 @@ Section def.
       and that is a function of "nat -> nat -> A" type.
       Meanwhile, we give two arguments r and c as the parts of mat type to represent 
       the rows and columns of a matrix. *)
-  Record mat {A} (r c : nat) : Type :=
-    mk_mat { matf : nat -> nat -> A }.
+  (* Record mat {A} (r c : nat) : Type := *)
+  (*   mk_mat { matf : nat -> nat -> A }. *)
+  Inductive mat {A} (r c : nat) : Type := mk_mat (f : nat -> nat -> A).
 
   (** Convert between function and matrix *)
-  Definition f2m {A} {r c} (f : nat -> nat -> A) : mat r c := mk_mat A r c f.
-  Definition m2f {A} {r c} (m : mat r c) : nat -> nat -> A := matf r c m.
+  Definition f2m {A} {r c} (f : nat -> nat -> A) : mat r c := @mk_mat A r c f.
+  Definition m2f {A} {r c} (m : mat r c) : nat -> nat -> A :=
+    let '(mk_mat _ _ f) := m in f.
   
 End def.
 
 Arguments mk_mat {A r c}.
-Arguments matf {A r c}.
+(* Arguments matf {A r c}. *)
 
 (** square matrix *)
 Notation smat A n := (@mat A n n).
@@ -67,7 +69,7 @@ Section meq.
   (** Two matrices are considered equal if each corresponding element
       whose index is in the bounds is equal.  *)
   Definition meq {r c : nat} (m1 m2 : @mat A r c) : Prop := 
-    forall i j, i < r -> j < c -> matf m1 i j == matf m2 i j.
+    forall i j, i < r -> j < c -> m2f m1 i j == m2f m2 i j.
   Infix "==" := meq : mat_scope.
   
   Lemma meq_refl : forall {r c} (m : mat r c), m == m.
@@ -96,14 +98,14 @@ Section meq.
   Proof. intros. constructor. intros. apply seq2eq_dec. Qed.
 
   (** matf is proper *)
-  Lemma matf_mor : forall {r c} (m p : @mat _ r c) i j,
-      i < r -> j < c -> m == p -> (matf m i j == matf p i j)%A.
+  Lemma m2f_mor : forall {r c} (m p : @mat _ r c) i j,
+      i < r -> j < c -> m == p -> (m2f m i j == m2f p i j)%A.
   Proof.
     intros. destruct m as [m], p as [p]. simpl in *. subst. apply H1; auto.
   Qed.
 
-  Example matf_mor_ex1 : forall (m p : @mat _ 3 3), m == p -> (matf m 0 0 == matf p 0 0)%A.
-  Proof. intros. rewrite matf_mor; auto. easy. Qed.
+  Example m2f_mor_ex1 : forall (m p : @mat _ 3 3), m == p -> (m2f m 0 0 == m2f p 0 0)%A.
+  Proof. intros. rewrite m2f_mor; auto. easy. Qed.
   
 End meq.
 
@@ -115,7 +117,7 @@ Section meqb.
   Infix "==" := (meq (Aeq:=Aeq)) : mat_scope.
 
   Definition meqb {r c : nat} (m1 m2 : @mat A r c) : bool :=
-    seq2eqb r c (matf m1) (matf m2).
+    seq2eqb r c (m2f m1) (m2f m2).
   Infix "=?" := meqb : mat_scope.
   
   Lemma meqb_reflect : forall r c (m1 m2 : @mat A r c), reflect (m1 == m2) (m1 =? m2).
@@ -137,7 +139,7 @@ Section mnth.
   Infix "==" := (meq (Aeq:=Aeq)) : mat_scope.
 
   (* Unsafe access (caller must assure the index manually) *)
-  Notation "m $ i $ j " := (matf (A:=A) m i j) : mat_scope.
+  Notation "m $ i $ j " := (m2f (A:=A) m i j) : mat_scope.
 
   Lemma meq_eta : forall {r c : nat} (m1 m2 : mat r c),
       m1 == m2 <-> (forall i j, i < r -> j < c -> (m1$i$j == m2$i$j)%A).
@@ -173,7 +175,7 @@ End mnth.
 Arguments mnth {A} Azero {r c}.
 
 Global Hint Unfold mnth : core.
-Notation "m $ i $ j " := (matf m i j) : mat_scope.
+Notation "m $ i $ j " := (m2f m i j) : mat_scope.
 Notation "m .00" := (m $ 0 $ 0) : mat_scope.
 Notation "m .00" := (m $ 0 $ 0) : mat_scope.
 Notation "m .01" := (m $ 0 $ 1) : mat_scope.
@@ -1333,7 +1335,7 @@ Section mdet.
       + destruct (Nat.even i). apply H; lia. f_equiv. apply H; lia.
       + apply IHn. rewrite H. easy.
     - f_equiv. f_equiv.
-      + apply matf_mor; auto; lia.
+      + apply m2f_mor; auto; lia.
       + apply IHn. rewrite H. easy.
   Qed.
 

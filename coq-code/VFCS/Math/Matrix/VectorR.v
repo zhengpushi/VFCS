@@ -603,7 +603,7 @@ Section morthogonal.
     intros.
     rewrite cvdot_eq_mul_trans.
     unfold scalar_of_mat, Matrix.scalar_of_mat.
-    rewrite (matf_mor _ (v1\T * v2)); auto.
+    rewrite (m2f_mor _ (v1\T * v2)); auto.
     rewrite mtrans_mmul. rewrite mmul_assoc. rewrite <- (mmul_assoc _ m).
     rewrite morthogonal_iff_mul_trans_l in H. rewrite H.
     rewrite mmul_1_l. easy.
@@ -1095,7 +1095,7 @@ Section v3.
     (** Proof its correctness *)
     Theorem rotAxisAngle_spec : forall (θ : R) (n : cvec 3) (v : cvec 3),
         let v_para : cvec 3 := cvproj v n in
-        let v_perp : cvec 3 := v - v_para in
+        let v_perp : cvec 3 := cvperp v n in
         let w : cvec 3 := n × v_perp in
         let v_perp' : cvec 3 := (cos θ) c* v_perp + (sin θ) c* w in
         let v' : cvec 3 := v_perp' + v_para in
@@ -1107,7 +1107,7 @@ Section v3.
       assert (v_para == <v,n> c* n) as H1.
       { unfold v_para, cvproj. rewrite H. f_equiv. autounfold with A. field. }
       assert (v_perp == v - <v,n> c* n) as H2.
-      { unfold v_perp. rewrite H1. easy. }
+      { unfold v_perp. rewrite <- H1. easy. }
       assert (w == n × v) as H3.
       { unfold w. rewrite H2.
         (* lma. (* auto solvable. But the detail also be shown below. *) *)

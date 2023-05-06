@@ -15,6 +15,7 @@
   1. (QQ) Introduction to Multicopter Design and Control, Springer, Quan Quan, page 96
   2. (Dunn) 3D Math Primer for Graphics and Game Development, Second Edition
      Fletcher Dunn, Ian Parberry.
+  3. (Krasjet) Quaternion and 3D rotation（四元数与三维旋转）
  *)
 
 Require Import Extraction.
@@ -833,7 +834,7 @@ Section qexp.
 End qexp.
 
 (** ** Exponentiation of quaternion *)
-Section qpow.
+Section qpower.
 
   (* 四元数被取幂，含义是：当 t 从 0 变换到 1 时，q^t 从 qone 变化到 q *)
   (* 例如，若 q 表示绕 x 顺时针转 30度，则 q^2 表示绕 x 顺时针转 60度，q^{-1/3} 表示
@@ -843,7 +844,7 @@ Section qpow.
      某些情况，我们关心旋转的总量，而不仅是最终结果（例如角速度）。
      此时，四元数不是正确的工具，可使用指数映射，或轴角格式。*)
   
-  Definition qpow' (q : quat) (t : R) : quat := qexp (t c* qlog q).
+  Definition qpower' (q : quat) (t : R) : quat := qexp (t c* qlog q).
 
   (* 理解 q^t 的插值（Interpolate）为什么会从qone到q。
      对数运算实际上将四元数转换为指数映射格式（except因子2）。
@@ -878,7 +879,7 @@ Section qpow.
      由于四元素单位元的任何幂次还是它，所以忽略即可。
      另外，计算 alpha 时，使用的是 acos 函数，它返回一个正角度，这没有问题。*)
 
-  Definition qpow (q : quat) (exponent : R) : quat :=
+  Definition qpower (q : quat) (exponent : R) : quat :=
     if (Rabs (q.X) <? 0.9999)
     then
       (let alpha : R := acos (q.W) in
@@ -887,7 +888,7 @@ Section qpow.
        mk_quat (cos newAlpha) (q.X * mult) (q.Y * mult) (q.Z * mult))
     else q.
   
-End qpow.
+End qpower.
 
 
 (** ** Spherical Linear Interpolation 球面线性插值 *)

@@ -70,7 +70,7 @@ Module BasicMatrixTheory (E : ElementType).
 
   (** Get element of a matrix (nth means n-th) *)
   Definition mnth {r c} (m : mat r c) (i j : nat) : A := mnth Azero m i j.
-  Notation "m $ i $ j " := (matf (A:=A) m i j) : mat_scope.
+  Notation "m $ i $ j " := (m2f m i j) : mat_scope.
   Notation "m ! i ! j " := (mnth m i j) : mat_scope.
 
   Notation "m .00" := (m $ 0 $ 0) : mat_scope.

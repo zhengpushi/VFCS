@@ -745,33 +745,33 @@ Module RingVectorTheory (E : RingElementType).
   (* ==================================== *)
   (** ** Comparison of matrix left or right multiply to a vector *)
   
-  (** M * v = v * M\T *)
-  Lemma mmv_eq_vmmt : forall {r c : nat} (M : mat r c) (v : cvec c),
-      (* Treat the column vector v as a row vector *)
-      let v' : rvec c := v\T in
-      (* matrix left multiply a vector *)
-      let u1 : cvec r := M * v in
-      (* matrix right multiply a vector (the matrix need to be transposed) *)
-      let u2 : rvec r := v' * M\T in
-      (* Treat the row vector u2 as a column vector *)
-      let u2' : cvec r := u2\T in
-      (* The result must be same *)
-      u1 == u2'.
-  Proof. intros. apply mmv_eq_vmmt. Qed.
+  (* (** M * v = v * M\T *) *)
+  (* Lemma mmv_eq_vmmt : forall {r c : nat} (M : mat r c) (v : cvec c), *)
+  (*     (* Treat the column vector v as a row vector *) *)
+  (*     let v' : rvec c := v\T in *)
+  (*     (* matrix left multiply a vector *) *)
+  (*     let u1 : cvec r := M * v in *)
+  (*     (* matrix right multiply a vector (the matrix need to be transposed) *) *)
+  (*     let u2 : rvec r := v' * M\T in *)
+  (*     (* Treat the row vector u2 as a column vector *) *)
+  (*     let u2' : cvec r := u2\T in *)
+  (*     (* The result must be same *) *)
+  (*     u1 == u2'. *)
+  (* Proof. intros. apply mmv_eq_vmmt. Qed. *)
 
-  (** v * M = M\T * v *)
-  Lemma mvm_eq_mtmv : forall {r c : nat} (v : rvec r) (M : mat r c),
-      (* Treat the row vector v as a column vector *)
-      let v' : cvec r := v\T in
-      (* matrix right multiply a vector *)
-      let u1 : rvec c := v * M in
-      (* matrix left multiply a vector (the matrix need to be transposed) *)
-      let u2 : cvec c := M\T * v' in
-      (* Treat the column vector u2 as a row vector *)
-      let u2' : rvec c := u2\T in
-      (* The result must be same *)
-      u1 == u2'.
-  Proof. intros. apply mvm_eq_mtmv. Qed.
+  (* (** v * M = M\T * v *) *)
+  (* Lemma mvm_eq_mtmv : forall {r c : nat} (v : rvec r) (M : mat r c), *)
+  (*     (* Treat the row vector v as a column vector *) *)
+  (*     let v' : cvec r := v\T in *)
+  (*     (* matrix right multiply a vector *) *)
+  (*     let u1 : rvec c := v * M in *)
+  (*     (* matrix left multiply a vector (the matrix need to be transposed) *) *)
+  (*     let u2 : cvec c := M\T * v' in *)
+  (*     (* Treat the column vector u2 as a row vector *) *)
+  (*     let u2' : rvec c := u2\T in *)
+  (*     (* The result must be same *) *)
+  (*     u1 == u2'. *)
+  (* Proof. intros. apply mvm_eq_mtmv. Qed. *)
 
 (** Thus, we proved that, row vector and column vector are different but have 
       a tight connection. *)

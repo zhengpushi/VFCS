@@ -319,6 +319,11 @@ Declare Scope mat_scope.
 Delimit Scope mat_scope with M.
 Open Scope mat_scope.
 
+(** Scope for vector type (limited use) *)
+(* Declare Scope vec_scope. *)
+(* Delimit Scope vec_scope with V. *)
+(* Open Scope vec_scope. *)
+
 (** Scope for row-vector type *)
 Declare Scope rvec_scope.
 Delimit Scope rvec_scope with RV.

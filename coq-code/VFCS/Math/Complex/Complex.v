@@ -190,12 +190,12 @@ Section def.
   Definition Cre (z : C) : R :=
     let (a, b) := z in
     a.
-  Notation "z '.a'" := (Cre z) (at level 20) : C_scope.
+  Notation "z .a" := (Cre z) (at level 20, format "z .a") : C_scope.
 
   Definition Cim (z : C) : R :=
     let (a, b) := z in
     b.
-  Notation "z '.b'" := (Cim z) (at level 20) : C_scope.
+  Notation "z .b" := (Cim z) (at level 20, format "z .b") : C_scope.
 
   Lemma Cproj_right : forall z : C, z = (z.a, z.b).
   Proof.
@@ -251,8 +251,8 @@ Hint Resolve C1_neq_C0 : complex.
 Infix " '+i' " := RR2C (at level 60) : C_scope.
 Notation "0" := C0 : C_scope.
 Notation "1" := C1 : C_scope.
-Notation "z '.a'" := (Cre z) (at level 20) : C_scope.
-Notation "z '.b'" := (Cim z) (at level 20) : C_scope.
+Notation "z .a" := (Cre z) (at level 20, format "z .a") : C_scope.
+Notation "z .b" := (Cim z) (at level 20, format "z .b") : C_scope.
 
 
 

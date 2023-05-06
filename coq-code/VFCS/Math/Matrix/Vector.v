@@ -59,7 +59,7 @@ Ltac rlva :=
 
 (* ======================================================================= *)
 (** ** Vector theory on general type *)
-Section basic.
+Section rvec_basic.
   Context `{Equiv_Aeq : Equivalence A Aeq} {Azero:A}.
   
   Infix "==" := Aeq : A_scope.
@@ -190,7 +190,7 @@ Section basic.
   Lemma rvec0_eq_mat0 : forall n, (@rvec0 n) == mat0 Azero.
   Proof. intros. easy. Qed.
 
-End basic.
+End rvec_basic.
 
 Arguments rvnth {A} Azero {n}.
 Arguments l2rv {A}.
@@ -223,7 +223,7 @@ End test.
 
 (* ======================================================================= *)
 (** ** Vector theory on element of ring type *)
-Section vec_ring.
+Section rvec_ring.
   Context `{AG : AGroup}.
 
   Infix "==" := Aeq : A_scope.
@@ -397,7 +397,7 @@ Section vec_ring.
   Lemma rvdot_0_r : forall {n} (v : rvec n), (<v,rvec0> == Azero)%A.
   Proof. intros. rewrite rvdot_comm, rvdot_0_l. easy. Qed.
   
-End vec_ring.
+End rvec_ring.
 
 Section test.
   Import ZArith.
@@ -424,7 +424,7 @@ End test.
 (* ======================================================================= *)
 (** ** Vector theory on element of field type *)
 
-Section vec_field.
+Section rvec_field.
 
   Context `{F : Field}.
   Infix "*" := (fun x y => Amul x y) : A_scope.
@@ -452,7 +452,7 @@ Section vec_field.
   (*   let '(a1,b1,c1) := v2t_3 v1 in *)
   (*     (a0 * a1 + b0 * b1 + c0 * c1)%A. *)
 
-End vec_field.
+End rvec_field.
 
 
 (** ######################################################################### *)
@@ -486,7 +486,7 @@ Ltac clva :=
 
 (* ======================================================================= *)
 (** ** Vector theory on general type *)
-Section basic.
+Section cvec_basic.
   Context `{Equiv_Aeq : Equivalence A Aeq} {Azero:A}.
   
   Infix "==" := Aeq : A_scope.
@@ -631,7 +631,7 @@ Section basic.
   Proof. intros. auto. Qed.
   
 
-End basic.
+End cvec_basic.
 
 Arguments cvnth {A} Azero {n}.
 Arguments l2cv {A}.
@@ -660,7 +660,7 @@ End test.
 
 (* ======================================================================= *)
 (** ** Vector theory on element of ring type *)
-Section vec_ring.
+Section cvec_ring.
   Context `{AG : AGroup}.
 
   Infix "==" := Aeq : A_scope.
@@ -965,42 +965,8 @@ Section vec_ring.
     rewrite seqsum_opp. apply seqsum_eq; intros; ring.
   Qed.
   
+End cvec_ring.
 
-  (** *** Connection and difference between "Matrix multiplication with row vector 
-        or column vector" *)
-
-  (** M * v = v * M\T *)
-  Lemma mmv_eq_vmmt : forall {r c : nat} (M : mat r c) (v : cvec c),
-      (* Treat the column vector v as a row vector *)
-      let v' : rvec c := v\T in
-      (* matrix left multiply a vector *)
-      let u1 : cvec r := M * v in
-      (* matrix right multiply a vector (the matrix need to be transposed) *)
-      let u2 : rvec r := v' * M\T in
-      (* Treat the row vector u2 as a column vector *)
-      let u2' : cvec r := u2\T in
-      (* The result must be same *)
-      u1 == u2'.
-  Proof. lma. apply seqsum_eq. intros. ring. Qed.
-  
-  (** v * M = M\T * v *)
-  Lemma mvm_eq_mtmv : forall {r c : nat} (v : rvec r) (M : mat r c),
-      (* Treat the row vector v as a column vector *)
-      let v' : cvec r := v\T in
-      (* matrix right multiply a vector *)
-      let u1 : rvec c := v * M in
-      (* matrix left multiply a vector (the matrix need to be transposed) *)
-      let u2 : cvec c := M\T * v' in
-      (* Treat the column vector u2 as a row vector *)
-      let u2' : rvec c := u2\T in
-      (* The result must be same *)
-      u1 == u2'.
-  Proof. lma. apply seqsum_eq. intros. ring. Qed.
-
-(** Thus, we proved that, row vector and column vector are different but have 
-        a tight connection. *)
-  
-End vec_ring.
 
 Section test.
   Import ZArith.
@@ -1027,7 +993,7 @@ End test.
 (* ======================================================================= *)
 (** ** Vector theory on element of field type *)
 
-Section vec_field.
+Section cvec_field.
 
   Context `{F : Field}.
   Infix "*" := (fun x y => Amul x y) : A_scope.
@@ -1055,11 +1021,14 @@ Section vec_field.
   (*   let '(a1,b1,c1) := v2t_3 v1 in *)
   (*     (a0 * a1 + b0 * b1 + c0 * c1)%A. *)
 
-End vec_field.
+End cvec_field.
 
 
 (** ######################################################################### *)
-(** * Convertion between cvec and rvec *)
+(** * Connection between rvec and cvec *)
+
+(* ======================================================================= *)
+(** ** Convertion between rvec and cvec *)
 Section cvt.
   Context `{Equiv_Aeq : Equivalence A Aeq} {Azero:A}.
   
@@ -1079,6 +1048,87 @@ Section cvt.
   Proof. lma. rewrite rvnth_spec; easy. Qed.
 
 End cvt.
+
+
+(* ======================================================================= *)
+(** ** Equivalence between rvec and cvec *)
+Section veq.
+  
+  (* Open Scope vec_scope. *)
+
+  (* (* Here, we need only a set A equiped with an equivalence reation Aeq *) *)
+  (* Context `{Equiv_Aeq : Equivalence A Aeq} {Azero : A}. *)
+  (* Infix "==" := Aeq : A_scope. *)
+  (* Notation cv2rv := (@cv2rv A Azero _). *)
+  (* Notation rv2cv := (@rv2cv A Azero _). *)
+  
+  (* (** Equivalence between rvec and cvec: they are mathematical equivalent *) *)
+  (* (** Note that, veq is not reflexive, not symmetric, and not transitive, *)
+  (*     due to the type mismatch. *) *)
+  (* Definition veq {n} (rv : rvec n) (cv : cvec n) : Prop := *)
+  (*   forall i : nat, i < n -> rvnth Azero rv i == cvnth Azero cv i. *)
+  
+  (* Infix "==" := veq : vec_scope. *)
+
+  (* (** cv2rv satisfy veq relation *) *)
+  (* Lemma cv2rv_veq : forall {n} (v : cvec n), cv2rv v == v. *)
+  (* Proof. *)
+  (*   intros. hnf. intros. repeat unfold rvnth,cvnth,cv2rv,f2rv,f2m,mnth; simpl. *)
+  (*   bdestruct (n >? i); bdestruct (1 >? 0); simpl; easy. *)
+  (* Qed. *)
+
+  (* (** rv2cv satisfy veq relation *) *)
+  (* Lemma rv2cv_veq : forall {n} (v : rvec n), v == rv2cv v. *)
+  (* Proof. *)
+  (*   intros. hnf. intros. *)
+  (*   unfold rvnth,cvnth,rv2cv,mnth,f2cv,f2m,rvnth,mnth. simpl. *)
+  (*   bdestruct (n >? i); bdestruct (1 >? 0); simpl; try easy. lia. *)
+  (* Qed. *)
+  
+End veq.
+
+
+(* ======================================================================= *)
+(** ** Equivalence of Left multiply a Rvec (LR) and Right multiply a Cvec (RC) *) 
+Section LR_RC.
+  (* (* we need a ring structure *) *)
+  (* Context `{R : Ring A Aadd Azero Aopp Amul Aone Aeq}. *)
+  (* Add Ring ring_inst : (make_ring_theory R). *)
+  (* Infix "==" := (@meq _ Aeq _ _). *)
+  (* Infix "*" := (@mmul _ Aadd Azero Amul _ _ _). *)
+  (* Notation cv2rv := (@cv2rv A Azero _). *)
+  (* Notation rv2cv := (@rv2cv A Azero _). *)
+
+  (* (** v * M == M\T * v' *) *)
+  (* Lemma mvm_eq_mtmv : forall {r c : nat} (v : rvec r) (M : mat r c), *)
+  (*     let v' : cvec r := v\T in *)
+  (*     (* matrix right multiply a vector *) *)
+  (*     let u1 : rvec c := v * M in *)
+  (*     (* matrix left multiply a vector (the matrix need to be transposed) *) *)
+  (*     let u2 : cvec c := M\T * v' in *)
+  (*     (* Treat the column vector u2 as a row vector *) *)
+  (*     let u2' : rvec c := u2\T in *)
+  (*     (* The result must be same *) *)
+  (*     u1 == u2'. *)
+  (* Proof. lma. apply seqsum_eq. intros. ring. Qed. *)
+
+  (* (** M * v = v * M\T *) *)
+  (* Lemma mmv_eq_vmmt : forall {r c : nat} (M : mat r c) (v : cvec c), *)
+  (*     (* Treat the column vector v as a row vector *) *)
+  (*     let v' : rvec c := v\T in *)
+  (*     (* matrix left multiply a vector *) *)
+  (*     let u1 : cvec r := M * v in *)
+  (*     (* matrix right multiply a vector (the matrix need to be transposed) *) *)
+  (*     let u2 : rvec r := v' * M\T in *)
+  (*     (* Treat the row vector u2 as a column vector *) *)
+  (*     let u2' : cvec r := u2\T in *)
+  (*     (* The result must be same *) *)
+  (*     u1 == u2'. *)
+  (* Proof. lma. apply seqsum_eq. intros. ring. Qed. *)
+
+  (* Thus, we proved that, row vector and column vector are different but similar *)
+End LR_RC.
+
 
 Section test.
   Infix "==" := (meq (Aeq:=eq)) : mat_scope.
