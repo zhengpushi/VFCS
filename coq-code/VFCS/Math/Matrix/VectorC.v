@@ -37,11 +37,10 @@ Section test.
   (* Compute cv2l v2. *)
 
   Variable a1 a2 a3 : A.
+  Variable f : A -> A.
   Let v3 := t2rv_3 (a1,a2,a3).
-  (* Compute rv2l (rvmap v3 Copp). *)
-  (* Eval cbn in rv2l (rvmap v3 Copp). *)
-
   Let v4 := t2cv_3 (a1,a2,a3).
-  (* Compute cv2l (cvmap v4 Copp). *)
-  (* Eval cbn in cv2l (cvmap v4 Copp). *)
+  (* Compute rv2l (rvmap v3 f). *)
+  (* Compute cv2l (cvmap v4 f). *)
+  
 End test.

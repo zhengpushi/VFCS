@@ -37,10 +37,10 @@ Section test.
   (* Compute m2l (mmap Copp m1). *)
   (* Compute m2l (m1 * m1). *)
 
-  Variable a11 a12 a21 a22 : C.
-  Variable f : C -> C.
+  Variable a11 a12 a21 a22 : A.
+  Variable f : A -> A.
   Let m2 := @l2m 2 2 [[a11;a12];[a21;a22]].
-  (* Compute m2l m2.       (* = [[a11; a12]; [a21; a22]] *) *)
+  (* Compute m2l m2.     (* = [[a11; a12]; [a21; a22]] *) *)
   (* Compute m2l (mmap f m2).       (* = [[f a11; f a12]; [f a21; f a22]] *) *)
   (* Compute m2l (m2 * m2). *)
 

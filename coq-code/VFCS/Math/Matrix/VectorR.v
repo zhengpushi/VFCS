@@ -545,9 +545,9 @@ Section mcolsOrthonormal.
   Admitted.
 
   Section test.
-    Variable a00 a01 a02 a10 a11 a12 a20 a21 a22 : R.
-    Let m1 : mat 1 3 := l2m [[a00;a01;a02];[a10;a11;a12]].
-    Let m2 : mat 3 1 := l2m [[a00;a01];[a10;a11];[a20;a21]].
+    Variable a11 a12 a13 a21 a22 a23 a31 a32 a33 : R.
+    Let m1 : mat 1 3 := l2m [[a11;a12;a13];[a21;a22;a23]].
+    Let m2 : mat 3 1 := l2m [[a11;a12];[a21;a22];[a31;a32]].
 
     (* Compute mcolsOrthogonalb m1. *)
     (* Compute mcolsOrthogonalb m2. (* because only one column, needn't be check *) *)
@@ -716,12 +716,12 @@ Section v3.
 
     (** Convert equality of vector to equality of its components *)
     Lemma cv3eq_iff : forall (v1 v2 : cvec 3),
-        v1 == v2 <-> (v1.0 = v2.0 /\ v1.1 = v2.1 /\ v1.2 = v2.2).
+        v1 == v2 <-> (v1.1 = v2.1 /\ v1.2 = v2.2 /\ v1.3 = v2.3).
     Proof. intros. split; intros. repeat (split; try apply H; auto). lma. Qed.
 
     (** Convert inequality of vector to inequality of its components *)
     Lemma cv3neq_iff : forall (v1 v2 : cvec 3),
-        v1 != v2 <-> (v1.0 <> v2.0 \/ v1.1 <> v2.1 \/ v1.2 <> v2.2).
+        v1 != v2 <-> (v1.1 <> v2.1 \/ v1.2 <> v2.2 \/ v1.3 <> v2.3).
     Proof. intros. unfold not. rewrite cv3eq_iff. lra. Qed.
 
   End cv3eq_cv3neq.
@@ -735,13 +735,13 @@ Section v3.
     Definition rv3j : rvec 3 := mk_rvec3 0 1 0.
     Definition rv3k : rvec 3 := mk_rvec3 0 0 1.
     
-    (** <v,i> = v.0, <v,j> = v.1, <v,k> = v.2 *)
-    Lemma rvdot_v3i_l : forall v : rvec 3, <rv3i, v> = v.0. Proof. intros. cbv; ring. Qed.
-    Lemma rvdot_v3j_l : forall v : rvec 3, <rv3j, v> = v.1. Proof. intros. cbv; ring. Qed.
-    Lemma rvdot_v3k_l : forall v : rvec 3, <rv3k, v> = v.2. Proof. intros. cbv; ring. Qed.
-    Lemma rvdot_v3i_r : forall v : rvec 3, <v, rv3i> = v.0. Proof. intros. cbv; ring. Qed.
-    Lemma rvdot_v3j_r : forall v : rvec 3, <v, rv3j> = v.1. Proof. intros. cbv; ring. Qed.
-    Lemma rvdot_v3k_r : forall v : rvec 3, <v, rv3k> = v.2. Proof. intros. cbv; ring. Qed.
+    (** <v,i> = <i,v> = v.1, <v,j> = <j,v> = v.2, <v,k> = <k,v> = v.3 *)
+    Lemma rvdot_v3i_l : forall v : rvec 3, <rv3i, v> = v.1. Proof. intros. cbv; ring. Qed.
+    Lemma rvdot_v3j_l : forall v : rvec 3, <rv3j, v> = v.2. Proof. intros. cbv; ring. Qed.
+    Lemma rvdot_v3k_l : forall v : rvec 3, <rv3k, v> = v.3. Proof. intros. cbv; ring. Qed.
+    Lemma rvdot_v3i_r : forall v : rvec 3, <v, rv3i> = v.1. Proof. intros. cbv; ring. Qed.
+    Lemma rvdot_v3j_r : forall v : rvec 3, <v, rv3j> = v.2. Proof. intros. cbv; ring. Qed.
+    Lemma rvdot_v3k_r : forall v : rvec 3, <v, rv3k> = v.3. Proof. intros. cbv; ring. Qed.
 
     Open Scope cvec_scope.
 
@@ -749,19 +749,19 @@ Section v3.
     Definition cv3j : cvec 3 := mk_cvec3 0 1 0.
     Definition cv3k : cvec 3 := mk_cvec3 0 0 1.
 
-    (** <v,i> = v.0, <v,j> = v.1, <v,k> = v.2 *)
-    Lemma cvdot_v3i_l : forall v : cvec 3, <cv3i, v> = v.0. Proof. intros. cbv; ring. Qed.
-    Lemma cvdot_v3j_l : forall v : cvec 3, <cv3j, v> = v.1. Proof. intros. cbv; ring. Qed.
-    Lemma cvdot_v3k_l : forall v : cvec 3, <cv3k, v> = v.2. Proof. intros. cbv; ring. Qed.
-    Lemma cvdot_v3i_r : forall v : cvec 3, <v, cv3i> = v.0. Proof. intros. cbv; ring. Qed.
-    Lemma cvdot_v3j_r : forall v : cvec 3, <v, cv3j> = v.1. Proof. intros. cbv; ring. Qed.
-    Lemma cvdot_v3k_r : forall v : cvec 3, <v, cv3k> = v.2. Proof. intros. cbv; ring. Qed.
+    (** <v,i> = <i,v> = v.1, <v,j> = <j,v> = v.2, <v,k> = <k,v> = v.3 *)
+    Lemma cvdot_v3i_l : forall v : cvec 3, <cv3i, v> = v.1. Proof. intros. cbv; ring. Qed.
+    Lemma cvdot_v3j_l : forall v : cvec 3, <cv3j, v> = v.2. Proof. intros. cbv; ring. Qed.
+    Lemma cvdot_v3k_l : forall v : cvec 3, <cv3k, v> = v.3. Proof. intros. cbv; ring. Qed.
+    Lemma cvdot_v3i_r : forall v : cvec 3, <v, cv3i> = v.1. Proof. intros. cbv; ring. Qed.
+    Lemma cvdot_v3j_r : forall v : cvec 3, <v, cv3j> = v.2. Proof. intros. cbv; ring. Qed.
+    Lemma cvdot_v3k_r : forall v : cvec 3, <v, cv3k> = v.3. Proof. intros. cbv; ring. Qed.
 
   End basis_vector.
 
   (** Dot product (inner-product) in 3D *)
   Section cv3dot.
-    Definition cv3dot (a b : cvec 3) := (a.0*b.0 + a.1*b.1 + a.2*b.2)%R.
+    Definition cv3dot (a b : cvec 3) := (a.1*b.1 + a.2*b.2 + a.3*b.3)%R.
 
     Lemma cv3dot_spec : forall v1 v2 : cvec 3, cv3dot v1 v2 = <v1,v2>.
     Proof. intros. cbv. ring. Qed.
@@ -772,7 +772,7 @@ Section v3.
 
     (** A unit vector has a algebra equation relation *)
     Lemma cv3unit_eq1 : forall (n : cvec 3),
-        cvunit n -> n.00 ^ 2 = (1 - n.10 ^ 2 - n.20 ^ 2)%R.
+        cvunit n -> n.1 ^ 2 = (1 - n.2 ^ 2 - n.3 ^ 2)%R.
     Proof. intros. cvec2fun. cbv in *. ring_simplify in H. ring_simplify. lra. Qed.
 
   End cvunit.
@@ -785,7 +785,7 @@ Section v3.
     Lemma cv3normalize_eq : forall {n} (v : cvec n),
         let v' := cvnormalize v in
         cvnonzero v ->
-        (v'.0 = v.0 / ||v||) /\ (v'.1 = v.1 / ||v||) /\ (v'.2 = v.2 / ||v||).
+        (v'.1 = v.1 / ||v||) /\ (v'.2 = v.2 / ||v||) /\ (v'.3 = v.3 / ||v||).
     Proof.
       intros. unfold v', cvnormalize. cvec2fun.
       autounfold with A. repeat split; try field.
@@ -794,7 +794,7 @@ Section v3.
 
     Lemma cv3normalize_sqr_eq1 : forall (v : cvec 3),
         let r := ||v|| in
-        ((v.0 / r)² + (v.1 / r)² + (v.2 / r)² = 1)%R.
+        ((v.1 / r)² + (v.2 / r)² + (v.3 / r)² = 1)%R.
     Proof.
       intros. pose proof (cvnormalize_len1 v).
       unfold cvnormalize in H.
@@ -816,9 +816,9 @@ Section v3.
    (2) 相邻两个向量按相反次序的外积为第三个向量的取反，即 j×i=-k, etc.
      *)
     Definition cv3cross (a b : cvec 3) : cvec 3 :=
-      l2cv [a.1 * b.2 - a.2 * b.1;
-            a.2 * b.0 - a.0 * b.2;
-            a.0 * b.1 - a.1 * b.0]%R.
+      l2cv [a.2 * b.3 - a.3 * b.2;
+            a.3 * b.1 - a.1 * b.3;
+            a.1 * b.2 - a.2 * b.1]%R.
 
     Infix "×" := cv3cross : cvec_scope.
 
@@ -907,9 +907,9 @@ Section v3.
 
     (** The matrix form of cvproj in 3-dim *)
     Definition cv3proj (a b : cvec 3) : cvec 3 :=
-      let x := b.0 in
-      let y := b.1 in
-      let z := b.2 in
+      let x := b.1 in
+      let y := b.2 in
+      let z := b.3 in
       let M : mat 3 3 :=
         l2m [[x * x; x * y; x * z];
              [x * y; y * y; y * z];
@@ -936,7 +936,7 @@ Section v3.
       (* Why it is a correct algebra equation? 
        I'm confused, and it's just a brute proof. *)
       cvec2fun.
-      assert (b.00 ^ 2 = R1 - b.10 ^ 2 - b.20 ^ 2)%R as H1.
+      assert (b.11 ^ 2 = R1 - b.21 ^ 2 - b.31 ^ 2)%R as H1.
       { cbv in H. rewrite <- H. field. }
       lma; cbv; ring_simplify; ring_simplify in H1; rewrite H1; field.
     Qed.
@@ -969,13 +969,13 @@ Section v3.
     (** Direction cosine of a vector relative to standard basis.
       That is : (cos α, cos β, cos γ) *)
     Definition cv3dc (v : cvec 3) : cvec 3 :=
-      let r := ||v|| in l2cv [v.0/r; v.1/r; v.2/r].
+      let r := ||v|| in l2cv [v.1/r; v.2/r; v.3/r].
 
     (** The original (lower level) definition as its spec. *)
     Lemma cv3dc_spec : forall (v : cvec 3),
         let v' := cv3dc v in
         let r := ||v|| in 
-        (v'.0 = <v,cv3i> / r) /\ v'.1 = (<v,cv3j> / r) /\ v'.2 = (<v,cv3k> / r).
+        (v'.1 = <v,cv3i> / r) /\ v'.2 = (<v,cv3j> / r) /\ v'.3 = (<v,cv3k> / r).
     Proof. intros. rewrite cvdot_v3i_r, cvdot_v3j_r, cvdot_v3k_r; auto. Qed.
 
     (** dc of a nonzero vector is a unit vector *)
@@ -1011,15 +1011,15 @@ Section v3.
 
     (** Convert a vector to its corresponding skew-symmetric matrix *)
     Definition cv3skew (v : cvec 3) : mat 3 3 :=
-      l2m [[0; -v.2; v.1];
-           [v.2; 0; -v.0];
-           [-v.1; v.0; 0]]%R.
+      l2m [[0; -v.3; v.2];
+           [v.3; 0; -v.1];
+           [-v.2; v.1; 0]]%R.
     
     Notation "`| v |ₓ" := (cv3skew v).
 
     (** Convert a skew-symmetric matrix to its corresponding vector *)
     Definition cv3skew2v (m : mat 3 3) : option (cvec 3) :=
-      Some (l2cv [m.21; m.02; m.10]).
+      Some (l2cv [m.32; m.13; m.21]).
 
     Lemma cv3skew_skew2v_id : forall (m : mat 3 3),
         cv3skewP m -> 
@@ -1190,12 +1190,12 @@ Section v4.
 
     (** Convert equality of vector to equality of its components *)
     Lemma cv4eq_iff : forall (v1 v2 : cvec 4),
-        v1 == v2 <-> (v1.0 = v2.0 /\ v1.1 = v2.1 /\ v1.2 = v2.2 /\ v1.3 = v2.3).
+        v1 == v2 <-> (v1.1 = v2.1 /\ v1.2 = v2.2 /\ v1.3 = v2.3 /\ v1.4 = v2.4).
     Proof. intros. split; intros. repeat (split; try apply H; auto). lma. Qed.
 
     (** Convert inequality of vector to inequality of its components *)
     Lemma cv4neq_iff : forall (v1 v2 : cvec 4),
-        v1 != v2 <-> (v1.0 <> v2.0 \/ v1.1 <> v2.1 \/ v1.2 <> v2.2 \/ v1.3 <> v2.3).
+        v1 != v2 <-> (v1.1 <> v2.1 \/ v1.2 <> v2.2 \/ v1.3 <> v2.3 \/ v1.4 <> v2.4).
     Proof. intros. unfold not. rewrite cv4eq_iff. lra. Qed.
 
   End cv4eq_cv4neq.
@@ -1262,12 +1262,12 @@ Section test.
   (* Compute rv2l v1. *)
   (* Compute cv2l v2. *)
 
-  Variable a0 a1 a2 : A.
-  Let v3 := t2rv_3 (a0,a1,a2).
-  (* Compute rv2l (rvmap v3 fopp). *)
-  (* Eval cbn in rv2l (rvmap v3 fopp). *)
 
-  Let v4 := t2cv_3 (a0,a1,a2).
-  (* Compute cv2l (cvmap v4 fopp). *)
-  (* Eval cbn in cv2l (cvmap v4 fopp). *)
+  Variable a1 a2 a3 : A.
+  Variable f : A -> A.
+  Let v3 := t2rv_3 (a1,a2,a3).
+  Let v4 := t2cv_3 (a1,a2,a3).
+  (* Compute rv2l (rvmap v3 f). *)
+  (* Compute cv2l (cvmap v4 f). *)
+  
 End test.

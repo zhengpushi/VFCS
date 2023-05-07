@@ -176,23 +176,22 @@ Arguments mnth {A} Azero {r c}.
 
 Global Hint Unfold mnth : core.
 Notation "m $ i $ j " := (m2f m i j) : mat_scope.
-Notation "m .00" := (m $ 0 $ 0) : mat_scope.
-Notation "m .00" := (m $ 0 $ 0) : mat_scope.
-Notation "m .01" := (m $ 0 $ 1) : mat_scope.
-Notation "m .02" := (m $ 0 $ 2) : mat_scope.
-Notation "m .03" := (m $ 0 $ 3) : mat_scope.
-Notation "m .10" := (m $ 1 $ 0) : mat_scope.
-Notation "m .11" := (m $ 1 $ 1) : mat_scope.
-Notation "m .12" := (m $ 1 $ 2) : mat_scope.
-Notation "m .13" := (m $ 1 $ 3) : mat_scope.
-Notation "m .20" := (m $ 2 $ 0) : mat_scope.
-Notation "m .21" := (m $ 2 $ 1) : mat_scope.
-Notation "m .22" := (m $ 2 $ 2) : mat_scope.
-Notation "m .23" := (m $ 2 $ 3) : mat_scope.
-Notation "m .30" := (m $ 3 $ 0) : mat_scope.
-Notation "m .31" := (m $ 3 $ 1) : mat_scope.
-Notation "m .32" := (m $ 3 $ 2) : mat_scope.
-Notation "m .33" := (m $ 3 $ 3) : mat_scope.
+Notation "m .11" := (m $ 0 $ 0) : mat_scope.
+Notation "m .12" := (m $ 0 $ 1) : mat_scope.
+Notation "m .13" := (m $ 0 $ 2) : mat_scope.
+Notation "m .14" := (m $ 0 $ 3) : mat_scope.
+Notation "m .21" := (m $ 1 $ 0) : mat_scope.
+Notation "m .22" := (m $ 1 $ 1) : mat_scope.
+Notation "m .23" := (m $ 1 $ 2) : mat_scope.
+Notation "m .24" := (m $ 1 $ 3) : mat_scope.
+Notation "m .31" := (m $ 2 $ 0) : mat_scope.
+Notation "m .32" := (m $ 2 $ 1) : mat_scope.
+Notation "m .33" := (m $ 2 $ 2) : mat_scope.
+Notation "m .34" := (m $ 2 $ 3) : mat_scope.
+Notation "m .41" := (m $ 3 $ 0) : mat_scope.
+Notation "m .42" := (m $ 3 $ 1) : mat_scope.
+Notation "m .43" := (m $ 3 $ 2) : mat_scope.
+Notation "m .44" := (m $ 3 $ 3) : mat_scope.
 
 
 (* ======================================================================= *)
@@ -650,16 +649,16 @@ Section t2m_m2t.
   Defined.
 
   (** m[0,0]: mat_1x1 -> A *)
-  Definition m2t_1_1 (m : @mat A 1 1) := m.00.
-  Definition scalar_of_mat (m : @mat A 1 1) := m.00.
+  Definition m2t_1_1 (m : @mat A 1 1) := m.11.
+  Definition scalar_of_mat (m : @mat A 1 1) := m.11.
 
-  (** mat_2x2 -> tuple 2x2. That is: ((a00,a01),(a10,a11)) *)
+  (** mat_2x2 -> tuple 2x2. That is: ((a11,a12),(a21,a22)) *)
   Definition m2t_2_2 (m : mat 2 2) : @T_2_2 A :=
-    ((m.00, m.01), (m.10, m.11)).
+    ((m.11, m.12), (m.21, m.22)).
 
-  (** mat_3x3 -> tuple 3x3. That is: ((a00,a01,a02),(a10,a11,a12),(a20,a21,a22)) *)
+  (** mat_3x3 -> tuple 3x3. That is: ((a11,a12,a13),(a21,a22,a23),(a31,a32,a33)) *)
   Definition m2t_3_3 (m : mat 3 3) : @T_3_3 A :=
-    ((m.00,m.01,m.02),(m.10,m.11,m.12),(m.20,m.21,m.22)).
+    ((m.11,m.12,m.13),(m.21,m.22,m.23),(m.31,m.32,m.33)).
 
 End t2m_m2t.
 
@@ -1361,7 +1360,7 @@ Section mdet.
   Section mdet_concrete.
 
     (** Determinant of a matrix of dimension-1 *)
-    Definition mdet1 (m : smat 1) := m.00.
+    Definition mdet1 (m : smat 1) := m.11.
 
     (** mdet1 m = mdet m *)
     Lemma mdet1_eq_mdet : forall m, (mdet1 m == mdet m)%A.
@@ -1369,11 +1368,11 @@ Section mdet.
     
     (** mdet m <> 0 <-> mdet_exp <> 0 *)
     Lemma mdet1_neq0_iff : forall (m : smat 1),
-        (mdet m != Azero) <-> (m.00 != Azero).
+        (mdet m != Azero) <-> (m.11 != Azero).
     Proof. intros. split; intros; mat2fun; reverse_neq0_neq0. Qed.
 
     (** Determinant of a matrix of dimension-2 *)
-    Definition mdet2 (m : smat 2) := (m.00*m.11 - m.01*m.10)%A.
+    Definition mdet2 (m : smat 2) := (m.11*m.22 - m.12*m.21)%A.
 
     (** mdet2 m = mdet m *)
     Lemma mdet2_eq_mdet : forall m, (mdet2 m == mdet m)%A.
@@ -1381,14 +1380,14 @@ Section mdet.
 
     (** mdet m <> 0 <-> mdet_exp <> 0 *)
     Lemma mdet2_neq0_iff : forall (m : smat 2),
-        mdet m != Azero <->  (m.00*m.11 - m.01*m.10 != Azero)%A.
+        mdet m != Azero <->  (m.11*m.22 - m.12*m.21 != Azero)%A.
     Proof. intros. split; intros; mat2fun; reverse_neq0_neq0. Qed.
 
     (** Determinant of a matrix of dimension-3 *)
     Definition mdet3 (m : smat 3) :=
-      (m.00 * m.11 * m.22 - m.00 * m.12 * m.21 - 
-         m.01 * m.10 * m.22 + m.01 * m.12 * m.20 + 
-         m.02 * m.10 * m.21 - m.02 * m.11 * m.20)%A.
+      (m.11 * m.22 * m.33 - m.11 * m.23 * m.32 - 
+         m.12 * m.21 * m.33 + m.12 * m.23 * m.31 + 
+         m.13 * m.21 * m.32 - m.13 * m.22 * m.31)%A.
 
     (** mdet3 m = mdet m *)
     Lemma mdet3_eq_mdet : forall m, (mdet3 m == mdet m)%A.
@@ -1397,19 +1396,19 @@ Section mdet.
     (** mdet m <> 0 <-> mdet_exp <> 0 *)
     Lemma mdet3_neq0_iff : forall (m : smat 3),
         mdet m != Azero <->
-          (m.00 * m.11 * m.22 - m.00 * m.12 * m.21 - 
-             m.01 * m.10 * m.22 + m.01 * m.12 * m.20 + 
-             m.02 * m.10 * m.21 - m.02 * m.11 * m.20 != Azero)%A.
+          (m.11 * m.22 * m.33 - m.11 * m.23 * m.32 - 
+             m.12 * m.21 * m.33 + m.12 * m.23 * m.31 + 
+             m.13 * m.21 * m.32 - m.13 * m.22 * m.31 != Azero)%A.
     Proof. intros. split; intros; mat2fun; reverse_neq0_neq0. Qed.
 
     (** Determinant of a matrix of dimension-4 *)
     Definition mdet4 (m : smat 4) :=
-      (m.00*m.11*m.22*m.33 - m.00*m.11*m.23*m.32 - m.00*m.12*m.21*m.33 + m.00*m.12*m.23*m.31 +
-         m.00*m.13*m.21*m.32 - m.00*m.13*m.22*m.31 - m.01*m.10*m.22*m.33 + m.01*m.10*m.23*m.32 +
-         m.01*m.12*m.20*m.33 - m.01*m.12*m.23*m.30 - m.01*m.13*m.20*m.32 + m.01*m.13*m.22*m.30 +
-         m.02*m.10*m.21*m.33 - m.02*m.10*m.23*m.31 - m.02*m.11*m.20*m.33 + m.02*m.11*m.23*m.30 +
-         m.02*m.13*m.20*m.31 - m.02*m.13*m.21*m.30 - m.03*m.10*m.21*m.32 + m.03*m.10*m.22*m.31 +
-         m.03*m.11*m.20*m.32 - m.03*m.11*m.22*m.30 - m.03*m.12*m.20*m.31 + m.03*m.12*m.21*m.30)%A.
+      (m.11*m.22*m.33*m.44 - m.11*m.22*m.34*m.43 - m.11*m.23*m.32*m.44 + m.11*m.23*m.34*m.42 +
+         m.11*m.24*m.32*m.43 - m.11*m.24*m.33*m.42 - m.12*m.21*m.33*m.44 + m.12*m.21*m.34*m.43 +
+         m.12*m.23*m.31*m.44 - m.12*m.23*m.34*m.41 - m.12*m.24*m.31*m.43 + m.12*m.24*m.33*m.41 +
+         m.13*m.21*m.32*m.44 - m.13*m.21*m.34*m.42 - m.13*m.22*m.31*m.44 + m.13*m.22*m.34*m.41 +
+         m.13*m.24*m.31*m.42 - m.13*m.24*m.32*m.41 - m.14*m.21*m.32*m.43 + m.14*m.21*m.33*m.42 +
+         m.14*m.22*m.31*m.43 - m.14*m.22*m.33*m.41 - m.14*m.23*m.31*m.42 + m.14*m.23*m.32*m.41)%A.
 
     (** mdet4 m = mdet m *)
     Lemma mdet4_eq_mdet : forall m, (mdet4 m == mdet m)%A.
@@ -1599,12 +1598,12 @@ Section matrix_inversion.
   
   (** *** Direct compute inversion of a symbol matrix of 1/2/3rd order. *)
   Section FindFormula.
-    Variable a00 a01 a02 a03 a10 a11 a12 a13 a20 a21 a22 a23 a30 a31 a32 a33 : A.
-    Let m1 := mk_mat_1_1 (Azero:=Azero) a00.
-    Let m2 := mk_mat_2_2 (Azero:=Azero) a00 a01 a10 a11.
-    Let m3 := mk_mat_3_3 (Azero:=Azero) a00 a01 a02 a10 a11 a12 a20 a21 a22.
+    Variable a11 a12 a13 a14 a21 a22 a23 a24 a31 a32 a33 a34 a41 a42 a43 a44 : A.
+    Let m1 := mk_mat_1_1 (Azero:=Azero) a11.
+    Let m2 := mk_mat_2_2 (Azero:=Azero) a11 a12 a21 a22.
+    Let m3 := mk_mat_3_3 (Azero:=Azero) a11 a12 a13 a21 a22 a23 a31 a32 a33.
     Let m4 := mk_mat_4_4 (Azero:=Azero)
-                a00 a01 a02 a03 a10 a11 a12 a13 a20 a21 a22 a23 a30 a31 a32 a33.
+                a11 a12 a13 a14 a21 a22 a23 a24 a31 a32 a33 a34 a41 a42 a43 a44.
 
     (* Compute (m2l (minv m1)). *)
     (* Compute (m2l (minv m2)). *)
@@ -1618,7 +1617,7 @@ Section matrix_inversion.
   
   (** *** Inversion matrix of common finite dimension *)
   Section concrete.
-    Definition minv1 (m : smat 1) : smat 1 := l2m [[Aone/m.00]].
+    Definition minv1 (m : smat 1) : smat 1 := l2m [[Aone/m.11]].
 
     (** mdet m <> 0 -> minv1 m = inv m *)
     Lemma minv1_eq_inv : forall m, mdet m != Azero -> minv1 m == minv m.
@@ -1638,7 +1637,7 @@ Section matrix_inversion.
     (** ** Inversion matrix of dimension-2 *)
     Definition minv2 (m : smat 2) : smat 2 :=
       let d := mdet2 m in
-      (l2m [[m.11/d; -m.01/d]; [-m.10/d; m.00/d]])%A.
+      (l2m [[m.22/d; -m.12/d]; [-m.21/d; m.11/d]])%A.
 
     (** mdet m <> 0 -> minv2 m = inv m *)
     Lemma minv2_eq_inv : forall m, mdet m != Azero -> minv2 m == minv m.
@@ -1660,9 +1659,9 @@ Section matrix_inversion.
     Definition minv3 (m : smat 3) : smat 3 :=
       let d := mdet3 m in
       (l2m
-         [[(m.11*m.22-m.12*m.21)/d; -(m.01*m.22-m.02*m.21)/d; (m.01*m.12-m.02*m.11)/d];
-          [-(m.10*m.22-m.12*m.20)/d; (m.00*m.22-m.02*m.20)/d; -(m.00*m.12-m.02*m.10)/d];
-          [(m.10*m.21-m.11*m.20)/d; -(m.00*m.21-m.01*m.20)/d; (m.00*m.11-m.01*m.10)/d]])%A.
+         [[(m.22*m.33-m.23*m.32)/d; -(m.12*m.33-m.13*m.32)/d; (m.12*m.23-m.13*m.22)/d];
+          [-(m.21*m.33-m.23*m.31)/d; (m.11*m.33-m.13*m.31)/d; -(m.11*m.23-m.13*m.21)/d];
+          [(m.21*m.32-m.22*m.31)/d; -(m.11*m.32-m.12*m.31)/d; (m.11*m.22-m.12*m.21)/d]])%A.
     
     (** mdet m <> 0 -> minv3 m = inv m *)
     Lemma minv3_eq_inv : forall m, mdet m != Azero -> minv3 m == minv m.
@@ -1692,22 +1691,22 @@ Section matrix_inversion.
     Definition minv4 (m : smat 4) : smat 4 :=
       let d := mdet4 m in
       l2m
-        [[(m.11*m.22*m.33 - m.11*m.23*m.32 - m.12*m.21*m.33 + m.12*m.23*m.31 + m.13*m.21*m.32 - m.13*m.22*m.31)/d;
-          -(m.01*m.22*m.33 - m.01*m.23*m.32 - m.02*m.21*m.33 + m.02*m.23*m.31 + m.03*m.21*m.32 - m.03*m.22*m.31)/d;
-          (m.01*m.12*m.33 - m.01*m.13*m.32 - m.02*m.11*m.33 + m.02*m.13*m.31 + m.03*m.11*m.32 - m.03*m.12*m.31)/d;
-          -(m.01*m.12*m.23 - m.01*m.13*m.22 - m.02*m.11*m.23 + m.02*m.13*m.21 + m.03*m.11*m.22 - m.03*m.12*m.21)/d];
-         [-(m.10*m.22*m.33 - m.10*m.23*m.32 - m.12*m.20*m.33 + m.12*m.23*m.30 + m.13*m.20*m.32 - m.13*m.22*m.30)/d;
-          (m.00*m.22*m.33 - m.00*m.23*m.32 - m.02*m.20*m.33 + m.02*m.23*m.30 + m.03*m.20*m.32 - m.03*m.22*m.30)/d;
-          -(m.00*m.12*m.33 - m.00*m.13*m.32 - m.02*m.10*m.33 + m.02*m.13*m.30 + m.03*m.10*m.32 - m.03*m.12*m.30)/d;
-          (m.00*m.12*m.23 - m.00*m.13*m.22 - m.02*m.10*m.23 + m.02*m.13*m.20 + m.03*m.10*m.22 - m.03*m.12*m.20)/d];
-         [(m.10*m.21*m.33 - m.10*m.23*m.31 - m.11*m.20*m.33 + m.11*m.23*m.30 + m.13*m.20*m.31 - m.13*m.21*m.30)/d;
-          -(m.00*m.21*m.33 - m.00*m.23*m.31 - m.01*m.20*m.33 + m.01*m.23*m.30 + m.03*m.20*m.31 - m.03*m.21*m.30)/d;
-          (m.00*m.11*m.33 - m.00*m.13*m.31 - m.01*m.10*m.33 + m.01*m.13*m.30 + m.03*m.10*m.31 - m.03*m.11*m.30)/d;
-          -(m.00*m.11*m.23 - m.00*m.13*m.21 - m.01*m.10*m.23 + m.01*m.13*m.20 + m.03*m.10*m.21 - m.03*m.11*m.20)/d];
-         [-(m.10*m.21*m.32 - m.10*m.22*m.31 - m.11*m.20*m.32 + m.11*m.22*m.30 + m.12*m.20*m.31 - m.12*m.21*m.30)/d;
-          (m.00*m.21*m.32 - m.00*m.22*m.31 - m.01*m.20*m.32 + m.01*m.22*m.30 + m.02*m.20*m.31 - m.02*m.21*m.30)/d;
-          -(m.00*m.11*m.32 - m.00*m.12*m.31 - m.01*m.10*m.32 + m.01*m.12*m.30 + m.02*m.10*m.31 - m.02*m.11*m.30)/d;
-          (m.00*m.11*m.22 - m.00*m.12*m.21 - m.01*m.10*m.22 + m.01*m.12*m.20 + m.02*m.10*m.21 - m.02*m.11*m.20)/d]]%A.
+        [[(m.22*m.33*m.44 - m.22*m.34*m.43 - m.23*m.32*m.44 + m.23*m.34*m.42 + m.24*m.32*m.43 - m.24*m.33*m.42)/d;
+          -(m.12*m.33*m.44 - m.12*m.34*m.43 - m.13*m.32*m.44 + m.13*m.34*m.42 + m.14*m.32*m.43 - m.14*m.33*m.42)/d;
+          (m.12*m.23*m.44 - m.12*m.24*m.43 - m.13*m.22*m.44 + m.13*m.24*m.42 + m.14*m.22*m.43 - m.14*m.23*m.42)/d;
+          -(m.12*m.23*m.34 - m.12*m.24*m.33 - m.13*m.22*m.34 + m.13*m.24*m.32 + m.14*m.22*m.33 - m.14*m.23*m.32)/d];
+         [-(m.21*m.33*m.44 - m.21*m.34*m.43 - m.23*m.31*m.44 + m.23*m.34*m.41 + m.24*m.31*m.43 - m.24*m.33*m.41)/d;
+          (m.11*m.33*m.44 - m.11*m.34*m.43 - m.13*m.31*m.44 + m.13*m.34*m.41 + m.14*m.31*m.43 - m.14*m.33*m.41)/d;
+          -(m.11*m.23*m.44 - m.11*m.24*m.43 - m.13*m.21*m.44 + m.13*m.24*m.41 + m.14*m.21*m.43 - m.14*m.23*m.41)/d;
+          (m.11*m.23*m.34 - m.11*m.24*m.33 - m.13*m.21*m.34 + m.13*m.24*m.31 + m.14*m.21*m.33 - m.14*m.23*m.31)/d];
+         [(m.21*m.32*m.44 - m.21*m.34*m.42 - m.22*m.31*m.44 + m.22*m.34*m.41 + m.24*m.31*m.42 - m.24*m.32*m.41)/d;
+          -(m.11*m.32*m.44 - m.11*m.34*m.42 - m.12*m.31*m.44 + m.12*m.34*m.41 + m.14*m.31*m.42 - m.14*m.32*m.41)/d;
+          (m.11*m.22*m.44 - m.11*m.24*m.42 - m.12*m.21*m.44 + m.12*m.24*m.41 + m.14*m.21*m.42 - m.14*m.22*m.41)/d;
+          -(m.11*m.22*m.34 - m.11*m.24*m.32 - m.12*m.21*m.34 + m.12*m.24*m.31 + m.14*m.21*m.32 - m.14*m.22*m.31)/d];
+         [-(m.21*m.32*m.43 - m.21*m.33*m.42 - m.22*m.31*m.43 + m.22*m.33*m.41 + m.23*m.31*m.42 - m.23*m.32*m.41)/d;
+          (m.11*m.32*m.43 - m.11*m.33*m.42 - m.12*m.31*m.43 + m.12*m.33*m.41 + m.13*m.31*m.42 - m.13*m.32*m.41)/d;
+          -(m.11*m.22*m.43 - m.11*m.23*m.42 - m.12*m.21*m.43 + m.12*m.23*m.41 + m.13*m.21*m.42 - m.13*m.22*m.41)/d;
+          (m.11*m.22*m.33 - m.11*m.23*m.32 - m.12*m.21*m.33 + m.12*m.23*m.31 + m.13*m.21*m.32 - m.13*m.22*m.31)/d]]%A.
     
     (** mdet m <> 0 -> minv4 m = inv m *)
     Lemma minv4_eq_inv : forall m, mdet m != Azero -> minv4 m == minv m.
@@ -1954,8 +1953,8 @@ Section test.
   Definition m1 := (mk_mat_3_3 (Azero:=0) 1 2 3 4 5 6 7 8 9)%Qc.
   (* Compute mtrace (Aadd:=Qcplus)(Azero:=0)(n:=3) m1. *)
 
-  Variable a00 a01 a02 a10 a11 a12 a20 a21 a22 : Qc.
-  Definition m2 := mk_mat_3_3 (Azero:=0) a00 a01 a02 a10 a11 a12 a20 a21 a22.
+  Variable a11 a12 a13 a21 a22 a23 a31 a32 a33 : Qc.
+  Definition m2 := mk_mat_3_3 (Azero:=0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
   (* Compute mrow 1 m2. *)
 
   (** *** rewrite support test *)

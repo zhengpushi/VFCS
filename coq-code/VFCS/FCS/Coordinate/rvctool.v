@@ -141,7 +141,7 @@ Module SO2.
     Definition skew (a : Real) : mat 2 2 := l2m [[0; -a];[a; 0]]%R.
 
     (** Convert a skew-symmetric matrix to its corresponding value *)
-    Definition vex (m : mat 2 2) : option Real := Some (m.10).
+    Definition vex (m : mat 2 2) : option Real := Some (m.21).
 
     Lemma skew_vex_id : forall (m : mat 2 2), is_skew m -> 
                                          match vex m with

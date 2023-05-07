@@ -39,12 +39,11 @@ Section test.
   Goal @l2cv 2 [1.5;2] == @l2cv 2 [6/4; 4/2].
   Proof. lma. Qed.
 
-  Variable a0 a1 a2 : A.
-  Let v3 := t2rv_3 (a0,a1,a2).
-  (* Compute rv2l (rvmap v3 Qopp). *)
-  (* Eval cbn in rv2l (rvmap v3 Qopp). *)
-
-  Let v4 := t2cv_3 (a0,a1,a2).
-  (* Compute cv2l (cvmap v4 Qopp). *)
-  (* Eval cbn in cv2l (cvmap v4 Qopp). *)
+  Variable a1 a2 a3 : A.
+  Variable f : A -> A.
+  Let v3 := t2rv_3 (a1,a2,a3).
+  Let v4 := t2cv_3 (a1,a2,a3).
+  (* Compute rv2l (rvmap v3 f). *)
+  (* Compute cv2l (cvmap v4 f). *)
+  
 End test.

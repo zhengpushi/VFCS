@@ -80,10 +80,10 @@ Module BasicVectorTheory (E : ElementType).
 
   (** Get element of vector from raw data, unsafe *)
   Notation "v $ i " := (v $ 0 $ i) : rvec_scope.
-  Notation "v .0" := (v $ 0) : rvec_scope.
-  Notation "v .1" := (v $ 1) : rvec_scope.
-  Notation "v .2" := (v $ 2) : rvec_scope.
-  Notation "v .3" := (v $ 3) : rvec_scope.
+  Notation "v .1" := (v $ 0) : rvec_scope.
+  Notation "v .2" := (v $ 1) : rvec_scope.
+  Notation "v .3" := (v $ 2) : rvec_scope.
+  Notation "v .4" := (v $ 3) : rvec_scope.
   (* Notation "v .x" := (v $ 0) : rvec_scope. *)
   (* Notation "v .y" := (v $ 1) : rvec_scope. *)
   (* Notation "v .z" := (v $ 2) : rvec_scope. *)
@@ -145,9 +145,9 @@ Module BasicVectorTheory (E : ElementType).
   
   (* ==================================== *)
   (** ** Make concrete vector *)
-  Definition mk_rvec2 (a0 a1 : A) : rvec 2 := mk_rvec2 Azero a0 a1.
-  Definition mk_rvec3 (a0 a1 a2 : A) : rvec 3 :=  mk_rvec3 Azero a0 a1 a2.
-  Definition mk_rvec4 (a0 a1 a2 a3 : A) : rvec 4 := mk_rvec4 Azero a0 a1 a2 a3.
+  Definition mk_rvec2 (a1 a2 : A) : rvec 2 := mk_rvec2 Azero a1 a2.
+  Definition mk_rvec3 (a1 a2 a3 : A) : rvec 3 :=  mk_rvec3 Azero a1 a2 a3.
+  Definition mk_rvec4 (a1 a2 a3 a4 : A) : rvec 4 := mk_rvec4 Azero a1 a2 a3 a4.
 
   
   (* ==================================== *)
@@ -221,10 +221,10 @@ Module BasicVectorTheory (E : ElementType).
 
   (** Get element of vector from raw data, unsafe *)
   Notation "v $ i " := (v $ i $ 0) : cvec_scope.
-  Notation "v .0" := (v $ 0) : cvec_scope.
-  Notation "v .1" := (v $ 1) : cvec_scope.
-  Notation "v .2" := (v $ 2) : cvec_scope.
-  Notation "v .3" := (v $ 3) : cvec_scope.
+  Notation "v .1" := (v $ 0) : cvec_scope.
+  Notation "v .2" := (v $ 1) : cvec_scope.
+  Notation "v .3" := (v $ 2) : cvec_scope.
+  Notation "v .4" := (v $ 3) : cvec_scope.
   (* Notation "v .x" := (v $ 0) : cvec_scope. *)
   (* Notation "v .y" := (v $ 1) : cvec_scope. *)
   (* Notation "v .z" := (v $ 2) : cvec_scope. *)
@@ -291,9 +291,9 @@ Module BasicVectorTheory (E : ElementType).
   
   (* ==================================== *)
   (** ** Make concrete vector *)
-  Definition mk_cvec2 (a0 a1 : A) : cvec 2 := mk_cvec2 Azero a0 a1.
-  Definition mk_cvec3 (a0 a1 a2 : A) : cvec 3 := mk_cvec3 Azero a0 a1 a2.
-  Definition mk_cvec4 (a0 a1 a2 a3 : A) : cvec 4 := mk_cvec4 Azero a0 a1 a2 a3.
+  Definition mk_cvec2 (a1 a2 : A) : cvec 2 := mk_cvec2 Azero a1 a2.
+  Definition mk_cvec3 (a1 a2 a3 : A) : cvec 3 := mk_cvec3 Azero a1 a2 a3.
+  Definition mk_cvec4 (a1 a2 a3 a4 : A) : cvec 4 := mk_cvec4 Azero a1 a2 a3 a4.
 
   
   (* ==================================== *)

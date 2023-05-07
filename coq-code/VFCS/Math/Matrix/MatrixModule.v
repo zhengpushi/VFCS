@@ -73,24 +73,22 @@ Module BasicMatrixTheory (E : ElementType).
   Notation "m $ i $ j " := (m2f m i j) : mat_scope.
   Notation "m ! i ! j " := (mnth m i j) : mat_scope.
 
-  Notation "m .00" := (m $ 0 $ 0) : mat_scope.
-  Notation "m .00" := (m $ 0 $ 0) : mat_scope.
-  Notation "m .01" := (m $ 0 $ 1) : mat_scope.
-  Notation "m .02" := (m $ 0 $ 2) : mat_scope.
-  Notation "m .03" := (m $ 0 $ 3) : mat_scope.
-  Notation "m .10" := (m $ 1 $ 0) : mat_scope.
-  Notation "m .11" := (m $ 1 $ 1) : mat_scope.
-  Notation "m .12" := (m $ 1 $ 2) : mat_scope.
-  Notation "m .13" := (m $ 1 $ 3) : mat_scope.
-  Notation "m .20" := (m $ 2 $ 0) : mat_scope.
-  Notation "m .21" := (m $ 2 $ 1) : mat_scope.
-  Notation "m .22" := (m $ 2 $ 2) : mat_scope.
-  Notation "m .23" := (m $ 2 $ 3) : mat_scope.
-  Notation "m .30" := (m $ 3 $ 0) : mat_scope.
-  Notation "m .31" := (m $ 3 $ 1) : mat_scope.
-  Notation "m .32" := (m $ 3 $ 2) : mat_scope.
-  Notation "m .33" := (m $ 3 $ 3) : mat_scope.
-
+  Notation "m .11" := (m $ 0 $ 0) : mat_scope.
+  Notation "m .12" := (m $ 0 $ 1) : mat_scope.
+  Notation "m .13" := (m $ 0 $ 2) : mat_scope.
+  Notation "m .14" := (m $ 0 $ 3) : mat_scope.
+  Notation "m .21" := (m $ 1 $ 0) : mat_scope.
+  Notation "m .22" := (m $ 1 $ 1) : mat_scope.
+  Notation "m .23" := (m $ 1 $ 2) : mat_scope.
+  Notation "m .24" := (m $ 1 $ 3) : mat_scope.
+  Notation "m .31" := (m $ 2 $ 0) : mat_scope.
+  Notation "m .32" := (m $ 2 $ 1) : mat_scope.
+  Notation "m .33" := (m $ 2 $ 2) : mat_scope.
+  Notation "m .34" := (m $ 2 $ 3) : mat_scope.
+  Notation "m .41" := (m $ 3 $ 0) : mat_scope.
+  Notation "m .42" := (m $ 3 $ 1) : mat_scope.
+  Notation "m .43" := (m $ 3 $ 2) : mat_scope.
+  Notation "m .44" := (m $ 3 $ 3) : mat_scope.
 
   (** mnth is equal to mnthRaw *)
   Lemma mnth_eq_mnthRaw : forall {r c : nat} (m : mat r c),
@@ -754,7 +752,7 @@ Module RingMatrixTheory (E : RingElementType).
   Proof. intros. apply mdet1_eq_mdet. Qed.
   
   (** mdet m <> 0 <-> mdet_exp <> 0 *)
-  Lemma mdet1_neq0_iff : forall (m : smat 1), (mdet m != Azero <-> m.00 != Azero)%A.
+  Lemma mdet1_neq0_iff : forall (m : smat 1), (mdet m != Azero <-> m.11 != Azero)%A.
   Proof. intros. apply mdet1_neq0_iff. Qed.
 
   (** Determinant of a matrix of dimension-2 *)
@@ -766,7 +764,7 @@ Module RingMatrixTheory (E : RingElementType).
 
   (** mdet m <> 0 <-> mdet_exp <> 0 *)
   Lemma mdet2_neq0_iff : forall (m : smat 2),
-      (mdet m != Azero <-> m.00*m.11 - m.01*m.10 != Azero)%A.
+      (mdet m != Azero <-> m.11*m.22 - m.12*m.21 != Azero)%A.
   Proof. intros. apply mdet2_neq0_iff. Qed.
 
   (** Determinant of a matrix of dimension-3 *)
@@ -779,9 +777,9 @@ Module RingMatrixTheory (E : RingElementType).
   (** mdet m <> 0 <-> mdet_exp <> 0 *)
   Lemma mdet3_neq0_iff : forall (m : smat 3),
       (mdet m != Azero <->
-         m.00 * m.11 * m.22 - m.00 * m.12 * m.21 - 
-           m.01 * m.10 * m.22 + m.01 * m.12 * m.20 + 
-           m.02 * m.10 * m.21 - m.02 * m.11 * m.20 != Azero)%A.
+         m.11 * m.22 * m.33 - m.11 * m.23 * m.32 - 
+           m.12 * m.21 * m.33 + m.12 * m.23 * m.31 + 
+           m.13 * m.21 * m.32 - m.13 * m.22 * m.31 != Azero)%A.
   Proof. intros. apply mdet3_neq0_iff. Qed.
   
   

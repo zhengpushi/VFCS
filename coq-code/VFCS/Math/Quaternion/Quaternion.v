@@ -98,11 +98,11 @@ Section construction.
   Proof. intros. split; auto. Qed.
 
   (** Construct a quaternion by a scalar number and a 3-dim vector *)
-  Definition quat_of_s_v (w : R) (v : cvec 3) := mk_quat w (v.0) (v.1) (v.2).
+  Definition quat_of_s_v (w : R) (v : cvec 3) := mk_quat w (v.1) (v.2) (v.3).
 
   Lemma quat_of_s_v_ok : forall w v,
       let q := quat_of_s_v w v in
-      q.W = w /\ q.X = v.0  /\ q.Y = v.1 /\ q.Z = v.2.
+      q.W = w /\ q.X = v.1  /\ q.Y = v.2 /\ q.Z = v.3.
   Proof. intros. split; auto. Qed.
 
   (** Construct a quaternion by a scalar number *)
@@ -118,15 +118,15 @@ Section construction.
   
   Lemma quat_of_v3_ok : forall v,
       let q := quat_of_v3 v in
-      q.W = R0 /\ q.X = v.0 /\ q.Y = v.1 /\ q.Z = v.2.
+      q.W = R0 /\ q.X = v.1 /\ q.Y = v.2 /\ q.Z = v.3.
   Proof. intros. apply quat_of_s_v_ok. Qed.
   
   (** Construct a quaternion by a vec4[w;x;y;z] *)
-  Definition cv2q (v : cvec 4) : quat := mk_quat (v.0) (v.1) (v.2) (v.3).
+  Definition cv2q (v : cvec 4) : quat := mk_quat (v.1) (v.2) (v.3) (v.4).
   
   Lemma cv2q_ok : forall v,
       let q := cv2q v in
-      q.W = v.0 /\ q.X = v.1 /\ q.Y = v.2 /\ q.Z = v.3.
+      q.W = v.1 /\ q.X = v.2 /\ q.Y = v.3 /\ q.Z = v.4.
   Proof. intros. cbv. auto. Qed.
   
   (** Quaternion to vec4[w;x;y;z] *)
@@ -134,7 +134,7 @@ Section construction.
   
   Lemma q2cv_ok : forall q,
       let v := q2cv q in
-      v.0 = q.W /\ v.1 = q.X /\ v.2 = q.Y /\ v.3 = q.Z.
+      v.1 = q.W /\ v.2 = q.X /\ v.3 = q.Y /\ v.4 = q.Z.
   Proof. intros. cbv. auto. Qed.
 
   (** Convert axis-angle to quaternion *)
@@ -143,7 +143,7 @@ Section construction.
     let θ := aa_angle a in
     let s2 := sin (θ/2) in
     let c2 := cos (θ/2) in
-    quat_of_s_v c2 (l2cv [s2 * n.0; s2 * n.1; s2 * n.2]%R).
+    quat_of_s_v c2 (l2cv [s2 * n.1; s2 * n.2; s2 * n.3]%R).
 
   (** Convert quaternion to axis-angle *)
   Definition quat_to_aa (q : quat) : axisangle :=

@@ -72,10 +72,10 @@ Section rvec_basic.
 
   (** get element from raw data, unsafe *)
   Notation "v $ i " := (v $ 0 $ i) : rvec_scope.
-  Notation "v .0" := (v $ 0) : rvec_scope.
-  Notation "v .1" := (v $ 1) : rvec_scope.
-  Notation "v .2" := (v $ 2) : rvec_scope.
-  Notation "v .3" := (v $ 3) : rvec_scope.
+  Notation "v .1" := (v $ 0) : rvec_scope.
+  Notation "v .2" := (v $ 1) : rvec_scope.
+  Notation "v .3" := (v $ 2) : rvec_scope.
+  Notation "v .4" := (v $ 3) : rvec_scope.
   
   (** get element, safe *)
   Definition rvnth {n} (v : rvec n) i : A := v ! 0 ! i.
@@ -144,9 +144,9 @@ Section rvec_basic.
   
   (** --------------------------------------------------- *)
   (** *** Make concrete vector *)
-  Definition mk_rvec2 (a0 a1 : A) : rvec 2 := l2rv 2 [a0;a1].
-  Definition mk_rvec3 (a0 a1 a2 : A) : rvec 3 := l2rv 3 [a0;a1;a2].
-  Definition mk_rvec4 (a0 a1 a2 a3 : A) : rvec 4 := l2rv 4 [a0;a1;a2;a3].
+  Definition mk_rvec2 (a1 a2 : A) : rvec 2 := l2rv 2 [a1;a2].
+  Definition mk_rvec3 (a1 a2 a3 : A) : rvec 3 := l2rv 3 [a1;a2;a3].
+  Definition mk_rvec4 (a1 a2 a3 a4 : A) : rvec 4 := l2rv 4 [a1;a2;a3;a4].
 
   
   (** --------------------------------------------------- *)
@@ -155,9 +155,9 @@ Section rvec_basic.
   Definition t2rv_3 (t : @T3 A) : rvec 3 := let '(a,b,c) := t in l2rv 3 [a;b;c].
   Definition t2rv_4 (t : @T4 A) : rvec 4 := let '(a,b,c,d) := t in l2rv 4 [a;b;c;d].
 
-  Definition rv2t_2 (v : rvec 2) : @T2 A := (v.0, v.1).
-  Definition rv2t_3 (v : rvec 3) : @T3 A := (v.0, v.1, v.2).
-  Definition rv2t_4 (v : rvec 4) : @T4 A := (v.0, v.1, v.2, v.3).
+  Definition rv2t_2 (v : rvec 2) : @T2 A := (v.1, v.2).
+  Definition rv2t_3 (v : rvec 3) : @T3 A := (v.1, v.2, v.3).
+  Definition rv2t_4 (v : rvec 4) : @T4 A := (v.1, v.2, v.3, v.4).
 
   (* Lemma rv2t_t2rv_id_2 : forall (t : A * A), rv2t_2 (t2rv_2 t) == t. *)
   (* Proof. intros. destruct t. simpl. unfold v2t_2. f_equal. Qed. *)
@@ -202,21 +202,21 @@ Arguments t2rv_3 {A}.
 Arguments t2rv_4 {A}.
 
 Notation "v $ i " := (v $ 0 $ i) : rvec_scope.
-Notation "v .0" := (v $ 0) : rvec_scope.
-Notation "v .1" := (v $ 1) : rvec_scope.
-Notation "v .2" := (v $ 2) : rvec_scope.
-Notation "v .3" := (v $ 3) : rvec_scope.
+Notation "v .1" := (v $ 0) : rvec_scope.
+Notation "v .2" := (v $ 1) : rvec_scope.
+Notation "v .3" := (v $ 2) : rvec_scope.
+Notation "v .4" := (v $ 3) : rvec_scope.
 
 Section test.
   Notation "v ! i " := (rvnth 0 v i) : rvec_scope.
   Let v1 : rvec 3 := l2rv 0 3 [1;2].
   Let m1 : mat 2 3 := l2m 0 [[10;11];[15;16]].
   (** These notations could be mixed use *)
-  (* Compute v1.0. *)
+  (* Compute v1.1. *)
   (* Compute v1$(v1$0). *)
   (* Compute v1!(v1!0). *)
   (* Compute v1$(v1!0). *)
-  (* Compute v1!(v1.0). *)
+  (* Compute v1!(v1.1). *)
   (* Compute m2l (mconsr v1 m1). *)
 End test.
 
@@ -404,11 +404,11 @@ Section test.
   Open Scope Z_scope.
   Open Scope rvec_scope.
   
-  Infix "+" := (rvadd (Aadd:=Z.add)) : rvec_scope.
-  Notation "- v" := (rvopp (Aopp:=Z.opp) v) : rvec_scope.
-  Infix "-" := (rvsub (Aadd:=Z.add)(Aopp:=Z.opp)) : rvec_scope.
-  Infix "c*" := (rvcmul (Amul:=Z.mul)) : rvec_scope.
-  Notation "< a , b >" := (rvdot a b (Azero:=0) (Aadd:=Z.add) (Amul:=Z.mul)) : rvec_scope.
+  Infix "+" := (@rvadd _ Z.add _) : rvec_scope.
+  Notation "- v" := (@rvopp _ Z.opp _ v) : rvec_scope.
+  Infix "-" := (@rvsub _ Z.add Z.opp _) : rvec_scope.
+  Infix "c*" := (@rvcmul _ Z.mul _) : rvec_scope.
+  Notation "< a , b >" := (@rvdot _ Z.add 0 Z.mul _ a b) : rvec_scope.
 
   Let v1 := l2rv 0 3 [1;2;3].
   Let v2 := l2rv 0 3 [4;5;6].
@@ -499,10 +499,10 @@ Section cvec_basic.
 
   (** get element from raw data, unsafe *)
   Notation "v $ i " := (v $ i $ 0) : cvec_scope.
-  Notation "v .0" := (v $ 0) : cvec_scope.
-  Notation "v .1" := (v $ 1) : cvec_scope.
-  Notation "v .2" := (v $ 2) : cvec_scope.
-  Notation "v .3" := (v $ 3) : cvec_scope.
+  Notation "v .1" := (v $ 0) : cvec_scope.
+  Notation "v .2" := (v $ 1) : cvec_scope.
+  Notation "v .3" := (v $ 2) : cvec_scope.
+  Notation "v .4" := (v $ 3) : cvec_scope.
   
   (** get element, safe *)
   Definition cvnth {n} (v : cvec n) i : A := v ! i ! 0.
@@ -578,9 +578,9 @@ Section cvec_basic.
   
   (** --------------------------------------------------- *)
   (** *** Make concrete vector *)
-  Definition mk_cvec2 (a0 a1 : A) : cvec 2 := l2cv 2 [a0;a1].
-  Definition mk_cvec3 (a0 a1 a2 : A) : cvec 3 := l2cv 3 [a0;a1;a2].
-  Definition mk_cvec4 (a0 a1 a2 a3 : A) : cvec 4 := l2cv 4 [a0;a1;a2;a3].
+  Definition mk_cvec2 (a1 a2 : A) : cvec 2 := l2cv 2 [a1;a2].
+  Definition mk_cvec3 (a1 a2 a3 : A) : cvec 3 := l2cv 3 [a1;a2;a3].
+  Definition mk_cvec4 (a1 a2 a3 a4 : A) : cvec 4 := l2cv 4 [a1;a2;a3;a4].
 
   
   (** --------------------------------------------------- *)
@@ -589,9 +589,9 @@ Section cvec_basic.
   Definition t2cv_3 (t : @T3 A) : cvec 3 := let '(a,b,c) := t in l2cv 3 [a;b;c].
   Definition t2cv_4 (t : @T4 A) : cvec 4 := let '(a,b,c,d) := t in l2cv 4 [a;b;c;d].
 
-  Definition cv2t_2 (v : cvec 2) : @T2 A := (v.0, v.1).
-  Definition cv2t_3 (v : cvec 3) : @T3 A := (v.0, v.1, v.2).
-  Definition cv2t_4 (v : cvec 4) : @T4 A := (v.0, v.1, v.2, v.3).
+  Definition cv2t_2 (v : cvec 2) : @T2 A := (v.1, v.2).
+  Definition cv2t_3 (v : cvec 3) : @T3 A := (v.1, v.2, v.3).
+  Definition cv2t_4 (v : cvec 4) : @T4 A := (v.1, v.2, v.3, v.4).
 
   (* Lemma cv2t_t2cv_id_2 : forall (t : A * A), cv2t_2 (t2cv_2 t) == t. *)
   (* Proof. intros. destruct t. simpl. unfold v2t_2. f_equal. Qed. *)
@@ -643,17 +643,17 @@ Arguments t2cv_3 {A}.
 Arguments t2cv_4 {A}.
 
 Notation "v $ i " := (v $ i $ 0) : cvec_scope.
-Notation "v .0" := (v $ 0) : cvec_scope.
-Notation "v .1" := (v $ 1) : cvec_scope.
-Notation "v .2" := (v $ 2) : cvec_scope.
-Notation "v .3" := (v $ 3) : cvec_scope.
+Notation "v .1" := (v $ 0) : cvec_scope.
+Notation "v .2" := (v $ 1) : cvec_scope.
+Notation "v .3" := (v $ 2) : cvec_scope.
+Notation "v .4" := (v $ 3) : cvec_scope.
 
 Section test.
   Notation "v ! i " := (cvnth 0 v i) : cvec_scope.
   Let v1 : cvec 3 := l2cv 0 3 [1;2].
   Let m1 : mat 3 3 := l2m 0 [[10;11];[15;16]].
-  (* Compute v1!0. *)
-  (* Compute v1!(v1!0). *)
+  (* Compute v1.1. *)
+  (* Compute v1!(v1.1). *)
   (* Compute m2l (mconsc v1 m1). *)
 End test.
 
@@ -973,11 +973,11 @@ Section test.
   Open Scope Z_scope.
   Open Scope cvec_scope.
   
-  Infix "+" := (cvadd (Aadd:=Z.add)) : cvec_scope.
-  Notation "- v" := (cvopp (Aopp:=Z.opp) v) : cvec_scope.
-  Infix "-" := (cvsub (Aadd:=Z.add)(Aopp:=Z.opp)) : cvec_scope.
-  Infix "c*" := (cvcmul (Amul:=Z.mul)) : cvec_scope.
-  Notation "< a , b >" := (cvdot a b (Azero:=0) (Aadd:=Z.add) (Amul:=Z.mul)) : cvec_scope.
+  Infix "+" := (@cvadd _ Z.add _) : cvec_scope.
+  Notation "- v" := (@cvopp _ Z.opp _ v) : cvec_scope.
+  Infix "-" := (@cvsub _ Z.add Z.opp _) : cvec_scope.
+  Infix "c*" := (@cvcmul _ Z.mul _) : cvec_scope.
+  Notation "< a , b >" := (@cvdot _ Z.add 0 Z.mul _ a b) : cvec_scope.
 
   Let v1 := l2cv 0 3 [1;2;3].
   Let v2 := l2cv 0 3 [4;5;6].

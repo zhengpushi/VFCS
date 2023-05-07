@@ -30,12 +30,12 @@ Open Scope cvec_scope.
 (* ======================================================================= *)
 (** * Usage demo *)
 Section test.
-  Variable a0 a1 a2 : A.
-  Let v3 := t2rv_3 (a0,a1,a2).
-  (* Compute rv2l (rvmap v3 fopp). *)
-  (* Eval cbn in rv2l (rvmap v3 fopp). *)
 
-  Let v4 := t2cv_3 (a0,a1,a2).
-  (* Compute cv2l (cvmap v4 fopp). *)
-  (* Eval cbn in cv2l (cvmap v4 fopp). *)
+  Variable a1 a2 a3 : A.
+  Variable f : A -> A.
+  Let v3 := t2rv_3 (a1,a2,a3).
+  Let v4 := t2cv_3 (a1,a2,a3).
+  (* Compute rv2l (rvmap v3 f). *)
+  (* Compute cv2l (cvmap v4 f). *)
+
 End test.

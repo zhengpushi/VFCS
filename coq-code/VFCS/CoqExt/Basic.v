@@ -89,29 +89,29 @@ Reserved Notation "v $ i"      (at level 20, i at next level).    (* nth of vec,
 (* index-of-matrix or index-of-nat-nat-function.
  Note, there are two style of start number to count index, 0 or 1.
  Many programming language use 0, but MATLAB and many mathematical textbook use 1.
- Maybe it is a convention problem, we choose 0. *)
-Reserved Notation "m .00"      (at level 20, format "m .00").     (* m[0,0] *)
-Reserved Notation "m .01"      (at level 20, format "m .01").
-Reserved Notation "m .02"      (at level 20, format "m .02").
-Reserved Notation "m .03"      (at level 20, format "m .03").
-Reserved Notation "m .10"      (at level 20, format "m .10").
-Reserved Notation "m .11"      (at level 20, format "m .11").
+ Maybe it is a convention problem, we choose 1. *)
+Reserved Notation "m .11"      (at level 20, format "m .11").     (* m[1,1] *)
 Reserved Notation "m .12"      (at level 20, format "m .12").
 Reserved Notation "m .13"      (at level 20, format "m .13").
-Reserved Notation "m .20"      (at level 20, format "m .20").
+Reserved Notation "m .14"      (at level 24, format "m .14").
 Reserved Notation "m .21"      (at level 20, format "m .21").
 Reserved Notation "m .22"      (at level 20, format "m .22").
 Reserved Notation "m .23"      (at level 20, format "m .23").
-Reserved Notation "m .30"      (at level 20, format "m .30").
+Reserved Notation "m .24"      (at level 20, format "m .24").
 Reserved Notation "m .31"      (at level 20, format "m .31").
 Reserved Notation "m .32"      (at level 20, format "m .32").
 Reserved Notation "m .33"      (at level 20, format "m .33").
+Reserved Notation "m .34"      (at level 20, format "m .34").
+Reserved Notation "m .41"      (at level 20, format "m .41").
+Reserved Notation "m .42"      (at level 20, format "m .42").
+Reserved Notation "m .43"      (at level 20, format "m .43").
+Reserved Notation "m .44"      (at level 20, format "m .44").
 
 (* index-of-vector or index-of-nat-function. We choose 0 as start number. *)
-Reserved Notation "v .0"       (at level 20, format "v .0").      (* v[0] *)
-Reserved Notation "v .1"       (at level 20, format "v .1").
+Reserved Notation "v .1"       (at level 20, format "v .1").      (* v[1] *)
 Reserved Notation "v .2"       (at level 20, format "v .2").
 Reserved Notation "v .3"       (at level 20, format "v .3").
+Reserved Notation "v .4"       (at level 20, format "v .4").
 (* Reserved Notation "v .x"       (at level 20, format "v .x").      (* v[0] *) *)
 (* Reserved Notation "v .y"       (at level 20, format "v .y"). *)
 (* Reserved Notation "v .z"       (at level 20, format "v .z"). *)

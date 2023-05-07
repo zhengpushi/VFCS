@@ -29,23 +29,22 @@ Declare Scope seq2_scope.
 Delimit Scope seq2_scope with seq2.
 Open Scope seq2_scope.
 
-Notation "f .00" := (f 0%nat 0%nat) : fun_scope.
-Notation "f .00" := (f 0%nat 0%nat) : fun_scope.
-Notation "f .01" := (f 0%nat 1%nat) : fun_scope.
-Notation "f .02" := (f 0%nat 2%nat) : fun_scope.
-Notation "f .03" := (f 0%nat 3%nat) : fun_scope.
-Notation "f .10" := (f 1%nat 0%nat) : fun_scope.
-Notation "f .11" := (f 1%nat 1%nat) : fun_scope.
-Notation "f .12" := (f 1%nat 2%nat) : fun_scope.
-Notation "f .13" := (f 1%nat 3%nat) : fun_scope.
-Notation "f .20" := (f 2%nat 0%nat) : fun_scope.
-Notation "f .21" := (f 2%nat 1%nat) : fun_scope.
-Notation "f .22" := (f 2%nat 2%nat) : fun_scope.
-Notation "f .23" := (f 2%nat 3%nat) : fun_scope.
-Notation "f .30" := (f 3%nat 0%nat) : fun_scope.
-Notation "f .31" := (f 3%nat 1%nat) : fun_scope.
-Notation "f .32" := (f 3%nat 2%nat) : fun_scope.
-Notation "f .33" := (f 3%nat 3%nat) : fun_scope.
+Notation "f .11" := (f 0%nat 0%nat) : fun_scope.
+Notation "f .12" := (f 0%nat 1%nat) : fun_scope.
+Notation "f .13" := (f 0%nat 2%nat) : fun_scope.
+Notation "f .14" := (f 0%nat 3%nat) : fun_scope.
+Notation "f .21" := (f 1%nat 0%nat) : fun_scope.
+Notation "f .22" := (f 1%nat 1%nat) : fun_scope.
+Notation "f .23" := (f 1%nat 2%nat) : fun_scope.
+Notation "f .24" := (f 1%nat 3%nat) : fun_scope.
+Notation "f .31" := (f 2%nat 0%nat) : fun_scope.
+Notation "f .32" := (f 2%nat 1%nat) : fun_scope.
+Notation "f .33" := (f 2%nat 2%nat) : fun_scope.
+Notation "f .34" := (f 2%nat 3%nat) : fun_scope.
+Notation "f .41" := (f 3%nat 0%nat) : fun_scope.
+Notation "f .42" := (f 3%nat 1%nat) : fun_scope.
+Notation "f .43" := (f 3%nat 2%nat) : fun_scope.
+Notation "f .44" := (f 3%nat 3%nat) : fun_scope.
 
 
 (* ======================================================================= *)

@@ -295,20 +295,20 @@ Section test.
   (* Compute m2l (mmap Ropp m1). *)
   (* Compute m2l (m1 * m1). *)
 
-  Variable a00 a01 a10 a11 : A.
+  Variable a11 a12 a21 a22 : A.
   Variable f : A -> A.
-  Let m2 := @l2m 2 2 [[a00;a01];[a10;a11]].
-  (* Compute m2l m2.       (* = [[a00; a01]; [a10; a11]] *) *)
-  (* Compute m2l (mmap f m2).     (* = [[f a00; f a01]; [f a10; f a11]] *) *)
+  Let m2 := @l2m 2 2 [[a11;a12];[a21;a22]].
+  (* Compute m2l m2.     (* = [[a11; a12]; [a21; a22]] *) *)
+  (* Compute m2l (mmap f m2).       (* = [[f a11; f a12]; [f a21; f a22]] *) *)
   (* Compute m2l (m2 * m2). *)
 
   Goal forall r c (m1 m2 : mat r c), m1 + m2 == m2 + m1.
   Proof. intros. apply madd_comm. Qed.
 
   (** Simulate Outer/inner product of two vectors *)
-  Variables a0 a1 a2 b0 b1 b2 : A.
-  Let m31 := @l2m 3 1 [[a0];[a1];[a2]].
-  Let m13 := @l2m 1 3 [[b0;b1;b2]].
+  Variables a1 a2 a3 b1 b2 b3 : A.
+  Let m31 := @l2m 3 1 [[a1];[a2];[a3]].
+  Let m13 := @l2m 1 3 [[b1;b2;b3]].
   (* Compute m2l (m31 * m13). *)
   (* Compute m2l (m13 * m31). *)
 
