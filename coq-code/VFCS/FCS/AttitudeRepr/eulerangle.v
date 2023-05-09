@@ -162,6 +162,15 @@ Section EulerAngle24.
   Notation c2 := (cos θ2). Notation s2 := (sin θ2).
   Notation c3 := (cos θ3). Notation s3 := (sin θ3).
 
+  (** 关于0点的线性化 *)
+  Section LinearizationCondition_at_Zero.
+    Definition LinearizationCondition : Prop :=
+      (s1 = θ1 /\ s2 = θ2 /\ s3 = θ3 /\
+        c1 = 1 /\ c2 = 1 /\ c3 = 1 /\
+         s1 * s2 = 0 /\ s1 * s3 = 0 /\ s2 * s3 = 0 /\
+         s2 * s1 = 0 /\ s3 * s1 = 0 /\ s3 * s2 = 0)%R.
+  End LinearizationCondition_at_Zero.
+
   (** 1. Body-three, 123 *)
   Definition B3_123 : mat 3 3 :=
     l2m
@@ -171,6 +180,33 @@ Section EulerAngle24.
 
   Theorem B3_123_ok : B3_123 == Rx θ1 * Ry θ2 * Rz θ3.
   Proof. lma. Qed.
+
+  (* Linearation *)
+  
+  (* 这里只证明这一个例子，预计可以找出所有的例子并证明 *)
+  Definition B3_123_L : mat 3 3 :=
+    l2m
+      [[1; -θ3; θ2];
+       [θ3; 1; -θ1];
+       [-θ2; θ1; 1]]%R.
+
+  Theorem B3_123_L_spec : LinearizationCondition -> B3_123 == B3_123_L.
+  Proof.
+    intros.
+    destruct H as [Hs1 [Hs2 [Hs3 [Hc1 [Hc2 [Hc3 [H12 [H13 [H23 [H21 [H31 H32]]]]]]]]]]].
+    unfold B3_123, B3_123_L.
+    lma;
+      (* 去掉 cos，并调整形式 *)
+      rewrite ?Hc1,?Hc2,?Hc3; ring_simplify;
+      (* 去掉 s * s *)
+      rewrite ?H12,?H13,?H23,?H21,?H31,?H32; ring_simplify; try easy;
+      (* 一步改写若能解决则执行 *)
+      try (rewrite ?Hs1,?Hs2,?Hs3; reflexivity).
+    (* 最后的都是因负号导致的重写失败 *)
+    rewrite Rmult_assoc;
+      rewrite ?H12,?H13,?H23,?H21,?H31,?H32; ring_simplify; try easy.
+  Qed.
+  
 
   (** 2. Body-three, 231 *)
   Definition B3_231 : mat 3 3 :=
