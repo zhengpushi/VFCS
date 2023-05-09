@@ -312,7 +312,7 @@ Open Scope dlist.
 (** Scope for function (especially for nat-indexed function such as "nat -> A") *)
 Declare Scope fun_scope.
 Delimit Scope fun_scope with F. (* Note that, Ranalysis1 defined Rfun_scope with F *)
-Open Scope fun_scope.
+(* Open Scope fun_scope. *)
 
 (** Scope for matrix type *)
 Declare Scope mat_scope.

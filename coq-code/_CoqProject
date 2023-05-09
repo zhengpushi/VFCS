@@ -79,4 +79,5 @@ VFCS/FCS/Propulsion/Q4.v
 #VFCS/FCS/Propulsion/ExtractionThis.v
 
 VFCS/FCS/Coordinate/rvctool.v
+VFCS/FCS/Coordinate/eulerangle.v
 

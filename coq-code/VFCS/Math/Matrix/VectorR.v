@@ -775,6 +775,14 @@ Section v3.
         cvunit n -> n.1 ^ 2 = (1 - n.2 ^ 2 - n.3 ^ 2)%R.
     Proof. intros. cvec2fun. cbv in *. ring_simplify in H. ring_simplify. lra. Qed.
 
+    Lemma cv3unit_eq2 : forall (n : cvec 3),
+        cvunit n -> n.2 ^ 2 = (1 - n.1 ^ 2 - n.3 ^ 2)%R.
+    Proof. intros. cvec2fun. cbv in *. ring_simplify in H. ring_simplify. lra. Qed.
+
+    Lemma cv3unit_eq3 : forall (n : cvec 3),
+        cvunit n -> n.3 ^ 2 = (1 - n.1 ^ 2 - n.2 ^ 2)%R.
+    Proof. intros. cvec2fun. cbv in *. ring_simplify in H. ring_simplify. lra. Qed.
+
   End cvunit.
     
 
@@ -995,9 +1003,8 @@ Section v3.
 
     Lemma cv3skewP_spec : forall m : mat 3 3,
         cv3skewP m ->
-        let '((a11,a12,a13),(a21,a22,a23),(a31,a32,a33)) := m2t_3_3 m in
-        (a11 = 0) /\ (a22 = 0) /\ (a33 = 0) /\
-          (a12 = -a21 /\ a13 = -a31 /\ a23 = -a32)%R.
+        (m.11 = 0) /\ (m.22 = 0) /\ (m.33 = 0) /\
+          (m.12 = -m.21 /\ m.13 = -m.31 /\ m.23 = -m.32)%R.
     Proof.
       intros. destruct m as [m]; simpl in *. cbv in H. split_intro.
       - epose proof (H 0 0 _ _)%nat. ra.
@@ -1087,8 +1094,8 @@ Section v3.
     (** 推导绕任意轴 k̂ 旋转 θ 角度的矩阵 R(n̂,θ)，使得 v' = R(n̂,θ) * v *)
 
     (** Rotate a vector v in R^3 by an axis described with a unit vector n and 
-    an angle θ according to right handle rule, we got the rotated vector as
-    follows. This formula is known as Rodrigues formula. *)
+        an angle θ according to right handle rule, we got the rotated vector as
+        follows. This formula is known as Rodrigues formula. *)
     Definition rotAxisAngle (θ : R) (n : cvec 3) (v : cvec 3) : cvec 3 :=
       (cos θ) c* (v - <v,n> c* n) + (sin θ) c* (n×v) + <v,n> c* n.
 
@@ -1173,6 +1180,7 @@ Section v3.
     (* Definition rotAxisAngle_direct (θ : R) (k : cvec 3) (v : cvec 3) : cvec 3 := *)
     (*   l2cv 3 *)
     (*     [? *)
+
 
   End rotAxisAngle.
   
