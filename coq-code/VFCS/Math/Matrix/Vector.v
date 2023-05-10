@@ -76,6 +76,10 @@ Section rvec_basic.
   Notation "v .2" := (v $ 1) : rvec_scope.
   Notation "v .3" := (v $ 2) : rvec_scope.
   Notation "v .4" := (v $ 3) : rvec_scope.
+  (** get element for 3D vector *)
+  Notation "v .x" := (v $ 0) : rvec_scope.
+  Notation "v .y" := (v $ 1) : rvec_scope.
+  Notation "v .z" := (v $ 2) : rvec_scope.
   
   (** get element, safe *)
   Definition rvnth {n} (v : rvec n) i : A := v ! 0 ! i.
@@ -206,6 +210,10 @@ Notation "v .1" := (v $ 0) : rvec_scope.
 Notation "v .2" := (v $ 1) : rvec_scope.
 Notation "v .3" := (v $ 2) : rvec_scope.
 Notation "v .4" := (v $ 3) : rvec_scope.
+(** get element for 3D vector *)
+Notation "v .x" := (v $ 0) : rvec_scope.
+Notation "v .y" := (v $ 1) : rvec_scope.
+Notation "v .z" := (v $ 2) : rvec_scope.
 
 Section test.
   Notation "v ! i " := (rvnth 0 v i) : rvec_scope.
@@ -503,6 +511,10 @@ Section cvec_basic.
   Notation "v .2" := (v $ 1) : cvec_scope.
   Notation "v .3" := (v $ 2) : cvec_scope.
   Notation "v .4" := (v $ 3) : cvec_scope.
+  (** get element for 3D vector *)
+  Notation "v .x" := (v $ 0) : cvec_scope.
+  Notation "v .y" := (v $ 1) : cvec_scope.
+  Notation "v .z" := (v $ 2) : cvec_scope.
   
   (** get element, safe *)
   Definition cvnth {n} (v : cvec n) i : A := v ! i ! 0.
@@ -647,6 +659,10 @@ Notation "v .1" := (v $ 0) : cvec_scope.
 Notation "v .2" := (v $ 1) : cvec_scope.
 Notation "v .3" := (v $ 2) : cvec_scope.
 Notation "v .4" := (v $ 3) : cvec_scope.
+(** get element for 3D vector *)
+Notation "v .x" := (v $ 0) : cvec_scope.
+Notation "v .y" := (v $ 1) : cvec_scope.
+Notation "v .z" := (v $ 2) : cvec_scope.
 
 Section test.
   Notation "v ! i " := (cvnth 0 v i) : cvec_scope.

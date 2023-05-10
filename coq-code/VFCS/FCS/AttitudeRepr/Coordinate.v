@@ -24,8 +24,7 @@
 
 Require Import Lra.
 
-From CoqMatrix Require Import VectorR.
-
+Require Import VectorR.
 
 (* --------------------------------------------------------------- *)
 (** Functions and Tactics for tuple *)
@@ -105,7 +104,7 @@ Definition atan2 (y x : R) : R :=
 . 
 
 (* --------------------------------------------------------------- *)
-(* custome tactics *)
+(* some tactics *)
 
 (* (* Tactic for type convertion *)
 Ltac simpl_etype :=

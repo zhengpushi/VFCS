@@ -23,6 +23,7 @@ Require Import ExtrOcamlBasic.
 Require Import MyExtrOCamlR.
 
 Require Export VectorR.
+Require Export VectorR3.
 
 Open Scope R.
 Open Scope mat_scope.

@@ -112,9 +112,11 @@ Reserved Notation "v .1"       (at level 20, format "v .1").      (* v[1] *)
 Reserved Notation "v .2"       (at level 20, format "v .2").
 Reserved Notation "v .3"       (at level 20, format "v .3").
 Reserved Notation "v .4"       (at level 20, format "v .4").
-(* Reserved Notation "v .x"       (at level 20, format "v .x").      (* v[0] *) *)
-(* Reserved Notation "v .y"       (at level 20, format "v .y"). *)
-(* Reserved Notation "v .z"       (at level 20, format "v .z"). *)
+
+(* only for 3D vector, the "w" component has two conventions, we won't use it *)
+Reserved Notation "v .x"       (at level 20, format "v .x").      (* v[1] *)
+Reserved Notation "v .y"       (at level 20, format "v .y").
+Reserved Notation "v .z"       (at level 20, format "v .z").
 (* Reserved Notation "v .w"       (at level 20, format "v .w"). *)
 
 

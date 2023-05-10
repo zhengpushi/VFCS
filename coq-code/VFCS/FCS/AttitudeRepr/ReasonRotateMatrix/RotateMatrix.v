@@ -8,20 +8,20 @@
   date      : Mar, 2021
 *)
 
-From CoqMatrix Require Export VectorR.
+Require Export VectorR.
 
-Export List.
-Export ListNotations.
+(* Export List. *)
+(* Export ListNotations. *)
 
 Open Scope nat_scope.
 Open Scope R_scope.
 Open Scope mat_scope.
 
 
-(** equality of list, if corresponding elements are equal. *)
-Lemma list_equality : forall (A : Type) (a1 a2 : A) (l1 l2 : list A),
-  a1 = a2 -> l1 = l2 -> a1 :: l1 = a2 :: l2.
-Proof. intros. subst; auto. Qed.
+(* (** equality of list, if corresponding elements are equal. *) *)
+(* Lemma list_equality : forall (A : Type) (a1 a2 : A) (l1 l2 : list A), *)
+(*   a1 = a2 -> l1 = l2 -> a1 :: l1 = a2 :: l2. *)
+(* Proof. intros. subst; auto. Qed. *)
 
 (** 
    Specify positive direction
@@ -37,6 +37,92 @@ Proof. intros. subst; auto. Qed.
 *)
 
 Section Rotation2D.
+
+  (* 二维向量执行旋转操作的转换矩阵。
+     已知向量a=[ax ay]^T，长度为l，与+x夹角为alpha，绕原点按正方向旋转beta角后
+     得到b=[bx by]^T，求出旋转矩阵Rab(beta),Rba(beta)，使得：
+     b=Rab(beta)a，
+     a=Rba(beta)b.
+  *)
+  Definition Rab (beta : R) : mat 2 2 :=
+    mk_mat_2_2
+      (cos beta) (- sin beta)%A
+      (sin beta) (cos beta).
+  Definition Rba (beta : R) : mat 2 2 :=
+    mk_mat_2_2 
+      (cos beta) (sin beta)
+      (- sin beta)%A (cos beta).
+
+  Lemma Rab_spec (a : cvec 2) (beta : R) :
+    let l := cvlen a in
+    let alpha := cvangle cv2i atan (a.y / a.x) in
+    let b_x := (l * cos (alpha + beta))%R in
+    let b_y := (l * sin (alpha + beta))%R in
+    let b : cvec 2 := l2cv [b_x;b_y] in
+    b == Rab beta * a.
+  Proof.
+    lma.
+    - unfold b_x. autorewrite with R.
+      unfold Rminus. rewrite Rmult_plus_distr_l.
+      f_equiv. ring_simplify.
+      
+      rewrite Rmul_
+      unfold alpha.
+      rewrite cos_atan, sin_atan.
+      unfold l. ring_simplify.
+    true.
+    let p1 := a1 = (l * cos alpha)%R in
+    let p2 := a2 = (l * sin alpha)%R in
+    let b1 := (l * cos (alpha + beta))%R in
+    let b2 := (l * sin (alpha + beta))%R in
+    let ob := t2v_2 (b1,b2) in
+    let A := rotation_matrix_2d_o2n beta in
+      p1 -> p2 ->
+      ob == (mmul A oa).
+  Proof.
+    destruct oa as [oa]. simpl.
+    lma; cbv in *; autorewrite with R in *;
+      remember (oa 0 0)%nat as a1;
+      remember (oa 1 0)%nat as a2.
+    - rewrite cos_plus; ring_simplify.
+      rewrite <- H, <- H0. ring.
+    - rewrite sin_plus; ring_simplify.
+      rewrite <- H, <- H0. ring.
+  Qed.
+  
+  Lemma rotation_matrix_2d_n2o_correct (oa : vec 2) (beta : R) :
+    let '(a1,a2) := v2t_2 oa in
+    let l := vlen oa in 
+    let alpha := (atan (a2 / a1))%R in
+    let p1 := a1 = (l * cos alpha)%R in
+    let p2 := a2 = (l * sin alpha)%R in
+    let b1 := (l * cos (alpha + beta))%R in
+    let b2 := (l * sin (alpha + beta))%R in
+    let ob := t2v_2 (b1,b2) in
+    let B := rotation_matrix_2d_n2o beta in
+      p1 -> p2 ->
+      oa == (mmul B ob).
+  Proof.
+    destruct oa as [oa]. simpl.
+    lma; cbv in *; autorewrite with R in *;
+      remember (oa 0 0)%nat as a1;
+      remember (oa 1 0)%nat as a2.
+    - rewrite cos_plus,sin_plus; ring_simplify.
+      rewrite Rmult_assoc. rewrite <- H.
+      autorewrite with R.
+      replace ((cos beta)² * a1 + a1 * (sin beta)²)%R
+        with (((cos beta)² + (sin beta)²) * a1)%R; try ring.
+      autorewrite with R. auto.
+    - rewrite cos_plus,sin_plus; ring_simplify.
+      rewrite Rmult_assoc. rewrite <- H0.
+      rewrite Rmult_assoc. rewrite (Rmult_comm _ (sin _)). rewrite <- Rmult_assoc.
+      rewrite <- H0.
+      autorewrite with R.
+      replace ((sin beta)² * a2 + a2 * (cos beta)²)%R
+        with (((sin beta)² + (cos beta)²) * a2)%R; try ring.
+      autorewrite with R. auto.
+  Qed.
+
 
   (* 二维向量执行旋转操作的转换矩阵。
     已知向量oa=[a1 a2]^T，长度为l，与ox夹角为alpha，绕原点按正方向旋转beta角后

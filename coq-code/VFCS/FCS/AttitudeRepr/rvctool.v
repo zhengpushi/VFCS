@@ -16,6 +16,7 @@ Require Import Lra.
 (* Require Import Quaternion. *)
 Require Import VectorC.
 Require Import VectorR.
+Require Import VectorR3.
 
 (* short name for matrix/vector theory on C *)
 Module C.

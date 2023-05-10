@@ -66,6 +66,7 @@
 
 Require Import Lra.
 Require Import VectorR.
+Require Import VectorR3.
 
 Open Scope cvec_scope.
 
