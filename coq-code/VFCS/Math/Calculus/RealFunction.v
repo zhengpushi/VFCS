@@ -333,7 +333,7 @@ Section basic_elementary_fun.
   Fact sin_PI_add : forall x, sin (PI + x) = - sin x. Admitted.
   Fact sin_3PI2_sub : forall x, sin (3 * PI / 2 - x) = - cos x. Admitted.
   Fact sin_3PI2_add : forall x, sin (3 * PI / 2 + x) = - cos x. Admitted.
-  Fact sin_2PI_add : forall x, sin (2 * PI + x) = - sin x. Admitted.
+  Fact sin_2PI_add : forall x, sin (2 * PI + x) = sin x. Admitted.
 
   Fact cos_PI2_sub : forall x, cos (PI/2 - x) = sin x. Admitted.
   Fact cos_PI2_add : forall x, cos (PI/2 + x) = - sin x. Admitted.
@@ -349,7 +349,7 @@ Section basic_elementary_fun.
   Fact tan_PI_add : forall x, tan (PI + x) = tan x. Admitted.
   Fact tan_3PI2_sub : forall x, tan (3 * PI / 2 - x) = cot x. Admitted.
   Fact tan_3PI2_add : forall x, tan (3 * PI / 2 + x) = - cot x. Admitted.
-  Fact tan_2PI_add : forall x, tan (2 * PI + x) = - tan x. Admitted.
+  Fact tan_2PI_add : forall x, tan (2 * PI + x) = tan x. Admitted.
   
   Fact cot_PI2_sub : forall x, cot (PI/2 - x) = tan x. Admitted.
   Fact cot_PI2_add : forall x, cot (PI/2 + x) = - tan x. Admitted.
@@ -357,7 +357,7 @@ Section basic_elementary_fun.
   Fact cot_PI_add : forall x, cot (PI + x) = cot x. Admitted.
   Fact cot_3PI2_sub : forall x, cot (3 * PI / 2 - x) = tan x. Admitted.
   Fact cot_3PI2_add : forall x, cot (3 * PI / 2 + x) = - tan x. Admitted.
-  Fact cot_2PI_add : forall x, cot (2 * PI + x) = - cot x. Admitted.
+  Fact cot_2PI_add : forall x, cot (2 * PI + x) = cot x. Admitted.
 
   (** 特殊三角函数值 *)
   Fact sin_0 : sin 0 = 0. Admitted.

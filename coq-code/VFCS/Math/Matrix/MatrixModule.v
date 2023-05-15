@@ -959,6 +959,180 @@ Module FieldMatrixTheory (E : FieldElementType).
   Lemma minv4_correct_r : forall (m : smat 4), (mdet m != Azero)%A -> m * (minv4 m) == mat1.
   Proof. intros. apply minv4_correct_r; auto. Qed.
 
+
+  (* ==================================== *)
+  (** ** orthogonal matrix *)
+  
+  (** A square matrix m is an orthogonal matrix *)
+  Definition morthogonal {n} (m : smat n) : Prop :=
+   (@morthogonal _ Aadd Azero Amul Aone Aeq _ m).
+
+  (** orthogonal m -> invertible m *)
+  Lemma morthogonal_invertible : forall {n} (m : smat n),
+      morthogonal m -> minvertible m.
+  Proof. intros. apply morthogonal_invertible; auto. Qed.
+
+  (** orthogonal m -> m⁻¹ = m\T *)
+  Lemma morthogonal_imply_inv_eq_trans : forall {n} (m : smat n),
+      morthogonal m -> m⁻¹ == m\T.
+  Proof. intros. apply morthogonal_imply_inv_eq_trans; auto. Qed.
+
+  (** m⁻¹ = m\T -> orthogonal m*)
+  Lemma minv_eq_trans_imply_morthogonal : forall {n} (m : smat n),
+      m⁻¹ == m\T -> morthogonal m.
+  Proof. intros. apply minv_eq_trans_imply_morthogonal; auto. Qed.
+
+  (** orthogonal m <-> m\T * m = mat1 *)
+  Lemma morthogonal_iff_mul_trans_l : forall {n} (m : smat n),
+      morthogonal m <-> m\T * m == mat1.
+  Proof. intros. apply morthogonal_iff_mul_trans_l; auto. Qed.
+
+  (** orthogonal m <-> m * m\T = mat1 *)
+  Lemma morthogonal_iff_mul_trans_r : forall {n} (m : smat n),
+      morthogonal m <-> m * m\T == mat1.
+  Proof. intros. apply morthogonal_iff_mul_trans_r; auto. Qed.
+
+  (** orthogonal mat1 *)
+  Lemma morthogonal_1 : forall {n}, morthogonal (@mat1 n).
+  Proof. intros. apply morthogonal_1; auto. Qed.
+
+  (** orthogonal m -> orthogonal p -> orthogonal (m * p) *)
+  Lemma morthogonal_mul : forall {n} (m p : smat n),
+      morthogonal m -> morthogonal p -> morthogonal (m * p).
+  Proof. intros. apply morthogonal_mul; auto. Qed.
+
+  (** orthogonal m -> orthogonal m\T *)
+  Lemma morthogonal_mtrans : forall {n} (m : smat n), morthogonal m -> morthogonal (m\T).
+  Proof. intros. apply morthogonal_mtrans; auto. Qed.
+
+  (** orthogonal m -> orthogonal m⁻¹ *)
+  Lemma morthogonal_minv : forall {n} (m : smat n), morthogonal m -> morthogonal (m⁻¹).
+  Proof. intros. apply morthogonal_minv; auto. Qed.
+
+  (** orthogonal m -> |m| = ± 1 *)
+  Lemma morthogonal_mdet : forall {n} (m : smat n) (HDec : Dec Aeq),
+      morthogonal m -> (mdet m == Aone \/ mdet m == - (Aone))%A.
+  Proof. intros. apply morthogonal_mdet; auto. Qed.
+
+  
+  (* ==================================== *)
+  (** ** O(n): General Orthogonal Group, General Linear Group *)
+  
+  (** The set of GOn *)
+  Definition GOn (n : nat) := (@GOn _ Aadd Azero Amul Aone Aeq n).
+
+  (** Equality of elements in GOn *)
+  Definition GOn_eq {n} (s1 s2 : GOn n) : Prop := GOn_eq s1 s2.
+
+  (** Multiplication of elements in GOn *)
+  Definition GOn_mul {n} (s1 s2 : GOn n) : GOn n := GOn_mul s1 s2.
+
+  (** Identity element in GOn *)
+  Definition GOn_1 {n} : GOn n :=  GOn_1.
+
+  (** Inverse operation of multiplication in GOn *)
+  Definition GOn_inv {n} (s : GOn n) : GOn n := GOn_inv s.
+
+  (** GOn_eq is equivalence relation *)
+  Lemma GOn_eq_equiv : forall n, Equivalence (@GOn_eq n).
+  Proof. intros. apply GOn_eq_equiv; auto. Qed.
+
+  (** GOn_mul is a proper morphism respect to GOn_eq *)
+  Lemma GOn_mul_proper : forall n, Proper (GOn_eq ==> GOn_eq ==> GOn_eq) (@GOn_mul n).
+  Proof. intros. apply GOn_mul_proper. Qed.
+
+  (** GOn_inv is a proper morphism respect to GOn_eq *)
+  Lemma GOn_inv_proper : forall n, Proper (GOn_eq ==> GOn_eq) (@GOn_inv n).
+  Proof. intros. apply GOn_inv_proper. Qed.
+
+  (** GOn_mul is associative *)
+  Lemma GOn_mul_assoc : forall n, Associative GOn_mul (@GOn_eq n).
+  Proof. intros. apply GOn_mul_assoc; auto. Qed.
+
+  (** GOn_1 is left-identity-element of GOn_mul operation *)
+  Lemma GOn_mul_id_l : forall n, IdentityLeft GOn_mul GOn_1 (@GOn_eq n).
+  Proof. intros. apply GOn_mul_id_l. Qed.
+  
+  (** GOn_1 is right-identity-element of GOn_mul operation *)
+  Lemma GOn_mul_id_r : forall n, IdentityRight GOn_mul GOn_1 (@GOn_eq n).
+  Proof. intros. apply GOn_mul_id_r. Qed.
+
+  (** GOn_inv is left-inversion of <GOn_mul,GOn_1> *)
+  Lemma GOn_mul_inv_l : forall n, InverseLeft GOn_mul GOn_1 GOn_inv (@GOn_eq n).
+  Proof. intros. apply GOn_mul_inv_l. Qed.
+
+  (** GOn_inv is right-inversion of <GOn_mul,GOn_1> *)
+  Lemma GOn_mul_inv_r : forall n, InverseRight GOn_mul GOn_1 GOn_inv (@GOn_eq n).
+  Proof. intros. apply GOn_mul_inv_r. Qed.
+  
+  (** <GOn, +, 1> is a monoid *)
+  Lemma Monoid_GOn : forall n, Monoid (@GOn_mul n) GOn_1 GOn_eq.
+  Proof. intros. apply Monoid_GOn. Qed.
+
+  (** <GOn, +, 1, /s> is a group *)
+  Theorem Group_GOn : forall n, Group (@GOn_mul n) GOn_1 GOn_inv GOn_eq.
+  Proof. intros. apply Group_GOn. Qed.
+
+  
+  (* ==================================== *)
+  (** ** SO(n): Special Orthogonal Group, Rotation Group *)
+
+  (** The set of SOn *)
+  Definition SOn (n: nat) := (@SOn _ Aadd Azero Aopp Amul Aone Aeq n).
+
+  Definition SOn_eq {n} (s1 s2 : SOn n) : Prop := SOn_mat _ s1 == SOn_mat _ s2.
+
+  Definition SOn_mul {n} (s1 s2 : SOn n) : SOn n := SOn_mul s1 s2.
+
+  Definition SOn_1 {n} : SOn n := SOn_1.
+
+  (** SOn_eq is equivalence relation *)
+  Lemma SOn_eq_equiv : forall n, Equivalence (@SOn_eq n).
+  Proof. intros. apply SOn_eq_equiv. Qed.
+
+  (** SOn_mul is a proper morphism respect to SOn_eq *)
+  Lemma SOn_mul_proper : forall n, Proper (SOn_eq ==> SOn_eq ==> SOn_eq) (@SOn_mul n).
+  Proof. intros. apply SOn_mul_proper. Qed.
+
+  (** SOn_mul is associative *)
+  Lemma SOn_mul_assoc : forall n, Associative SOn_mul (@SOn_eq n).
+  Proof. intros. apply SOn_mul_assoc. Qed.
+
+  (** SOn_1 is left-identity-element of SOn_mul operation *)
+  Lemma SOn_mul_id_l : forall n, IdentityLeft SOn_mul SOn_1 (@SOn_eq n).
+  Proof. intros. apply SOn_mul_id_l. Qed.
+  
+  (** SOn_1 is right-identity-element of SOn_mul operation *)
+  Lemma SOn_mul_id_r : forall n, IdentityRight SOn_mul SOn_1 (@SOn_eq n).
+  Proof. intros. apply SOn_mul_id_r. Qed.
+  
+  (** <SOn, +, 1> is a monoid *)
+  Lemma Monoid_SOn : forall n, Monoid (@SOn_mul n) SOn_1 SOn_eq.
+  Proof. intros. apply Monoid_SOn. Qed.
+
+  Definition SOn_inv {n} (s : SOn n) : SOn n := SOn_inv s.
+
+  (** SOn_inv is a proper morphism respect to SOn_eq *)
+  Lemma SOn_inv_proper : forall n, Proper (SOn_eq ==> SOn_eq) (@SOn_inv n).
+  Proof. intros. apply SOn_inv_proper. Qed.
+
+  (** SOn_inv is left-inversion of <SOn_mul,SOn_1> *)
+  Lemma SOn_mul_inv_l : forall n, InverseLeft SOn_mul SOn_1 SOn_inv (@SOn_eq n).
+  Proof. intros. apply SOn_mul_inv_l. Qed.
+
+  (** SOn_inv is right-inversion of <SOn_mul,SOn_1> *)
+  Lemma SOn_mul_inv_r : forall n, InverseRight SOn_mul SOn_1 SOn_inv (@SOn_eq n).
+  Proof. intros. apply SOn_mul_inv_r. Qed.
+
+  (** <SOn, +, 1, /s> is a group *)
+  Theorem Group_SOn : forall n, Group (@SOn_mul n) SOn_1 SOn_inv SOn_eq.
+  Proof. intros. apply Group_SOn. Qed.
+
+  
+  (* ==================================== *)
+  (** ** Other un-sorted properties *)
+  
+
   (* (** k * m = 0 -> (m = 0) \/ (k = 0) *) *)
   (* Axiom mcmul_eq0_imply_m0_or_k0 : forall {r c} (m : mat r c) k, *)
   (*     let m0 := mat0 r c in *)

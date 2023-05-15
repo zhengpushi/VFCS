@@ -12,42 +12,44 @@
  *)
 
 Require Export VectorR.
+Require Import VectorR2.
 
 
 (* ======================================================================= *)
 (** * 3D vector theory *)
 
-(** Equality and Inequality *)
-Section cv3eq_cv3neq.
+(** ** General properties *)
+Section general.
 
-  (** Convert equality of vector to equality of its components *)
+  (** The equality of 3D vector equal to the equality of its components *)
   Lemma cv3eq_iff : forall (v1 v2 : cvec 3),
       v1 == v2 <-> (v1.1 = v2.1 /\ v1.2 = v2.2 /\ v1.3 = v2.3).
   Proof. intros. split; intros. repeat (split; try apply H; auto). lma. Qed.
 
-  (** Convert inequality of vector to inequality of its components *)
+  (** The inequality of 3D vector equal to the inequality of its components *)
   Lemma cv3neq_iff : forall (v1 v2 : cvec 3),
       v1 != v2 <-> (v1.1 <> v2.1 \/ v1.2 <> v2.2 \/ v1.3 <> v2.3).
   Proof. intros. unfold not. rewrite cv3eq_iff. lra. Qed.
 
-End cv3eq_cv3neq.
+End general.
 
-(** Standard basis vector in Euclidean space of 3-dimensions *)
-Section basis_vector.
+
+(** ** Standard basis vector in Euclidean space of 3-dimensions *)
+Section basis.
   
-  Open Scope rvec_scope.
+  (* Open Scope rvec_scope. *)
   
-  Definition rv3i : rvec 3 := mk_rvec3 1 0 0.
-  Definition rv3j : rvec 3 := mk_rvec3 0 1 0.
-  Definition rv3k : rvec 3 := mk_rvec3 0 0 1.
+  (* Definition rv3i : rvec 3 := mk_rvec3 1 0 0. *)
+  (* Definition rv3j : rvec 3 := mk_rvec3 0 1 0. *)
+  (* Definition rv3k : rvec 3 := mk_rvec3 0 0 1. *)
   
-  (** <v,i> = <i,v> = v.1, <v,j> = <j,v> = v.2, <v,k> = <k,v> = v.3 *)
-  Lemma rvdot_v3i_l : forall v : rvec 3, <rv3i, v> = v.1. Proof. intros. cbv; ring. Qed.
-  Lemma rvdot_v3j_l : forall v : rvec 3, <rv3j, v> = v.2. Proof. intros. cbv; ring. Qed.
-  Lemma rvdot_v3k_l : forall v : rvec 3, <rv3k, v> = v.3. Proof. intros. cbv; ring. Qed.
-  Lemma rvdot_v3i_r : forall v : rvec 3, <v, rv3i> = v.1. Proof. intros. cbv; ring. Qed.
-  Lemma rvdot_v3j_r : forall v : rvec 3, <v, rv3j> = v.2. Proof. intros. cbv; ring. Qed.
-  Lemma rvdot_v3k_r : forall v : rvec 3, <v, rv3k> = v.3. Proof. intros. cbv; ring. Qed.
+  (* (** <v,i> = <i,v> = v.1, <v,j> = <j,v> = v.2, <v,k> = <k,v> = v.3 *) *)
+  (* Lemma rvdot_v3i_l : forall v : rvec 3, <rv3i, v> = v.1. Proof. intros. cbv; ring. Qed. *)
+  (* Lemma rvdot_v3j_l : forall v : rvec 3, <rv3j, v> = v.2. Proof. intros. cbv; ring. Qed. *)
+  (* Lemma rvdot_v3k_l : forall v : rvec 3, <rv3k, v> = v.3. Proof. intros. cbv; ring. Qed. *)
+  (* Lemma rvdot_v3i_r : forall v : rvec 3, <v, rv3i> = v.1. Proof. intros. cbv; ring. Qed. *)
+  (* Lemma rvdot_v3j_r : forall v : rvec 3, <v, rv3j> = v.2. Proof. intros. cbv; ring. Qed. *)
+  (* Lemma rvdot_v3k_r : forall v : rvec 3, <v, rv3k> = v.3. Proof. intros. cbv; ring. Qed. *)
 
   Open Scope cvec_scope.
 
@@ -55,15 +57,51 @@ Section basis_vector.
   Definition cv3j : cvec 3 := mk_cvec3 0 1 0.
   Definition cv3k : cvec 3 := mk_cvec3 0 0 1.
 
-  (** <v,i> = <i,v> = v.1, <v,j> = <j,v> = v.2, <v,k> = <k,v> = v.3 *)
-  Lemma cvdot_v3i_l : forall v : cvec 3, <cv3i, v> = v.1. Proof. intros. cbv; ring. Qed.
-  Lemma cvdot_v3j_l : forall v : cvec 3, <cv3j, v> = v.2. Proof. intros. cbv; ring. Qed.
-  Lemma cvdot_v3k_l : forall v : cvec 3, <cv3k, v> = v.3. Proof. intros. cbv; ring. Qed.
-  Lemma cvdot_v3i_r : forall v : cvec 3, <v, cv3i> = v.1. Proof. intros. cbv; ring. Qed.
-  Lemma cvdot_v3j_r : forall v : cvec 3, <v, cv3j> = v.2. Proof. intros. cbv; ring. Qed.
-  Lemma cvdot_v3k_r : forall v : cvec 3, <v, cv3k> = v.3. Proof. intros. cbv; ring. Qed.
+  (** 任意向量都能写成该向量的坐标在标准基向量下的线性组合 *)
+  Lemma cv3_linear_composition : forall (v : cvec 3),
+      v == v.x c* cv3i + v.y c* cv3j + v.z c* cv3k.
+  Proof. lma. Qed.
 
-End basis_vector.
+  (** 标准基向量的长度为 1 *)
+  Lemma cv3i_len1 : ||cv3i|| = 1. Proof. cbv. autorewrite with R; auto. Qed.
+  Lemma cv3j_len1 : ||cv3j|| = 1. Proof. cbv. autorewrite with R; auto. Qed.
+  Lemma cv3k_len1 : ||cv3k|| = 1. Proof. cbv. autorewrite with R; auto. Qed.
+
+  (** 标准基向量都是单位向量 *)
+  Lemma cv3i_vunit : cvunit cv3i. Proof. apply cvunit_spec. apply cv3i_len1. Qed.
+  Lemma cv3j_vunit : cvunit cv3j. Proof. apply cvunit_spec. apply cv3j_len1. Qed.
+  Lemma cv3k_vunit : cvunit cv3k. Proof. apply cvunit_spec. apply cv3k_len1. Qed.
+
+  (** 标准基向量都是非零向量 *)
+  Lemma cv3i_nonzero : cvnonzero cv3i.
+  Proof. intro. apply cv3eq_iff in H. destruct H as [H1 [H2 H3]]. ra. Qed.
+  
+  Lemma cv3j_nonzero : cvnonzero cv3j.
+  Proof. intro. apply cv3eq_iff in H. destruct H as [H1 [H2 H3]]. ra. Qed.
+  
+  Lemma cv3k_nonzero : cvnonzero cv3k.
+  Proof. intro. apply cv3eq_iff in H. destruct H as [H1 [H2 H3]]. ra. Qed.
+
+  (** 标准基向量是规范化操作的不动点 *)
+  Lemma cv3i_cvnormalize_fixpoint : cvnormalize cv3i == cv3i.
+  Proof. apply cvnormalize_vunit_fixpoint. apply cv3i_vunit. Qed.
+  
+  Lemma cv3j_cvnormalize_fixpoint : cvnormalize cv3j == cv3j.
+  Proof. apply cvnormalize_vunit_fixpoint. apply cv3j_vunit. Qed.
+  
+  Lemma cv3k_cvnormalize_fixpoint : cvnormalize cv3k == cv3k.
+  Proof. apply cvnormalize_vunit_fixpoint. apply cv3k_vunit. Qed.
+
+  (** 标准基向量与任意向量v的点积等于v的各分量 *)
+  Lemma cv3dot_i_l : forall v : cvec 3, <cv3i, v> = v.x. Proof. intros. cbv; ring. Qed.
+  Lemma cv3dot_j_l : forall v : cvec 3, <cv3j, v> = v.y. Proof. intros. cbv; ring. Qed.
+  Lemma cv3dot_k_l : forall v : cvec 3, <cv3k, v> = v.z. Proof. intros. cbv; ring. Qed.
+  Lemma cv3dot_i_r : forall v : cvec 3, <v, cv3i> = v.x. Proof. intros. cbv; ring. Qed.
+  Lemma cv3dot_j_r : forall v : cvec 3, <v, cv3j> = v.y. Proof. intros. cbv; ring. Qed.
+  Lemma cv3dot_k_r : forall v : cvec 3, <v, cv3k> = v.z. Proof. intros. cbv; ring. Qed.
+
+End basis.
+
 
 (** Dot product (inner-product) in 3D *)
 Section cv3dot.
@@ -73,20 +111,21 @@ Section cv3dot.
   Proof. intros. cbv. ring. Qed.
 End cv3dot.
 
+
 (** Unit vector in 3D *)
 Section cvunit.
 
   (** A unit vector has a algebra equation relation *)
   Lemma cv3unit_eq1 : forall (n : cvec 3),
-      cvunit n -> n.1 ^ 2 = (1 - n.2 ^ 2 - n.3 ^ 2)%R.
+      cvunit n -> (n.x)² = (1 - (n.y)² - (n.z)²)%R.
   Proof. intros. cvec2fun. cbv in *. ring_simplify in H. ring_simplify. lra. Qed.
 
   Lemma cv3unit_eq2 : forall (n : cvec 3),
-      cvunit n -> n.2 ^ 2 = (1 - n.1 ^ 2 - n.3 ^ 2)%R.
+      cvunit n -> (n.y)² = (1 - (n.x)² - (n.z)²)%R.
   Proof. intros. cvec2fun. cbv in *. ring_simplify in H. ring_simplify. lra. Qed.
 
   Lemma cv3unit_eq3 : forall (n : cvec 3),
-      cvunit n -> n.3 ^ 2 = (1 - n.1 ^ 2 - n.2 ^ 2)%R.
+      cvunit n -> (n.z)² = (1 - (n.x)² - (n.y)²)%R.
   Proof. intros. cvec2fun. cbv in *. ring_simplify in H. ring_simplify. lra. Qed.
 
 End cvunit.
@@ -118,6 +157,7 @@ Section cv3normalize.
   Admitted. (* 可能太复杂了，下次重新证 *)
   
 End cv3normalize.
+
 
 (** Cross product (vector product) of two 3-dim vectors *)
 Section cv3cross.
@@ -216,6 +256,7 @@ Section cv3cross.
 End cv3cross.
 Infix "×" := cv3cross : cvec_scope.
 
+
 (** Projection component of vector in 3D : 投影分量 *)
 Section cv3proj.
 
@@ -234,6 +275,7 @@ Section cv3proj.
   Proof. lma. Qed.
 
 End cv3proj.
+
 
 (** Perpendicular component of vector in 3D : 垂直分量 *)
 Section cv3perp.
@@ -290,7 +332,7 @@ Section direction_cosine.
       let v' := cv3dc v in
       let r := ||v|| in 
       (v'.1 = <v,cv3i> / r) /\ v'.2 = (<v,cv3j> / r) /\ v'.3 = (<v,cv3k> / r).
-  Proof. intros. rewrite cvdot_v3i_r, cvdot_v3j_r, cvdot_v3k_r; auto. Qed.
+  Proof. intros. rewrite cv3dot_i_r, cv3dot_j_r, cv3dot_k_r; auto. Qed.
 
   (** dc of a nonzero vector is a unit vector *)
   Lemma cv3dc_unit : forall (v : cvec 3), cvnonzero v -> cvunit (cv3dc v).
@@ -331,26 +373,15 @@ Section skew.
   Notation "`| v |ₓ" := (cv3skew v).
 
   (** Convert a skew-symmetric matrix to its corresponding vector *)
-  Definition cv3skew2v (m : mat 3 3) : option (cvec 3) :=
-    Some (l2cv [m.32; m.13; m.21]).
+  Definition cv3vex (m : mat 3 3) : cvec 3 := l2cv [m.32; m.13; m.21].
 
-  Lemma cv3skew_skew2v_id : forall (m : mat 3 3),
-      cv3skewP m -> 
-      match cv3skew2v m with
-      | Some v => cv3skew v == m
-      | _ => False
-      end.
+  Lemma cv3skew_skew2v_id : forall (m : mat 3 3), cv3skewP m -> cv3skew (cv3vex m) == m.
   Proof.
     intros [m]. simpl. intros. apply cv3skewP_spec in H.
-    do 5 destruct H as [? H]. lma. simpl in *.
-    autounfold with A. ra.
+    do 5 destruct H as [? H]. lma. autounfold with A. ra.
   Qed.
 
-  Lemma cv3skew2v_skew_id : forall (v : cvec 3),
-      match cv3skew2v (cv3skew v) with
-      | Some v' => v == v'
-      | _ => False
-      end.
+  Lemma cv3skew2v_skew_id : forall (v : cvec 3), cv3vex (cv3skew v) == v.
   Proof.
     intros. cvec2fun. cbv. intros.
     assert (j = 0%nat) by lia. rewrite H1.
@@ -361,6 +392,21 @@ Section skew.
   
   Lemma cv3cross_eq_skew_mul : forall (v1 v2 : cvec 3), v1 × v2 == `|v1|ₓ * v2.
   Proof. lma. Qed.
+
+  (* (** 习题8.2第12题, page 23, 高等数学，第七版 *) *)
+  (* (** 利用向量来证明不等式，并指出等号成立的条件 *) *)
+  (* Theorem Rineq3 : forall a1 a2 a3 b1 b2 b3 : R, *)
+  (*     sqrt (a1² + a2² + a3²) * sqrt (b1² + b2² + b3²) >= |a1*b1 + a2*b2 + a3*b3|. *)
+  (* Proof. *)
+  (*   intros. *)
+  (*   pose (a := t2cv_3 (a1,a2,a3)). *)
+  (*   pose (b := t2cv_3 (b1,b2,b3)). *)
+  (*   pose (alen := cvlen a). *)
+  (*   pose (blen := cvlen b). *)
+  (*   replace (sqrt _) with alen; [| unfold alen; cbv; f_equal; ring]. *)
+  (*   replace (sqrt _) with blen; [| unfold blen; cbv; f_equal; ring]. *)
+  (*   replace (Rabs _) with (|<a,b>|); [| cbv; autorewrite with R; auto]. *)
+  (* Abort. *)
 
   (** Example 4, page 19, 高等数学，第七版 *)
   Goal let a := t2cv_3 (2,1,-1) in
@@ -412,7 +458,7 @@ End cv3mixed.
 
 
 (** Axis-angle representation *)
-Section rotAxisAngle.
+Section AxisAngle.
 
   (** 推导绕任意轴 k̂ 旋转 θ 角度的矩阵 R(n̂,θ)，使得 v' = R(n̂,θ) * v *)
 
@@ -499,9 +545,176 @@ Section rotAxisAngle.
     rewrite !mmul_madd_distr_r. rewrite <- HeqN. f_equiv. f_equiv. apply mmul_1_l.
   Qed.
 
-  (* (** Direct formula of rotation with axis-angle *) *)
-  (* Definition rotAxisAngle_direct (θ : R) (k : cvec 3) (v : cvec 3) : cvec 3 := *)
-  (*   l2cv 3 *)
-  (*     [? *)
+  (** Rodrigues formula. *)
+  Section Rodrigues.
 
-End rotAxisAngle.
+    (** The Matrix for rotate by any axis is known as Rodrigues formula. *)
+    Definition RrodM := rotAxisAngleMat.
+    
+    (** The direct form of Rodrigues formula. *)
+    Definition Rrod (θ : R) (k : cvec 3) : mat 3 3 :=
+      let x := k.x in
+      let y := k.y in
+      let z := k.z in
+      let C := cos θ in
+      let S := sin θ in
+      l2m
+        [[C + x * x * (1 - C); x * y * (1 - C) - z * S; x * z * (1 - C) + y * S];
+         [y * x * (1 - C) + z * S; C + y * y * (1 - C); y * z * (1 - C) - x * S];
+         [z * x * (1 - C) - y * S; z * y * (1 - C) + x * S; C + z * z * (1 - C)]]%R.
+
+    Theorem Rrod_eq_RrodM : forall (θ : R) (k : cvec 3),
+        cvunit k -> Rrod θ k == RrodM θ k.
+    Proof.
+      intros. lma;
+        pose proof (cv3unit_eq1 k H); autounfold with A in *;
+        ring_simplify; autorewrite with R; rewrite H0; field.
+    Qed.
+
+    (** R(-θ) = R(θ)\T *)
+    Lemma Rrod_neg_eq_trans : forall (θ : R) (n : cvec 3), Rrod (-θ) n == (Rrod θ n)\T.
+      (* Proof. lma; autounfold with A; autorewrite with R; ring. Qed. *)
+    Admitted. (* to speed up the compile process *)
+
+    (** R(θ) * R(θ)\T = I *)
+    Lemma Rrod_Rrod_neg_inv : forall (θ : R) (n : cvec 3),
+        cvunit n -> Rrod θ n * ((Rrod θ n)\T) == mat1.
+    (* Proof. *)
+    (*   intros. *)
+    (*   pose proof (cv3unit_eq1 n H) as H1. *)
+    (*   pose proof (cv3unit_eq2 n H) as H2. *)
+    (*   pose proof (cv3unit_eq3 n H) as H3. *)
+    (*   lma; autounfold with A in *; cvec2fun; cbv; ring_simplify; autorewrite with R. *)
+    (*   - rewrite H1. rewrite RealFunction.cos2_eq. cbv; ring. *)
+    (*   - rewrite H3. rewrite RealFunction.cos2_eq. cbv; ring. *)
+    (*   - rewrite H2. rewrite RealFunction.cos2_eq. cbv; ring. *)
+    (*   - rewrite H3. rewrite RealFunction.cos2_eq. cbv; ring. *)
+    (*   - rewrite H2. rewrite RealFunction.cos2_eq. cbv; ring. *)
+    (*   - rewrite H1. rewrite RealFunction.cos2_eq. cbv; ring. *)
+    (*   - rewrite H2. rewrite RealFunction.cos2_eq. cbv; ring. *)
+    (*   - rewrite H1. rewrite RealFunction.cos2_eq. cbv; ring. *)
+    (*   - rewrite H3. rewrite RealFunction.cos2_eq. cbv; ring. *)
+    (* Qed. *)
+    Admitted. (* to speed up the compile process *)
+
+  End Rodrigues.
+
+End AxisAngle.
+
+
+(** ** Rotation matrix in 3D *)
+Section RotationMatrix3D.
+  
+  (** 主动旋转，逆时针正向(或顺时针负向)时，旋转矩阵 *)
+
+  (** 注意列向量和行向量的不同用法：
+     1. 给一个在该坐标系下的列向量 v1，正向旋转该向量 θ 角得到新的向量 v1'，按如下公式
+          v1' = R(θ) * v1
+          v1  = R(θ)\T * v1'
+     2. 给一个在该坐标系下的行向量 v2，正向旋转该向量 θ 角得到新的向量 v2'，按如下公式
+          v2' = v2 * (R(θ))\T
+     3. 如果进行了连续两次旋转，即，先旋转θ1，然后在此基础上再旋转θ2，则
+        按照列向量：v' = R(θ2) * R(θ1) * v，
+        按照行向量：v' = v * R(θ1) * R(θ2)，其中 R 是 R\T
+   *)
+
+  (** Basic rotation matrix in 3D *)
+  Definition R3x (θ : R) : mat 3 3 :=
+    l2m
+      [[1; 0; 0];
+       [0; cos θ; - sin θ];
+       [0; sin θ; cos θ]]%R.
+
+  Definition R3y (θ : R) : mat 3 3 :=
+    l2m
+      [[cos θ; 0; sin θ];
+       [0; 1; 0];
+       [- sin θ; 0; cos θ]]%R.
+
+  Definition R3z (θ : R) : mat 3 3 :=
+    l2m
+      [[cos θ; - sin θ; 0];
+       [sin θ; cos θ; 0];
+       [0; 0; 1]]%R.
+  
+  (** Three basic rotation matrix are the special case of Rrod. *)
+  Theorem Rrod_eq_Rx : forall θ : R, Rrod θ cv3i == R3x θ.
+  Proof. lma. Qed.
+
+  Theorem Rrod_eq_Ry : forall θ : R, Rrod θ cv3j == R3y θ.
+  Proof. lma. Qed.
+
+  Theorem Rrod_eq_Rz : forall θ : R, Rrod θ cv3k == R3z θ.
+  Proof. lma. Qed.
+  
+  (* (** R(-θ) = R(θ)\T *) *)
+  (* Lemma R3x_neg_eq_trans : forall θ : R, R3x (-θ) == (R3x θ)\T. *)
+  (* Proof. lma; autorewrite with R; try easy. Qed. *)
+  
+  (* Lemma R3y_neg_eq_trans : forall θ : R, R3y (-θ) == (R3y θ)\T. *)
+  (* Proof. lma; autorewrite with R; try easy. Qed. *)
+  
+  (* Lemma R3z_neg_eq_trans : forall θ : R, R3z (-θ) == (R3z θ)\T. *)
+  (* Proof. lma; autorewrite with R; try easy. Qed. *)
+
+  (* (** R(-θ) * R(θ) = I *) *)
+  (* Lemma R3x_neg_R3x_inv : forall θ : R, R3x (- θ) * R3x θ == mat1. *)
+  (* Proof. lma; autounfold with A; autorewrite with R; auto; ring. Qed. *)
+  
+  (* Lemma R3y_neg_R3y_inv : forall θ : R, R3y (- θ) * R3y θ == mat1. *)
+  (* Proof. lma; autounfold with A; autorewrite with R; auto; ring. Qed. *)
+  
+  (* Lemma R3z_neg_R3z_inv : forall θ : R, R3z (- θ) * R3z θ == mat1. *)
+  (* Proof. lma; autounfold with A; autorewrite with R; auto; ring. Qed. *)
+
+  (* (** R(θ) * R(-θ) = I *) *)
+  (* Lemma R3x_R3x_neg_inv : forall θ : R, R3x θ * R3x (- θ) == mat1. *)
+  (* Proof. lma; autounfold with A; autorewrite with R; auto; ring. Qed. *)
+  
+  (* Lemma R3y_R3y_neg_inv : forall θ : R, R3y θ * R3y (- θ) == mat1. *)
+  (* Proof. lma; autounfold with A; autorewrite with R; auto; ring. Qed. *)
+  
+  (* Lemma R3z_R3z_neg_inv : forall θ : R, R3z θ * R3z (- θ) == mat1. *)
+  (* Proof. lma; autounfold with A; autorewrite with R; auto; ring. Qed. *)
+
+  (* (** v' = Rx(θ) * v *) *)
+  (* Lemma R3x_spec1 : forall (v : cvec 3) (θ : R), rotAxisAngle θ cv3i v == (R3x θ) * v. *)
+  (* Proof. lma. Qed. *)
+  
+  (* Lemma R3y_spec1 : forall (v : cvec 3) (θ : R), rotAxisAngle θ cv3j v == (R3y θ) * v. *)
+  (* Proof. lma. Qed. *)
+  
+  (* Lemma R3z_spec1 : forall (v : cvec 3) (θ : R), rotAxisAngle θ cv3k v == (R3z θ) * v. *)
+  (* Proof. lma. Qed. *)
+
+  (* (** v = R(-θ) * v' *) *)
+  (* Lemma R3x_spec2 : forall (v : cvec 3) (θ : R), v == (R3x (-θ)) * (rotAxisAngle θ cv3i v). *)
+  (* Proof. intros. rewrite R3x_spec1,<- mmul_assoc,R3x_neg_R3x_inv,mmul_1_l; easy. Qed. *)
+  
+  (* Lemma R3y_spec2 : forall (v : cvec 3) (θ : R), v == (R3y (-θ)) * (rotAxisAngle θ cv3j v). *)
+  (* Proof. intros. rewrite R3y_spec1,<- mmul_assoc,R3y_neg_R3y_inv,mmul_1_l; easy. Qed. *)
+  
+  (* Lemma R3z_spec2 : forall (v : cvec 3) (θ : R), v == (R3z (-θ)) * (rotAxisAngle θ cv3k v). *)
+  (* Proof. intros. rewrite R3z_spec1,<- mmul_assoc,R3z_neg_R3z_inv,mmul_1_l; easy. Qed *)
+
+  (* (** v = R(θ)\T * v' *) *)
+  (* Lemma R3x_spec3 : forall (v : cvec 3) (θ : R), v == (R3x θ)\T * (rotAxisAngle θ cv3i v). *)
+  (* Proof. intros. rewrite <- R3x_neg_eq_trans. apply R3x_spec2. Qed. *)
+
+  (* Lemma R3y_spec3 : forall (v : cvec 3) (θ : R), v == (R3y θ)\T * (rotAxisAngle θ cv3j v). *)
+  (* Proof. intros. rewrite <- R3y_neg_eq_trans. apply R3y_spec2. Qed. *)
+
+  (* Lemma R3z_spec3 : forall (v : cvec 3) (θ : R), v == (R3z θ)\T * (rotAxisAngle θ cv3k v). *)
+  (* Proof. intros. rewrite <- R3z_neg_eq_trans. apply R3z_spec2. Qed. *)
+
+  (* (** 预乘和后乘旋转矩阵的关系，即: v ~ v' -> R(θ) * v ~ v' * R(θ) *) *)
+  (* Lemma R3x_spec4 : forall (v1 : cvec 3) (θ : R), *)
+  (*     let v1' : rvec 3 := v1\T in  (* v1和v1'是列向量和行向量形式的同一个向量 *) *)
+  (*     let v2 : cvec 3 := (R3x θ) * v1 in       (* 用列向量形式计算 *) *)
+  (*     let v2' : rvec 3 := v1' * ((R3x θ)\T) in (* 用行向量形式计算 *) *)
+  (*     let v2'' : cvec 3 := v2'\T in           (* v2' 的列向量形式 *) *)
+  (*     v2 == v2''. (* 结果应该相同 *) *)
+  (* Proof. lma. Qed. *)
+
+End RotationMatrix3D.
+

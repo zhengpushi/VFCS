@@ -1373,11 +1373,22 @@ Section Theory.
 
   Infix "==" := Aeq : A_scope.
   Infix "+" := Aadd : A_scope.
+  Notation "1" := Aone : A_scope.
+  Notation "0" := Azero : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
   Notation Asub := (fun a b => a + -b).
   Infix "*" := Amul : A_scope.
+  Open Scope A_scope.
 
   Add Ring ring_inst : (make_ring_theory R).
+
+  (** 0 * a = 0 *)
+  Lemma ring_mul_0_l : forall (a : A), 0 * a == 0.
+  Proof. intros. ring. Qed.
+
+  (** a * 0 = 0 *)
+  Lemma ring_mul_0_r : forall (a : A), a * 0 * a == 0.
+  Proof. intros. ring. Qed.
 
 End Theory.
 
@@ -1530,6 +1541,7 @@ Section Theory.
   Notation Adiv := (fun a b => a * (/b))%A.
   Infix "/" := Adiv : A_scope.
 
+  Add Ring ring_inst : (make_ring_theory fieldRing).
   Add Field field_inst : (make_field_theory F).
 
   (** a <> 0 -> /a * a = 1 *)
@@ -1593,7 +1605,37 @@ Section Theory.
     apply field_mul_cancel_r in H; auto. 
   Qed.
 
+  (** a * a = 1 -> a = 1 \/ a = - 1 *)
+  Lemma field_sqr_eq1_imply_eq1_or_eq_n1 : forall (a : A) (HDec : Dec Aeq),
+      a * a == 1 -> a == 1 \/ a == - (1).
+  Proof.
+    (*
+      假设 a * a = 1 成立，我们需要证明 a = 1 或 a = -1。
+      1. 首先考虑 a = 1 的情况。如果 a = 1，则显然成立。
+      2. 接下来考虑 a ≠ 1 的情况。
+      由于域F中乘法存在乘法逆元，我们可以设 a 的乘法逆元为 b，即 a * b = 1。
+      由于 a ≠ 1，所以 b 也不等于 1。
+      那么我们可以将 a * a = 1 两边同时乘以 b，得到 (a * a) * b = 1 * b，
+      即 a = b。根据域的乘法单位元的性质，1 * b = b，所以 b = 1。
+      但是我们已经证得 b ≠ 1，这产生了矛盾。
+      综上所述，若 a * a = 1，则 a = 1 或 a = -1 成立。*)
+    intros. destruct (dec a 1); auto.
+    (* /a != 1 *)
+    assert (/a != 1).
+    { intro.
+      assert (a * / a == 1).
+      { apply field_mul_inv_r. intro. rewrite H1 in H.
+        rewrite (ring_mul_0_l _ _) in H.
+        pose proof (field_1_neq_0). rewrite H in H2. destruct H2. easy. }
+      rewrite H0 in H1. rewrite identityRight in H1. easy. }
+    (* /a == 1 *)
+    assert (/a == 1); try easy.
+    assert ((a * a) * /a == 1 * /a).
+    { rewrite H. easy. }
+    Admitted.
+
 End Theory.
+
 
 (** ** Examples *)
 Section Examples.

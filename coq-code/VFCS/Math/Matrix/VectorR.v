@@ -300,7 +300,7 @@ Section vlen.
   Qed.
 
   (** ||v|| = 0 <-> v = 0 *)
-  Lemma cvlen_eq0_iff_eq0 : forall {n} (v : cvec n), ||v|| = 0 <-> v == cvec0.
+  Lemma cvlen_eq0_iff_eq0 : forall {n} (v : cvec n), ||v|| = 0 <-> cvzero v.
   Proof.
     intros. unfold cvlen. split; intros.
     - apply cvdot0_iff_0. apply sqrt_eq_0 in H. auto. apply cvdot_ge0.
@@ -308,12 +308,16 @@ Section vlen.
   Qed.
 
   (** ||v|| <> 0 <-> v <> 0 *)
-  Lemma cvlen_neq0_iff_neq0 : forall {n} (v : cvec n), ||v|| <> 0 <-> v != cvec0.
+  Lemma cvlen_neq0_iff_neq0 : forall {n} (v : cvec n), ||v|| <> 0 <-> cvnonzero v.
   Proof.
     intros. split; intros; intro.
     - apply cvlen_eq0_iff_eq0 in H0. easy.
     - apply cvlen_eq0_iff_eq0 in H0. easy.
   Qed.
+
+  (** v <> vec0 -> 0 < ||v|| *)
+  Lemma cvlen_gt0 : forall {n} (v : cvec n), cvnonzero v -> 0 < ||v||.
+  Proof. intros. pose proof (cvlen_ge0 v). apply cvlen_neq0_iff_neq0 in H. lra. Qed.
 
   (** Length of a vector u is 1, iff the dot product of u and u is 1 *)
   Lemma cvlen_eq1_iff_vdot1 : forall {n} (u : cvec n), ||u|| = 1 <-> <u,u> = 1.
@@ -395,6 +399,38 @@ Section vnormalize.
     rewrite H0. cbv. field. subst. apply cvlen_neq0_iff_neq0; auto.
   Qed.
 
+  (** Unit vector is fixpoint of cvnormalize operation *)
+  Lemma cvnormalize_vunit_fixpoint : forall {n} (v : cvec n),
+      cvunit v -> cvnormalize v == v.
+  Proof.
+    intros. lma. rewrite (cvunit_spec v) in H. rewrite H. autorewrite with R. easy.
+  Qed.
+
+  (** The component of a normalized vector is equivalent to its original component 
+      divide the vector's length *)
+  Lemma cvnormalize_nth : forall {n} (v : cvec n) i,
+      cvnonzero v -> (i < n)%nat -> ((cvnormalize v) $ i == v $ i / (||v||))%A.
+  Proof.
+    intros. unfold cvnormalize. rewrite cvcmul_nth; auto.
+    autounfold with A. field. apply cvlen_neq0_iff_neq0; auto.
+  Qed.
+
+  (** Normalization is idempotent *)
+  Lemma cvnormalize_idem : forall {n} (v : cvec n),
+      cvnonzero v -> cvnormalize (cvnormalize v) == cvnormalize v.
+  Proof.
+    intros. unfold cvnormalize. rewrite cvcmul_assoc.
+    assert (1 / (||1 / (||v||) c* v||) == Aone)%A.
+    { rewrite cvlen_cmul. remember (||v||) as r. autounfold with A.
+      replace (|(1/r)|) with (1/r); try field.
+      + rewrite Heqr. apply cvlen_neq0_iff_neq0; auto.
+      + rewrite Rabs_right; auto.
+        pose proof (cvlen_gt0 v H). rewrite <- Heqr in H0.
+        assert (forall r, 0 < r -> 0 <= r). intros. ra.
+        apply Rle_ge. apply H1. apply Rdiv_lt_0_compat; lra. }
+    rewrite H0. monoid_simp.
+  Qed.
+
   (** Keep the same direction as the original vector *)
   Lemma cvnormalize_direction : forall {n} (v : cvec n),
       (cvnormalize v) ∥ v.
@@ -422,7 +458,7 @@ End vnormalize.
 (** ** Angle between two vectors *)
 Section vangle.
 
-  (** The angle from vector v1 to vector v2, is derived from the inner-product *)
+  (** The angle from vector v1 to vector v2, θ ∈ [0,π] *)
   Definition cvangle {n} (v1 v2 : cvec n) : R :=
     let v1' := cvnormalize v1 in
     let v2' := cvnormalize v2 in

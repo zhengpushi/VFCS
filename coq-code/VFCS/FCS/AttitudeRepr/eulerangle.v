@@ -110,11 +110,11 @@ Section BasicRotationMatrics.
 
      Notes:
      1. Give a column-vector v1 respect to this coordinate, when actively rotate it 
-     about the x-axes, we could get a new vector v1' respect to this coordinate by
-     this formula:
-          v1' = Rx(θ) v1
+        about the x-axes, we could get a new vector v1' respect to this coordinate by
+        this formula:
+             v1' = Rx(θ) v1
      2. If give a row-vector v2, ..., v2' ...
-         v2' = v2 (Rx(θ))\T
+             v2' = v2 (Rx(θ))\T
 
    *)
   Definition Rx (θ : R) : mat 3 3 :=
@@ -134,6 +134,11 @@ Section BasicRotationMatrics.
       [[cos θ; - sin θ; 0];
        [sin θ; cos θ; 0];
        [0; 0; 1]]%R.
+
+  (** 这里的定义与 R3x,R3y,R3z 是一样的 *)
+  Lemma Rx_spec : forall θ, Rx θ == R3x θ. Proof. lma. Qed.
+  Lemma Ry_spec : forall θ, Ry θ == R3y θ. Proof. lma. Qed.
+  Lemma Rz_spec : forall θ, Rz θ == R3z θ. Proof. lma. Qed.
 
   (* Fact Rx_inv : forall θ, minv (Rx θ) == (Rx θ)\T. *)
   (* Proof. lma; autounfold with A; autorewrite with R; auto. Qed. *)
@@ -184,7 +189,7 @@ Section EulerAngle24.
 
   (* Linearation *)
   
-  (* 这里只证明这一个例子，预计可以找出所有的例子并证明 *)
+  (* 这里只证明这一个例子，其余例子可以仿照此处做法 *)
   Definition B3_123_L : mat 3 3 :=
     l2m
       [[1; -θ3; θ2];
@@ -451,16 +456,16 @@ Module R2Euler.
   Module B3_123.
 
     (* 这是最弱的算法，只能求解小机动的值。更好的算法比较复杂，需要更多验证 *)
-    Section r2euler.
-      Variable C : mat 3 3.
-      Definition θ1' := atan (- C.23 / C.33).
-      Definition θ2' := asin (C.13).
-      Definition θ3' := atan (- C.12 / C.11).
-
+    Section alg1.
       Variable θ1 θ2 θ3 : R.
       Hypotheses θ1_range : - PI / 2 < θ1 < PI / 2.
       Hypotheses θ2_range : - PI / 2 < θ2 < PI / 2.
       Hypotheses θ3_range : - PI / 2 < θ3 < PI / 2.
+
+      Variable C : mat 3 3.
+      Definition θ1' := atan (- C.23 / C.33).
+      Definition θ2' := asin (C.13).
+      Definition θ3' := atan (- C.12 / C.11).
 
       Lemma θ1_ok : C == B3_123 θ1 θ2 θ3 -> θ1' = θ1.
       Proof. intros; cbv; rewrite !H; auto; cbv; autorewrite with R; ra. Qed.
@@ -471,7 +476,7 @@ Module R2Euler.
       Lemma θ3_ok : C == B3_123 θ1 θ2 θ3 -> θ3' = θ3.
       Proof. intros; cbv; rewrite !H; auto; cbv; autorewrite with R; ra. Qed.
       
-    End r2euler.
+    End alg1.
 
   End B3_123.
 
@@ -496,75 +501,3 @@ Section skew3.
   (* Check cv3skew2v_skew_id. *)
   
 End skew3.
-
-(** Eliminate tail expressions, which ring tactic may not work *)
-Ltac ring_tail :=
-  rewrite !associative;
-  repeat
-    match goal with
-    | |- (?a - ?b = ?c - ?b)%R => f_equal
-    | |- (?a + ?b = ?c + ?b)%R => f_equal
-    end;
-  rewrite <- !associative.
-
-
-(** * Axis-Angle *)
-Module AxisAngle.
-
-  Open Scope nat.
-  (* Open Scope R_scope. *)
-  Open Scope mat_scope.
-
-  (** 推导一个绕任意轴 k̂ 旋转 θ 角度的矩阵 R(k̂,θ)，使得 v' = R(k̂,θ) * v *)
-  Section derive_AxisAngleMatrix.
-
-    (* Check rotAxisAngle. *)
-    (* Check rotAxisAngle_spec. *)
-
-    (** Also known as Rodrigues formula. *)
-    (* Check rotAxisAngleMat. *)
-    Definition Rrod := rotAxisAngleMat.
-
-  End derive_AxisAngleMatrix.
-
-  (** Rodrigues formula. *)
-  Section Rodrigues.
-
-    Local Open Scope fun_scope.
-    
-    (** Three basic rotation matrix are the special case of Rrod. *)
-    Theorem Rrod_eq_Rx : forall θ : R, Rrod θ cv3i == Rx θ.
-    Proof. lma. Qed.
-
-    Theorem Rrod_eq_Ry : forall θ : R, Rrod θ cv3j == Ry θ.
-    Proof. lma. Qed.
-
-    Theorem Rrod_eq_Rz : forall θ : R, Rrod θ cv3k == Rz θ.
-    Proof. lma. Qed.
-
-    (** The matrix form of Rrod, so that the computer can directly calculate *)
-    Definition RrodM (θ : R) (k : cvec 3) : mat 3 3 :=
-      let x := k.1 in
-      let y := k.2 in
-      let z := k.3 in
-      let C := cos θ in
-      let S := sin θ in
-      l2m
-        [[C + x * x * (1 - C); x * y * (1 - C) - z * S; x * z * (1 - C) + y * S];
-         [y * x * (1 - C) + z * S; C + y * y * (1 - C); y * z * (1 - C) - x * S];
-         [z * x * (1 - C) - y * S; z * y * (1 - C) + x * S; C + z * z * (1 - C)]]%R.
-
-    Theorem RrodM_eq : forall (θ : R) (k : cvec 3), cvunit k -> Rrod θ k == RrodM θ k.
-    Proof.
-      intros. lma.
-      - pose proof (cv3unit_eq1 k H);
-          cvec2fun; ring_simplify; ring_simplify in H0; rewrite H0; cbv; field.
-      - pose proof (cv3unit_eq2 k H);
-          cvec2fun; ring_simplify; ring_simplify in H0; rewrite H0; cbv; field.
-      - pose proof (cv3unit_eq3 k H);
-          cvec2fun; ring_simplify; ring_simplify in H0; rewrite H0; cbv; field.
-    Qed.
-    
-  End Rodrigues.
-
-End AxisAngle.

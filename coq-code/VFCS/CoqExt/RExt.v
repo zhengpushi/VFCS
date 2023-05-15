@@ -303,6 +303,14 @@ Proof.
   intros. unfold Rleb. destruct (Rle_lt_dec y x); constructor; lra.
 Qed.
 
+(** (a - b <? 0) = (0 <? a - b) *)
+Lemma Rminus_ltb0_comm : forall a b : R, (a - b <? 0) = (0 <? b - a).
+Proof. intros. unfold Rltb. destruct Rlt_le_dec, Rlt_le_dec; auto; lra. Qed.
+  
+(** (a - b >? 0) = (0 >? b - a) *)
+Lemma Rminus_gtb0_comm : forall a b : R, (a - b >? 0) = (0 >? b - a).
+Proof. intros. unfold Rltb. destruct Rlt_le_dec, Rlt_le_dec; auto; lra. Qed.
+
 (** These theorems are automatic used. *)
 Global Hint Resolve
   Reqb_reflect
@@ -343,17 +351,18 @@ Global Hint Resolve
 
 (** We always prefer x², an exception is when using ring or field tactic. *)
 Lemma xx_Rsqr x : x * x = x².
-Proof.
-  auto.
-Qed.
+Proof. auto. Qed.
 #[export] Hint Rewrite xx_Rsqr : R.
 
 (** r ^ 2 = r² *)
 Lemma Rpow2_Rsqr r : r ^ 2 = r².
-Proof.
-  ra.
-Qed.
+Proof. ra. Qed.
 #[export] Hint Rewrite Rpow2_Rsqr : R.
+
+(** r ^ 4 = (r²)² *)
+Lemma Rpow4_Rsqr_Rsqr r : r ^ 4 = r²².
+Proof. ra. Qed.
+#[export] Hint Rewrite Rpow4_Rsqr_Rsqr : R.
 
 (** r² = 1 -> r = 1 \/ r = -1 *)
 Lemma Rsqr_eq1 : forall r : R, r² = 1 -> r = 1 \/ r = -1.

@@ -301,8 +301,8 @@ Section qrotation.
   Proof.
     intros. unfold qunit, qlen. apply sqrt_eq1_imply_eq1_rev.
     pose proof (cv3unit_eq1 n H).
-    cvec2fun. cbv. ring_simplify in H0. ring_simplify. rewrite H0. ring_simplify.
-    autorewrite with R. auto.
+    cvec2fun. cbv. ring_simplify in H0. ring_simplify. autorewrite with R.
+    rewrite H0. ring_simplify. autorewrite with R. auto.
   Qed.
 
 End qrotation.
