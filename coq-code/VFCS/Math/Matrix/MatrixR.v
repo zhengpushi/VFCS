@@ -27,6 +27,26 @@ Open Scope mat_scope.
 
 
 (* ==================================== *)
+(** ** Orthogonal matrix *)
+Section morthogonal.
+
+  (** orthogonal m -> |m| = ± 1 *)
+  Lemma morthogonal_mdet : forall {n} (m : smat n),
+      morthogonal m -> (mdet m == 1 \/ mdet m == - (1))%A.
+  Proof.
+    intros.
+    assert (m\T * m == mat1).
+    { unfold morthogonal in H. unfold Matrix.morthogonal in H. rewrite H. easy. }
+    assert (mdet (m\T * m)%M == mdet (@mat1 n))%A.
+    { rewrite H0. easy. }
+    rewrite mdet_mmul in H1. rewrite mdet_mtrans in H1. rewrite mdet_1 in H1.
+    apply Rsqr_eq1 in H1. easy.
+  Qed.
+
+End morthogonal.
+
+
+(* ==================================== *)
 (** ** SO(3): special orthogonal group on 3D *)
 
 Section SO3.

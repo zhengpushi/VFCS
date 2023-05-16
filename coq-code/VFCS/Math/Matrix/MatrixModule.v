@@ -1009,10 +1009,10 @@ Module FieldMatrixTheory (E : FieldElementType).
   Lemma morthogonal_minv : forall {n} (m : smat n), morthogonal m -> morthogonal (m⁻¹).
   Proof. intros. apply morthogonal_minv; auto. Qed.
 
-  (** orthogonal m -> |m| = ± 1 *)
-  Lemma morthogonal_mdet : forall {n} (m : smat n) (HDec : Dec Aeq),
-      morthogonal m -> (mdet m == Aone \/ mdet m == - (Aone))%A.
-  Proof. intros. apply morthogonal_mdet; auto. Qed.
+  (* (** orthogonal m -> |m| = ± 1 *) *)
+  (* Lemma morthogonal_mdet : forall {n} (m : smat n) (HDec : Dec Aeq), *)
+  (*     morthogonal m -> (mdet m == Aone \/ mdet m == - (Aone))%A. *)
+  (* Proof. intros. apply morthogonal_mdet; auto. Qed. *)
 
   
   (* ==================================== *)

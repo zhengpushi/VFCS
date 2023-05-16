@@ -1931,15 +1931,15 @@ Section OrthogonalMatrix.
     apply morthogonal_iff_mul_trans_r; auto.
   Qed.
 
-  (** orthogonal m -> |m| = ± 1 *)
-  Lemma morthogonal_mdet : forall {n} (m : smat n) (HDec : Dec Aeq),
-      morthogonal m -> (mdet m == 1 \/ mdet m == - (1))%A.
-  Proof.
-    intros. red in H.
-    assert (mdet (m\T * m) == mdet (mat1 n))%A. { rewrite H. easy. }
-    rewrite mdet_mmul in H0. rewrite mdet_mtrans, mdet_1 in H0.
-    apply field_sqr_eq1_imply_eq1_or_eq_n1 in H0; auto.
-  Qed.
+  (* (** orthogonal m -> |m| = ± 1 *) *)
+  (* Lemma morthogonal_mdet : forall {n} (m : smat n) (HDec : Dec Aeq), *)
+  (*     morthogonal m -> (mdet m == 1 \/ mdet m == - (1))%A. *)
+  (* Proof. *)
+  (*   intros. red in H. *)
+  (*   assert (mdet (m\T * m) == mdet (mat1 n))%A. { rewrite H. easy. } *)
+  (*   rewrite mdet_mmul in H0. rewrite mdet_mtrans, mdet_1 in H0. *)
+  (*   apply field_sqr_eq1_imply_eq1_or_eq_n1 in H0; auto. *)
+  (* Qed. *)
 
   
   (* (* ==================================== *) *)
