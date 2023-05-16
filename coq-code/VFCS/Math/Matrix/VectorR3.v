@@ -618,7 +618,7 @@ Section RotationMatrix3D.
         按照行向量：v' = v * R(θ1) * R(θ2)，其中 R 是 R\T
    *)
 
-  (** Basic rotation matrix in 3D *)
+  (** Basic rotation matrices in 3D *)
   Definition R3x (θ : R) : mat 3 3 :=
     l2m
       [[1; 0; 0];
@@ -637,7 +637,7 @@ Section RotationMatrix3D.
        [sin θ; cos θ; 0];
        [0; 0; 1]]%R.
   
-  (** Three basic rotation matrix are the special case of Rrod. *)
+  (** R3x,R3y,R3z are the special case of Rrod. *)
   Theorem Rrod_eq_Rx : forall θ : R, Rrod θ cv3i == R3x θ.
   Proof. lma. Qed.
 
@@ -647,74 +647,128 @@ Section RotationMatrix3D.
   Theorem Rrod_eq_Rz : forall θ : R, Rrod θ cv3k == R3z θ.
   Proof. lma. Qed.
   
-  (* (** R(-θ) = R(θ)\T *) *)
-  (* Lemma R3x_neg_eq_trans : forall θ : R, R3x (-θ) == (R3x θ)\T. *)
-  (* Proof. lma; autorewrite with R; try easy. Qed. *)
+  (** R3x,R3y,R3z are orthogonal matrix *)
+  Lemma R3x_orthogonal : forall (θ : R), morthogonal (R3x θ).
+  Proof. lma; autorewrite with R; easy. Qed.
   
-  (* Lemma R3y_neg_eq_trans : forall θ : R, R3y (-θ) == (R3y θ)\T. *)
-  (* Proof. lma; autorewrite with R; try easy. Qed. *)
+  Lemma R3y_orthogonal : forall (θ : R), morthogonal (R3y θ).
+  Proof. lma; autorewrite with R; easy. Qed.
   
-  (* Lemma R3z_neg_eq_trans : forall θ : R, R3z (-θ) == (R3z θ)\T. *)
-  (* Proof. lma; autorewrite with R; try easy. Qed. *)
+  Lemma R3z_orthogonal : forall (θ : R), morthogonal (R3z θ).
+  Proof. lma; autorewrite with R; easy. Qed.
 
-  (* (** R(-θ) * R(θ) = I *) *)
-  (* Lemma R3x_neg_R3x_inv : forall θ : R, R3x (- θ) * R3x θ == mat1. *)
-  (* Proof. lma; autounfold with A; autorewrite with R; auto; ring. Qed. *)
-  
-  (* Lemma R3y_neg_R3y_inv : forall θ : R, R3y (- θ) * R3y θ == mat1. *)
-  (* Proof. lma; autounfold with A; autorewrite with R; auto; ring. Qed. *)
-  
-  (* Lemma R3z_neg_R3z_inv : forall θ : R, R3z (- θ) * R3z θ == mat1. *)
-  (* Proof. lma; autounfold with A; autorewrite with R; auto; ring. Qed. *)
+  (** The determinant of R3x,R3y,R3z are 1 *)
+  Lemma R3x_det1 : forall (θ : R), mdet (R3x θ) = 1.
+  Proof. intros; cbv; autorewrite with R; easy. Qed.
 
-  (* (** R(θ) * R(-θ) = I *) *)
-  (* Lemma R3x_R3x_neg_inv : forall θ : R, R3x θ * R3x (- θ) == mat1. *)
-  (* Proof. lma; autounfold with A; autorewrite with R; auto; ring. Qed. *)
-  
-  (* Lemma R3y_R3y_neg_inv : forall θ : R, R3y θ * R3y (- θ) == mat1. *)
-  (* Proof. lma; autounfold with A; autorewrite with R; auto; ring. Qed. *)
-  
-  (* Lemma R3z_R3z_neg_inv : forall θ : R, R3z θ * R3z (- θ) == mat1. *)
-  (* Proof. lma; autounfold with A; autorewrite with R; auto; ring. Qed. *)
+  Lemma R3y_det1 : forall (θ : R), mdet (R3y θ) = 1.
+  Proof. intros; cbv; autorewrite with R; easy. Qed.
 
-  (* (** v' = Rx(θ) * v *) *)
-  (* Lemma R3x_spec1 : forall (v : cvec 3) (θ : R), rotAxisAngle θ cv3i v == (R3x θ) * v. *)
-  (* Proof. lma. Qed. *)
+  Lemma R3z_det1 : forall (θ : R), mdet (R3z θ) = 1.
+  Proof. intros; cbv; autorewrite with R; easy. Qed.
+
+  (** R3x,R3y,R3z are member of SO3 *)
+  Definition R3x_SO3 (θ : R) : SO3.
+    refine (Build_SOn _ (R3x θ) _). split. apply R3x_orthogonal. apply R3x_det1.
+  Defined.
+
+  Definition R3y_SO3 (θ : R) : SO3.
+    refine (Build_SOn _ (R3y θ) _). split. apply R3y_orthogonal. apply R3y_det1.
+  Defined.
+
+  Definition R3z_SO3 (θ : R) : SO3.
+    refine (Build_SOn _ (R3z θ) _). split. apply R3z_orthogonal. apply R3z_det1.
+  Defined.
+
+  (** 以下示例说明了使用群 SOn 可以解决一批问题(SO2, SO3等），并且比暴力证明的速度快 *)
   
-  (* Lemma R3y_spec1 : forall (v : cvec 3) (θ : R), rotAxisAngle θ cv3j v == (R3y θ) * v. *)
-  (* Proof. lma. Qed. *)
+  (** R(θ)⁻¹ = R(θ)\T *)
   
-  (* Lemma R3z_spec1 : forall (v : cvec 3) (θ : R), rotAxisAngle θ cv3k v == (R3z θ) * v. *)
-  (* Proof. lma. Qed. *)
+  Lemma R3x_inv_eq_trans : forall θ : R, (R3x θ)⁻¹ == (R3x θ)\T.
+  Proof.
+    (* method 1 : prove by computing (too slow, 0.8s) *)
+    (* lma; autounfold with A; autorewrite with R; try easy. *)
+    (* method 2 : prove by reasoning *)
+    intros; apply (SOn_imply_inv_eq_trans (R3x_SO3 θ)).
+  Qed.
 
-  (* (** v = R(-θ) * v' *) *)
-  (* Lemma R3x_spec2 : forall (v : cvec 3) (θ : R), v == (R3x (-θ)) * (rotAxisAngle θ cv3i v). *)
-  (* Proof. intros. rewrite R3x_spec1,<- mmul_assoc,R3x_neg_R3x_inv,mmul_1_l; easy. Qed. *)
+  Lemma R3y_inv_eq_trans : forall θ : R, (R3y θ)⁻¹ == (R3y θ)\T.
+  Proof. intros; apply (SOn_imply_inv_eq_trans (R3y_SO3 θ)). Qed.
+
+  Lemma R3z_inv_eq_trans : forall θ : R, (R3z θ)⁻¹ == (R3z θ)\T.
+  Proof. intros; apply (SOn_imply_inv_eq_trans (R3z_SO3 θ)). Qed.
   
-  (* Lemma R3y_spec2 : forall (v : cvec 3) (θ : R), v == (R3y (-θ)) * (rotAxisAngle θ cv3j v). *)
-  (* Proof. intros. rewrite R3y_spec1,<- mmul_assoc,R3y_neg_R3y_inv,mmul_1_l; easy. Qed. *)
+  (** R(-θ) = R(θ)\T *)
+  Lemma R3x_neg_eq_trans : forall θ : R, R3x (-θ) == (R3x θ)\T.
+  Proof. lma; autorewrite with R; try easy. Qed.
   
-  (* Lemma R3z_spec2 : forall (v : cvec 3) (θ : R), v == (R3z (-θ)) * (rotAxisAngle θ cv3k v). *)
-  (* Proof. intros. rewrite R3z_spec1,<- mmul_assoc,R3z_neg_R3z_inv,mmul_1_l; easy. Qed *)
+  Lemma R3y_neg_eq_trans : forall θ : R, R3y (-θ) == (R3y θ)\T.
+  Proof. lma; autorewrite with R; try easy. Qed.
+  
+  Lemma R3z_neg_eq_trans : forall θ : R, R3z (-θ) == (R3z θ)\T.
+  Proof. lma; autorewrite with R; try easy. Qed.
 
-  (* (** v = R(θ)\T * v' *) *)
-  (* Lemma R3x_spec3 : forall (v : cvec 3) (θ : R), v == (R3x θ)\T * (rotAxisAngle θ cv3i v). *)
-  (* Proof. intros. rewrite <- R3x_neg_eq_trans. apply R3x_spec2. Qed. *)
+  (** R(-θ) * R(θ) = I *)
+  Lemma R3x_neg_R3x_inv : forall θ : R, R3x (- θ) * R3x θ == mat1.
+  Proof.
+    (* lma; autounfold with A; autorewrite with R; auto; ring. *)
+    intros; rewrite R3x_neg_eq_trans, <- R3x_inv_eq_trans, mmul_minv_l; easy.
+  Qed.
+  
+  Lemma R3y_neg_R3y_inv : forall θ : R, R3y (- θ) * R3y θ == mat1.
+  Proof. intros; rewrite R3y_neg_eq_trans, <- R3y_inv_eq_trans, mmul_minv_l; easy. Qed.
+  
+  Lemma R3z_neg_R3z_inv : forall θ : R, R3z (- θ) * R3z θ == mat1.
+  Proof. intros; rewrite R3z_neg_eq_trans, <- R3z_inv_eq_trans, mmul_minv_l; easy. Qed.
 
-  (* Lemma R3y_spec3 : forall (v : cvec 3) (θ : R), v == (R3y θ)\T * (rotAxisAngle θ cv3j v). *)
-  (* Proof. intros. rewrite <- R3y_neg_eq_trans. apply R3y_spec2. Qed. *)
+  (** R(θ) * R(-θ) = I *)
+  Lemma R3x_R3x_neg_inv : forall θ : R, R3x θ * R3x (- θ) == mat1.
+  Proof. intros; rewrite R3x_neg_eq_trans, <- R3x_inv_eq_trans, mmul_minv_r; easy. Qed.
+  
+  Lemma R3y_R3y_neg_inv : forall θ : R, R3y θ * R3y (- θ) == mat1.
+  Proof. intros; rewrite R3y_neg_eq_trans, <- R3y_inv_eq_trans, mmul_minv_r; easy. Qed.
+  
+  Lemma R3z_R3z_neg_inv : forall θ : R, R3z θ * R3z (- θ) == mat1.
+  Proof. intros; rewrite R3z_neg_eq_trans, <- R3z_inv_eq_trans, mmul_minv_r; easy. Qed.
 
-  (* Lemma R3z_spec3 : forall (v : cvec 3) (θ : R), v == (R3z θ)\T * (rotAxisAngle θ cv3k v). *)
-  (* Proof. intros. rewrite <- R3z_neg_eq_trans. apply R3z_spec2. Qed. *)
+  (** v' = Rx(θ) * v *)
+  Lemma R3x_spec1 : forall (v : cvec 3) (θ : R), rotAxisAngle θ cv3i v == (R3x θ) * v.
+  Proof. lma. Qed.
+  
+  Lemma R3y_spec1 : forall (v : cvec 3) (θ : R), rotAxisAngle θ cv3j v == (R3y θ) * v.
+  Proof. lma. Qed.
+  
+  Lemma R3z_spec1 : forall (v : cvec 3) (θ : R), rotAxisAngle θ cv3k v == (R3z θ) * v.
+  Proof. lma. Qed.
 
-  (* (** 预乘和后乘旋转矩阵的关系，即: v ~ v' -> R(θ) * v ~ v' * R(θ) *) *)
-  (* Lemma R3x_spec4 : forall (v1 : cvec 3) (θ : R), *)
-  (*     let v1' : rvec 3 := v1\T in  (* v1和v1'是列向量和行向量形式的同一个向量 *) *)
-  (*     let v2 : cvec 3 := (R3x θ) * v1 in       (* 用列向量形式计算 *) *)
-  (*     let v2' : rvec 3 := v1' * ((R3x θ)\T) in (* 用行向量形式计算 *) *)
-  (*     let v2'' : cvec 3 := v2'\T in           (* v2' 的列向量形式 *) *)
-  (*     v2 == v2''. (* 结果应该相同 *) *)
-  (* Proof. lma. Qed. *)
+  (** v = R(-θ) * v' *)
+  Lemma R3x_spec2 : forall (v : cvec 3) (θ : R), v == (R3x (-θ)) * (rotAxisAngle θ cv3i v).
+  Proof. intros. rewrite R3x_spec1,<- mmul_assoc,R3x_neg_R3x_inv,mmul_1_l; easy. Qed.
+  
+  Lemma R3y_spec2 : forall (v : cvec 3) (θ : R), v == (R3y (-θ)) * (rotAxisAngle θ cv3j v).
+  Proof. intros. rewrite R3y_spec1,<- mmul_assoc,R3y_neg_R3y_inv,mmul_1_l; easy. Qed.
+  
+  Lemma R3z_spec2 : forall (v : cvec 3) (θ : R), v == (R3z (-θ)) * (rotAxisAngle θ cv3k v).
+  Proof. intros. rewrite R3z_spec1,<- mmul_assoc,R3z_neg_R3z_inv,mmul_1_l; easy. Qed.
+
+  (** v = R(θ)\T * v' *)
+  Lemma R3x_spec3 : forall (v : cvec 3) (θ : R), v == (R3x θ)\T * (rotAxisAngle θ cv3i v).
+  Proof. intros. rewrite <- R3x_neg_eq_trans. apply R3x_spec2. Qed.
+
+  Lemma R3y_spec3 : forall (v : cvec 3) (θ : R), v == (R3y θ)\T * (rotAxisAngle θ cv3j v).
+  Proof. intros. rewrite <- R3y_neg_eq_trans. apply R3y_spec2. Qed.
+
+  Lemma R3z_spec3 : forall (v : cvec 3) (θ : R), v == (R3z θ)\T * (rotAxisAngle θ cv3k v).
+  Proof. intros. rewrite <- R3z_neg_eq_trans. apply R3z_spec2. Qed.
+
+  (** 预乘和后乘旋转矩阵的关系，即: v ~ v' -> R(θ) * v ~ v' * R(θ) *)
+  Lemma R3x_spec4 : forall (v1 : cvec 3) (θ : R),
+      let v1' : rvec 3 := v1\T in  (* v1和v1'是列向量和行向量形式的同一个向量 *)
+      let v2 : cvec 3 := (R3x θ) * v1 in       (* 用列向量形式计算 *)
+      let v2' : rvec 3 := v1' * ((R3x θ)\T) in (* 用行向量形式计算 *)
+      let v2'' : cvec 3 := v2'\T in           (* v2' 的列向量形式 *)
+      v2 == v2''. (* 结果应该相同 *)
+  Proof. lma. Qed.
 
 End RotationMatrix3D.
 

@@ -314,11 +314,35 @@ Section RotationMatrix2D.
         按照行向量：v' = v * R(θ1) * R(θ2)，其中 R 是 R2\T
    *)
 
-  (** Rotation matrix in 3D *)
+  (** Rotation matrix in 2D *)
   Definition R2 (θ : R) : smat 2 :=
     let c := cos θ in
     let s := sin θ in
     l2m [[c;-s];[s;c]]%R.
+
+  (** R2 is orthogonal matrix *)
+  Lemma R2_orthogonal : forall (θ : R), morthogonal (R2 θ).
+  Proof. lma; autorewrite with R; easy. Qed.
+
+  (** The determinant of R2 is 1 *)
+  Lemma R2_det1 : forall (θ : R), mdet (R2 θ) = 1.
+  Proof. intros. cbv. autorewrite with R; easy. Qed.
+
+  (** R2 is a member of SO2 *)
+  Definition R2_SO2 (θ : R) : SO2.
+    refine (Build_SOn _ (R2 θ) _). split.
+    apply R2_orthogonal. apply R2_det1.
+  Defined.
+
+  (** R(θ)⁻¹ = R(θ)\T *)
+  
+  Lemma R2_inv_eq_trans : forall θ : R, (R2 θ)⁻¹ == (R2 θ)\T.
+  Proof.
+    (* method 1 : prove by computing (slow) *)
+    (* lma; autounfold with A; autorewrite with R; try easy. *)
+    (* method 2 : prove by reasoning *)
+    intros; apply (SOn_imply_inv_eq_trans (R2_SO2 θ)).
+  Qed.
 
   (** R(-θ) = R(θ)\T *)
   Lemma R2_neg_eq_trans : forall θ : R, R2 (-θ) == (R2 θ)\T.
@@ -326,11 +350,17 @@ Section RotationMatrix2D.
 
   (** R(-θ) * R(θ) = I *)
   Lemma R2_neg_R2_inv : forall θ : R, R2 (- θ) * R2 θ == mat1.
-  Proof. lma; autounfold with A; autorewrite with R; auto; ring. Qed.
+  Proof.
+    (* lma; autounfold with A; autorewrite with R; auto; ring. *)
+    intros; rewrite R2_neg_eq_trans, <- R2_inv_eq_trans, mmul_minv_l; easy.
+  Qed.
 
   (** R(θ) * R(-θ) = I *)
   Lemma R2_R2_neg_inv : forall θ : R, R2 θ * R2 (- θ) == mat1.
-  Proof. lma; autounfold with A; autorewrite with R; auto; ring. Qed.
+  Proof.
+    (* lma; autounfold with A; autorewrite with R; auto; ring. *)
+    intros; rewrite R2_neg_eq_trans, <- R2_inv_eq_trans, mmul_minv_r; easy.
+  Qed.
 
   (** v' = R(θ) * v *)
   Lemma R2_spec1 : forall (v : cvec 2) (θ : R),

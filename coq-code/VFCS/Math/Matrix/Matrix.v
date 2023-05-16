@@ -1931,16 +1931,6 @@ Section OrthogonalMatrix.
     apply morthogonal_iff_mul_trans_r; auto.
   Qed.
 
-  (* (** orthogonal m -> |m| = ± 1 *) *)
-  (* Lemma morthogonal_mdet : forall {n} (m : smat n) (HDec : Dec Aeq), *)
-  (*     morthogonal m -> (mdet m == 1 \/ mdet m == - (1))%A. *)
-  (* Proof. *)
-  (*   intros. red in H. *)
-  (*   assert (mdet (m\T * m) == mdet (mat1 n))%A. { rewrite H. easy. } *)
-  (*   rewrite mdet_mmul in H0. rewrite mdet_mtrans, mdet_1 in H0. *)
-  (*   apply field_sqr_eq1_imply_eq1_or_eq_n1 in H0; auto. *)
-  (* Qed. *)
-
   
   (* (* ==================================== *) *)
   (* (** *** O(n): General Orthogonal Group, General Linear Group *) *)
@@ -2058,7 +2048,6 @@ Section OrthogonalMatrix.
   (*   Qed. *)
     
   (* End GOn. *)
-
   
   (* ==================================== *)
   (** *** O(n): General Orthogonal Group, General Linear Group *)
@@ -2152,9 +2141,21 @@ Section OrthogonalMatrix.
       - apply GOn_mul_proper.
       - apply GOn_inv_proper.
     Qed.
-    
+  
+    (** *** Extract the properties of GOn to its carrier *)
+
+    (** m⁻¹ = m\T *)
+    Lemma GOn_imply_inv_eq_trans : forall {n} (s : GOn n),
+        let m := GOn_mat n s in
+        m⁻¹ == m\T.
+    Proof.
+      intros. unfold m. destruct s as [m' H]. simpl in *.
+      rewrite morthogonal_imply_inv_eq_trans; auto. easy.
+    Qed.
+
   End GOn.
 
+  
   (* ==================================== *)
   (** ** SO(n): Special Orthogonal Group, Rotation Group *)
   (* https://en.wikipedia.org/wiki/Orthogonal_group#Special_orthogonal_group *)
@@ -2163,21 +2164,20 @@ Section OrthogonalMatrix.
     (** The set of SOn *)
     Record SOn (n: nat) := {
         SOn_mat :> smat n;
-        SOn_prop1 : morthogonal SOn_mat;
-        SOn_prop2 : (mdet SOn_mat == 1)%A
+        SOn_props : (morthogonal SOn_mat) /\ (mdet SOn_mat == 1)%A
       }.
 
     Definition SOn_eq {n} (s1 s2 : SOn n) : Prop := SOn_mat _ s1 == SOn_mat _ s2.
 
     Definition SOn_mul {n} (s1 s2 : SOn n) : SOn n.
-      refine (Build_SOn n (s1 * s2) _ _);
-        destruct s1 as [s1 H1 H1'], s2 as [s2 H2 H2'].
+      refine (Build_SOn n (s1 * s2) _).
+      destruct s1 as [s1 [H1 H1']], s2 as [s2 [H2 H2']]. simpl. split.
       - apply morthogonal_mul; auto.
-      - rewrite mdet_mmul. rewrite H1', H2'. cbv. ring.
+      - rewrite mdet_mmul. rewrite H1', H2'. ring.
     Defined.
 
     Definition SOn_1 {n} : SOn n.
-      refine (Build_SOn n (mat1 n) _ _).
+      refine (Build_SOn n (mat1 n) _). split.
       apply morthogonal_1. apply mdet_1.
     Defined.
 
@@ -2216,7 +2216,8 @@ Section OrthogonalMatrix.
     Qed.
 
     Definition SOn_inv {n} (s : SOn n) : SOn n.
-      refine (Build_SOn n (s\T) _ _); destruct s as [s H1 H2]; simpl.
+      refine (Build_SOn n (s\T) _).
+      destruct s as [s [H1 H2]]; simpl. split.
       apply morthogonal_mtrans; auto. rewrite mdet_mtrans. auto.
     Defined.
 
@@ -2244,6 +2245,17 @@ Section OrthogonalMatrix.
       - apply SOn_mul_inv_r.
       - apply SOn_mul_proper.
       - apply SOn_inv_proper.
+    Qed.
+
+    (** *** Extract the properties of SOn to its carrier *)
+
+    (** m⁻¹ = m\T *)
+    Lemma SOn_imply_inv_eq_trans : forall {n} (s : SOn n),
+        let m := SOn_mat n s in
+        m⁻¹ == m\T.
+    Proof.
+      intros. unfold m. destruct s as [m' [H1 H2]]. simpl in *.
+      rewrite morthogonal_imply_inv_eq_trans; auto. easy.
     Qed.
 
   End SOn.

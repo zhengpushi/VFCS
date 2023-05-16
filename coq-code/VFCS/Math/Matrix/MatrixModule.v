@@ -1073,12 +1073,20 @@ Module FieldMatrixTheory (E : FieldElementType).
   Theorem Group_GOn : forall n, Group (@GOn_mul n) GOn_1 GOn_inv GOn_eq.
   Proof. intros. apply Group_GOn. Qed.
 
+  (** m⁻¹ = m\T *)
+  Lemma GOn_imply_inv_eq_trans : forall {n} (s : GOn n),
+      let m := GOn_mat n s in
+      m⁻¹ == m\T.
+  Proof. intros. apply GOn_imply_inv_eq_trans. Qed.
   
   (* ==================================== *)
   (** ** SO(n): Special Orthogonal Group, Rotation Group *)
 
   (** The set of SOn *)
   Definition SOn (n: nat) := (@SOn _ Aadd Azero Aopp Amul Aone Aeq n).
+
+  Definition mk_SOn {n : nat} (m : smat n) (H : morthogonal m /\ (mdet m == Aone)%A)
+    : SOn n := Build_SOn n m H.
 
   Definition SOn_eq {n} (s1 s2 : SOn n) : Prop := SOn_mat _ s1 == SOn_mat _ s2.
 
@@ -1127,6 +1135,12 @@ Module FieldMatrixTheory (E : FieldElementType).
   (** <SOn, +, 1, /s> is a group *)
   Theorem Group_SOn : forall n, Group (@SOn_mul n) SOn_1 SOn_inv SOn_eq.
   Proof. intros. apply Group_SOn. Qed.
+
+  (** m⁻¹ = m\T *)
+  Lemma SOn_imply_inv_eq_trans : forall {n} (s : SOn n),
+      let m := SOn_mat n s in
+      m⁻¹ == m\T.
+  Proof. intros. apply SOn_imply_inv_eq_trans. Qed.
 
   
   (* ==================================== *)

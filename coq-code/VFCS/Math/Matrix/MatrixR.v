@@ -47,9 +47,12 @@ End morthogonal.
 
 
 (* ==================================== *)
-(** ** SO(3): special orthogonal group on 3D *)
+(** ** SO(n): special orthogonal group *)
 
-Section SO3.
+Section SOn.
+
+  (** SO2 *)
+  Definition SO2 := SOn 2.
 
   (** SO3 *)
   Definition SO3 := SOn 3.
@@ -59,7 +62,7 @@ Section SO3.
   Goal m\T == m⁻¹.
   Proof. destruct m. rewrite morthogonal_imply_inv_eq_trans; try easy. Qed.
 
-End SO3.
+End SOn.
 
 
 (* ==================================== *)
