@@ -1417,7 +1417,7 @@ Section mdet.
   End mdet_concrete.
 
 End mdet.
-
+  
 
 (* ======================================================================= *)
 (** ** Inverse matrix with the help of determinant and adjoint matrix. *)
@@ -1931,123 +1931,6 @@ Section OrthogonalMatrix.
     apply morthogonal_iff_mul_trans_r; auto.
   Qed.
 
-  
-  (* (* ==================================== *) *)
-  (* (** *** O(n): General Orthogonal Group, General Linear Group *) *)
-  (* (* https://en.wikipedia.org/wiki/Orthogonal_group#Special_orthogonal_group *) *)
-  (* Section GOn. *)
-    
-  (*   (** The set of GOn *) *)
-  (*   Record GOn {n: nat} (m : smat n) := { *)
-  (*       _ : morthogonal m *)
-  (*     }. *)
-
-  (*   (** Equality of elements in GOn *) *)
-  (*   Definition GOn_eq {n} {m1 m2 : smat n} (s1 : GOn m1) (s2 : GOn m2) : Prop := *)
-  (*     m1 == m2. *)
-
-  (*   (* (** GOn_eq is equivalence relation *) *) *)
-  (*   (* Lemma GOn_eq_equiv : forall n (m1 m2 : smat n), Equivalence (@GOn_eq n m1 m2). *) *)
-  (*   (* Proof. *) *)
-  (*   (*   intros. unfold GOn_eq. constructor; hnf; intros; try easy. *) *)
-  (*   (* Qed. *) *)
-
-  (*   (* Variable n : nat. *) *)
-  (*   (* Variable m1 m2 : smat n. *) *)
-  (*   (* Variable H1 : morthogonal m1. *) *)
-  (*   (* Variable H2 : morthogonal m2. *) *)
-  (*   (* Definition s1 : GOn m1 := Build_GOn n m1 H1. *) *)
-  (*   (* Definition s2 : GOn m2 := Build_GOn n m2 H2. *) *)
-
-  (*   (* Existing Instance GOn_eq_equiv. *) *)
-  (*   (* Goal GOn_eq s1 s1.  reflexivity. Qed. *) *)
-  (*   (* Goal GOn_eq s1 s2 -> GOn_eq s2 s2. *) *)
-  (*   (*   intros. Search Equivalence. *) *)
-  (*   (*   Print Equivalence. *) *)
-  (*   (*   Print Symmetric. *) *)
-  (*   (*   Search Symmetric. *) *)
-  (*   (*   apply symmetry. *) *)
-  (*   (*   apply Symmetric. *) *)
-  (*   (*   apply  *) *)
-
-  (*   (*   symmetry. apply symmetry. unfold  *) *)
-  (*   (*                                     destruct H. inversion H. inv H. *) *)
-  (*   (*                                     rewrite <- H. reflexivity. Qed. *) *)
-  (*   (* Goal GOn_eq s1 s1.  reflexivity. Qed. *) *)
-
-  (*   (** Multiplication of elements in GOn *) *)
-  (*   Definition GOn_mul {n} {m1 m2 : smat n) (s1 s2 : GOn n) : GOn n. *)
-  (*     refine (Build_GOn n (s1 * s2) _). *)
-  (*     destruct s1 as [s1 H1], s2 as [s2 H2]. simpl. *)
-  (*     apply morthogonal_mul; auto. *)
-  (*   Defined. *)
-
-  (*   (** Identity element in GOn *) *)
-  (*   Definition GOn_1 {n} : GOn n. *)
-  (*     refine (Build_GOn n (mat1 n) _). *)
-  (*     apply morthogonal_1. *)
-  (*   Defined. *)
-
-  (*   (** Inverse operation of multiplication in GOn *) *)
-  (*   Definition GOn_inv {n} (s : GOn n) : GOn n. *)
-  (*     refine (Build_GOn n (s\T) _). destruct s as [s H1]. simpl. *)
-  (*     apply morthogonal_mtrans; auto. *)
-  (*   Defined. *)
-
-  (*   (** GOn_mul is a proper morphism respect to GOn_eq *) *)
-  (*   Lemma GOn_mul_proper : forall n, Proper (GOn_eq ==> GOn_eq ==> GOn_eq) (@GOn_mul n). *)
-  (*   Proof. unfold GOn_eq in *. simp_proper. intros. simpl. rewrite H,H0. easy. Qed. *)
-
-  (*   (** GOn_inv is a proper morphism respect to GOn_eq *) *)
-  (*   Lemma GOn_inv_proper : forall n, Proper (GOn_eq ==> GOn_eq) (@GOn_inv n). *)
-  (*   Proof. unfold GOn_eq in *. simp_proper. intros. simpl. rewrite H. easy. Qed. *)
-
-  (*   (** GOn_mul is associative *) *)
-  (*   Lemma GOn_mul_assoc : forall n, Associative GOn_mul (@GOn_eq n). *)
-  (*   Proof. unfold GOn_eq. intros. constructor. intros; simpl. apply mmul_assoc. Qed. *)
-
-  (*   (** GOn_1 is left-identity-element of GOn_mul operation *) *)
-  (*   Lemma GOn_mul_id_l : forall n, IdentityLeft GOn_mul GOn_1 (@GOn_eq n). *)
-  (*   Proof. unfold GOn_eq. intros. constructor. intros; simpl. apply mmul_1_l. Qed. *)
-    
-  (*   (** GOn_1 is right-identity-element of GOn_mul operation *) *)
-  (*   Lemma GOn_mul_id_r : forall n, IdentityRight GOn_mul GOn_1 (@GOn_eq n). *)
-  (*   Proof. unfold GOn_eq. intros. constructor. intros; simpl. apply mmul_1_r. Qed. *)
-
-  (*   (** GOn_inv is left-inversion of <GOn_mul,GOn_1> *) *)
-  (*   Lemma GOn_mul_inv_l : forall n, InverseLeft GOn_mul GOn_1 GOn_inv (@GOn_eq n). *)
-  (*   Proof. unfold GOn_eq. intros. constructor. intros; simpl. apply a. Qed. *)
-
-  (*   (** GOn_inv is right-inversion of <GOn_mul,GOn_1> *) *)
-  (*   Lemma GOn_mul_inv_r : forall n, InverseRight GOn_mul GOn_1 GOn_inv (@GOn_eq n). *)
-  (*   Proof. *)
-  (*     unfold GOn_eq. intros. constructor. intros; simpl. *)
-  (*     apply morthogonal_iff_mul_trans_r. apply a. *)
-  (*   Qed. *)
-    
-  (*   (** <GOn, +, 1> is a monoid *) *)
-  (*   Lemma Monoid_GOn : forall n, Monoid (@GOn_mul n) GOn_1 GOn_eq. *)
-  (*   Proof. *)
-  (*     intros. constructor. *)
-  (*     - apply GOn_mul_proper. *)
-  (*     - apply GOn_eq_equiv. *)
-  (*     - apply GOn_mul_assoc. *)
-  (*     - apply GOn_mul_id_l. *)
-  (*     - apply GOn_mul_id_r. *)
-  (*   Qed. *)
-
-  (*   (** <GOn, +, 1, /s> is a group *) *)
-  (*   Theorem Group_GOn : forall n, Group (@GOn_mul n) GOn_1 GOn_inv GOn_eq. *)
-  (*   Proof. *)
-  (*     intros. constructor. *)
-  (*     - apply Monoid_GOn. *)
-  (*     - apply GOn_mul_inv_l. *)
-  (*     - apply GOn_mul_inv_r. *)
-  (*     - apply GOn_mul_proper. *)
-  (*     - apply GOn_inv_proper. *)
-  (*   Qed. *)
-    
-  (* End GOn. *)
   
   (* ==================================== *)
   (** *** O(n): General Orthogonal Group, General Linear Group *)

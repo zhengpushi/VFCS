@@ -27,6 +27,40 @@ Open Scope mat_scope.
 
 
 (* ==================================== *)
+(** ** matrix norm *)
+Section matrix_norm.
+
+  (** Definition *)
+  Section def.
+    Variable r c : nat.
+    Variable mnorm : mat r c -> R.
+
+    Definition mnorm_cond_non_neg := forall A : mat r c,
+        (A != mat0 -> mnorm A > 0) /\ (A == mat0 -> mnorm A = 0).
+    Definition mnorm_cond_homo := forall (A : mat r c) (k : R),
+        mnorm (k c* A) = ((Rabs k) * (mnorm A))%R.
+    Definition mnorm_cond_trig_ineq := forall (A B : mat r c),
+        mnorm (A + B) <= mnorm A + mnorm B.
+
+  End def.
+
+  Definition mnormF {r c} (A : mat r c) : R :=
+    sqrt (seqsum (fun i => seqsum (fun j => (m2f A i j)²) c) r).
+
+  (** mnormF m = √ tr (A\T * A) *)
+  Lemma mnormF_eq_trace : forall {r c} (A : mat r c),
+      mnormF A = sqrt (mtrace (A\T * A)).
+  Proof.
+    intros. unfold mnormF. f_equiv. unfold mtrace, Matrix.mtrace. simpl.
+    rewrite seqsum_seqsum_exchg.
+    apply seqsum_eq. intros.
+    apply seqsum_eq. intros. cbv. auto.
+  Qed.
+  
+End matrix_norm.
+
+
+(* ==================================== *)
 (** ** Orthogonal matrix *)
 Section morthogonal.
 

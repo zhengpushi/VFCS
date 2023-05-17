@@ -91,10 +91,10 @@ Section construction.
   Qed.
 
   (** Construct a quaternion by 4 scalar number *)
-  Definition quat_of_ssss (w x y z : R) : quat := mk_quat w x y z.
+  Definition quat_of_wxyz (w x y z : R) : quat := mk_quat w x y z.
 
-  Lemma quat_of_ssss_ok : forall w x y z,
-      let q := quat_of_ssss w x y z in
+  Lemma quat_of_wxyz_ok : forall w x y z,
+      let q := quat_of_wxyz w x y z in
       q.W = w /\ q.X = x  /\ q.Y = y /\ q.Z = z.
   Proof. intros. split; auto. Qed.
 
@@ -287,27 +287,6 @@ End qunit.
 (** ** Quaternion normalization *)
 
 
-(** ** Rotation quaternion *)
-Section qrotation.
-  
-  (** Rotation quaternion is constructed from a unit vector of axis and an angle. *)
-  Definition qrotation (θ : R) (n : cvec 3) (H : cvunit n) : quat :=
-    quat_of_aa (mk_axisangle θ n).
-
-  (** Any quaternion constructed from axis-angle is unit quaternion *)
-  Lemma qrotation_imply_qunit : forall (θ : R) (n : cvec 3),
-      let q := quat_of_aa (mk_axisangle θ n) in
-      cvunit n -> qunit q.
-  Proof.
-    intros. unfold qunit, qlen. apply sqrt_eq1_imply_eq1_rev.
-    pose proof (cv3unit_eq1 n H).
-    cvec2fun. cbv. ring_simplify in H0. ring_simplify. autorewrite with R.
-    rewrite H0. ring_simplify. autorewrite with R. auto.
-  Qed.
-
-End qrotation.
-
-
 (** ** Quaternion addition 四元数加法 *)
 Section qadd.
   
@@ -360,7 +339,7 @@ Section qmul.
       (p.W * q.W - <p.Im, q.Im>)
       (p.W c* q.Im + q.W c* p.Im + p.Im × q.Im)%M.
 
-  Lemma qmulVEC_eq_qmul (p q : quat) : qmulVEC p q = p * q.
+  Lemma qmulVEC_spec (p q : quat) : qmulVEC p q = p * q.
   Proof. destruct p, q. lqa. Qed.
 
   (** Quaternion multiplication with PLUS form. page96, p+ *)
@@ -387,16 +366,31 @@ Section qmul.
 
   (** Quaternion multiplication with MINUS form. page96, p- *)
   Definition qMINUS (q : quat) : smat 4 :=
-    let m1 : smat 4 := (q.W c* mat1)%M in
-    let m2a : mat 1 4 := mconsc (mk_mat_1_1 0) (-(q.Im\T))%M in
-    let m2b : mat 3 4 := mconsc (q.Im) (-(cv3skew (q.Im)))%M in
-    let m2 : smat 4 := mconsr m2a m2b in
-    (m1 + m2)%M.
+    let (q0,q1,q2,q3) := q in
+    l2m [[q0; - q1; - q2; - q3];
+         [q1; q0; q3; -q2];
+         [q2; -q3; q0; q1];
+         [q3; q2; -q1; q0]]%R.
+
+  Definition qMINUS' (q : quat) : smat 4 :=
+      let m1 : smat 4 := (q.W c* mat1)%M in
+      let m2a : mat 1 4 := mconsc (mk_mat_1_1 0) (-(q.Im\T))%M in
+      let m2b : mat 3 4 := mconsc (q.Im) (-(cv3skew (q.Im)))%M in
+      let m2 : smat 4 := mconsr m2a m2b in
+      (m1 + m2)%M.
+
+  Lemma qMINUS_spec : forall q : quat,
+      let m1 : smat 4 := (q.W c* mat1)%M in
+      let m2a : mat 1 4 := mconsc (mk_mat_1_1 0) (-(q.Im\T))%M in
+      let m2b : mat 3 4 := mconsc (q.Im) (-(cv3skew (q.Im)))%M in
+      let m2 : smat 4 := mconsr m2a m2b in
+      qMINUS q == (m1 + m2)%M.
+  Proof. destruct q. lma. Qed.
 
    (** p * q = q⁻ * p *)
   Definition qmulMINUS (p q : quat) : quat := cv2q ((qMINUS q) * (q2cv p))%M.
 
-  Lemma qmulMINUS_correct (p q : quat) : p * q = qmulMINUS p q.
+  Lemma qmulMINUS_spec (p q : quat) : p * q = qmulMINUS p q.
   Proof. destruct p, q. lqa. Qed.
 
   (** qlen2 (q1 * q2) = (qlen2 q1) * (qlen2 q2) *)
@@ -410,10 +404,11 @@ Section qmul.
     autorewrite with R. rewrite !sqr_qlen. destruct q1,q2; cbv; ring.
   Qed.
 
-  (** qunit p -> qunit q -> || p * q || = 1 *)
-  (* 两个单位四元数相乘后还是一个单位四元数 *)
-  Lemma qlen_qmul_qunit (p q : quat) : qunit p -> qunit q -> || p * q || = 1.
-  Proof. destruct p,q. intros. rewrite qlen_qmul. rewrite H,H0. ring. Qed.
+  (** qunit p -> qunit q -> qunit (p * q) *)
+  Lemma qunit_qmul (p q : quat) : qunit p -> qunit q -> qunit (p * q).
+  Proof.
+    intros. destruct p,q. unfold qunit. rewrite qlen_qmul. rewrite H,H0. ring.
+  Qed.
 
   (** (q * r) * m = q * (r * m) *)
   Lemma qmul_assoc (q r m : quat) : (q * r) * m = q * (r * m).
@@ -422,8 +417,8 @@ Section qmul.
   (** The multiplication is non-commutative. That is: p * q <> q * p. *)
   Lemma qmul_comm_fail : exists (p q : quat), p * q <> q * p.
   Proof.
-    exists (quat_of_ssss 0 1 2 1).
-    exists (quat_of_ssss 0 2 1 2).
+    exists (quat_of_wxyz 0 1 2 1).
+    exists (quat_of_wxyz 0 2 1 2).
     cbv. intros. inversion H. lra.
   Qed.
 
@@ -560,12 +555,6 @@ Section  qinv.
     intros. unfold qinv. apply qunit_eq1 in H. rewrite H.
     autorewrite with R. rewrite qcmul_1_l. auto.
   Qed.
-  
-  (** Any rotation quaternion, inverse equal to conjugate. *)
-  Lemma qrotation_imply_qinv_eq_qconj : forall θ n H,
-      let q := qrotation θ n H in
-      q ⁻¹ = q ∗.
-  Proof. intros. apply qinv_eq_qconj. apply qrotation_imply_qunit. auto. Qed.
 
   (** (p * q)⁻¹ = q⁻¹ * p⁻¹ *)
   Lemma qinv_qmul : forall p q : quat, p <> qzero -> q <> qzero -> (p * q)⁻¹ = q⁻¹ * p⁻¹.
@@ -575,30 +564,43 @@ Section  qinv.
     rewrite qlen2_qmul. field. split; apply qlen2_neq0_iff; auto.
   Qed.
 
+  (** p * q = r -> p = r * q⁻¹ *)
+  Lemma qmul_imply_solve_l : forall p q r : quat, q <> qzero -> p * q = r -> p = r * q⁻¹.
+  Proof.
+    intros. rewrite <- H0. rewrite qmul_assoc, qmul_qinv_r, qmul_1_r; auto.
+  Qed.
+
+  (** p * q = r -> q = p⁻¹ * r *)
+  Lemma qmul_imply_solve_r : forall p q r : quat, p <> qzero -> p * q = r -> q = p⁻¹ * r.
+  Proof.
+    intros. rewrite <- H0. rewrite <- qmul_assoc, qmul_qinv_l, qmul_1_l; auto.
+  Qed.
+  
+
   (** 以下几个公式是我发现的 *)
 
-  (** Let q1 = q⁺, q2 = (q⁻¹)⁻, then q1 * q2 = q2 * q1 *)
+  (** q⁺ * (q⁻¹)⁻ = (q⁻¹)⁻ * q⁺ *)
   Lemma qmul_qPLUS_qMINUS_qinv_comm : forall q,
       let m1 := qPLUS q in
       let m2 := qMINUS (q⁻¹) in
       (m1 * m2 == m2 * m1)%M.
   Proof. destruct q. lma. Qed.
 
-  (** Let q1 = (q⁻¹)⁺, q2 = (q⁺)\T, then q1 * q2 = q2 * q1 *)
+  (** (q⁻¹)⁺ * (q⁺)\T = (q⁺)\T * (q⁻¹)⁺ *)
   Lemma qmul_qPLUS_qinv_trans_qPLUS_comm : forall q,
       let m1 := qPLUS (q⁻¹) in
       let m2 := (qPLUS q)\T in
       (m1 * m2 == m2 * m1)%M.
   Proof. destruct q. lma. Qed.
 
-  (** Let q1 = (q⁻¹)⁻, q2 = (q⁺)\T, then q1 * q2 = q2 * q1 *)
+  (** (q⁻¹)⁻ * (q⁺)\T = (q⁺)\T * (q⁻¹)⁻ *)
   Lemma qmul_qMINUS_qinv_trans_qPLUS_comm : forall q,
       let m1 := qMINUS (q⁻¹) in
       let m2 := (qPLUS q)\T in
       (m1 * m2 == m2 * m1)%M.
   Proof. destruct q. lma. Qed.
 
-  (** Let q1 = (q⁻¹)⁺, q2 = (q⁻¹)⁻, then q1 * q2 = q2 * q1 *)
+  (** (q⁻¹)⁺ * (q⁻¹)⁻ = (q⁻¹)⁻ * (q⁻¹)⁺ *)
   Lemma qmul_qPLUS_qinv_qMINUS_qinv_comm : forall q,
       let m1 := qPLUS (q⁻¹) in
       let m2 := qMINUS (q⁻¹) in
@@ -621,19 +623,35 @@ Section qdiv.
   Lemma qdiv_spec : forall a b : quat, a <> qzero -> (qdiv a b) * a = b.
   Proof. intros. unfold qdiv. rewrite qmul_assoc,qmul_qinv_l,qmul_1_r; auto. Qed.
 
-  (** p * q = r -> p = r * q⁻¹ *)
-  Lemma qmul_imply_solve_l : forall p q r : quat, q <> qzero -> p * q = r -> p = r * q⁻¹.
-  Proof.
-    intros. rewrite <- H0. rewrite qmul_assoc, qmul_qinv_r, qmul_1_r; auto.
-  Qed.
-
-  (** p * q = r -> q = p⁻¹ * r *)
-  Lemma qmul_imply_solve_r : forall p q r : quat, p <> qzero -> p * q = r -> q = p⁻¹ * r.
-  Proof.
-    intros. rewrite <- H0. rewrite <- qmul_assoc, qmul_qinv_l, qmul_1_l; auto.
-  Qed.
-
 End qdiv.
+
+
+
+(** ** Rotation quaternion *)
+Section qrotation.
+  
+  (** Rotation quaternion is constructed from a unit vector of axis and an angle. *)
+  Definition qrotation (θ : R) (n : cvec 3) (H : cvunit n) : quat :=
+    quat_of_aa (mk_axisangle θ n).
+
+  (** Any quaternion constructed from axis-angle is unit quaternion *)
+  Lemma qrotation_imply_qunit : forall (θ : R) (n : cvec 3),
+      let q := quat_of_aa (mk_axisangle θ n) in
+      cvunit n -> qunit q.
+  Proof.
+    intros. unfold qunit, qlen. apply sqrt_eq1_imply_eq1_rev.
+    pose proof (cv3unit_eq1 n H).
+    cvec2fun. cbv. ring_simplify in H0. ring_simplify. autorewrite with R.
+    rewrite H0. ring_simplify. autorewrite with R. auto.
+  Qed.
+  
+  (** Any rotation quaternion, inverse equal to conjugate. *)
+  Lemma qrotation_imply_qinv_eq_qconj : forall θ n H,
+      let q := qrotation θ n H in
+      q ⁻¹ = q ∗.
+  Proof. intros. apply qinv_eq_qconj. apply qrotation_imply_qunit. auto. Qed.
+
+End qrotation.
 
 
 (** ** Rotate 3D vector by quaterion multiplication *)
@@ -644,7 +662,7 @@ Section qrot.
   Definition qrot (q : quat) (v : quat) : quat := q * v * q⁻¹.
 
   (** 使用四元数连接多个旋转: First by q1, then by q2 *)
-  Lemma qrot2 : forall (q1 q2 : quat) (v : quat),
+  Lemma qrot_twice_eq_qmul : forall (q1 q2 : quat) (v : quat),
       q1 <> qzero -> q2 <> qzero -> qrot q2 (qrot q1 v) = qrot (q2 * q1) v.
   Proof.
     intros. unfold qrot. rewrite qinv_qmul; auto. rewrite !qmul_assoc. auto.
@@ -656,36 +674,88 @@ Section qrot.
       读取。对于 Dunn 的这个观点，我们可以进一步实验，看看四元数是否也能通过某种
       “转置”操作实现更换方向。当然，这个实验可能只是理论上的需要，实际并无此需求。*)
 
-  
   (** 证明四元数乘法能够旋转三维矢量 *)
   (** 方法1：计算其生成的结果与轴角表示的结果相同，这是大多数文献所采用的方法。*)
   Section spec1.
-    
     Local Open Scope fun_scope.
     Lemma qrot_spec : forall (θ : R) (n : cvec 3) (H : cvunit n) (v : cvec 3),
         let q := qrotation θ n H in
         (qrot q (quat_of_v3 v)).Im == rotAxisAngle θ n v.
     Proof.
       intros.
-      (* pose proof (cv3unit_eq1 n H). *)
-      (* cvec2fun. *)
-      (* lma. *)
-      (* cbv. *)
-      (* ring_simplify. *)
-      (* remember (cos (θ * / (R1 + R1))) as c. *)
-      (* remember (sin (θ * / (R1 + R1))) as s. *)
-      (* ring_simplify in H0. rewrite H0. field_simplify. *)
-      (* ring_simplify. *)
-      (* rewrite (Rmult_assoc _ _ (n.00)). *)
-      (* rewrite H0. *)
-      (* field_simplify. *)
-    Abort.
+      pose proof (cv3unit_eq1 n H).
+      cvec2fun. lma.
+      (* 以下三部分一模一样，但为了看到过程，所以没有全部使用分号策略“;”。*)
+      - cbv in H0; ring_simplify in H0. unfold cvdot; cbv; ring_simplify.
+        remember (θ * / (R1 + R1))%R as α; replace θ with (α + α)%R by lra.
+        remember (n.11) as n1; remember (n.21) as n2; remember (n.31) as n3.
+        remember (v.11) as v1; remember (v.21) as v2; remember (v.31) as v3.
+        rewrite cos_plus, sin_plus. unfold Rminus; field_simplify.
+        + rewrite H0; field_simplify. rewrite cos2'. field; try lra.
+          rewrite cos2'; intro H1; field_simplify in H1; lra.
+        + intro H1; ring_simplify in H1.
+          rewrite cos2',H0 in H1; field_simplify in H1; lra.
+      - cbv in H0; ring_simplify in H0. unfold cvdot; cbv; ring_simplify.
+        remember (θ * / (R1 + R1))%R as α; replace θ with (α + α)%R by lra.
+        remember (n.11) as n1; remember (n.21) as n2; remember (n.31) as n3.
+        remember (v.11) as v1; remember (v.21) as v2; remember (v.31) as v3.
+        rewrite cos_plus, sin_plus. unfold Rminus; field_simplify.
+        + rewrite H0; field_simplify. rewrite cos2'. field; try lra.
+          rewrite cos2'; intro H1; field_simplify in H1; lra.
+        + intro H1; ring_simplify in H1.
+          rewrite cos2',H0 in H1; field_simplify in H1; lra.
+      - cbv in H0; ring_simplify in H0. unfold cvdot; cbv; ring_simplify.
+        remember (θ * / (R1 + R1))%R as α; replace θ with (α + α)%R by lra.
+        remember (n.11) as n1; remember (n.21) as n2; remember (n.31) as n3.
+        remember (v.11) as v1; remember (v.21) as v2; remember (v.31) as v3.
+        rewrite cos_plus, sin_plus. unfold Rminus; field_simplify.
+        + rewrite H0; field_simplify. rewrite cos2'. field; try lra.
+          rewrite cos2'; intro H1; field_simplify in H1; lra.
+        + intro H1; ring_simplify in H1.
+          rewrite cos2',H0 in H1; field_simplify in H1; lra.
+    Qed.
 
   End spec1.
 
   (** 方法2：QQ书上的推导过程 *)
   Section spec2.
 
+    (* 1. 任给单位四元数q，总能写成
+       q = [cos(θ/2), v * sin(θ/2)]
+       其中，v是带单位向量，表示旋转轴，θ是旋转的角度，q表示绕v旋转θ。
+
+       我们声称，以下公式能够将向量 v1 按照q的作用旋转到 v1'
+       [0,v1'] = q⊗[0,v1]⊗ q^{-1}
+       其中，q是单位四元数。
+       下面，证明这个结论。
+       1. 第一行可以验证是成立的。
+       2. 经过变换，v1' 和 v1 的长度不变。
+       3. 非零实数s乘以q以后，仍然是相同的作用。
+       4. 表示旋转的论证
+       (1). 两个3D单位向量 v0 v1 (v0 ≠ ± v1，即，不共线)，
+            θ/2 为 v0 到 v1 之间的夹角，<v0,v1> = cos(θ/2),
+            同时，确定了一个新的向量 
+            v = (v0 × v1) / |v0×v1| 
+            = (v0 × v1) / (|v0| * |v1| * sin(θ/2))
+            = (v0 × v1) / sin(θ/2)
+            所以，v0 × v1 = v * sin(θ/2)
+            所以，q = [<v0,v1>, v0×v1] = [0,v1] ⊗ [0,v0]*
+        (2) 定义 [0,v2] = q⊗[0,v0]⊗q^{-1}
+            可证明 [<v2,v1>, v2×v1] = [0,v2]⊗[0,v1]* = q
+            于是，现在可知 <v2,v1> = <v1,v0> 且 v2×v1 = v1×v0
+            这表明：
+                v2位于v0和v1所在的平面，且v2与v1夹角是θ/2
+                所以对v0作用单位向量q，可看作是把v0绕v旋转θ后得到v2。
+        (3) 任意向量 vt 可分解为 s0*v0 + s1*v1 + s2*v,
+            由双线性性质，我们可以分别对v0,v1,v2作用。
+        (4) 还能很容易验证 q⊗[0,v] = [0,v]⊗q，进一步可验证
+            q⊗[0,v]⊗q* = [0,v]⊗q⊗q* = [0,v]
+            这表明，v是旋转轴（经过作用后没有变化）。
+        因此，q对每个向量的作用是绕v进行θ角的一次旋转。
+
+        一般化定理5.1，可知每个3D旋转对应一个单位四元数。
+        进一步，若q1,q2两次相继旋转可得到进一步的公式。
+     *)
     (** 四元数p经过单位四元数q作用后得到四元数p'，其标量部分保持不变。公式5.26 *)
     Lemma qrot_keep_s : forall (q v : quat), qunit q -> (qrot q v).W = v.W.
     Proof.
@@ -693,14 +763,11 @@ Section qrot.
       field_simplify in H0. field_simplify; try lra. rewrite H0. field. lra.
     Qed.
 
-    (** 利用四元数进行向量旋转的公式 5.24 *)
-    (* Definition qrot_vec (q : quat) (v : cvec 3) : quat := q * (quat_of_v3 v) * q⁻¹. *)
-
     (** 四元数旋转向量后的四元数第一个分量为0 *)
     (* Lemma vec_rot_by_quat_w_is_0 : forall q v, (qrot_vec q v).W = R0. *)
     (* Proof. intros. destruct q. lqa. Qed. *)
 
-    (** 四元数旋转向量后的四元数取出虚部作为向量 *)
+    (** (5.24) 利用四元数进行向量旋转, 取出虚部作为向量 *)
     Definition qrot_vec (q : quat) (v : cvec 3) : cvec 3 :=
       (q * (quat_of_v3 v) * q⁻¹).Im.
 
@@ -713,47 +780,43 @@ Section qrot.
 
     (** 四元数能表示三维旋转的定理 Th5.1 *)
 
-    (* (1) 通过四元数进行向量旋转会保持向量范数不变 *)
-    (* Lemma vec_rot_by_quat_keep_norm : forall (pv : cvec 3) (q : quat) (H : qunit q), *)
-    (*     let p' := vec_rot_by_quat q pv in *)
-    (*     let pv' := v3_of_quat p' in *)
-    (*     cvlen pv = cvlen pv'. *)
-    (* Proof. *)
-    (*   intros. destruct q as [x y z w]. destruct pv as [pv]. *)
-    (*   cbv. apply Rsqr_inj; ra; rewrite !sqrt_sqrt; ra. field. *)
-    (*   apply qunit_imply_eq_R1 in H. lra. *)
-    (* Qed. *)
+    (** (1) 通过四元数进行向量旋转会保持向量范数不变 *)
     Lemma qrot_keep_len : forall (q v : quat),
         let v3 : cvec 3 := v.Im in
         let v3' : cvec 3 := (qrot q v).Im in
         qunit q -> (|| v3 || = || v3' ||)%CV.
-    Admitted.
+    Proof.
+      intros. pose proof (qunit_eq2 q H).
+      destruct q as [a b c d], v as [e f g h]. simpl in *.
+      lqa. field_simplify; try lra. field_simplify in H0.
+      rewrite Rpow4_Rsqr_Rsqr'. rewrite H0. field. lra.
+    Qed.
 
     (* (2) 任意非零实数s与q相乘，结论仍然成立 *)
-    (* Lemma vec_rot_by_quat_keep_norm_ext : forall (pv : cvec 3) (s : R) (q : quat)  *)
-    (*                                         (H : qunit q) (H1 : s <> 0), *)
-    (*     let q' := s c* q in *)
-    (*     let p' := vec_rot_by_quat q' pv in *)
-    (*     let pv' := v3_of_quat p' in *)
-    (*     cvlen pv = cvlen pv'. *)
-    (* Proof. *)
-    (*   intros. destruct q as [x y z w]. destruct pv as [pv]. *)
-    (*   cbv. apply Rsqr_inj; ra; rewrite !sqrt_sqrt; ra. field. *)
-    (*   apply qunit_imply_eq_R1 in H. nra. *)
-    (* Qed. *)
     Lemma qrot_keep_len_ext :  forall (q v : quat) (s : R),
         let q := s c* q in
         let v3 : cvec 3 := v.Im in
         let v3' : cvec 3 := (qrot q v).Im in
         s <> 0 -> qunit q -> (|| v3 || = || v3' ||)%CV.
+    Proof.
+      intros. pose proof (qunit_eq2 q0 H0).
+      destruct q as [a b c d], v as [e f g h]. simpl in *.
+      lqa. field_simplify; try lra. field_simplify in H1.
+      rewrite !Rpow4_Rsqr_Rsqr'.
+      remember (s ^ 2) as s2.
+      remember (a ^ 2) as a2.
+      replace (f ^ 2 * s2 ^ 2 * a2 ^ 2)%R
+        with (f ^ 2 * (s2 * a2) ^ 2)%R by ring.
+      autorewrite with R.
+      (* 可能引理的描述不正确 *)
     Admitted.
 
     (* (3) 公式5.25中的四元数作用：绕v轴旋转θ角度。
        换言之，公式5.25是如何构造的？它为什么能表示旋转 *)
 
     (* 计算两个向量的夹角 *)
-    Definition rot_angle_by_twovec (v0 v1 : cvec 3) : R := 
-      acos (<v0, v1>).
+    Definition rot_angle_by_twovec (v0 v1 : cvec 3) : R :=
+      cvangle v0 v1.
 
     (* 计算两个向量所决定的转轴（垂直于所在平面的法向量) *)
     Definition rot_axis_by_twovec (v0 v1 : cvec 3) : cvec 3 :=
@@ -980,5 +1043,5 @@ End qslerp.
 (* Extract Constant Rabst => "__". *)
 (* Extract Constant Rrepr => "__". *)
 (* Extraction "quat.ml" mk_mat_3_1. (* Why so many warning? *) *)
-(* Recursive Extraction mk_quat quat_of_ssss quat_of_t4 qmul qconj qinv qlen rot_by_quat. *)
-(* Extraction "quat.ml" mk_quat quat_of_ssss quat_of_t4 qmul qconj qinv. qlen rot_by_quat. *)
+(* Recursive Extraction mk_quat quat_of_wxyz quat_of_t4 qmul qconj qinv qlen rot_by_quat. *)
+(* Extraction "quat.ml" mk_quat quat_of_wxyz quat_of_t4 qmul qconj qinv. qlen rot_by_quat. *)

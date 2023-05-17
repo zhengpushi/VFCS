@@ -347,6 +347,8 @@ Section basic_elementary_fun.
   Fact tan_PI2_add : forall x, tan (PI/2 + x) = - cot x. Admitted.
   Fact tan_PI_sub : forall x, tan (PI - x) = - tan x. Admitted.
   Fact tan_PI_add : forall x, tan (PI + x) = tan x. Admitted.
+  Fact tan_add_PI : forall x, tan (x + PI) = tan x. Admitted.
+  Fact tan_sub_PI : forall x, tan (x - PI) = tan x. Admitted.
   Fact tan_3PI2_sub : forall x, tan (3 * PI / 2 - x) = cot x. Admitted.
   Fact tan_3PI2_add : forall x, tan (3 * PI / 2 + x) = - cot x. Admitted.
   Fact tan_2PI_add : forall x, tan (2 * PI + x) = tan x. Admitted.

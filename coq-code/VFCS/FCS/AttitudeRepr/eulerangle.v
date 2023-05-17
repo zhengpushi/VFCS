@@ -14,6 +14,8 @@
   4. https://zhuanlan.zhihu.com/p/98320567
   5. Carlos M. Roithmayr and Deway H. Hodges, Dynamics: Theory and Application of 
      Kane's Method. page22, page484.
+  6. James Diebel, Representing Attitude: Euler Angles, Unit Quaternions, and 
+     Rotation Vectors.
 
   remark    :
   一、欧拉角
@@ -59,7 +61,7 @@
      例如 R = X(α)Y(β)Z(γ) 是一个旋转矩阵，可表示关于 z,y,x轴的外部旋转的复合，
      或是关于 x,y',z''轴的内部旋转的复合。
   三、线性化处理
-  1. 小角度变化经常被用来近似描述系统的动态特性，此时系统的相应可通过线性模型来预测和控制。
+  1. 小角度变化经常被用来近似描述系统的动态特性，此时系统的响应可通过线性模型来预测和控制。
   2. 角度变化很小(通常认为10度以内)时，可线性化处理，
      sin(α)->α, cos(α)->1, 高阶项sin(α)*sin(β)->0
 *)
@@ -70,14 +72,14 @@ Require Import VectorR3.
 
 Open Scope cvec_scope.
 
-(* 手性：左手定、和右手定则 *)
-Inductive HandRule := HRLeft | HRRight.
+(* (* 手性：左手定、和右手定则 *) *)
+(* Inductive HandRule := HRLeft | HRRight. *)
 
-(* 变换类型：主动变换、被动变换 *)
-Inductive Transformation := TActive | TPassive.
+(* (* 变换类型：主动变换、被动变换 *) *)
+(* Inductive Transformation := TActive | TPassive. *)
 
-(* 旋转轴类型：绕机体轴的内旋、绕固定轴的外旋 *)
-Inductive RotateMode := RMIntrinsic | RMExtrinsic.
+(* (* 旋转轴类型：绕机体轴的内旋、绕固定轴的外旋 *) *)
+(* Inductive RotateMode := RMIntrinsic | RMExtrinsic. *)
                               
 
 (* Lemma Rabs_1 : Rabs 1 = 1. *)
@@ -104,9 +106,24 @@ Inductive RotateMode := RMIntrinsic | RMExtrinsic.
 
 
 Section BasicRotationMatrics.
+
+  (** 坐标变换的第一种解释：向量不动，坐标系变化。
+      Ref: {Dibel - Representing}
+      We define the rotation matrix that encodes the attitude of a rigid body to be 
+      the matrix that when pre-multiplied by a vector expressed in the body-fixed 
+      coordinates yields the same vector expressed in the word coordinates.
+      That is, if v\in R^3 is a vector in the body-fixed coordinates and v'\in R^3 is 
+      the same vector expressed in the word coordinates, then the following relations 
+      hold:
+            v' = R v
+            v = R\T v'
+      These expression apply to {vectors}, relative quantities lacking a position in 
+      space. To transform a {point} from one coordinate system to other we must 
+      subtract the offset to the origin of the target coordinate system before 
+      applying the rotation matrix. *)
   
-  (** Orthogormal rotation matrices for rotation of θ aobout 
-     the x-,y- and z- axes.
+  (** 坐标变换的第二种解释：同一个坐标系，向量变化
+      Orthogormal rotation matrices for rotation of θ aobout the x-,y- and z- axes.
 
      Notes:
      1. Give a column-vector v1 respect to this coordinate, when actively rotate it 
@@ -115,7 +132,6 @@ Section BasicRotationMatrics.
              v1' = Rx(θ) v1
      2. If give a row-vector v2, ..., v2' ...
              v2' = v2 (Rx(θ))\T
-
    *)
   Definition Rx (θ : R) : mat 3 3 :=
     l2m
@@ -455,29 +471,295 @@ Module R2Euler.
   (** 1. Body-three, 123 *)
   Module B3_123.
 
-    (* 这是最弱的算法，只能求解小机动的值。更好的算法比较复杂，需要更多验证 *)
-    Section alg1.
-      Variable θ1 θ2 θ3 : R.
-      Hypotheses θ1_range : - PI / 2 < θ1 < PI / 2.
-      Hypotheses θ2_range : - PI / 2 < θ2 < PI / 2.
-      Hypotheses θ3_range : - PI / 2 < θ3 < PI / 2.
+    (** 奇异性问题的存在性 *)
+    Section singularity.
 
-      Variable C : mat 3 3.
-      Definition θ1' := atan (- C.23 / C.33).
-      Definition θ2' := asin (C.13).
-      Definition θ3' := atan (- C.12 / C.11).
+      (** Claim: If θ = kπ+π/2, then we can not uniquely determine ϕ and ψ. *)
 
-      Lemma θ1_ok : C == B3_123 θ1 θ2 θ3 -> θ1' = θ1.
-      Proof. intros; cbv; rewrite !H; auto; cbv; autorewrite with R; ra. Qed.
+      (* Let's prove some simpler goals first. *)
 
-      Lemma θ2_ok : C == B3_123 θ1 θ2 θ3 -> θ2' = θ2.
-      Proof. intros; cbv; rewrite !H; auto; cbv; autorewrite with R; ra. Qed.
+      (** If θ = -π/2, then the rotation matrix has following form. *)
+      Lemma B3_123_θ_eq_pi2_neg : forall (ϕ θ ψ : R),
+          θ = -PI/2 ->
+          B3_123 ϕ θ ψ ==
+            l2m [[0; 0; -1];
+                 [sin (ψ - ϕ); cos (ψ - ϕ); 0];
+                 [cos (ψ - ϕ); - sin (ψ - ϕ); 0]].
+      Proof.
+        intros; rewrite H.
+        lma; autounfold with A; autorewrite with R; auto; try field.
+      Qed.
+      
+      (** If θ = π/2, then the rotation matrix has following form. *)
+      Lemma B3_123_θ_eq_pi2 : forall (ϕ θ ψ : R),
+          θ = PI/2 ->
+          B3_123 ϕ θ ψ ==
+            l2m [[0; 0; 1];
+                 [sin (ϕ + ψ); cos (ϕ + ψ); 0];
+                 [- cos (ϕ + ψ); sin (ϕ + ψ); 0]].
+      Proof.
+        intros; rewrite H.
+        lma; autounfold with A; autorewrite with R; auto; try field.
+      Qed.
 
-      Lemma θ3_ok : C == B3_123 θ1 θ2 θ3 -> θ3' = θ3.
-      Proof. intros; cbv; rewrite !H; auto; cbv; autorewrite with R; ra. Qed.
+      (** If θ = -π/2, then there are infinite ϕ can generate a same matrix. *)
+      Theorem B3_123_singularity_ϕ_when_θ_eq_pi2_neg : forall (ϕ θ ψ : R),
+        θ = -PI/2 -> forall ϕ', (exists ψ', B3_123 ϕ' θ ψ' == B3_123 ϕ θ ψ).
+      Proof.
+        intros. eexists. rewrite !B3_123_θ_eq_pi2_neg; auto.
+        lma. instantiate (1:=ψ - ϕ + ϕ'). all: f_equiv; try field. f_equiv. field.
+      Qed.
+
+      (** If θ = -π/2, then there are infinite ψ can generate a same matrix. *)
+      Theorem B3_123_singularity_ψ_when_θ_eq_pi2_neg : forall (ϕ θ ψ : R),
+        θ = -PI/2 -> forall ψ', (exists ϕ', B3_123 ϕ' θ ψ' == B3_123 ϕ θ ψ).
+      Proof.
+        intros. eexists. rewrite !B3_123_θ_eq_pi2_neg; auto.
+        lma. instantiate (1:=-ψ + ϕ + ψ'). all: f_equiv; try field. f_equiv. field.
+      Qed.
+
+      (** If θ = π/2, then there are infinite ϕ can generate a same matrix. *)
+      Theorem B3_123_singularity_ϕ_when_θ_eq_pi2 : forall (ϕ θ ψ : R),
+        θ = PI/2 -> forall ϕ', (exists ψ', B3_123 ϕ' θ ψ' == B3_123 ϕ θ ψ).
+      Proof.
+        intros. eexists. rewrite !B3_123_θ_eq_pi2; auto.
+        lma. instantiate (1:=ψ + ϕ - ϕ'). all: f_equiv; try field. f_equiv. field.
+      Qed.
+
+      (** If θ = π/2, then there are infinite ψ can generate a same matrix. *)
+      Theorem B3_123_singularity_ψ_when_θ_eq_pi2 : forall (ϕ θ ψ : R),
+        θ = PI/2 -> forall ψ', (exists ϕ', B3_123 ϕ' θ ψ' == B3_123 ϕ θ ψ).
+      Proof.
+        intros. eexists. rewrite !B3_123_θ_eq_pi2; auto.
+        lma. instantiate (1:=ψ + ϕ - ψ'). all: f_equiv; try field. f_equiv. field.
+      Qed.
+      
+    End singularity.
+
+    (* 算法1：避开奇异点，小机动范围，即 roll,pitch,yaw ∈ (-π/2,π/2) *)
+    Module alg1.
+      Section sec.
+        (* Let's have a rotation matrix *)
+        Variable C : smat 3.
+        
+        (* calculate the euler-angles *)
+        Definition ϕ' := atan (- C.23 / C.33).
+        Definition θ' := asin (C.13).
+        Definition ψ' := atan (- C.12 / C.11).
+        Definition euler_angles : cvec 3 := l2cv [ϕ'; θ'; ψ'].
+
+        Lemma ϕ_spec : forall (ϕ θ ψ : R),
+            - PI / 2 < ϕ < PI / 2 ->
+            - PI / 2 < θ < PI / 2 ->
+            - PI / 2 < ψ < PI / 2 ->
+            C == B3_123 ϕ θ ψ -> ϕ' = ϕ.
+        Proof. intros. cbv. rewrite !H2; auto. cbv. autorewrite with R; ra. Qed.
+
+        Lemma θ_spec : forall (ϕ θ ψ : R),
+            - PI / 2 < ϕ < PI / 2 ->
+            - PI / 2 < θ < PI / 2 ->
+            - PI / 2 < ψ < PI / 2 ->
+            C == B3_123 ϕ θ ψ -> θ' = θ.
+        Proof. intros. cbv. rewrite !H2; auto. cbv. autorewrite with R; ra. Qed.
+
+        Lemma ψ_spec : forall (ϕ θ ψ : R),
+            - PI / 2 < ϕ < PI / 2 ->
+            - PI / 2 < θ < PI / 2 ->
+            - PI / 2 < ψ < PI / 2 ->
+            C == B3_123 ϕ θ ψ -> ψ' = ψ.
+        Proof. intros. cbv. rewrite !H2; auto. cbv. autorewrite with R; ra. Qed.
+      End sec.
       
     End alg1.
 
+    (* 算法2：避开奇异点，大机动范围，即 pitch ∈ (-π/2,π/2), roll,yaw ∈ (-π,π) *)
+    Module alg2.
+      Section sec.
+        (* Let's have a rotation matrix *)
+        Variable C : smat 3.
+        
+        (* calculate the euler-angles *)
+        Definition ϕ' := atan2 (- C.23) (C.33).
+        Definition θ' := asin (C.13).
+        Definition ψ' := atan2 (- C.12) (C.11).
+        Definition euler_angles : cvec 3 := l2cv [ϕ'; θ'; ψ'].
+
+        (** An equation about atan2 will be used in the later proof *)
+        Lemma atan2_sin_cos_eq1 : forall a k : R,
+            - PI < a < PI -> k > 0 ->
+            atan2 (sin a * k) (cos a * k) = a.
+        Proof.
+          intros.
+          apply Rsplit_neg_pi_to_pi in H.
+          repeat match goal with | H: _ \/ _ |- _ => destruct H as [? | H] end; 
+            subst; autorewrite with R.
+          - rewrite atan2_spec5; ra.
+          - rewrite atan2_spec1; ra.
+            replace (0 / k) with 0; ra. apply atan_0.
+          - rewrite atan2_spec4; ra.
+          - assert (sin a < 0). { apply sin_lt_0_var; lra. }
+            assert (cos a < 0).
+            { rewrite <- RealFunction.cos_2PI_add. apply cos_lt_0; ra. }
+            rewrite atan2_spec2; ra.
+            rewrite atan_ak_bk; ra. cbv; rewrite Rtan_rw.
+            rewrite <- Rtrigo_facts.tan_pi_plus; ra. rewrite atan_tan; ra.
+          - assert (sin a < 0). { apply sin_lt_0_var; lra. }
+            assert (0 < cos a). { apply cos_gt_0; ra. }
+            rewrite atan2_spec1; ra.
+            rewrite atan_ak_bk; ra. cbv; rewrite Rtan_rw. rewrite atan_tan; ra.
+          - assert (0 < sin a). { apply sin_gt_0; lra. }
+            assert (0 < cos a). { apply cos_gt_0; ra. }
+            rewrite atan2_spec1; ra.
+            rewrite atan_ak_bk; ra. cbv; rewrite Rtan_rw. rewrite atan_tan; ra.
+          - assert (0 < sin a). { apply sin_gt_0; lra. }
+            assert (cos a < 0). { apply cos_lt_0; ra. }
+            rewrite atan2_spec3; ra.
+            rewrite atan_ak_bk; ra. cbv; rewrite Rtan_rw.
+            rewrite <- RealFunction.tan_sub_PI. rewrite atan_tan; ra.
+        Qed.
+
+        Lemma ϕ_spec : forall (ϕ θ ψ : R),
+            - PI < ϕ < PI ->
+            - PI / 2 < θ < PI / 2 ->
+            - PI < ψ < PI ->
+            C == B3_123 ϕ θ ψ -> ϕ' = ϕ.
+        Proof.
+          Opaque atan2.
+          intros. cbv. rewrite !H2; auto. cbv. autorewrite with R.
+          assert (0 < cos θ). { apply cos_gt_0; try lra. }
+          (* atan2 (sin ϕ * cos θ) (cos ϕ * cos θ) = ϕ *)
+          rewrite atan2_sin_cos_eq1; auto.
+        Qed.
+
+        Lemma θ_spec : forall (ϕ θ ψ : R),
+            - PI < ϕ < PI ->
+            - PI / 2 < θ < PI / 2 ->
+            - PI < ψ < PI ->
+            C == B3_123 ϕ θ ψ -> θ' = θ.
+        Proof. intros; cbv. rewrite !H2; auto. cbv; autorewrite with R; ra. Qed.
+        
+        Lemma ψ_spec : forall (ϕ θ ψ : R),
+            - PI < ϕ < PI ->
+            - PI / 2 < θ < PI / 2 ->
+            - PI < ψ < PI ->
+            C == B3_123 ϕ θ ψ -> ψ' = ψ.
+        Proof.
+          Opaque atan2.
+          intros. cbv. rewrite !H2; auto. cbv. autorewrite with R.
+          assert (0 < cos θ). { apply cos_gt_0; try lra. }
+          (* atan2 (cos θ * sin ψ) (cos θ * cos ψ) = ψ *)
+          rewrite (Rmult_comm (cos θ)). rewrite (Rmult_comm (cos θ)).
+          rewrite atan2_sin_cos_eq1; auto.
+        Qed.
+      End sec.
+      
+    End alg2.
+      
+    (* 算法2：保留奇异点，完整的机动范围，即 roll,pitch,yaw ∈ [-π,π] *)
+    Module alg3.
+      (* 该算法来自于 QQ's book, page94.
+         1. 当θ=±π/2时(此时 r11=r21=0)，ϕ和ψ不唯一，可以人为规定 ϕ = 0
+         2. 当ϕ,ψ为边界时，即当 r11=r33=1, r21=r31=r32=0, 有两种可能
+            (ϕ,θ,ψ) = (0,0,0);(π,π,π)，此时根据与上次的值相近的结果
+         3. 其余情况，可在 alg2 的基础上改进，以便θ从(-π/2,π/2)扩展到(-π,π)
+            具体做法：
+            (1) 计算出6个欧拉角，ϕ0,θ0,ψ0,ϕ1,θ1,ψ1，它们的组合有8种。
+            (2) 计算这8种组合下的旋转矩阵与输入矩阵的差的范数（没有说是哪一种）
+            (3) 范数最小时的那个组合就是所要求的欧拉角
+
+         思考"步骤3"的原理：
+         1. 为何旋转矩阵之差异矩阵的范数最小时对应了所需的欧拉角？
+       *)
+      
+      (** sign of a real number *)
+      Definition Rsign (r : R) : R := if r <? 0 then -1 else 1.
+      
+      Section sec.
+        (* Let's have a rotation matrix *)
+        Variable C : smat 3.
+
+        (* (5.13) When r11=r21=0, this is the answer *)
+        Definition case1_cond : bool := (C.11 =? 0) && (C.21 =? 0).
+
+        (* ϕ, θ, ψ = v.1, v.2, v.3 *)
+        Definition case1_values : cvec 3 :=
+          l2cv [0; (Rsign (-C.31)) * (PI / 2); atan2 (-C.12) (C.22)].
+
+        (* (5.15) possible euler angles *)
+        
+        (* 
+           ϕ_0, θ_0, ψ_0 = m.11, m.21, m.31 
+           ϕ_1, θ_1, ψ_1 = m.12, m.22, m.32 
+         *)
+        Definition case2_params : mat 3 2 :=
+          let θ_0 := asin (-C.31) in
+          l2m [[atan2 (C.32) (C.33); atan2 (-C.32) (-C.33)];
+               [θ_0; Rsign θ_0 * PI - θ_0];
+               [atan2 (C.21) (C.11); atan2 (-C.21) (-C.11)]].
+
+        (* (5.14) best composition of euler angles *)
+        Definition find_best : (R*R*R*R) :=
+          let gen_val (ϕ θ ψ : R) : R*R*R*R := (ϕ, θ, ψ, mnormF (C - B3_123 ϕ θ ψ)%M) in
+          let m := case2_params in
+          let a111 := gen_val (m.11) (m.21) (m.31) in
+          let a112 := gen_val (m.11) (m.21) (m.32) in
+          let a121 := gen_val (m.11) (m.22) (m.31) in
+          let a122 := gen_val (m.11) (m.22) (m.32) in
+          let a211 := gen_val (m.12) (m.21) (m.31) in
+          let a212 := gen_val (m.12) (m.21) (m.32) in
+          let a221 := gen_val (m.12) (m.22) (m.31) in
+          let a222 := gen_val (m.12) (m.22) (m.32) in
+          let l := [a111;a112;a121;a122;a211;a212;a221;a222] in
+          list_min a111
+            (fun x y => match x, y with (_,_,_,x1),(_,_,_,y1) => x1 <? y1 end)
+            l.
+
+        Definition case2_values : cvec 3 :=
+          let '(ϕ,θ,ψ,_) := find_best in
+          l2cv [ϕ; θ; ψ].
+
+        (** If the matrix is identity matrix, there are two possible solutions *)
+        Definition case3_cond : bool :=
+          (C.11 =? 1) && (C.33 =? 1) && (C.21 =? 0) && (C.32 =? 0) && (C.31 =? 0).
+        
+        Definition case3_opts : mat 3 2 :=
+          l2m [[0; PI]; [0; PI]; [0; PI]].
+
+        (** If the euler angles is option 1 or 2, then the matrix is identity matrix *)
+        Lemma case3_opts_1_eq_mat1 :
+          let ea := mcol case3_opts 0 in
+          B3_123 (ea.1) (ea.2) (ea.3) == mat1.
+        Proof. lma; autorewrite with R; easy. Qed.
+        
+        Lemma case3_opts_2_eq_mat1 :
+          let ea := mcol case3_opts 1 in
+          B3_123 (ea.1) (ea.2) (ea.3) == mat1.
+        Proof. lma; autorewrite with R; cbv; ring. Qed.
+
+        Definition case3_values (old : cvec 3) : cvec 3 :=
+          (* 根据历史值，与之接近的是正解 *)
+          let closest (old opt1 opt2 : R) : R :=
+            if Rabs (old - opt1) <? Rabs (old - opt2) then opt1 else opt2 in
+          let m := case3_opts in
+          l2cv [
+              closest (old.1) (m.11) (m.12);
+              closest (old.2) (m.21) (m.22);
+              closest (old.3) (m.31) (m.32)
+            ].
+
+        (** final algorithm *)
+        Definition euler_angles (old : cvec 3) : cvec 3 :=
+          if case1_cond
+          then case1_values
+          else if case3_cond
+               then case3_values old
+               else case2_values.
+
+        (** This algorithm havn't been verified yet. *)
+        
+      End sec.
+    End alg3.
+    
   End B3_123.
 
 End R2Euler.

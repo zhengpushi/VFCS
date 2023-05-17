@@ -364,6 +364,10 @@ Lemma Rpow4_Rsqr_Rsqr r : r ^ 4 = r²².
 Proof. ra. Qed.
 #[export] Hint Rewrite Rpow4_Rsqr_Rsqr : R.
 
+(** r ^ 4 = (r ^ 2) ^ 2 *)
+Lemma Rpow4_Rsqr_Rsqr' : forall r : R, r ^ 4 = (r ^ 2) ^ 2.
+Proof. intros. lra. Qed.
+
 (** r² = 1 -> r = 1 \/ r = -1 *)
 Lemma Rsqr_eq1 : forall r : R, r² = 1 -> r = 1 \/ r = -1.
 Proof.
@@ -881,6 +885,12 @@ Proof.
   intros. rewrite Rplus_comm. apply sin2_cos2.
 Qed.
 
+Lemma cos2' : forall x : R, (cos x) ^ 2 = (1 - (sin x) ^ 2)%R.
+Proof. intros. autorewrite with R. rewrite cos2. auto. Qed.
+
+Lemma sin2' : forall x : R, (sin x) ^ 2 = (1 - (cos x) ^ 2)%R.
+Proof. intros. autorewrite with R. rewrite sin2. auto. Qed.
+
 (* sin r * / cos r = tan r *)
 Lemma Rtan_rw : forall r : R, sin r * / cos r = tan r.
 Proof. auto. Qed.
@@ -892,6 +902,8 @@ Proof. intros. assert (0 < cos r). { apply cos_gt_0; ra. } ra. Qed.
 #[export] Hint Rewrite
   sin_0         (* sin 0 = 0 *)
   cos_0         (* cos 0 = 1 *)
+  sin_PI        (* sin PI = 0 *)
+  cos_PI        (* cos PI = -1 *)
   sin_PI2       (* sin (PI / 2) = 1 *)
   cos_PI2       (* cos (PI / 2) = 0 *)
   sin_PI2_neg   (* sin (- (PI/2)) = -1 *)
@@ -1200,6 +1212,7 @@ Section compare_with_PI.
   Definition PI_lb : R := 3.14159265.
   Axiom PI_lt : PI < PI_ub.
   Axiom PI_gt : PI_lb < PI.
+  Axiom PI_lt_gt : PI_lb < PI < PI_ub.
 
   Goal 2 < PI.
   Proof.
@@ -1367,6 +1380,23 @@ End compare_with_PI.
 
 
 (* ######################################################################### *)
+(** * atan *)
+
+(** 背景：
+    在 atan2 的证明中，经常需要化简形如 atan ((a * b) / (a * c)) 的式子 *)
+
+(** atan (k * a) (k * b) = atan a b *)
+Lemma atan_ka_kb : forall a b k : R,
+    b <> 0 -> k <> 0 -> atan ((k * a) / (k * b)) = atan (a/b).
+Proof. intros. f_equal. field. ra. Qed.
+
+(** atan (a * k) (b * k) = atan a b *)
+Lemma atan_ak_bk : forall a b k : R,
+    b <> 0 -> k <> 0 -> atan ((a * k) /(b * k)) = atan (a/b).
+Proof. intros. f_equal. field. ra. Qed.
+
+
+(* ######################################################################### *)
 (** * atan2 *)
 
 (** 背景：
@@ -1498,6 +1528,48 @@ Proof.
   intros. intro. destruct H1. subst.
   apply lt_IZR in H0.
   apply lt_IZR in H. lia.
+Qed.
+
+(* ######################################################################### *)
+(** ** Split a large range to small pieces *)
+
+(** Split the range of (-π,π) to several small ranges *)
+Section a_strange_problem.
+
+  (** A strange problem about "lra":
+      If I declare a condition here, the next proof will be finished by lra,
+      otherwise, the next proof will not be done. *)
+  Variable b: R.
+  Hypotheses Hb : - PI < b < PI.
+
+  Lemma Rsplit_neg_pi_to_pi' : forall a : R,
+      -PI < a < PI <->
+        a = -PI/2 \/ a = 0 \/ a = PI/2 \/
+          (-PI < a < -PI/2) \/ (-PI/2 < a < 0) \/
+          (0 < a < PI/2) \/ (PI/2 < a < PI).
+  Proof.
+    intros.
+    (* Here, the automatic process is determined by the existence of "Hb", Why ?
+       可能的原因，-PI < -PI/2 < PI 无法被lra证明，但有了 Hb 后就能证了，
+       虽然 b 和 a 没有关系，但确实完成了证明。暂不知原理。
+       
+       同时，也发现了一个技巧，虽然 PI 不能被 lra 证明，但可以设定一个近似表示，比如
+       “3.14 < PI < 3.15”，然后 lra 就能用了。
+     *)
+    lra.
+  Qed.
+End a_strange_problem.
+
+Lemma Rsplit_neg_pi_to_pi : forall a : R,
+    -PI < a < PI <->
+      a = -PI/2 \/ a = 0 \/ a = PI/2 \/
+        (-PI < a < -PI/2) \/ (-PI/2 < a < 0) \/
+        (0 < a < PI/2) \/ (PI/2 < a < PI).
+Proof.
+  intros.
+  (* 引入 PI 的不等式，以便 lra 能够使用 *)
+  pose proof (PI_lt_gt) as H; unfold PI_lb,PI_ub in H.
+  ra.
 Qed.
 
 
