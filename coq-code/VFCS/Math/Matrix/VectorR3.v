@@ -269,7 +269,7 @@ Section cv3cross.
   Qed.
   
   (** || v1 × v2 || = ||v1|| * ||v2|| * |sin (cvangle v1 v2)| *)
-  Lemma cvlen_cr3cross : forall v1 v2 : cvec 3,
+  Lemma cvlen_cv3cross : forall v1 v2 : cvec 3,
       || v1 × v2 || = (||v1|| * ||v2|| * sin (cvangle v1 v2))%R.
   Proof.
     intros. pose proof (cvlen_cv3cross_cv3dot v1 v2).

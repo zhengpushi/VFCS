@@ -516,6 +516,11 @@ Section vangle.
   
   Infix "∠" := cvangle (at level 60) : cvec_scope.
 
+  #[export] Instance cvangle_mor {n} : Proper (meq ==> meq ==> eq) (@cvangle n).
+  Proof.
+    simp_proper. intros. unfold cvangle. rewrite H,H0. auto.
+  Qed.
+
   (** Angle is commutative *)
   Lemma cvangle_comm : forall {n} (v1 v2 : cvec n), v1 ∠ v2 = v2 ∠ v1.
   Proof. intros. unfold cvangle. rewrite cvdot_comm. auto. Qed.

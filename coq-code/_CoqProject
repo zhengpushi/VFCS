@@ -61,7 +61,8 @@ VFCS/Math/Matrix/VectorR4.v
 
 VFCS/Math/LinearAlgebra/PermutationExt.v
 
-VFCS/Math/Quaternion/Quaternion.v
+VFCS/Math/Quaternion/Quaternion_base.v
+VFCS/Math/Quaternion/Quaternion_rot.v
 
 VFCS/Math/DifferenceEquation/DifferenceEquation.v
 VFCS/Math/LaplaceTransform/LaplaceTransform.v
