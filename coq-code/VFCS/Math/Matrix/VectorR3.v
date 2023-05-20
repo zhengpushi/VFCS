@@ -84,13 +84,13 @@ Section basis.
 
   (** 标准基向量是规范化操作的不动点 *)
   Lemma cv3i_cvnormalize_fixpoint : cvnormalize cv3i == cv3i.
-  Proof. apply cvnormalize_vunit_fixpoint. apply cv3i_vunit. Qed.
+  Proof. apply cvnormalize_cvunit_fixpoint. apply cv3i_vunit. Qed.
   
   Lemma cv3j_cvnormalize_fixpoint : cvnormalize cv3j == cv3j.
-  Proof. apply cvnormalize_vunit_fixpoint. apply cv3j_vunit. Qed.
+  Proof. apply cvnormalize_cvunit_fixpoint. apply cv3j_vunit. Qed.
   
   Lemma cv3k_cvnormalize_fixpoint : cvnormalize cv3k == cv3k.
-  Proof. apply cvnormalize_vunit_fixpoint. apply cv3k_vunit. Qed.
+  Proof. apply cvnormalize_cvunit_fixpoint. apply cv3k_vunit. Qed.
 
   (** 标准基向量与任意向量v的点积等于v的各分量 *)
   Lemma cv3dot_i_l : forall v : cvec 3, <cv3i, v> = v.x. Proof. intros. cbv; ring. Qed.
@@ -252,6 +252,32 @@ Section cv3cross.
   Lemma cv3cross_ji : cv3j × cv3i == -cv3k. Proof. lma. Qed.
   Lemma cv3cross_kj : cv3k × cv3j == -cv3i. Proof. lma. Qed.
   Lemma cv3cross_ik : cv3i × cv3k == -cv3j. Proof. lma. Qed.
+
+
+  (** The relation between cross and dot product *)
+  (* https://en.wikipedia.org/wiki/Cross_product *)
+  Local Open Scope fun_scope.
+
+  (** || v1 × v2 ||² = ||v1||² * ||v2||² - <v1,v2>² *)
+  Lemma cvlen_cv3cross_cv3dot : forall v1 v2 : cvec 3,
+      || v1 × v2 ||² = ((||v1||² * ||v2||²) - (<v1,v2>)²)%R.
+  Proof.
+    intros. cvec2fun. cbv. autorewrite with R.
+    remember (v1.11) as a1; remember (v1.21) as a2; remember (v1.31) as a3.
+    remember (v2.11) as b1; remember (v2.21) as b2; remember (v2.31) as b3.
+    rewrite !Rsqr_sqrt; ra.
+  Qed.
+  
+  (** || v1 × v2 || = ||v1|| * ||v2|| * |sin (cvangle v1 v2)| *)
+  Lemma cvlen_cr3cross : forall v1 v2 : cvec 3,
+      || v1 × v2 || = (||v1|| * ||v2|| * sin (cvangle v1 v2))%R.
+  Proof.
+    intros. pose proof (cvlen_cv3cross_cv3dot v1 v2).
+    rewrite cvdot_eq_cos_angle in H.  rewrite !Rsqr_mult in H. rewrite cos2 in H.
+    apply Rsqr_inj; ra. apply cvlen_ge0.
+    apply Rmult_le_pos. apply cvlen_ge0.
+    apply Rmult_le_pos. apply cvlen_ge0. apply sin_cvangle_ge0.
+  Qed.
 
 End cv3cross.
 Infix "×" := cv3cross : cvec_scope.
@@ -444,6 +470,13 @@ Section cv3mixed.
   (** 若混合积≠0，则三向量可构成平行六面体，即三向量不共面，反之也成立。
     所以：三向量共面的充要条件是混合积为零。*)
   Definition cv3coplanar (a b c : cvec 3) := cv3mixed a b c = 0.
+
+  (** (v1,v2)的法向量和(v2,v3)的法向量相同，则v1,v2,v3共面 *)
+  Lemma cv3cross_same_cv3coplanar : forall v1 v2 v3 : cvec 3,
+      v1 × v2 == v2 × v3 -> cv3coplanar v1 v2 v3.
+  Proof.
+    intros. unfold cv3coplanar, cv3mixed. rewrite H. apply cv3cross_dot_same_r.
+  Qed.
 
   (** Example 7, page 22, 高等数学，第七版 *)
   (** 根据四顶点的坐标，求四面体的体积：四面体ABCD的体积等于AB,AC,AD为棱的平行六面体

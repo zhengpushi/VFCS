@@ -264,6 +264,29 @@ Section vdot.
       rvdot (mrow m i) (mrow m j) = (m * m\T) $ i $ j.
   Admitted.
 
+  (** <-v1, v2> = - <v1,v2> *)
+  Lemma cvdot_cvopp_l : forall {n} (v1 v2 : cvec n), < -v1, v2> = (- <v1,v2>)%R.
+  Proof.
+    intros. unfold cvdot, Vector.cvdot. cvec2fun.
+    rewrite seqsum_opp. apply seqsum_eq. intros. cbv. ring.
+  Qed.
+
+  (** <v1, -v2> = - <v1,v2> *)
+  Lemma cvdot_cvopp_r : forall {n} (v1 v2 : cvec n), < v1, -v2> = (- <v1,v2>)%R.
+  Proof. intros. rewrite cvdot_comm, cvdot_cvopp_l, cvdot_comm. auto. Qed.
+
+  (** <k * v1, v2> = k * <v1,v2> *)
+  Lemma cvdot_cvcmul_l : forall {n} (k : R) (v1 v2 : cvec n),
+      < k c* v1, v2> = (k * <v1,v2>)%R.
+  Proof.
+    intros. unfold cvdot, Vector.cvdot. cvec2fun.
+    rewrite seqsum_cmul_l. apply seqsum_eq. intros. cbv. ring.
+  Qed.
+
+  (** <v1, k * v2> = k * <v1,v2> *)
+  Lemma cvdot_cvcmul_r : forall {n} (k : R) (v1 v2 : cvec n),
+      < v1, k c* v2> = (k * <v1,v2>)%R.
+  Proof. intros. rewrite cvdot_comm, cvdot_cvcmul_l, cvdot_comm. auto. Qed.
   
 End vdot.
 
@@ -323,18 +346,28 @@ Section vlen.
   Lemma cvlen_eq1_iff_vdot1 : forall {n} (u : cvec n), ||u|| = 1 <-> <u,u> = 1.
   Proof. intros. unfold cvlen. split; intros; hnf in *. ra. rewrite H. ra. Qed.
 
+  (** || - v|| = || v || *)
+  Lemma cvlen_copp : forall n (v : cvec n), || - v|| = || v ||.
+  Proof.
+    intros. unfold cvlen. f_equal. rewrite cvdot_cvopp_l,cvdot_cvopp_r.
+    autorewrite with R. auto.
+  Qed.
+  
   (** ||k c* v|| = |k| * ||v|| *)
   Lemma cvlen_cmul : forall n (v : cvec n) k, ||k c* v|| = (|k| * ||v||)%R.
   Proof.
-  Admitted.
+    intros. unfold cvlen. rewrite cvdot_cvcmul_l, cvdot_cvcmul_r.
+    rewrite <- Rmult_assoc.
+    rewrite sqrt_mult_alt; ra. f_equal. autorewrite with R. ra.
+  Qed.
 
   (** ||u + v|| <= ||u|| + ||v|| *)
   Lemma cvlen_add_ineq : forall {n} (u v : cvec n), ||(u + v)|| <= ||u|| + ||v||.
-  Admitted.
+  Abort.
 
   (** |<u,v>| <= ||u|| * ||v|| *)
   Lemma cvlen_mul_ineq : forall {n} (u v : cvec n), |<u,v>| <= ||u|| * ||v||.
-  Admitted.
+  Abort.
 
 End vlen.
 Notation "|| v ||" := (cvlen v) : cvec_scope.
@@ -350,6 +383,9 @@ Section vunit.
    *)
   Definition cvunit {n} (u : cvec n) : Prop := <u,u> = 1.
 
+  #[export] Instance cvunit_mor {n} : Proper (meq ==> impl) (@cvunit n).
+  Proof. simp_proper. intros. unfold cvunit. rewrite H. easy. Qed.
+  
   (** (bool version) *)
   Definition cvunitb {n} (u : cvec n) : bool := (<u,u> =? 1)%R.
 
@@ -360,6 +396,20 @@ Section vunit.
   (** Verify the definition is reasonable *)
   Lemma cvunit_spec : forall {n} (u : cvec n), cvunit u <-> ||u|| = 1.
   Proof. intros. split; intros; apply cvlen_eq1_iff_vdot1; auto. Qed.
+
+  (** cvunit v -> v != cvec0. *)
+  Lemma cvunit_neq0 : forall {n} (v : cvec n), cvunit v -> v != cvec0.
+  Proof.
+    intros. intro. rewrite H0 in H. unfold cvunit in H.
+    rewrite cvdot_0_l in H. ra.
+  Qed.
+
+  (** cvunit u <-> cvunit (cvopp u). *)
+  Lemma cvopp_cvunit : forall {n} (u : cvec n), cvunit (cvopp u) <-> cvunit u.
+  Proof.
+    intros. unfold cvunit. rewrite <- !cvlen_eq1_iff_vdot1.
+    rewrite cvlen_copp. easy.
+  Qed.
 
   (** If column of a and column of b all are unit, 
     then column of (a * b) is also unit *)
@@ -400,7 +450,7 @@ Section vnormalize.
   Qed.
 
   (** Unit vector is fixpoint of cvnormalize operation *)
-  Lemma cvnormalize_vunit_fixpoint : forall {n} (v : cvec n),
+  Lemma cvnormalize_cvunit_fixpoint : forall {n} (v : cvec n),
       cvunit v -> cvnormalize v == v.
   Proof.
     intros. lma. rewrite (cvunit_spec v) in H. rewrite H. autorewrite with R. easy.
@@ -458,7 +508,7 @@ End vnormalize.
 (** ** Angle between two vectors *)
 Section vangle.
 
-  (** The angle from vector v1 to vector v2, θ ∈ [0,π] *)
+  (** The angle from vector v1 to vector v2, Here, θ ∈ [0,π] *)
   Definition cvangle {n} (v1 v2 : cvec n) : R :=
     let v1' := cvnormalize v1 in
     let v2' := cvnormalize v2 in
@@ -502,6 +552,14 @@ Section vangle.
     pose proof (cosine_law a b). ra.
   Qed.
 
+  (** 0 <= cvangle u v <= PI *)
+  Lemma cvangle_bound : forall {n} (u v : cvec n), 0 <= cvangle u v <= PI.
+  Proof. intros. unfold cvangle. apply acos_bound. Qed.
+
+  (** 0 <= sin (cvangle u v) *)
+  Lemma sin_cvangle_ge0 : forall {n} (u v : cvec n), 0 <= sin (cvangle u v).
+  Proof. intros. apply sin_ge_0; apply cvangle_bound. Qed.
+  
 End vangle.
 Infix "∠" := cvangle (at level 60) : cvec_scope.
 

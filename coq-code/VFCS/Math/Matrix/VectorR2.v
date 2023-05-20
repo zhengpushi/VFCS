@@ -92,10 +92,10 @@ Section basis.
 
   (** 标准基向量是规范化操作的不动点 *)
   Lemma cv2i_cvnormalize_fixpoint : cvnormalize cv2i == cv2i.
-  Proof. apply cvnormalize_vunit_fixpoint. apply cv2i_vunit. Qed.
+  Proof. apply cvnormalize_cvunit_fixpoint. apply cv2i_vunit. Qed.
 
   Lemma cv2j_cvnormalize_fixpoint : cvnormalize cv2j == cv2j.
-  Proof. apply cvnormalize_vunit_fixpoint. apply cv2j_vunit. Qed.
+  Proof. apply cvnormalize_cvunit_fixpoint. apply cv2j_vunit. Qed.
   
   (** 标准基向量与任意向量v的点积等于v的各分量 *)
   Lemma cv2dot_i_l : forall (v : cvec 2), <cv2i, v> = v.x. Proof. intros. cbv; ring. Qed.
