@@ -94,6 +94,17 @@ Section seqeq.
       (* Note: Aeq_reflect is come from typeclass of Decidable theory. *)
       destruct (Aeq_reflect i n); subst; auto. apply H. lia.
   Qed.
+
+  (** If a seq f satisfy P for all top n elements, and P (f(n)) also hold,
+      then the seq f satisfy P for all top (n+1) elements. *)
+  Lemma seq_prop_extend_r : forall (f : nat -> A) (n : nat) (P : A -> Prop),
+      (forall i, (i < n)%nat -> P (f i)) -> P (f n) ->
+      (forall i, (i < S n)%nat -> P (f i)).
+  Proof.
+    intros f n P. induction n.
+    - intros. assert (i = 0)%nat. nia. subst. auto.
+    - intros. assert (i < S n \/ i = S n)%nat by nia. destruct H2; subst; auto.
+  Qed.
   
   (** seqeq is decidable  *)
   Global Instance seqeq_dec {Dec_Aeq : Dec Aeq} : forall n, Dec (seqeq n).
@@ -339,7 +350,7 @@ Section Sum.
   Proof. induction n; simpl; try easy. f_equiv. auto. Qed.
     
   (** Sum of a sequence which every element is zero get zero. *)
-  Lemma seqsum_seq0 : forall (f : nat -> A) (n : nat), 
+  Lemma seqsum_eq0 : forall (f : nat -> A) (n : nat), 
       (forall i, i < n -> f i == Azero) -> seqsum f n == Azero.
   Proof.
     intros f n H. induction n; simpl. easy.
@@ -379,12 +390,12 @@ Section Sum.
     rewrite <- IHn. rewrite group_inv_distr. apply commutative.
   Qed.
 
+  
   (** Let's have an ring structure *)
   Context `{R : Ring A Aadd Azero Aopp Amul Aone Aeq}.
   Add Ring ring_inst : (make_ring_theory R).
   
   Infix "*" := Amul : A_scope.
-
   
   (** Constant left multiply to the sum of a sequence. *)
   Lemma seqsum_cmul_l : forall c (f : nat -> A) (n : nat),
@@ -411,7 +422,7 @@ Section Sum.
     destruct (Aeq_reflect i n).
     - subst.
       assert (seqsum f n == Azero) as H2.
-      + apply seqsum_seq0. intros. apply H1. lia.
+      + apply seqsum_eq0. intros. apply H1. lia.
       + rewrite H2. rewrite H0. ring.
     - assert (f n == Azero) as H2.
       + apply H1; auto.
@@ -505,7 +516,6 @@ Section Sum.
 End Sum.
 
 
-
 (* ======================================================================= *)
 (** ** Sequence on R type *)
 Section Seq_R.
@@ -515,10 +525,36 @@ Section Seq_R.
   
   Notation seqsum := (@seqsum _ Rplus R0).
 
-  (** If all elements is >= 0, then the sum is >= 0 *)
+  (** If all elements of a sequence are >= 0, then the sum is >= 0 *)
   Lemma seqsum_ge0 : forall (f : nat -> R) n,
       (forall i, (i < n)%nat -> 0 <= f i) -> 0 <= seqsum f n.
   Proof. intros. induction n; simpl. lra. apply Rplus_le_le_0_compat; auto. Qed.
+
+  (** If all elements of a sequence are >= 0, and the sum of top (n+1) elements of
+      the sequence is = 0, then the sum of top n elements are 0 *)
+  Lemma seqsum_eq0_less : forall (f : nat -> R) (n : nat), 
+      (forall i, (i < S n)%nat -> 0 <= f i) ->
+      seqsum f (S n) = 0 ->
+      seqsum f n = 0.
+  Proof.
+    intros. rewrite <- seqsum_extend_r in H0.
+    assert (0 <= f n); auto.
+    assert (0 <= seqsum f n). apply seqsum_ge0; auto. lra.
+  Qed.
+
+  (** If all elements of a sequence are >= 0, and the sum of the sequence is = 0,
+      then all elements of the sequence are 0. *)
+  Lemma seqsum_eq0_imply_seq0 : forall (f : nat -> R) (n : nat), 
+      (forall i, (i < n)%nat -> 0 <= f i) -> seqsum f n = 0 -> (forall i, (i < n)%nat -> f i = 0).
+  Proof.
+    intros f n. induction n. intros H1 H2 i H3; try easy. intros.
+    assert (i < n \/ i = n)%nat by nia. destruct H2.
+    - apply IHn; auto. apply seqsum_eq0_less; auto.
+    - subst.
+      assert (0 <= f n); auto.
+      assert (0 <= seqsum f n). apply seqsum_ge0; auto.
+      rewrite <- seqsum_extend_r in H0. lra.
+  Qed.
   
 End Seq_R.
 

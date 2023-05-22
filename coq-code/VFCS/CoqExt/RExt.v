@@ -430,11 +430,16 @@ Proof. ra. Qed.
 Lemma Rdiv_1 : forall a, a / 1 = a.
 Proof. ra. Qed.
 
+(** 0 / a = 0 *)
+Lemma Rdiv_0_eq0 : forall a : R, a <> 0 -> 0 / a = 0.
+Proof. intros. field; auto. Qed.
+
 #[export] Hint Rewrite
   Rsqr_R1           (* (R1)² = 1 *)
   Rinv_1            (* / 1 = 1 *)
   Rinv_R1           (* / R1 = 1 *)
   Rdiv_1            (* a / 1 = 1 *)
+  Rdiv_0_eq0        (* 0 / a = 0 *)
   : R.
 
 #[export] Hint Resolve

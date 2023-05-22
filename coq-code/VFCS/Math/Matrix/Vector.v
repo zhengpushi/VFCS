@@ -399,7 +399,7 @@ Section rvec_ring.
 
   (** <0,v> = 0 *)
   Lemma rvdot_0_l : forall {n} (v : rvec n), (<rvec0,v> == Azero)%A.
-  Proof. intros. apply seqsum_seq0. intros. cbv. ring. Qed.
+  Proof. intros. apply seqsum_eq0. intros. cbv. ring. Qed.
 
   (** <v,0> = 0 *)
   Lemma rvdot_0_r : forall {n} (v : rvec n), (<v,rvec0> == Azero)%A.
@@ -691,6 +691,8 @@ Section cvec_ring.
   Infix "==" := (meq) : mat_scope.
 
   Notation cvec0 := (@cvec0 _ Azero _).
+  Notation cvzero := (@cvzero _ Aeq Azero _).
+  Notation cvnonzero := (@cvnonzero _ Aeq Azero _).
 
   Notation seqsum := (seqsum (Aadd:=Aadd)(Azero:=Azero)).
   
@@ -867,8 +869,7 @@ Section cvec_ring.
   Lemma cvcmul_mmul_assoc_r : forall {r c} (a : A) (m : mat r c) (v : cvec c), 
       a c* (m * v) == m * (a c* v).
   Proof. intros. apply mcmul_mmul_assoc_r. Qed.
-
-  Notation cvnonzero := (@cvnonzero _ Aeq Azero _).
+  
   (** If k times a non-zero vector equal to zero vector, then k must be not zero *)
   Lemma cvcmul_vnonzero_neq0_imply_neq0 : forall {n} (v : cvec n) k,
       cvnonzero v -> ~(k c* v == cvec0) -> (k != Azero)%A.
@@ -961,7 +962,7 @@ Section cvec_ring.
 
   (** <0,v> = 0 *)
   Lemma cvdot_0_l : forall {n} (v : cvec n), (<cvec0,v> == Azero)%A.
-  Proof. intros. apply seqsum_seq0. intros. cbv. ring. Qed.
+  Proof. intros. apply seqsum_eq0. intros. cbv. ring. Qed.
 
   (** <v,0> = 0 *)
   Lemma cvdot_0_r : forall {n} (v : cvec n), (<v,cvec0> == Azero)%A.

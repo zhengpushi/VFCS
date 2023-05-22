@@ -103,6 +103,48 @@ Section basis.
 End basis.
 
 
+(** Equality *)
+Section cv3eq.
+
+  (** v1 = v2 <-> (||v1|| = ||v2|| /\ v1 ∠ v2 = 0)
+      这是规定了 v1,v2 非零的简单形式 *)
+  Lemma cv3eq_iff_len_angle0_simple : forall (v1 v2 : cvec 3),
+      cvnonzero v1 -> cvnonzero v2 ->
+      (v1 == v2 <-> ((||v1|| = ||v2||)%CV /\ cvangle v1 v2 = 0)).
+  Proof.
+    intros v1 v2 Hv1_neq0 Hv2_neq0. split; intros H.
+    - rewrite H. split; auto. apply cvangle_same_eq0.
+    - destruct H as [H1 H2].
+      apply cvangle_eq0_cvparallel in H2. destruct H2 as [k [H2 H3]].
+      assert (|| k c* v1 || = || v2 ||)%CV as H4. { rewrite H3; auto. }
+      rewrite cvlen_cmul in H4. rewrite H1 in H4.
+      rewrite Rabs_right in H4; ra.
+      assert (|| v2 ||%CV > 0). { apply cvlen_gt0; auto. }
+      assert (k = 1); ra. rewrite H0 in H3. rewrite cvcmul_1_l in H3; auto.
+  Qed.
+
+  (** v1 = v2 <-> (||v1|| = ||v2|| /\ v1 ∠ v2 = 0)
+      这是不限制 v1,v2 非零条件的普遍形式 *)
+  Lemma cv3eq_iff_len_angle0 : forall (v1 v2 : cvec 3),
+      (v1 == v2 <-> ((||v1|| = ||v2||)%CV /\ cvangle v1 v2 = 0)).
+  Proof.
+    intros v1 v2.
+    destruct (dec v1 cvec0) as [H1 | H1], (dec v2 cvec0) as [H2 | H2].
+    - rewrite H1,H2. split; intros; try easy.
+      split; auto. apply cvangle_same_eq0.
+    - rewrite H1. split; intros.
+      + rewrite <- H. rewrite !cvlen_cvec0. split; auto. apply cvangle_same_eq0.
+      + destruct H. rewrite cvlen_cvec0 in H.
+        symmetry in H. apply cvlen_eq0_iff_eq0 in H; easy.
+    - rewrite H2. split; intros.
+      + rewrite H. rewrite !cvlen_cvec0. split; auto. apply cvangle_same_eq0.
+      + destruct H. rewrite cvlen_cvec0 in H. apply cvlen_eq0_iff_eq0 in H; easy.
+    - apply cv3eq_iff_len_angle0_simple; auto.
+  Qed.
+
+End cv3eq.
+
+
 (** Dot product (inner-product) in 3D *)
 Section cv3dot.
   Definition cv3dot (a b : cvec 3) := (a.1*b.1 + a.2*b.2 + a.3*b.3)%R.
@@ -243,6 +285,14 @@ Section cv3cross.
       (v1 × v2) × v1 == <v1,v1> c* v2 - <v1,v2> c* v1.
   Proof. lma. Qed.
 
+  (** (u × v) ⟂ u *)
+  Lemma cv3cross_orthogonal_l : forall u v : cvec 3, (u × v) ⟂ u.
+  Proof. intros. unfold cvorthogonal. apply cv3cross_dot_same_l. Qed.
+
+  (** (u × v) ⟂ v *)
+  Lemma cv3cross_orthogonal_r : forall u v : cvec 3, (u × v) ⟂ v.
+  Proof. intros. unfold cvorthogonal. apply cv3cross_dot_same_r. Qed.
+
   (** i×j=k, j×k=i, k×i=j *)
   Lemma cv3cross_ij : cv3i × cv3j == cv3k. Proof. lma. Qed.
   Lemma cv3cross_jk : cv3j × cv3k == cv3i. Proof. lma. Qed.
@@ -277,6 +327,48 @@ Section cv3cross.
     apply Rsqr_inj; ra. apply cvlen_ge0.
     apply Rmult_le_pos. apply cvlen_ge0.
     apply Rmult_le_pos. apply cvlen_ge0. apply sin_cvangle_ge0.
+  Qed.
+
+
+  (** ||v1 × v2|| = 0 <-> (θ = 0 \/ θ = PI) *)
+  Lemma cvlen_cv3cross_eq0_iff_angle_0_pi : forall (v1 v2 : cvec 3),
+      cvnonzero v1 -> cvnonzero v2 ->
+      (||v1 × v2|| = 0)%CV <-> (v1 ∠ v2 = 0 \/ v1 ∠ v2 = PI).
+  Proof.
+    intros.
+    rewrite cvlen_cv3cross. apply cvlen_neq0_iff_neq0 in H,H0.
+    pose proof (cvangle_bound v1 v2).
+    split; intros.
+    - apply Rmult_integral in H2; destruct H2; ra.
+      apply Rmult_integral in H2; destruct H2; ra.
+      apply sin_eq_O_2PI_0 in H2; ra.
+    - apply Rmult_eq_0_compat. right.
+      apply Rmult_eq_0_compat. right.
+      apply sin_eq_O_2PI_1; ra.
+  Qed.
+
+  (** v1 × v2 = cvec0 <-> (θ = 0 \/ θ = PI) *)
+  Lemma cv3cross_eq0_iff_angle_0_pi : forall (v1 v2 : cvec 3),
+      cvnonzero v1 -> cvnonzero v2 ->
+      v1 × v2 == cvec0 <-> (v1 ∠ v2 = 0 \/ v1 ∠ v2 = PI).
+  Proof.
+    intros. rewrite <- cvlen_cv3cross_eq0_iff_angle_0_pi; auto.
+    rewrite cvlen_eq0_iff_eq0. easy.
+  Qed.
+
+  (** v1 × v2 = (sin (v1 ∠ v2) * ||v1|| * ||v2||) c* cvnormalize (v1 × v2) *)
+  Lemma cv3cross_eq_cmul : forall (v1 v2 : cvec 3),
+      cvnonzero v1 -> cvnonzero v2 ->
+      v1 ∠ v2 <> 0 -> v1 ∠ v2 <> PI ->
+      v1 × v2 == ((sin (v1 ∠ v2) * ||v1|| * ||v2||)%R c* cvnormalize (v1 × v2))%CV.
+  Proof.
+    intros. unfold cvnormalize. rewrite cvlen_cv3cross.
+    rewrite cvcmul_assoc.
+    match goal with |- context [(?a c* _)%CV] => replace a with 1 end.
+    rewrite cvcmul_1_l; easy.
+    autounfold with A. field. split.
+    - pose proof (sin_cvangle_gt0 v1 v2 H1 H2). ra.
+    - split; apply cvlen_neq0_iff_neq0; auto.
   Qed.
 
 End cv3cross.
@@ -342,6 +434,7 @@ Section cv3parallel.
       repeat (destruct i; cbv; try ring).
     - cbv in *.
   Abort. (* 叉乘为零，则{1:两行线性相关，对应系数成比例; 2.存在零向量}。*)
+  
 End cv3parallel.
 
 

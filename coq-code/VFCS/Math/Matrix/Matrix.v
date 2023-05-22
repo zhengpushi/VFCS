@@ -1110,7 +1110,7 @@ Section malg.
       (m1 * m2) * m3 == m1 * (m2 * m3).
   Proof.
     lma. induction c; simpl.
-    - apply seqsum_seq0. intros. ring.
+    - apply seqsum_eq0. intros. ring.
     - rewrite <- IHc. rewrite seqsum_cmul_l. rewrite <- seqsum_add.
       apply seqsum_eq; intros. ring.
   Qed.
@@ -1149,11 +1149,11 @@ Section malg.
 
   (** mat0 * m = mat0 *)
   Lemma mmul_0_l : forall {r c s} (m : mat c s), (@mat0 _ Azero r c) * m == mat0 Azero.
-  Proof. lma. apply seqsum_seq0. intros. ring. Qed.
+  Proof. lma. apply seqsum_eq0. intros. ring. Qed.
 
   (** m * mat0 = mat0 *)
   Lemma mmul_0_r : forall {r c s} (m : mat r c), m * (@mat0 _ Azero c s) == mat0 Azero.
-  Proof. lma. apply seqsum_seq0. intros. ring. Qed.
+  Proof. lma. apply seqsum_eq0. intros. ring. Qed.
 
   (** mat1 * m = m *)
   Lemma mmul_1_l : forall {r c : nat} (m : mat r c), mat1 Azero Aone * m == m.

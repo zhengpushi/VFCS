@@ -144,6 +144,10 @@ Section construction.
   Lemma qpure_qim : forall (q : quat), q.W = 0 -> qpure (q.Im) = q.
   Proof. intros. destruct q. cbv. simpl in *. f_equal. auto. Qed.
   
+  (** (qpure v).Im = v *)
+  Lemma qpure_qim_v : forall (v : cvec 3), (qpure v).Im == v.
+  Proof. intros. lma. Qed.
+  
   (** Construct a quaternion by a vec4[w;x;y;z] *)
   Definition cv2q (v : cvec 4) : quat := mk_quat (v.1) (v.2) (v.3) (v.4).
   
@@ -438,6 +442,16 @@ Section qmul.
   (** qlen2 (a c* q) = a² * (qlen2 q) *)
   Lemma qlen2_qcmul : forall (a : R) (q : quat), qlen2 (a c* q) = (a² * (qlen2 q))%R.
   Proof. intros. destruct q. cbv. ring. Qed.
+
+  (** a c* q = qzero <-> (a = 0) \/ (q = qzero) *)
+  Lemma qcmul_eq0_iff : forall (q : quat) (a : R),
+      a c* q = qzero <-> (a = 0) \/ (q = qzero).
+  Proof. intros. destruct q. rewrite !quat_eq_iff; simpl. ra. Qed.
+
+  (** a c* q <> qzero <-> (a <> 0) /\ (q <> qzero) *)
+  Lemma qcmul_neq0_iff : forall (q : quat) (a : R),
+      a c* q <> qzero <-> (a <> 0) /\ (q <> qzero).
+  Proof. intros. pose proof(qcmul_eq0_iff q a). tauto. Qed.
 
   (** Right scalar multiplication *)
   (* 此定义也正确，但是太繁琐 *)

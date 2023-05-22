@@ -184,6 +184,27 @@ Section cvparallel.
     rewrite <- cvcmul_assoc. rewrite H2. auto.
   Qed.
 
+  (** v1 ∥ v2 -> (a c* v1) ∥ v2 *)
+  Lemma cvcmul_cvparallel_l : forall {n} (v1 v2 : cvec n) (a : R),
+      v1 ∥ v2 -> a <> 0 -> (a c* v1) ∥ v2.
+  Proof.
+    intros. unfold cvparallel in *. destruct H as [k [H1 H2]].
+    exists (k/a). split.
+    - unfold Rdiv.
+      apply Rmult_integral_contrapositive_currified; auto.
+      apply Rinv_neq_0_compat; auto.
+    - rewrite cvcmul_assoc.
+      replace (k / a * a)%A with k; auto. cbv. field; auto.
+  Qed.
+
+  (** v1 ∥ v2 -> v1 ∥ (a c* v2) *)
+  Lemma cvcmul_cvparallel_r : forall {n} (v1 v2 : cvec n) (a : R),
+      v1 ∥ v2 -> a <> 0 -> v1 ∥ (a c* v2).
+  Proof.
+    intros. apply cvparallel_sym. apply cvcmul_cvparallel_l; auto.
+    apply cvparallel_sym; auto.
+  Qed.
+
   (** Zero vector is parallel to any other vectors *)
   (* Lemma cvparallel_zero_l : forall {n} (v1 v2 : cvec n), cvzero v1 -> v1 ∥ v2. *)
   (* Proof. intros. exists 0. *)
@@ -232,7 +253,7 @@ Section vdot.
   Qed.
 
   (** <v,v> = 0 <-> v = 0 *)
-  Lemma cvdot0_iff_0 : forall {n} (v : cvec n), <v,v> = 0 <-> v == cvec0.
+  Lemma cvdot_same_eq0 : forall {n} (v : cvec n), <v,v> = 0 <-> v == cvec0.
   Proof.
     intros. unfold cvdot, Vector.cvdot. cvec2fun.
     split; intros.
@@ -243,7 +264,25 @@ Section vdot.
         hnf; simpl. intros. assert (i = 0%nat) by lia. subst; auto.
       + apply seqsum_ge0. intros. ra.
     - hnf in H; simpl in *.
-      apply seqsum_seq0. intros. apply Rsqr_eq0_if0. apply H; auto.
+      apply seqsum_eq0. intros. apply Rsqr_eq0_if0. apply H; auto.
+  Qed.
+
+  (** Another proof. *)
+  Lemma cvdot_same_eq0' : forall {n} (v : cvec n), <v,v> = 0 <-> v == cvec0.
+  Proof.
+    intros. unfold cvdot. split; intros.
+    - hnf; intros. apply (seqsum_eq0_imply_seq0) with (i:=i) in H; auto; ra.
+      cvec2fun; cbv in H.
+      assert (j = 0)%nat by nia.
+      assert (v i 0%nat = 0); ra. subst. easy.
+    - rewrite H. rewrite cvdot_0_l. auto.
+  Qed.
+      
+  (** <v, v> != Azero <-> cvnonzero v *)
+  Lemma cvdot_same_neq0 : forall {n} (v : cvec n),
+      <v, v> <> 0 <-> cvnonzero v.
+  Proof.
+    intros. split; intros; intro; apply cvdot_same_eq0 in H0; easy.
   Qed.
 
   (** <row(m1,i), col(m2,j)> = (m1 * m2)[i,j] *)
@@ -304,9 +343,9 @@ Section vlen.
   Proof.
     simp_proper. intros. unfold cvlen. f_equiv. rewrite H. auto.
   Qed.
-
-  (** Square of length equal to dot-product *)
-  Lemma cvlen_sqr : forall {n} (v : cvec n), ||v||² = <v,v>.
+  
+  (** Dot product a same vector equal to the square of its length *)
+  Lemma cvdot_same : forall {n} (v : cvec n), <v,v> = ||v||².
   Proof. intros. unfold cvlen. rewrite Rsqr_sqrt; auto. apply cvdot_ge0. Qed.
 
   (** 0 <= ||v|| *)
@@ -316,18 +355,20 @@ Section vlen.
   (** Length equal iff dot-product equal *)
   Lemma cvlen_eq_iff_dot_eq : forall {n} (u v : cvec n), ||u|| = ||v|| <-> <u,u> = <v,v>.
   Proof.
-    intros. rewrite <- !cvlen_sqr. split; intros.
-    - apply Rsqr_eq_asb_1. rewrite H. auto.
-    - apply Rsqr_eq_abs_0 in H. rewrite !Rabs_right in H; auto.
-      all: apply Rle_ge; apply cvlen_ge0.
+    intros. unfold cvlen. split; intros H; try rewrite H; auto.
+    apply sqrt_inj in H; auto; apply cvdot_ge0.
   Qed.
+
+  (** || cvec0 || = 0 *)
+  Lemma cvlen_cvec0 : forall {n}, || @cvec0 n || = 0.
+  Proof. intros. unfold cvlen. rewrite cvdot_0_l. ra. Qed.
 
   (** ||v|| = 0 <-> v = 0 *)
   Lemma cvlen_eq0_iff_eq0 : forall {n} (v : cvec n), ||v|| = 0 <-> cvzero v.
   Proof.
     intros. unfold cvlen. split; intros.
-    - apply cvdot0_iff_0. apply sqrt_eq_0 in H. auto. apply cvdot_ge0.
-    - apply cvdot0_iff_0 in H. rewrite H. ra.
+    - apply cvdot_same_eq0. apply sqrt_eq_0 in H. auto. apply cvdot_ge0.
+    - apply cvdot_same_eq0 in H. rewrite H. ra.
   Qed.
 
   (** ||v|| <> 0 <-> v <> 0 *)
@@ -367,6 +408,11 @@ Section vlen.
 
   (** |<u,v>| <= ||u|| * ||v|| *)
   Lemma cvlen_mul_ineq : forall {n} (u v : cvec n), |<u,v>| <= ||u|| * ||v||.
+  Abort.
+  
+  (** 这个性质不成立，有一个例子：相反向量长度相等且平行，但不相等。*)
+  Lemma cv_eq_iff_len_parallel : forall {n} (v1 v2 : cvec n),
+      (||v1|| = ||v2|| /\ v1 ∥ v2) <-> v1 == v2.
   Abort.
 
 End vlen.
@@ -442,7 +488,7 @@ Section vnormalize.
     (* v̂ = v/|v|, |v̂| = sqrt (v/|v| ⋅ v/|v|) = sqrt ((v⋅v) / (|v|*|v|))
      = sqrt(v⋅v) / |v| = |v| / |v| = 1 *)
     intros. unfold cvnormalize. unfold cvlen.
-    rewrite !cvdot_vcmul_l, !cvdot_vcmul_r. rewrite <- cvlen_sqr.
+    rewrite !cvdot_vcmul_l, !cvdot_vcmul_r. rewrite cvdot_same.
     remember (||v||). autounfold with A. autorewrite with R.
     apply sqrt_eq1_imply_eq1_rev.
     assert (|r| = r). { pose proof (cvlen_ge0 v). subst. ra. }
@@ -550,7 +596,7 @@ Section vangle.
     intros.
     (* construct another form of "cosine_law" *)
     assert (||(a-b)%CV||² = ||a||² + ||b||² - 2 * <a,b>)%R.
-    { rewrite !cvlen_sqr.  unfold cvsub.
+    { rewrite <- !cvdot_same. unfold cvsub.
       rewrite !cvdot_vadd_distr_l, !cvdot_vadd_distr_r.
       rewrite !cvdot_vopp_l, !cvdot_vopp_r. rewrite (cvdot_comm b a).
       autounfold with A; ring. }
@@ -565,6 +611,54 @@ Section vangle.
   Lemma sin_cvangle_ge0 : forall {n} (u v : cvec n), 0 <= sin (cvangle u v).
   Proof. intros. apply sin_ge_0; apply cvangle_bound. Qed.
   
+  (** θ ≠ 0 -> θ ≠ π -> 0 < sin (cvangle u v) *)
+  Lemma sin_cvangle_gt0 : forall {n} (u v : cvec n),
+      u ∠ v <> 0 -> u ∠ v <> PI -> 0 < sin (u ∠ v).
+  Proof. intros. pose proof (cvangle_bound u v). apply sin_gt_0; ra. Qed.
+
+  (** v1 ∠ v2 = 0 <-> v1,v2同向平行 *)
+  Lemma cvangle_eq0_cvparallel : forall {n} (v1 v2 : cvec n),
+      cvangle v1 v2 = 0 <-> (exists k : R, k > 0 /\ k c* v1 == v2).
+  Proof.
+  Admitted.
+
+  (** 相同的向量之间的角度是 0。可能还有一个特例，两个0向量之间的夹角可能是任意值 *)
+  Lemma cvangle_same_eq0 : forall {n} (v : cvec n), v ∠ v = 0.
+  Admitted.
+
+  (** 由于目前 cvangle 的值域是 [0,π]，暂不能表示 [0,2π)，所以该性质有点困难。
+      有扩展了值域为 [0,2π) 的 cv2angle 可做参考，但3D中尚未实现。
+      所以，暂时用公理来承认该性质。*)
+  Axiom cvangle_add : forall (v1 v2 v3 : cvec 3),
+      v1 ∠ v2 < PI ->
+      v2 ∠ v3 < PI ->
+      v1 ∠ v3 = ((v1 ∠ v2) + (v2 ∠ v3))%R.
+
+  (** 给定两个向量，若将这两个向量同时旋转θ角，则向量之和在旋转前后的夹角也是θ。*)
+  Axiom cvangle_cvadd : forall (v1 v2 v1' v2' : cvec 3),
+      ||v1|| = ||v1'|| -> ||v2|| = ||v2'|| ->
+      v1 ∠ v2 = v1' ∠ v2' ->
+      v1 + v2 ∠ v1' + v2' = v1 ∠ v2.
+
+  (** a <> 0 -> (a c* v1) ∠ v2 = v1 ∠ v2 *)
+  Lemma cvangle_cvcmul_l : forall {n} (v1 v2 : cvec n) (a : R),
+      a <> 0 -> (a c* v1) ∠ v2 = v1 ∠ v2.
+  Proof.
+  Admitted.
+
+  (** a <> 0 -> v1 ∠ (a c* v2) = v1 ∠ v2 *)
+  Lemma cvangle_cvcmul_r : forall {n} (v1 v2 : cvec n) (a : R),
+      a <> 0 -> v1 ∠ (a c* v2) = v1 ∠ v2.
+  Proof.
+  Admitted.
+
+  Lemma cvangle_cvnormalize_l : forall {n} (v1 v2 : cvec n),
+      cvnormalize v1 ∠ v2 = v1 ∠ v2.
+  Admitted.
+  Lemma cvangle_cvnormalize_r : forall {n} (v1 v2 : cvec n),
+      v1 ∠ cvnormalize v2 = v1 ∠ v2.
+  Admitted.
+
 End vangle.
 Infix "∠" := cvangle (at level 60) : cvec_scope.
 
@@ -602,6 +696,35 @@ Section cvproj.
 
   (* (** The scalar projection of a on b is a simple triangle relation *) *)
   (* Lemma cvsproj_spec : forall {n} (a b : cvec n), cvsproj a b == `|a| * cvangle. *)
+
+  #[export] Instance cvproj_mor {n} : Proper (meq ==> meq ==> meq) (@cvproj n).
+  Proof. simp_proper. intros. unfold cvproj. rewrite H,H0. easy. Qed.
+
+  (** cvproj (a1 + a2) b == cvproj a1 b + cvproj a2 b *)
+  Lemma cvproj_linear_cvadd : forall {n} (a1 a2 b : cvec n),
+      cvnonzero b -> (cvproj (a1 + a2) b == cvproj a1 b + cvproj a2 b)%CV.
+  Proof.
+    intros. unfold cvproj. rewrite cvdot_vadd_distr_l.
+    rewrite <- cvcmul_add_distr. f_equiv. autounfold with A. field.
+    rewrite cvdot_same. apply cvlen_gt0 in H. ra.
+  Qed.
+
+  (** cvproj (k * a) b == k * (cvproj a b) *)
+  Lemma cvproj_linear_cvcmul : forall {n} (a b : cvec n) (k : R),
+      cvnonzero b -> (cvproj (k c* a) b == k c* (cvproj a b))%CV.
+  Proof.
+    intros. unfold cvproj. rewrite cvdot_vcmul_l. rewrite cvcmul_assoc. f_equiv.
+    autounfold with A. field.
+    rewrite cvdot_same. apply cvlen_gt0 in H. ra.
+  Qed.
+  
+  (** cvproj a a = a *)
+  Lemma cvproj_same : forall {n} (a : cvec n), cvnonzero a -> cvproj a a == a.
+  Proof.
+    intros. unfold cvproj. replace (<a,a> / <a,a>) with 1; try field.
+    apply cvcmul_1_l. rewrite cvdot_same. apply cvlen_gt0 in H. ra.
+  Qed.
+  
 End cvproj.
 
 
@@ -611,7 +734,32 @@ Section cvperp.
 
   (** The perpendicular component of a respect to b *)
   Definition cvperp {n} (a b : cvec n) : cvec n := a - cvproj a b.
+  
+  #[export] Instance cvperp_mor {n} : Proper (meq ==> meq ==> meq) (@cvperp n).
+  Proof. simp_proper. intros. unfold cvperp. rewrite H,H0. easy. Qed.
 
+  (** cvperp (a1 + a2) b == cvperp a1 b + cvperp a2 b *)
+  Lemma cvperp_linear_cvadd : forall {n} (a1 a2 b : cvec n),
+      cvnonzero b -> (cvperp (a1 + a2) b == cvperp a1 b + cvperp a2 b)%CV.
+  Proof.
+    intros. unfold cvperp. rewrite cvproj_linear_cvadd; auto.
+    unfold cvsub. elimh. rewrite cvopp_vadd. easy.
+  Qed.
+
+  (** cvperp (k * a) b == k * (cvperp a b) *)
+  Lemma cvperp_linear_cvcmul : forall {n} (a b : cvec n) (k : R),
+      cvnonzero b -> (cvperp (k c* a) b == k c* (cvperp a b))%CV.
+  Proof.
+    intros. unfold cvperp. rewrite cvproj_linear_cvcmul; auto.
+    rewrite cvcmul_vsub. easy.
+  Qed.
+
+  (** cvperp a a = 0 *)
+  Lemma cvperp_same : forall {n} (a : cvec n), cvnonzero a -> cvperp a a == cvec0.
+  Proof.
+    intros. unfold cvperp. rewrite cvproj_same; auto; auto. apply cvsub_self.
+  Qed.
+  
 End cvperp.
 
 
@@ -629,12 +777,100 @@ Section cvorthogonal.
   Definition cvorthogonalb {n} (v1 v2 : cvec n) : bool := (<v1,v2> =? 0)%R.
   Infix "⟂" := cvorthogonal ( at level 50).
 
+  #[export] Instance cvorthogonal_mor {n} :
+    Proper (meq ==> meq ==> impl) (@cvorthogonal n).
+  Proof.
+    simp_proper. intros. unfold cvorthogonal. rewrite H,H0. easy.
+  Qed.
+
+  (** u ⟂ v -> v ⟂ u *)
+  Lemma cvorthogonal_comm : forall (u v : cvec 3), u ⟂ v -> v ⟂ u.
+  Proof. intros. unfold cvorthogonal in *. rewrite cvdot_comm; auto. Qed.
+
+  (** u ⟂ v -> cvproj u v == cvec0 *)
+  Lemma cvorthogonal_cvproj : forall (u v : cvec 3),
+      cvnonzero v -> u ⟂ v -> cvproj u v == cvec0.
+  Proof.
+    intros. unfold cvorthogonal in H0.
+    unfold cvproj. rewrite H0. autorewrite with R. rewrite cvcmul_0_l; easy.
+    apply cvdot_same_neq0; auto.
+  Qed.
+  
+  (** u ⟂ v -> cvperp u v == u *)
+  Lemma cvorthogonal_cvperp : forall (u v : cvec 3),
+      cvnonzero v -> u ⟂ v -> cvperp u v == u.
+  Proof.
+    intros. unfold cvperp. rewrite cvorthogonal_cvproj; auto. apply cvsub_0_r.
+  Qed.
+
+  (** u ⟂ v -> cvnormalize u ⟂ v *)
+  Lemma cvorthogonal_cvnormalize_l : forall (u v : cvec 3), u ⟂ v -> cvnormalize u ⟂ v.
+  Proof.
+    intros. unfold cvorthogonal, cvnormalize in *. rewrite cvdot_cvcmul_l; ra.
+  Qed.
+
+  (** cvnormalize u ⟂ v -> u ⟂ v *)
+  Lemma cvorthogonal_cvnormalize_l_rev : forall (u v : cvec 3),
+      u != cvec0 -> cvnormalize u ⟂ v -> u ⟂ v.
+  Proof.
+    intros. unfold cvorthogonal, cvnormalize in *.
+    rewrite cvdot_cvcmul_l in H0; ra.
+    assert (1 * / (||u||) <> 0)%R; ra.
+    apply cvlen_neq0_iff_neq0 in H.
+    apply Rmult_integral_contrapositive_currified; ra.
+    apply Rinv_neq_0_compat; auto.
+  Qed.
+
+  (** u ⟂ v -> cvnormalize u ⟂ v *)
+  Lemma cvorthogonal_cvnormalize_r : forall (u v : cvec 3), u ⟂ v -> u ⟂ cvnormalize v.
+  Proof.
+    intros. unfold cvorthogonal, cvnormalize in *. rewrite cvdot_cvcmul_r; ra.
+  Qed.
+
+  (** u ⟂ cvnormalize v -> u ⟂ v *)
+  Lemma cvorthogonal_cvnormalize_r_rev : forall (u v : cvec 3),
+      v != cvec0 -> u ⟂ cvnormalize v -> u ⟂ v.
+  Proof.
+    intros. unfold cvorthogonal, cvnormalize in *.
+    rewrite cvdot_cvcmul_r in H0; ra. assert (1 * / (||v||) <> 0)%R; ra.
+    apply cvlen_neq0_iff_neq0 in H.
+    apply Rmult_integral_contrapositive_currified; ra.
+    apply Rinv_neq_0_compat; auto.
+  Qed.
+  
+  (** u ⟂ v -> (k c* u) ⟂ v *)
+  Lemma cvorthogonal_cvcmul_l : forall (u v : cvec 3) (k : R), u ⟂ v -> (k c* u) ⟂ v.
+  Proof.
+    intros. unfold cvorthogonal, cvnormalize in *. rewrite cvdot_cvcmul_l; ra.
+  Qed.
+
+  (** (k c* u) ⟂ v -> u ⟂ v *)
+  Lemma cvorthogonal_cvcmul_l_rev : forall (u v : cvec 3) (k : R),
+      k <> 0 -> (k c* u) ⟂ v -> u ⟂ v.
+  Proof.
+    intros. unfold cvorthogonal, cvnormalize in *. rewrite cvdot_cvcmul_l in H0; ra.
+  Qed.
+
+  (** u ⟂ v -> u ⟂ (k c* v) *)
+  Lemma cvorthogonal_cvcmul_r : forall (u v : cvec 3) (k : R), u ⟂ v -> u ⟂ (k c* v).
+  Proof.
+    intros. unfold cvorthogonal, cvnormalize in *. rewrite cvdot_cvcmul_r; ra.
+  Qed.
+
+  (** u ⟂ (k c* v) -> u ⟂ v *)
+  Lemma cvorthogonal_cvcmul_r_rev : forall (u v : cvec 3) (k : R),
+      k <> 0 -> u ⟂ (k c* v) -> u ⟂ v.
+  Proof.
+    intros. unfold cvorthogonal, cvnormalize in *. rewrite cvdot_cvcmul_r in H0; ra.
+  Qed.
+
   (** cvproj ⟂ cvperp *)
   Lemma cvorthogonal_proj_perp : forall {n} (u v : cvec n), cvproj u v ⟂ cvperp u v.
   Proof.
-    intros. hnf. unfold cvproj,cvperp.
+    intros. hnf. unfold cvperp, cvproj.
+    (* unfold cvperp. unfold cvsub. rewrite cvdot_vadd_distr_r. *)
     (* 以下证明思路明显是错误的，不可能所有元素都是0 *)
-    apply seqsum_seq0.
+    apply seqsum_eq0.
     intros.
     cvec2fun. simpl.
     unfold cvdot, Vector.cvdot. simpl.
@@ -642,6 +878,7 @@ Section cvorthogonal.
     remember (seqsum (fun i0 : nat => v i0 0%nat * v i0 0%nat) n)%A as r1.
     remember (seqsum (fun i0 : nat => u i0 0%nat * v i0 0%nat) n)%A as r2.
   Abort.
+  
 End cvorthogonal.
 Infix "⟂" := cvorthogonal ( at level 50).
 
