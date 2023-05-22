@@ -649,33 +649,33 @@ Section vangle.
       u ∠ v <> 0 -> u ∠ v <> PI -> 0 < sin (u ∠ v).
   Proof. intros. pose proof (cvangle_bound u v). apply sin_gt_0; ra. Qed.
 
-  (** v1 ∠ v2 = 0 <-> v1,v2同向平行 *)
-  Lemma cvangle_eq0_cvparallel : forall {n} (v1 v2 : cvec n),
-      cvnonzero v1 -> cvnonzero v2 ->
-      (cvangle v1 v2 = 0 <-> (exists k : R, k > 0 /\ k c* v1 == v2)).
-  Proof.
-    intros. unfold cvangle. split; intros.
-    2:{
-      destruct H1 as [k [H11 H12]].
-      rewrite <- H12. rewrite <- acos_1. f_equal.
-      unfold cvnormalize.
-      rewrite cvcmul_assoc, !cvdot_cvcmul_l, !cvdot_cvcmul_r.
-      rewrite cvlen_cmul. rewrite cvdot_same. rewrite Rabs_right; ra.
-      autounfold with A. field.
-      apply cvlen_neq0_iff_neq0 in H,H0. lra. }
-    1:{
-      rewrite <- acos_1 in H1. apply acos_inj in H1; ra.
-      2:{ apply cvdot_vnormalize_bound; auto. }
-      1:{
-        (**
-           v1 ∠ v2 = 0 -> acos(<v1',v2'>) = 0, where v1',v2' is normalized v1,v2.
-           then <v1',v2'> = 1. that is <cvnormlize v1, cvnormalize v2> = ,
-           then (1/(|v1|*|v2|)) * <v1,v2> = 1
-           可以借助投影来表明 v1和v2是k倍的关系
-         *)
-        exists (||v1|| * ||v2||)%R.
-        rewrite cvdot_eq_cos_angle in H1.
-        Admitted.
+  (* (** v1 ∠ v2 = 0 <-> v1,v2同向平行 *) *)
+  (* Lemma cvangle_eq0_cvparallel : forall {n} (v1 v2 : cvec n), *)
+  (*     cvnonzero v1 -> cvnonzero v2 -> *)
+  (*     (cvangle v1 v2 = 0 <-> (exists k : R, k > 0 /\ k c* v1 == v2)). *)
+  (* Proof. *)
+  (*   intros. unfold cvangle. split; intros. *)
+  (*   2:{ *)
+  (*     destruct H1 as [k [H11 H12]]. *)
+  (*     rewrite <- H12. rewrite <- acos_1. f_equal. *)
+  (*     unfold cvnormalize. *)
+  (*     rewrite cvcmul_assoc, !cvdot_cvcmul_l, !cvdot_cvcmul_r. *)
+  (*     rewrite cvlen_cmul. rewrite cvdot_same. rewrite Rabs_right; ra. *)
+  (*     autounfold with A. field. *)
+  (*     apply cvlen_neq0_iff_neq0 in H,H0. lra. } *)
+  (*   1:{ *)
+  (*     rewrite <- acos_1 in H1. apply acos_inj in H1; ra. *)
+  (*     2:{ apply cvdot_vnormalize_bound; auto. } *)
+  (*     1:{ *)
+  (*       (** *)
+  (*          v1 ∠ v2 = 0 -> acos(<v1',v2'>) = 0, where v1',v2' is normalized v1,v2. *)
+  (*          then <v1',v2'> = 1. that is <cvnormlize v1, cvnormalize v2> = , *)
+  (*          then (1/(|v1|*|v2|)) * <v1,v2> = 1 *)
+  (*          可以借助投影来表明 v1和v2是k倍的关系 *)
+  (*        *) *)
+  (*       exists (||v1|| * ||v2||)%R. *)
+  (*       rewrite cvdot_eq_cos_angle in H1. *)
+  (*       Admitted. *)
 
   (** 相同的向量之间的角度是 0。可能还有一个特例，两个0向量之间的夹角可能是任意值 *)
   Lemma cvangle_same_eq0 : forall {n} (v : cvec n),
