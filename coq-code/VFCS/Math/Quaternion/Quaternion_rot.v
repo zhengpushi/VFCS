@@ -635,18 +635,20 @@ Module qrot_spec_method2.
   
   (** 四元数乘法能表示旋转（这一版，仍然使用 v0,v1 这两个中间变量，以后去掉） *)
   Theorem qrot_valid : forall (v0 v1 : cvec 3) (s0 s1 s2 : R) (α : R) (v : cvec 3),
-      let q : quat := aa2quat (α/2, v) in
+      let q : quat := aa2quat (α, v) in
       let vt : cvec 3 := (s0 c* v0 + s1 c* v1 + s2 c* v)%CV in
       let vt' : cvec 3 := qrotv q vt in
       cvunit v0 -> cvunit v1 -> 0 < α < 2 * PI ->
       cvnormalize (v0 × v1) == v ->
       cvangle v0 v1 = α/2 ->
+      cvunit v -> s0 <> 0 -> s1 <> 0 ->
       (||vt'|| = ||vt||)%CV /\ cvperp vt v ∠ cvperp vt' v = α.
   Proof.
     intros. split.
     - pose proof (cvlen_vt'_eq_vt α v H1 v0 v1 H H0 H2 H3 s0 s1 s2).
-      unfold vt'. unfold vt. unfold q. rewrite <- H4. f_equiv.
-      f_equiv. f_equiv.
+      unfold vt'. unfold vt. unfold q. rewrite <- H7. f_equiv.
+    - pose proof (vt'_vt_proj_θ α v H1 H4 v0 v1 H H0 H2 H3 s0 s1 s2 H5 H6).
+      unfold vt', vt, q. rewrite H7.
   Abort.
 
 End qrot_spec_method2.
