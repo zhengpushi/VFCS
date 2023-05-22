@@ -638,7 +638,7 @@ Section vangle.
   Axiom cvangle_cvadd : forall (v1 v2 v1' v2' : cvec 3),
       ||v1|| = ||v1'|| -> ||v2|| = ||v2'|| ->
       v1 ∠ v2 = v1' ∠ v2' ->
-      v1 + v2 ∠ v1' + v2' = v1 ∠ v2.
+      v1 + v2 ∠ v1' + v2' = v1 ∠ v1'.
 
   (** a <> 0 -> (a c* v1) ∠ v2 = v1 ∠ v2 *)
   Lemma cvangle_cvcmul_l : forall {n} (v1 v2 : cvec n) (a : R),

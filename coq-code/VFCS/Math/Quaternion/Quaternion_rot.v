@@ -355,10 +355,6 @@ Module qrot_spec_method2.
 
     (** *** 1. 基本的事实 *)
 
-    (* (** 0 < θ / 2 < PI *) *)
-    (* Fact θ2_bound_0_pi : 0 < θ / 2 < PI. *)
-    (* Proof. ra. Qed. *)
-
     (** <v0,v1> = cos (θ / 2) *)
     Fact dot01_eq : <v0,v1> = cos (θ / 2).
     Proof.
@@ -382,7 +378,7 @@ Module qrot_spec_method2.
       - apply sin_eq_O_2PI_0 in H; ra.
     Qed.
     
-    (** sin (θ/2) ≠ 0 -> θ ≠ 0 *)
+    (** θ ≠ 0 <-> sin (θ/2) ≠ 0*)
     Fact θ_neq0_iff_sin_θ2_neq0 : θ <> 0 <-> sin (θ/2) <> 0.
     Proof. rewrite θ_eq0_iff_sin_θ2_eq0. easy. Qed.
     
@@ -570,12 +566,6 @@ Module qrot_spec_method2.
       apply qunit_neq0. apply q_qunit.
     Qed.
     
-    (* Fact v_unchanged : qrot q (qpure v) = qpure v. *)
-    (* Proof. *)
-    (*   unfold qrot. rewrite qv_eq_vq. rewrite qmul_assoc. *)
-    (*   rewrite qmul_qinv_r. apply qmul_1_r. apply qunit_neq0. apply q_qunit. *)
-    (* Qed. *)
-    
     (** *** 5. 证明 q 与任意向量 vt 的几何关系 *)
     Section main_theorem_analysis.
       
@@ -592,7 +582,7 @@ Module qrot_spec_method2.
 
       (** 我们证明如下结论：
           (1) vt和vt'的长度相等
-          (1) vt和vt'在v的法平面上的投影的夹角是θ
+          (2) vt和vt'在v的法平面上的投影的夹角是θ
           这说明了 qrot 将 vt 绕 v 轴旋转了 θ 度，到达 vt'。
           所以，单位四元数旋转公式
           [0 v'] = qrot (q, v) = q ⊗ [0 v] ⊗ q∗, 其中，q = (cos(θ/2), sin(θ/2)*v)
@@ -605,8 +595,8 @@ Module qrot_spec_method2.
         unfold vt',vt. rewrite qrot_keep_cvlen; auto. apply q_qunit.
       Qed.
 
-      (** vt和vt'在v的法平面上的投影的夹角是θ/2 *)
-      Fact vt'_vt_proj_θ : cvperp vt v ∠ cvperp vt' v = θ/2.
+      (** vt和vt'在v的法平面上的投影的夹角是θ *)
+      Fact vt'_vt_proj_θ : cvperp vt v ∠ cvperp vt' v = θ.
       Proof.
         pose proof (cvunit_neq0 v Hunit_v).
         unfold vt',vt.
@@ -617,8 +607,9 @@ Module qrot_spec_method2.
         rewrite cvperp_same; auto. rewrite cvcmul_0_r, !cvadd_0_r.
         (* elim cvperp *)
         rewrite !cvorthogonal_cvperp; auto.
-        - (* (v0+v1) 到 (v2+v3) 的角度也是 θ/2 *)
+        - (* (v0+v1) 到 (v2+v3) 的角度也是 θ *)
           rewrite !cvangle_cvadd, !cvangle_cvcmul_l, !cvangle_cvcmul_r; auto.
+          + apply v02_angle_θ.
           + rewrite !cvlen_cmul, !cvlen_cvunit; auto. apply v2_cvunit.
           + rewrite !cvlen_cmul, !cvlen_cvunit; auto. apply v3_cvunit.
           + rewrite !cvangle_cvcmul_l, !cvangle_cvcmul_r; auto.
@@ -646,10 +637,10 @@ Module qrot_spec_method2.
   Proof.
     intros. split.
     - pose proof (cvlen_vt'_eq_vt α v H1 v0 v1 H H0 H2 H3 s0 s1 s2).
-      unfold vt'. unfold vt. unfold q. rewrite <- H7. f_equiv.
+      unfold vt', vt, q. auto.
     - pose proof (vt'_vt_proj_θ α v H1 H4 v0 v1 H H0 H2 H3 s0 s1 s2 H5 H6).
-      unfold vt', vt, q. rewrite H7.
-  Abort.
+      unfold vt', vt, q. auto.
+  Qed.
 
 End qrot_spec_method2.
 
