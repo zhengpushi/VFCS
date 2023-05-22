@@ -463,6 +463,14 @@ Section basic_elementary_fun.
   Fact acos_sqrt2_2 : acos ((sqrt 2) / 2) = PI / 4. Admitted.
   Fact acos_sqrt3_2 : acos ((sqrt 3) / 2) = PI / 2. Admitted.
   Fact acos_1 : acos 1 = 0. Admitted.
+  (** acos is injective in its domain *)
+  Fact acos_inj : forall x1 x2 : R,
+      -1 <= x1 <= 1 -> -1 <= x2 <= 1 ->
+      acos x1 = acos x2 -> x1 = x2.
+  Proof.
+    intros. rewrite <- cos_acos; auto.
+    rewrite <- H1. rewrite cos_acos; auto.
+  Qed.
 
   Fact atan_0 : atan 0 = 0. Admitted.
   Fact atan_sqrt3_3 : atan ((sqrt 3) / 3) = PI / 6. Admitted.

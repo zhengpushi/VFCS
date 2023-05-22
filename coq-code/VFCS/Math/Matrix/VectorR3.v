@@ -106,40 +106,20 @@ End basis.
 (** Equality *)
 Section cv3eq.
 
-  (** v1 = v2 <-> (||v1|| = ||v2|| /\ v1 ∠ v2 = 0)
-      这是规定了 v1,v2 非零的简单形式 *)
-  Lemma cv3eq_iff_len_angle0_simple : forall (v1 v2 : cvec 3),
+  (** v1 = v2 <-> (||v1|| = ||v2|| /\ v1 ∠ v2 = 0) *)
+  Lemma cv3eq_iff_len_angle0 : forall (v1 v2 : cvec 3),
       cvnonzero v1 -> cvnonzero v2 ->
       (v1 == v2 <-> ((||v1|| = ||v2||)%CV /\ cvangle v1 v2 = 0)).
   Proof.
     intros v1 v2 Hv1_neq0 Hv2_neq0. split; intros H.
-    - rewrite H. split; auto. apply cvangle_same_eq0.
+    - rewrite H. split; auto. apply cvangle_same_eq0; auto.
     - destruct H as [H1 H2].
-      apply cvangle_eq0_cvparallel in H2. destruct H2 as [k [H2 H3]].
+      apply cvangle_eq0_cvparallel in H2; auto. destruct H2 as [k [H2 H3]].
       assert (|| k c* v1 || = || v2 ||)%CV as H4. { rewrite H3; auto. }
       rewrite cvlen_cmul in H4. rewrite H1 in H4.
       rewrite Rabs_right in H4; ra.
       assert (|| v2 ||%CV > 0). { apply cvlen_gt0; auto. }
       assert (k = 1); ra. rewrite H0 in H3. rewrite cvcmul_1_l in H3; auto.
-  Qed.
-
-  (** v1 = v2 <-> (||v1|| = ||v2|| /\ v1 ∠ v2 = 0)
-      这是不限制 v1,v2 非零条件的普遍形式 *)
-  Lemma cv3eq_iff_len_angle0 : forall (v1 v2 : cvec 3),
-      (v1 == v2 <-> ((||v1|| = ||v2||)%CV /\ cvangle v1 v2 = 0)).
-  Proof.
-    intros v1 v2.
-    destruct (dec v1 cvec0) as [H1 | H1], (dec v2 cvec0) as [H2 | H2].
-    - rewrite H1,H2. split; intros; try easy.
-      split; auto. apply cvangle_same_eq0.
-    - rewrite H1. split; intros.
-      + rewrite <- H. rewrite !cvlen_cvec0. split; auto. apply cvangle_same_eq0.
-      + destruct H. rewrite cvlen_cvec0 in H.
-        symmetry in H. apply cvlen_eq0_iff_eq0 in H; easy.
-    - rewrite H2. split; intros.
-      + rewrite H. rewrite !cvlen_cvec0. split; auto. apply cvangle_same_eq0.
-      + destruct H. rewrite cvlen_cvec0 in H. apply cvlen_eq0_iff_eq0 in H; easy.
-    - apply cv3eq_iff_len_angle0_simple; auto.
   Qed.
 
 End cv3eq.

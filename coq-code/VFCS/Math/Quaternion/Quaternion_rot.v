@@ -366,9 +366,9 @@ Module qrot_spec_method2.
     Fact sin_θ2_gt0 : 0 < sin (θ/2).
     Proof. rewrite <- Hangle_v01_θ. apply sin_gt_0; ra. Qed.
 
-    (** θ = 0 <-> v0 = v1 *)
-    Fact θ_eq0_iff_v0_eq_v1 : θ = 0 <-> v0 == v1.
-    Proof. rewrite cv3eq_iff_len_angle0. rewrite !cvlen_cvunit; auto. ra. Qed.
+    (* (** θ = 0 <-> v0 = v1 *) *)
+    (* Fact θ_eq0_iff_v0_eq_v1 : θ = 0 <-> v0 == v1. *)
+    (* Proof. rewrite cv3eq_iff_len_angle0. rewrite !cvlen_cvunit; auto. ra. Qed. *)
 
     (** θ = 0 <-> sin (θ/2) = 0 *)
     Fact θ_eq0_iff_sin_θ2_eq0 : θ = 0 <-> sin (θ/2) = 0.
@@ -610,6 +610,8 @@ Module qrot_spec_method2.
         - (* (v0+v1) 到 (v2+v3) 的角度也是 θ *)
           rewrite !cvangle_cvadd, !cvangle_cvcmul_l, !cvangle_cvcmul_r; auto.
           + apply v02_angle_θ.
+          + apply cvcmul_cvnonzero; auto. apply cvunit_neq0; auto.
+          + apply cvcmul_cvnonzero; auto. apply cvunit_neq0; auto.
           + rewrite !cvlen_cmul, !cvlen_cvunit; auto. apply v2_cvunit.
           + rewrite !cvlen_cmul, !cvlen_cvunit; auto. apply v3_cvunit.
           + rewrite !cvangle_cvcmul_l, !cvangle_cvcmul_r; auto.

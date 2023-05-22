@@ -376,7 +376,7 @@ Section sec_6_4_3.
   (*   (* prove "det m <> 0" *) *)
   (*   cbv; autorewrite with R. ra. *)
     (* Qed. *)
-  Admitted. (* 为提供编译速度，暂时注释掉 *)
+  Admitted. (* 为提高编译速度，暂时注释掉 *)
       
 End sec_6_4_3.
 

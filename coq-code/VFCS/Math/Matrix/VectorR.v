@@ -93,6 +93,12 @@ End kronecker.
 (** ** Properties about vcmul *)
 Section vcmul.
 
+  (** cvnonzero v -> k <> 0 -> cvnonzero (k c* v). *)
+  Lemma cvcmul_cvnonzero : forall {n} (v : cvec n) (k : R),
+      cvnonzero v -> k <> 0 -> cvnonzero (k c* v).
+  Proof.
+    Admitted.
+
   (** If k times a non-zero vector equal to zero, then k must be zero *)
   Lemma cvcmul_nonzero_eq_zero_imply_k0 : forall {n} (v : cvec n) k,
       cvnonzero v -> k c* v == cvec0 -> (k == Azero)%A.
@@ -205,9 +211,13 @@ Section cvparallel.
     apply cvparallel_sym; auto.
   Qed.
 
-  (** Zero vector is parallel to any other vectors *)
-  (* Lemma cvparallel_zero_l : forall {n} (v1 v2 : cvec n), cvzero v1 -> v1 ∥ v2. *)
-  (* Proof. intros. exists 0. *)
+  (** Zero vector is parallel to any other vectors. *)
+  Lemma cvparallel_0_l : forall {n} (v1 v2 : cvec n), cvzero v1 -> v1 ∥ v2.
+  Proof.
+    intros. exists 0.
+    (* Note, it is not true, because the definition of cvparallel.  *)
+  Abort.
+
 
 (* (** If two non-zero vectors are parallel, then there is a unique k such that *)
  (*     they are k times relation *) *)
@@ -289,19 +299,19 @@ Section vdot.
   Lemma cvdot_row_col_eq : forall {r c s} (m : mat r c) (n : mat c s) i j,
       (i < r)%nat -> (j < c)%nat ->
       cvdot ((mrow m i)\T) (mcol n j) = (m * n) $ i $ j.
-  Admitted.
+  Proof. intros. apply seqsum_eq. intros. simpl. auto. Qed.
 
   (** <col(m1,i), col(m2,j)> = (m1\T * m2)[i,j] *)
   Lemma cvdot_col_col : forall {n} (m : smat n) i j,
       (i < n)%nat -> (j < n)%nat ->
       cvdot (mcol m i) (mcol m j) = (m\T * m) $ i $ j.
-  Admitted.
+  Proof. intros. apply seqsum_eq. intros. simpl. auto. Qed.
 
   (** <row(m1,i), row(m2,j)> = (m1 * m2\T)[i,j] *)
   Lemma cvdot_row_row : forall {n} (m : smat n) i j,
       (i < n)%nat -> (j < n)%nat ->
       rvdot (mrow m i) (mrow m j) = (m * m\T) $ i $ j.
-  Admitted.
+  Proof. intros. apply seqsum_eq. intros. simpl. auto. Qed.
 
   (** <-v1, v2> = - <v1,v2> *)
   Lemma cvdot_cvopp_l : forall {n} (v1 v2 : cvec n), < -v1, v2> = (- <v1,v2>)%R.
@@ -529,18 +539,21 @@ Section vnormalize.
 
   (** Keep the same direction as the original vector *)
   Lemma cvnormalize_direction : forall {n} (v : cvec n),
-      (cvnormalize v) ∥ v.
+      cvnonzero v -> (cvnormalize v) ∥ v.
   Proof.
-  Admitted.
+    intros. unfold cvparallel. unfold cvnormalize. exists (||v||). split.
+    - apply cvlen_neq0_iff_neq0; auto.
+    - rewrite cvcmul_assoc. autounfold with A.
+      match goal with | |- context[?a c* _] => replace a with 1 end.
+      apply cvcmul_1_l. field. apply cvlen_neq0_iff_neq0; auto.
+  Qed.
 
-  (* Variable n : nat. *)
-  (* Variable v : cvec n. *)
-  (* Hypotheses H : cvnonzero v. *)
-  (* Check cvnormalize_direction v. *)
-  (* Check (cvnormalize_len1 v H) /\ True. : Prop. *)
   Lemma cvnormalize_spec : forall {n} (v : cvec n),
-      (cvnonzero v -> ||cvnormalize v|| = 1) /\ ((cvnormalize v) ∥ v).
-  Proof. intros. split. apply cvnormalize_len1. apply cvnormalize_direction. Qed.
+      cvnonzero v -> (||cvnormalize v|| = 1 /\ (cvnormalize v) ∥ v).
+  Proof.
+    intros. split. apply cvnormalize_len1; auto.
+    apply cvnormalize_direction; auto.
+  Qed.
 
   (** 单位化后的非零向量都是单位向量 *)
   Lemma cvnormalize_unit : forall {n} (v : cvec n),
@@ -548,6 +561,14 @@ Section vnormalize.
   Proof. intros. apply cvunit_spec. apply cvnormalize_len1; auto. Qed.
 
 End vnormalize.
+
+
+(* ==================================== *)
+(* (** ** About {cvdot, cvunit,  cvnormalize} *) *)
+(* Section cvdot_cvunit_cvnormalize. *)
+  
+
+(* End cvdot_cvunit_cvangle_cvnormalize. *)
 
 
 (* ==================================== *)
@@ -571,19 +592,15 @@ Section vangle.
   Lemma cvangle_comm : forall {n} (v1 v2 : cvec n), v1 ∠ v2 = v2 ∠ v1.
   Proof. intros. unfold cvangle. rewrite cvdot_comm. auto. Qed.
   
-  (* (** Angle equal iff dot-product equal *) *)
-  (* Lemma cvangle_eq_if_dot_eq : forall {n} (u1 u2 v1 v2 : cvec n), *)
-  (*     <u1,v1> = <u2,v2> -> u1 ∠ v1 = u2 ∠ v2. *)
-  (* Proof. *)
-  (*   intros. unfold cvangle. f_equal. *)
-  (* Qed. *)
-
   (** The angle between (1,0,0) and (1,1,0) is 45 degree, i.e., π/4 *)
+  (* Remark: Here, we can finish a demo proof with a special value π/4,
+     but real cases maybe have any value, it is hard to finished in Coq.
+     Because the construction of {sqrt, acos, PI, etc} is complex. *)
   Example cvangle_ex1 : (@l2cv 3 [1;0;0]) ∠ (l2cv [1;1;0]) = PI/4.
   Proof.
-    compute.
-    (* Todo: 含有 sqrt, acos, PI 等，如何证明此类等式？ *)
-  Abort.
+    rewrite <- acos_inv_sqrt2.
+    compute. f_equiv. autorewrite with R. auto.
+  Qed.
 
   (** The law of cosine *)
   Axiom cosine_law : forall {n} (a b : cvec n),
@@ -603,6 +620,22 @@ Section vangle.
     pose proof (cosine_law a b). ra.
   Qed.
 
+  (** 单位向量的点积介于[-1,1] *)
+  Lemma cvdot_unit_bound : forall {n} (u v : cvec n),
+      cvunit u -> cvunit v -> -1 <= <u,v> <= 1.
+  Proof.
+    intros. rewrite cvdot_eq_cos_angle.
+    rewrite ?cvlen_cvunit; auto.
+    match goal with |- context [cos ?r] => remember r as a end.
+    pose proof (COS_bound a). lra.
+  Qed.
+
+  (** 单位化后的非零向量的点积介于 [-1,1] *)
+  Lemma cvdot_vnormalize_bound : forall {n} (u v : cvec n),
+      cvnonzero u -> cvnonzero v ->
+      -1 <= <cvnormalize u, cvnormalize v> <= 1.
+  Proof. intros. apply cvdot_unit_bound; apply cvnormalize_unit; auto. Qed.
+
   (** 0 <= cvangle u v <= PI *)
   Lemma cvangle_bound : forall {n} (u v : cvec n), 0 <= cvangle u v <= PI.
   Proof. intros. unfold cvangle. apply acos_bound. Qed.
@@ -618,27 +651,149 @@ Section vangle.
 
   (** v1 ∠ v2 = 0 <-> v1,v2同向平行 *)
   Lemma cvangle_eq0_cvparallel : forall {n} (v1 v2 : cvec n),
-      cvangle v1 v2 = 0 <-> (exists k : R, k > 0 /\ k c* v1 == v2).
+      cvnonzero v1 -> cvnonzero v2 ->
+      (cvangle v1 v2 = 0 <-> (exists k : R, k > 0 /\ k c* v1 == v2)).
   Proof.
-  Admitted.
+    intros. unfold cvangle. split; intros.
+    2:{
+      destruct H1 as [k [H11 H12]].
+      rewrite <- H12. rewrite <- acos_1. f_equal.
+      unfold cvnormalize.
+      rewrite cvcmul_assoc, !cvdot_cvcmul_l, !cvdot_cvcmul_r.
+      rewrite cvlen_cmul. rewrite cvdot_same. rewrite Rabs_right; ra.
+      autounfold with A. field.
+      apply cvlen_neq0_iff_neq0 in H,H0. lra. }
+    1:{
+      rewrite <- acos_1 in H1. apply acos_inj in H1; ra.
+      2:{ apply cvdot_vnormalize_bound; auto. }
+      1:{
+        (**
+           v1 ∠ v2 = 0 -> acos(<v1',v2'>) = 0, where v1',v2' is normalized v1,v2.
+           then <v1',v2'> = 1. that is <cvnormlize v1, cvnormalize v2> = ,
+           then (1/(|v1|*|v2|)) * <v1,v2> = 1
+           可以借助投影来表明 v1和v2是k倍的关系
+         *)
+        exists (||v1|| * ||v2||)%R.
+        rewrite cvdot_eq_cos_angle in H1.
+        Admitted.
 
   (** 相同的向量之间的角度是 0。可能还有一个特例，两个0向量之间的夹角可能是任意值 *)
-  Lemma cvangle_same_eq0 : forall {n} (v : cvec n), v ∠ v = 0.
-  Admitted.
+  Lemma cvangle_same_eq0 : forall {n} (v : cvec n),
+      cvnonzero v -> v ∠ v = 0.
+  Proof.
+    intros. unfold cvangle. rewrite cvdot_same.
+    rewrite cvnormalize_len1; auto. autorewrite with R. apply acos_1.
+  Qed.
 
-  (** 由于目前 cvangle 的值域是 [0,π]，暂不能表示 [0,2π)，所以该性质有点困难。
-      有扩展了值域为 [0,2π) 的 cv2angle 可做参考，但3D中尚未实现。
-      所以，暂时用公理来承认该性质。*)
-  Axiom cvangle_add : forall (v1 v2 v3 : cvec 3),
+  (** v1 ∠ v3 = (v1 ∠ v2) + (v2 ∠ v3) *)
+  Lemma cvangle_add : forall (v1 v2 v3 : cvec 3),
       v1 ∠ v2 < PI ->
       v2 ∠ v3 < PI ->
       v1 ∠ v3 = ((v1 ∠ v2) + (v2 ∠ v3))%R.
+  Proof.
+  (** 由于目前 cvangle 的值域是 [0,π]，暂不能表示 [0,2π)，所以该性质有点困难。
+      有扩展了值域为 [0,2π) 的 cv2angle 可做参考，但3D中尚未实现。*)
+  Admitted.
+
+  Lemma Rdiv_1_neq_0_compat : forall r : R, r <> 0 -> 1 / r <> 0.
+  Proof. intros. pose proof (Rinv_neq_0_compat r H). ra. Qed.
+
+  
+  (* (** 给定两个向量，若将这两个向量同时旋转θ角，则向量之和在旋转前后的夹角也是θ。*) *)
+  (* Lemma cvangle_cvadd : forall (v1 v2 v1' v2' : cvec 2), *)
+  (*     cvnonzero v1 -> cvnonzero v2 -> *)
+  (*     ||v1|| = ||v1'|| -> ||v2|| = ||v2'|| -> *)
+  (*     v1 ∠ v2 = v1' ∠ v2' -> *)
+  (*     v1 + v2 ∠ v1' + v2' = v1 ∠ v1'. *)
+  (* Proof. *)
+  (*   intros v1 v2 v1' v2' Hneq0_v1 Hneq0_v2 Hlen_eq_11' Hlen_eq_22' Hangle_eq. *)
+  (*   assert (||v1|| <> 0) as Hlen_neq0_v1. *)
+  (*   { apply cvlen_neq0_iff_neq0; auto. } *)
+  (*   assert (||v2|| <> 0) as Hlen_neq0_v2. *)
+  (*   { apply cvlen_neq0_iff_neq0; auto. } *)
+  (*   assert (cvnonzero v1') as Hneq0_v1'. *)
+  (*   { apply cvlen_neq0_iff_neq0 in Hneq0_v1. apply cvlen_neq0_iff_neq0. ra. } *)
+  (*   assert (cvnonzero v2') as Hneq0_v2'. *)
+  (*   { apply cvlen_neq0_iff_neq0 in Hneq0_v2. apply cvlen_neq0_iff_neq0. ra. } *)
+  (*   unfold cvangle in *. f_equiv. *)
+  (*   apply acos_inj in Hangle_eq; try apply cvdot_vnormalize_bound; auto. *)
+  (*   unfold cvnormalize in *. *)
+  (*   rewrite !cvdot_cvcmul_l, !cvdot_cvcmul_r in *. *)
+  (*   (* remember (||(v1 + v2)%CV||) as r1. *) *)
+  (*   (* remember (||(v1' + v2')%CV||) as r1'. *) *)
+  (*   rewrite !cvdot_vadd_distr_l, !cvdot_vadd_distr_r. *)
+  (*   rewrite <- Hlen_eq_11', <- Hlen_eq_22' in *. *)
+  (*   assert (<v1,v2> = <v1',v2'>). *)
+  (*   { apply Rmult_eq_reg_l with (r:=(1/(||v2||))). *)
+  (*     apply Rmult_eq_reg_l with (r:=(1/(||v1||))). auto. *)
+  (*     all: apply Rdiv_1_neq_0_compat; auto. } *)
+  (*   (* 以下，尝试自动证明，因为我暂时无法手动证明 *) *)
+  (*   Open Scope fun_scope. *)
+  (*   cvec2fun. cbv in *. autorewrite with R in *. *)
+  (*   remember (v1.11) as a1; remember (v1.21) as a2; remember (v1.31) as a3. *)
+  (*   remember (v2.11) as b1; remember (v2.21) as b2; remember (v2.31) as b3. *)
+  (*   rename v1' into v3. rename v2' into v4. *)
+  (*   remember (v3.11) as c1; remember (v3.21) as c2; remember (v3.31) as c3. *)
+  (*   remember (v4.11) as d1; remember (v4.21) as d2; remember (v4.31) as d3. *)
+  (*   autorewrite with R. autorewrite with R in H. *)
+  (*   generalize Hlen_eq_11' Hlen_eq_22' H. clear. *)
+  (*   intros. *)
+  (*   field_simplify. *)
+  (*   autorewrite with R sqrt. *)
+  (*   rewrite <- sqrt_mult_alt. *)
+  (*   cbv. *)
+  (*   field_simplify. *)
+  (*   autorewrite with R. *)
+  (*   apply sqrt_inj in Hlen_eq_11', Hlen_eq_22'. *)
+  (*   match goal with *)
+  (*   | |- context [?a / sqrt ?b = ?c] => *)
+  (*       assert (b * c * c = a * a)%R end. *)
+  (*   (* 核心部分 *) *)
+  (*   field_simplify. *)
+  (*   Admitted. *)
 
   (** 给定两个向量，若将这两个向量同时旋转θ角，则向量之和在旋转前后的夹角也是θ。*)
-  Axiom cvangle_cvadd : forall (v1 v2 v1' v2' : cvec 3),
+  Lemma cvangle_cvadd : forall (v1 v2 v1' v2' : cvec 3),
+      cvnonzero v1 -> cvnonzero v2 ->
       ||v1|| = ||v1'|| -> ||v2|| = ||v2'|| ->
       v1 ∠ v2 = v1' ∠ v2' ->
       v1 + v2 ∠ v1' + v2' = v1 ∠ v1'.
+  Proof.
+    Admitted.
+    (* intros v1 v2 v1' v2' Hneq0_v1 Hneq0_v2 Hlen_eq_11' Hlen_eq_22' Hangle_eq. *)
+    (* assert (||v1|| <> 0) as Hlen_neq0_v1. *)
+    (* { apply cvlen_neq0_iff_neq0; auto. } *)
+    (* assert (||v2|| <> 0) as Hlen_neq0_v2. *)
+    (* { apply cvlen_neq0_iff_neq0; auto. } *)
+    (* assert (cvnonzero v1') as Hneq0_v1'. *)
+    (* { apply cvlen_neq0_iff_neq0 in Hneq0_v1. apply cvlen_neq0_iff_neq0. ra. } *)
+    (* assert (cvnonzero v2') as Hneq0_v2'. *)
+    (* { apply cvlen_neq0_iff_neq0 in Hneq0_v2. apply cvlen_neq0_iff_neq0. ra. } *)
+    (* unfold cvangle in *. f_equiv. *)
+    (* apply acos_inj in Hangle_eq; try apply cvdot_vnormalize_bound; auto. *)
+    (* unfold cvnormalize in *. *)
+    (* rewrite !cvdot_cvcmul_l, !cvdot_cvcmul_r in *. *)
+    (* (* remember (||(v1 + v2)%CV||) as r1. *) *)
+    (* (* remember (||(v1' + v2')%CV||) as r1'. *) *)
+    (* rewrite !cvdot_vadd_distr_l, !cvdot_vadd_distr_r. *)
+    (* rewrite <- Hlen_eq_11', <- Hlen_eq_22' in *. *)
+    (* assert (<v1,v2> = <v1',v2'>). *)
+    (* { apply Rmult_eq_reg_l with (r:=(1/(||v2||))). *)
+    (*   apply Rmult_eq_reg_l with (r:=(1/(||v1||))). auto. *)
+    (*   all: apply Rdiv_1_neq_0_compat; auto. } *)
+    (* (* 以下，尝试自动证明，因为我暂时无法手动证明 *) *)
+    (* Open Scope fun_scope. *)
+    (* cvec2fun. cbv in *. autorewrite with R in *. *)
+    (* remember (v1.11) as a1; remember (v1.21) as a2; remember (v1.31) as a3. *)
+    (* remember (v2.11) as b1; remember (v2.21) as b2; remember (v2.31) as b3. *)
+    (* rename v1' into v3. rename v2' into v4. *)
+    (* remember (v3.11) as c1; remember (v3.21) as c2; remember (v3.31) as c3. *)
+    (* remember (v4.11) as d1; remember (v4.21) as d2; remember (v4.31) as d3. *)
+    (* autorewrite with R. autorewrite with R in H. *)
+    (* generalize Hlen_eq_11' Hlen_eq_22' H. clear. *)
+    (* intros. *)
+    (* clear. *)
+    
 
   (** a <> 0 -> (a c* v1) ∠ v2 = v1 ∠ v2 *)
   Lemma cvangle_cvcmul_l : forall {n} (v1 v2 : cvec n) (a : R),
@@ -661,30 +816,6 @@ Section vangle.
 
 End vangle.
 Infix "∠" := cvangle (at level 60) : cvec_scope.
-
-
-(* ==================================== *)
-(** ** About {cvdot, cvunit, cvangle, cvnormalize} *)
-Section cvdot_cvunit_cvangle_cvnormalize.
-  
-  (** 单位向量的点积介于[-1,1] *)
-  Lemma cvdot_unit_bound : forall {n} (u v : cvec n),
-      cvunit u -> cvunit v -> -1 <= <u,v> <= 1.
-  Proof.
-    intros. rewrite cvdot_eq_cos_angle.
-    rewrite ?cvlen_cvunit; auto.
-    match goal with |- context [cos ?r] => remember r as a end.
-    pose proof (COS_bound a). lra.
-  Qed.
-
-  (** 单位化后的非零向量的点积介于 [-1,1] *)
-  Lemma cvdot_vnormalize_bound : forall {n} (u v : cvec n),
-      cvnonzero u -> cvnonzero v ->
-      -1 <= <cvnormalize u, cvnormalize v> <= 1.
-  Proof. intros. apply cvdot_unit_bound; apply cvnormalize_unit; auto. Qed.
-
-End cvdot_cvunit_cvangle_cvnormalize.
-
 
 
 (* ==================================== *)
@@ -888,8 +1019,8 @@ Infix "⟂" := cvorthogonal ( at level 50).
 Section cvorthogonalset.
 
   (** A set of vectors in an inner product space is called pairwise orthogonal if 
-    each pairing of them is orthogonal. Such a set is called an orthogonal set.
-    Note: each pair means {(vi,vj)|i≠j}  *)
+      each pairing of them is orthogonal. Such a set is called an orthogonal set.
+      Note: each pair means {(vi,vj)|i≠j}  *)
   Definition cvorthogonalset {r c} (m : mat r c) : Prop :=
     forall j1 j2, (j1 < c)%nat -> (j2 < c)%nat -> (j1 <> j2) -> <mcol m j1, mcol m j2> = Azero.
 
@@ -927,7 +1058,7 @@ End cvorthogonalset.
 Section mcolsOrthonormal.
 
   (** All (different) column-vectors of a matrix are orthogonal each other.
-    For example: [v1;v2;v3] => v1⟂v2 && v1⟂v3 && v2⟂v3. *)
+      For example: [v1;v2;v3] => v1⟂v2 && v1⟂v3 && v2⟂v3. *)
   Definition mcolsOrthogonal {r c} (m : mat r c) : Prop :=
     forall j1 j2, (j1 < c)%nat -> (j2 < c)%nat -> j1 <> j2 -> mcol m j1 ⟂ mcol m j2.
 
@@ -953,7 +1084,7 @@ Section mcolsOrthonormal.
   End test.
 
   (** All column-vectors of a matrix are unit vector.
-    For example: [v1;v2;v3] => unit v1 && unit v2 && unit v3 *)
+      For example: [v1;v2;v3] => unit v1 && unit v2 && unit v3 *)
   Definition mcolsUnit {r c} (m : mat r c) : Prop :=
     forall j, (j < c)%nat -> cvunit (mcol m j).
 
@@ -1032,8 +1163,8 @@ Section morthogonal.
   Qed.
 
   (** 由于正交矩阵可保持变换向量的长度和角度，它可保持坐标系的整体结构不变。
-    因此，正交矩阵仅可用于旋转变换和反射变换或二者的组合变换。
-    当正交矩阵的行列式为1，表示一个旋转，行列式为-1，表示一个反射。*)
+      因此，正交矩阵仅可用于旋转变换和反射变换或二者的组合变换。
+      当正交矩阵的行列式为1，表示一个旋转，行列式为-1，表示一个反射。*)
 End morthogonal.
 
 
