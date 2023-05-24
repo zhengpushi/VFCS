@@ -63,7 +63,7 @@ Notation smat T n := (@mat T n n).
 (* ======================================================================= *)
 (** ** Equality of matrix *)
 Section meq.
-  Context `{Equiv_Teq : Equivalence T Teq}.
+  Context `{Equivalence T Teq}.
   Infix "==" := Teq : T_scope.
   
   (** Two matrices are considered equal if each corresponding element
@@ -101,7 +101,7 @@ Section meq.
   Lemma m2f_mor : forall {r c} (m p : @mat _ r c) i j,
       i < r -> j < c -> m == p -> (m2f m i j == m2f p i j)%T.
   Proof.
-    intros. destruct m as [m], p as [p]. simpl in *. subst. apply H1; auto.
+    intros. destruct m as [m], p as [p]. simpl in *. subst. apply H2; auto.
   Qed.
 
   Example m2f_mor_ex1 : forall (m p : @mat _ 3 3), m == p -> (m2f m 0 0 == m2f p 0 0)%T.
