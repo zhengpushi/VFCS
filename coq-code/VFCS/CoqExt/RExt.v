@@ -243,7 +243,7 @@ Ltac ra :=
 (* ######################################################################### *)
 (** * Reqb,Rleb,Rltb: Boolean comparison of R *)
 
-Definition Reqb (r1 r2 : R) : bool := Basic.Aeqb r1 r2.
+Definition Reqb (r1 r2 : R) : bool := Basic.Teqb r1 r2.
 Definition Rleb (r1 r2 : R) : bool := if Rle_lt_dec r1 r2 then true else false.
 Definition Rltb (r1 r2 : R) : bool := if Rlt_le_dec r1 r2 then true else false.
 Infix "=?"  := Reqb : R_scope.
@@ -255,14 +255,14 @@ Infix ">=?" := (fun x y => y <=? x) : R_scope.
 (** Reflection of (=) and (=?) *)
 Hint Resolve eq_refl : bdestruct.
 Lemma Reqb_true : forall x y, x =? y = true <-> x = y.
-Proof. apply Aeqb_true. Qed.
+Proof. apply Teqb_true. Qed.
 
 Lemma Reqb_false : forall x y, x =? y = false <-> x <> y.
-Proof. apply Aeqb_false. Qed.
+Proof. apply Teqb_false. Qed.
     
 Lemma Reqb_reflect : forall x y, reflect (x = y) (x =? y).
 Proof.
-  intros. unfold Reqb,Aeqb. destruct dec; constructor; auto.
+  intros. unfold Reqb,Teqb. destruct dec; constructor; auto.
 Qed.
 
 Lemma Reqb_refl : forall r, r =? r = true.

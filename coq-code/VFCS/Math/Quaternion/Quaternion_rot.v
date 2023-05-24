@@ -359,7 +359,7 @@ Module qrot_spec_method2.
     Fact dot01_eq : <v0,v1> = cos (θ / 2).
     Proof.
       rewrite cvdot_eq_cos_angle. rewrite <- Hangle_v01_θ.
-      rewrite !cvlen_cvunit; auto. autounfold with A; ring.
+      rewrite !cvlen_cvunit; auto. autounfold with T; ring.
     Qed.
 
     (** 0 < sin (θ/2) *)

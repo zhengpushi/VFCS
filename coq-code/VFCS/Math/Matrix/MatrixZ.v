@@ -34,8 +34,8 @@ Section test.
   (* Compute m2l (mmap Z.opp m1).       (* = [[-1; -2]; [-3; -4]] *) *)
   (* Compute m2l (m1 * m1).     (* = [[7; 10]; [15; 22]] *) *)
 
-  Variable a11 a12 a21 a22 : A.
-  Variable f : A -> A.
+  Variable a11 a12 a21 a22 : T.
+  Variable f : T -> T.
   Let m2 := @l2m 2 2 [[a11;a12];[a21;a22]].
   (* Compute m2l m2.     (* = [[a11; a12]; [a21; a22]] *) *)
   (* Compute m2l (mmap f m2).       (* = [[f a11; f a12]; [f a21; f a22]] *) *)
@@ -43,12 +43,12 @@ Section test.
   Let m3 : mat 3 3 := l2m [[10; -42; 13]; [-34; 15; 76]; [77; 98; 49]].
   (* Time Eval compute in mdet m3. *)
 (*      = -441217 *)
-(*      : A *)
+(*      : T *)
 (* Finished transaction in 0.002 secs (0.002u,0.s) (successful) *)
   
   (* Time Eval vm_compute in mdet m3. *)
 (*        = -441217 *)
-(*      : A *)
+(*      : T *)
   (* Finished transaction in 0.001 secs (0.001u,0.s) (successful) *)
 
   Let m4 : mat 10 10 :=
@@ -66,7 +66,7 @@ Section test.
 
   (* Time Eval vm_compute in mdet m4. *)
 (*      = -418388139 *)
-(*      : A *)
+(*      : T *)
 (* Finished transaction in 13.995 secs (13.992u,0.s) (successful) *)
 
   Let m5 : mat 20 20 :=

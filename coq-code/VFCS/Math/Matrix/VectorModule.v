@@ -41,16 +41,16 @@ Module BasicVectorTheory (E : ElementType).
   (** ** Vector element type *)
   Export E.
   
-  Infix "==" := (eqlistA Aeq) : list_scope.
+  Infix "==" := (eqlistA Teq) : list_scope.
   Infix "!=" := (fun l1 l2 => ~(l1 == l2)%list) : list_scope.
-  Infix "==" := (eqlistA (eqlistA Aeq)) : dlist_scope.
+  Infix "==" := (eqlistA (eqlistA Teq)) : dlist_scope.
   Infix "!=" := (fun d1 d2 => ~(d1 == d2)%dlist) : dlist_scope.
 
-  Notation "m ! i ! j " := (mnth Azero m i j) : mat_scope.
-  Infix "==" := (meq (Aeq:=Aeq)) : mat_scope.
+  Notation "m ! i ! j " := (mnth T0 m i j) : mat_scope.
+  Infix "==" := (meq (Teq:=Teq)) : mat_scope.
 
   Open Scope nat_scope.
-  Open Scope A_scope.
+  Open Scope T_scope.
   Open Scope mat_scope.
   
 
@@ -63,11 +63,11 @@ Module BasicVectorTheory (E : ElementType).
   (** ** Vector type *)
 
   (** A vector rvec(n) is a colum vector, equal to a matrix mat(n,1) *)
-  Definition rvec (n : nat) := @rvec A n.
+  Definition rvec (n : nat) := @rvec T n.
 
   (** Convert between function and vector *)
-  Definition f2rv {n} (f : nat -> A) : rvec n := f2rv f.
-  Definition rv2f {n} (v : rvec n) : nat -> A := rv2f v.
+  Definition f2rv {n} (f : nat -> T) : rvec n := f2rv f.
+  Definition rv2f {n} (v : rvec n) : nat -> T := rv2f v.
 
   (** Convert vec to function *)
   Ltac rvec2fun :=
@@ -92,16 +92,16 @@ Module BasicVectorTheory (E : ElementType).
   
   
   (** Get element of vector, the index will be restricted to in the bound, safe *)
-  Definition rvnth {n} (v : rvec n) i : A := v ! 0 ! i.
+  Definition rvnth {n} (v : rvec n) i : T := v ! 0 ! i.
   Notation "v ! i " := (rvnth v i) : rvec_scope.
 
   (** If the index is in bound, its behavior is equal to get element from raw data *)
-  Lemma rvnth_spec : forall {n : nat} (v : rvec n) i, i < n -> (v ! i == v $ i)%A.
+  Lemma rvnth_spec : forall {n : nat} (v : rvec n) i, i < n -> (v ! i == v $ i)%T.
   Proof. intros. apply rvnth_spec; auto. Qed.
 
   (** veq, iff vnth *)
   Lemma veq_iff_rvnth : forall {n : nat} (v1 v2 : rvec n),
-      v1 == v2 <-> (forall i, i < n -> (v1 ! i == v2 ! i)%A).
+      v1 == v2 <-> (forall i, i < n -> (v1 ! i == v2 ! i)%T).
   Proof. intros. apply veq_iff_rvnth. Qed.
 
   
@@ -114,11 +114,11 @@ Module BasicVectorTheory (E : ElementType).
   (** ** List like operations for vector *)
   
   (** a :: v  *)
-  Definition rvcons {n} (a : A) (v : rvec n) : rvec (S n) := rvcons a v.
+  Definition rvcons {n} (a : T) (v : rvec n) : rvec (S n) := rvcons a v.
 
   Lemma rvcons_spec : forall n a (v : rvec n) i,
       let v' := rvcons a v in
-      (v' $ 0 == a)%A /\ (i < n -> (v $ i == v' $ (S i))%A).
+      (v' $ 0 == a)%T /\ (i < n -> (v $ i == v' $ (S i))%T).
   Proof. intros. apply rvcons_spec. Qed.
 
   (** Get a vector from a given vector by remove i-th element *)
@@ -127,16 +127,16 @@ Module BasicVectorTheory (E : ElementType).
   
   (* ==================================== *)
   (** ** Convert between list and vector *)
-  Definition rv2l {n} (v : rvec n) : list A := rv2l v.
-  Definition l2rv {n} (l : list A) : rvec n := l2rv Azero n l.
+  Definition rv2l {n} (v : rvec n) : list T := rv2l v.
+  Definition l2rv {n} (l : list T) : rvec n := l2rv T0 n l.
 
   (** list of vector to dlist *)
-  Definition rvl2dl {n} (l : list (rvec n)) : dlist A := rvl2dl l.
+  Definition rvl2dl {n} (l : list (rvec n)) : dlist T := rvl2dl l.
 
   Lemma rv2l_length : forall {n} (v : rvec n), length (rv2l v) = n.
   Proof. intros. apply rv2l_length. Qed.
 
-  Lemma rv2l_l2rv_id : forall {n} (l : list A),
+  Lemma rv2l_l2rv_id : forall {n} (l : list T),
       length l = n -> (rv2l (@l2rv n l) == l)%list.
   Proof. intros. apply rv2l_l2rv_id; auto. Qed.
 
@@ -146,22 +146,22 @@ Module BasicVectorTheory (E : ElementType).
   
   (* ==================================== *)
   (** ** Make concrete vector *)
-  Definition mk_rvec2 (a1 a2 : A) : rvec 2 := mk_rvec2 Azero a1 a2.
-  Definition mk_rvec3 (a1 a2 a3 : A) : rvec 3 :=  mk_rvec3 Azero a1 a2 a3.
-  Definition mk_rvec4 (a1 a2 a3 a4 : A) : rvec 4 := mk_rvec4 Azero a1 a2 a3 a4.
+  Definition mk_rvec2 (a1 a2 : T) : rvec 2 := mk_rvec2 T0 a1 a2.
+  Definition mk_rvec3 (a1 a2 a3 : T) : rvec 3 :=  mk_rvec3 T0 a1 a2 a3.
+  Definition mk_rvec4 (a1 a2 a3 a4 : T) : rvec 4 := mk_rvec4 T0 a1 a2 a3 a4.
 
   
   (* ==================================== *)
   (** ** Convert between tuples and vector *)
-  Definition t2rv_2 (t : @T2 A) : rvec 2 := t2rv_2 Azero t.
-  Definition t2rv_3 (t : @T3 A) : rvec 3 := t2rv_3 Azero t.
-  Definition t2rv_4 (t : @T4 A) : rvec 4 := t2rv_4 Azero t.
+  Definition t2rv_2 (t : @T2 T) : rvec 2 := t2rv_2 T0 t.
+  Definition t2rv_3 (t : @T3 T) : rvec 3 := t2rv_3 T0 t.
+  Definition t2rv_4 (t : @T4 T) : rvec 4 := t2rv_4 T0 t.
 
-  Definition rv2t_2 (v : rvec 2) : @T2 A := rv2t_2 v.
-  Definition rv2t_3 (v : rvec 3) : @T3 A := rv2t_3 v.
-  Definition rv2t_4 (v : rvec 4) : @T4 A := rv2t_4 v.
+  Definition rv2t_2 (v : rvec 2) : @T2 T := rv2t_2 v.
+  Definition rv2t_3 (v : rvec 3) : @T3 T := rv2t_3 v.
+  Definition rv2t_4 (v : rvec 4) : @T4 T := rv2t_4 v.
 
-  (* Lemma rv2t_t2rv_id_2 : forall (t : A * A), rv2t_2 (t2rv_2 t) == t. *)
+  (* Lemma rv2t_t2rv_id_2 : forall (t : T * T), rv2t_2 (t2rv_2 t) == t. *)
   (* Proof. intros. destruct t. simpl. unfold v2t_2. f_equal. Qed. *)
 
   Lemma t2rv_rv2t_id_2 : forall (v : rvec 2), t2rv_2 (rv2t_2 v) == v.
@@ -170,29 +170,29 @@ Module BasicVectorTheory (E : ElementType).
   
   (* ==================================== *)
   (** ** vector mapping *)
-  Definition rvmap {n} (v : rvec n) (f : A -> A) : rvec n := rvmap v f.
-  Definition rvmap2 {n} (v1 v2 : rvec n) (f : A -> A -> A) : rvec n := rvmap2 v1 v2 f.
+  Definition rvmap {n} (v : rvec n) (f : T -> T) : rvec n := rvmap v f.
+  Definition rvmap2 {n} (v1 v2 : rvec n) (f : T -> T -> T) : rvec n := rvmap2 v1 v2 f.
 
   
   (* ==================================== *)
   (** ** vector folding *)
-  (* Definition rvfold {B : Type} {n} (v : @rvec A n) (f : A -> B) (b0 : B) : B. *)
+  (* Definition rvfold {U : Type} {n} (v : @rvec T n) (f : T -> U) (b : U) : U. *)
 
   
   (* ==================================== *)
   (** ** Zero vector *)
 
   (** Make a zero vector *)
-  Definition rvec0 {n} : rvec n := @rvec0 _ Azero _.
+  Definition rvec0 {n} : rvec n := @rvec0 _ T0 _.
 
   (** A vector is a zero vector. *)
-  Definition rvzero {n} (v : rvec n) : Prop := @rvzero _ Aeq Azero _ v.
+  Definition rvzero {n} (v : rvec n) : Prop := @rvzero _ Teq T0 _ v.
 
   (** A vector is a non-zero vector. *)
   Definition rvnonzero {n} (v : rvec n) : Prop := ~(rvzero v).
 
   (** vec0 is equal to mat0 with column 1 *)
-  Lemma rvec0_eq_mat0 : forall n, (@rvec0 n) == mat0 Azero.
+  Lemma rvec0_eq_mat0 : forall n, (@rvec0 n) == mat0 T0.
   Proof. intros. apply rvec0_eq_mat0. Qed.
 
 
@@ -204,11 +204,11 @@ Module BasicVectorTheory (E : ElementType).
   (** ** Vector type *)
 
   (** A vector cvec(n) is a colum vector, equal to a matrix mat(n,1) *)
-  Definition cvec (n : nat) := @cvec A n.
+  Definition cvec (n : nat) := @cvec T n.
 
   (** Convert between function and vector *)
-  Definition f2cv {n} (f : nat -> A) : cvec n := f2cv f.
-  Definition cv2f {n} (v : cvec n) : nat -> A := cv2f v.
+  Definition f2cv {n} (f : nat -> T) : cvec n := f2cv f.
+  Definition cv2f {n} (v : cvec n) : nat -> T := cv2f v.
 
   (** Convert vec to function *)
   Ltac cvec2fun :=
@@ -233,16 +233,16 @@ Module BasicVectorTheory (E : ElementType).
   (* Notation "v .w" := (v $ 3) : cvec_scope. *)
   
   (** Get element of vector, the index will be restricted to in the bound, safe *)
-  Definition cvnth {n} (v : cvec n) i : A := v ! i ! 0.
+  Definition cvnth {n} (v : cvec n) i : T := v ! i ! 0.
   Notation "v ! i " := (cvnth v i) : cvec_scope.
   
   (** If the index is in bound, its behavior is equal to get element from raw data *)
-  Lemma cvnth_spec : forall {n : nat} (v : cvec n) i, i < n -> (v ! i == v $ i)%A.
+  Lemma cvnth_spec : forall {n : nat} (v : cvec n) i, i < n -> (v ! i == v $ i)%T.
   Proof. intros. apply cvnth_spec; auto. Qed.
 
   (** veq, iff vnth *)
   Lemma veq_iff_cvnth : forall {n : nat} (v1 v2 : cvec n),
-      v1 == v2 <-> (forall i, i < n -> (v1 ! i == v2 ! i)%A).
+      v1 == v2 <-> (forall i, i < n -> (v1 ! i == v2 ! i)%T).
   Proof. intros. apply veq_iff_cvnth. Qed.
 
   (** veq, iff {top n-1 elements equal, and the n-th elements equal} *)
@@ -257,11 +257,11 @@ Module BasicVectorTheory (E : ElementType).
   (** ** List like operations for vector *)
   
   (** a :: v  *)
-  Definition cvcons {n} (a : A) (v : cvec n) : cvec (S n) := cvcons a v.
+  Definition cvcons {n} (a : T) (v : cvec n) : cvec (S n) := cvcons a v.
 
   Lemma cvcons_spec : forall n a (v : cvec n) i,
       let v' := cvcons a v in
-      (v' $ 0 == a)%A /\ (i < n -> (v $ i == v' $ (S i))%A).
+      (v' $ 0 == a)%T /\ (i < n -> (v $ i == v' $ (S i))%T).
   Proof. intros. apply cvcons_spec. Qed.
 
   (** Get a vector from a given vector by remove i-th element *)
@@ -274,16 +274,16 @@ Module BasicVectorTheory (E : ElementType).
   
   (* ==================================== *)
   (** ** Convert between list and vector *)
-  Definition cv2l {n} (v : cvec n) : list A := cv2l v.
-  Definition l2cv {n} (l : list A) : cvec n := l2cv Azero n l.
+  Definition cv2l {n} (v : cvec n) : list T := cv2l v.
+  Definition l2cv {n} (l : list T) : cvec n := l2cv T0 n l.
 
   (** list of vector to dlist *)
-  Definition cvl2dl {n} (l : list (cvec n)) : dlist A := cvl2dl l.
+  Definition cvl2dl {n} (l : list (cvec n)) : dlist T := cvl2dl l.
 
   Lemma cv2l_length : forall {n} (v : cvec n), length (cv2l v) = n.
   Proof. intros. apply cv2l_length. Qed.
 
-  Lemma cv2l_l2cv_id : forall {n} (l : list A),
+  Lemma cv2l_l2cv_id : forall {n} (l : list T),
       length l = n -> (cv2l (@l2cv n l) == l)%list.
   Proof. intros. apply cv2l_l2cv_id; auto. Qed.
 
@@ -293,22 +293,22 @@ Module BasicVectorTheory (E : ElementType).
   
   (* ==================================== *)
   (** ** Make concrete vector *)
-  Definition mk_cvec2 (a1 a2 : A) : cvec 2 := mk_cvec2 Azero a1 a2.
-  Definition mk_cvec3 (a1 a2 a3 : A) : cvec 3 := mk_cvec3 Azero a1 a2 a3.
-  Definition mk_cvec4 (a1 a2 a3 a4 : A) : cvec 4 := mk_cvec4 Azero a1 a2 a3 a4.
+  Definition mk_cvec2 (a1 a2 : T) : cvec 2 := mk_cvec2 T0 a1 a2.
+  Definition mk_cvec3 (a1 a2 a3 : T) : cvec 3 := mk_cvec3 T0 a1 a2 a3.
+  Definition mk_cvec4 (a1 a2 a3 a4 : T) : cvec 4 := mk_cvec4 T0 a1 a2 a3 a4.
 
   
   (* ==================================== *)
   (** ** Convert between tuples and vector *)
-  Definition t2cv_2 (t : @T2 A) : cvec 2 := t2cv_2 Azero t.
-  Definition t2cv_3 (t : @T3 A) : cvec 3 := t2cv_3 Azero t.
-  Definition t2cv_4 (t : @T4 A) : cvec 4 := t2cv_4 Azero t.
+  Definition t2cv_2 (t : @T2 T) : cvec 2 := t2cv_2 T0 t.
+  Definition t2cv_3 (t : @T3 T) : cvec 3 := t2cv_3 T0 t.
+  Definition t2cv_4 (t : @T4 T) : cvec 4 := t2cv_4 T0 t.
 
-  Definition cv2t_2 (v : cvec 2) : @T2 A := cv2t_2 v.
-  Definition cv2t_3 (v : cvec 3) : @T3 A := cv2t_3 v.
-  Definition cv2t_4 (v : cvec 4) : @T4 A := cv2t_4 v.
+  Definition cv2t_2 (v : cvec 2) : @T2 T := cv2t_2 v.
+  Definition cv2t_3 (v : cvec 3) : @T3 T := cv2t_3 v.
+  Definition cv2t_4 (v : cvec 4) : @T4 T := cv2t_4 v.
 
-  (* Lemma cv2t_t2cv_id_2 : forall (t : A * A), cv2t_2 (t2cv_2 t) == t. *)
+  (* Lemma cv2t_t2cv_id_2 : forall (t : T * T), cv2t_2 (t2cv_2 t) == t. *)
   (* Proof. intros. destruct t. simpl. unfold v2t_2. f_equal. Qed. *)
 
   Lemma t2cv_cv2t_id_2 : forall (v : cvec 2), t2cv_2 (cv2t_2 v) == v.
@@ -317,13 +317,13 @@ Module BasicVectorTheory (E : ElementType).
   
   (* ==================================== *)
   (** ** vector mapping *)
-  Definition cvmap {n} (v : cvec n) (f : A -> A) : cvec n := cvmap v f.
-  Definition cvmap2 {n} (v1 v2 : cvec n) (f : A -> A -> A) : cvec n := cvmap2 v1 v2 f.
+  Definition cvmap {n} (v : cvec n) (f : T -> T) : cvec n := cvmap v f.
+  Definition cvmap2 {n} (v1 v2 : cvec n) (f : T -> T -> T) : cvec n := cvmap2 v1 v2 f.
 
 
   (* ==================================== *)
   (** ** vector folding *)
-  Definition cvfold {n} {B:Type} (v : cvec n) (f : B -> A -> B) (b0 : B) : B :=
+  Definition cvfold {n} {B:Type} (v : cvec n) (f : B -> T -> B) (b0 : B) : B :=
     cvfold v f b0.
 
 
@@ -331,16 +331,16 @@ Module BasicVectorTheory (E : ElementType).
   (** ** Zero vector *)
 
   (** Make a zero vector *)
-  Definition cvec0 {n} : cvec n := @cvec0 _ Azero n.
+  Definition cvec0 {n} : cvec n := @cvec0 _ T0 n.
 
   (** A vector is a zero vector. *)
-  Definition cvzero {n} (v : cvec n) : Prop := @cvzero _ Aeq Azero _ v.
+  Definition cvzero {n} (v : cvec n) : Prop := @cvzero _ Teq T0 _ v.
 
   (** A vector is a non-zero vector. *)
   Definition cvnonzero {n} (v : cvec n) : Prop := ~(cvzero v).
 
   (** vec0 is equal to mat0 with column 1 *)
-  Lemma cvec0_eq_mat0 : forall n, (@cvec0 n) == mat0 Azero.
+  Lemma cvec0_eq_mat0 : forall n, (@cvec0 n) == mat0 T0.
   Proof. intros. apply cvec0_eq_mat0. Qed.
 
   (** Any zero vector is vec0 *)
@@ -351,12 +351,12 @@ Module BasicVectorTheory (E : ElementType).
   (** ######################################################################### *)
   (** * (Convertion between cvec and rvec *)
 
-  Definition cv2rv {n} (v : cvec n) : rvec n := @cv2rv _ Azero _ v.
+  Definition cv2rv {n} (v : cvec n) : rvec n := @cv2rv _ T0 _ v.
 
   Lemma cv2rv_spec : forall {n} (v : cvec n), cv2rv v == v\T.
   Proof. intros. apply cv2rv_spec. Qed.
 
-  Definition rv2cv {n} (v : rvec n) : cvec n := @rv2cv _ Azero _ v.
+  Definition rv2cv {n} (v : rvec n) : cvec n := @rv2cv _ T0 _ v.
 
   Lemma rv2cv_spec : forall {n} (v : rvec n), rv2cv v == v\T.
   Proof. intros. apply rv2cv_spec. Qed.
@@ -372,8 +372,8 @@ Module RingVectorTheory (E : RingElementType).
   
   Include (BasicVectorTheory E).
 
-  Infix "*" := (mmul (Aadd:=Aadd)(Azero:=Azero)(Amul:=Amul)) : mat_scope.
-  Infix "c*" := (mcmul (Amul:=Amul)) : mat_scope.
+  Infix "*" := (mmul (Tadd:=Tadd)(T0:=T0)(Tmul:=Tmul)) : mat_scope.
+  Infix "c*" := (mcmul (Tmul:=Tmul)) : mat_scope.
   
   
   (** ######################################################################### *)
@@ -384,7 +384,7 @@ Module RingVectorTheory (E : RingElementType).
   (* ==================================== *)
   (** ** Vector addition *)
 
-  Definition rvadd {n} (v1 v2 : rvec n) : rvec n := @rvadd _ Aadd _ v1 v2.
+  Definition rvadd {n} (v1 v2 : rvec n) : rvec n := @rvadd _ Tadd _ v1 v2.
   Infix "+" := rvadd : rvec_scope.
 
   (** v1 + v2 = v2 + v1 *)
@@ -407,7 +407,7 @@ Module RingVectorTheory (E : RingElementType).
   (* ==================================== *)
   (** ** Vector opposition *)
 
-  Definition rvopp {n} (v : rvec n) : rvec n := @rvopp _ Aopp _ v.
+  Definition rvopp {n} (v : rvec n) : rvec n := @rvopp _ Topp _ v.
   Notation "- v" := (rvopp v) : rvec_scope.
 
   (** (- v) + v = vec0 *)
@@ -422,18 +422,18 @@ Module RingVectorTheory (E : RingElementType).
   (* ==================================== *)
   (** ** Vector subtraction *)
 
-  Definition rvsub {n} (v1 v2 : rvec n) : rvec n := @rvsub _ Aadd Aopp _ v1 v2.
+  Definition rvsub {n} (v1 v2 : rvec n) : rvec n := @rvsub _ Tadd Topp _ v1 v2.
   Infix "-" := rvsub : rvec_scope.
 
 
   (* ==================================== *)
   (** ** Vector scalar multiplication *)
 
-  Definition rvcmul {n} a (v : rvec n) : rvec n := @rvcmul _ Amul _ a v.
+  Definition rvcmul {n} a (v : rvec n) : rvec n := @rvcmul _ Tmul _ a v.
   Infix "c*" := rvcmul : rvec_scope.
 
   (** a c* (b c* v) = (a * b) c* v *)
-  Lemma rvcmul_assoc : forall {n} a b (v : rvec n), a c* (b c* v) == (a * b)%A c* v.
+  Lemma rvcmul_assoc : forall {n} a b (v : rvec n), a c* (b c* v) == (a * b)%T c* v.
   Proof. intros. apply rvcmul_assoc. Qed.
 
   (** a c* (b c* v) = b c* (a c* v) *)
@@ -442,7 +442,7 @@ Module RingVectorTheory (E : RingElementType).
 
   (** (a + b) c* v = (a c* v) + (b c* v) *)
   Lemma rvcmul_add_distr : forall {n} a b (v : rvec n),
-      (a + b)%A c* v == (a c* v) + (b c* v).
+      (a + b)%T c* v == (a c* v) + (b c* v).
   Proof. intros. apply rvcmul_add_distr. Qed.
 
   (** a c* (v1 + v2) = (a c* v1) + (a c* v2) *)
@@ -451,14 +451,14 @@ Module RingVectorTheory (E : RingElementType).
   Proof. intros. apply rvcmul_vadd_distr. Qed.
 
   (** 1 c* v = v *)
-  Lemma rvcmul_1_l : forall {n} (v : rvec n), Aone c* v == v.
+  Lemma rvcmul_1_l : forall {n} (v : rvec n), T1 c* v == v.
   Proof. intros. apply rvcmul_1_l. Qed.
 
   (** 0 c* v = rvec0 *)
-  Lemma rvcmul_0_l : forall {n} (v : rvec n), Azero c* v == rvec0.
+  Lemma rvcmul_0_l : forall {n} (v : rvec n), T0 c* v == rvec0.
   Proof. intros. apply rvcmul_0_l. Qed.
 
-  Definition rvmulc {n} (v : rvec n) a : rvec n := mmulc (Amul:=Amul) v a.
+  Definition rvmulc {n} (v : rvec n) a : rvec n := mmulc (Tmul:=Tmul) v a.
   Infix "*c" := rvmulc : rvec_scope.
 
   (** v *c a = a c* v *)
@@ -466,11 +466,11 @@ Module RingVectorTheory (E : RingElementType).
   Proof. intros. apply rvmulc_eq_vcmul. Qed.
 
   (** (v *c a) *c b = v *c (a * b) *)
-  Lemma rvmulc_assoc : forall {n} (v : rvec n) (a b : A), (v *c a) *c b == v *c (a * b)%A.
+  Lemma rvmulc_assoc : forall {n} (v : rvec n) (a b : T), (v *c a) *c b == v *c (a * b)%T.
   Proof. intros. apply rvmulc_assoc. Qed.
 
   (** (v *c a) *c b = (v *c b) c* a *)
-  Lemma rvmulc_perm : forall {n} (v : rvec n) (a b : A), (v *c a) *c b == (v *c b) *c a.
+  Lemma rvmulc_perm : forall {n} (v : rvec n) (a b : T), (v *c a) *c b == (v *c b) *c a.
   Proof. intros. apply rvmulc_perm. Qed.
 
 
@@ -478,39 +478,39 @@ Module RingVectorTheory (E : RingElementType).
   (** ** Vector dot product *)
 
   (** dot production of two vectors. *)
-  Definition rvdot {n : nat} (v1 v2 : rvec n) : A := @rvdot _ Aadd Azero Amul _ v1 v2.
+  Definition rvdot {n : nat} (v1 v2 : rvec n) : T := @rvdot _ Tadd T0 Tmul _ v1 v2.
   Notation "< a , b >" := (rvdot a b) : rvec_scope.
 
   (** <v1,v2> = <v2,v1> *)
-  Lemma rvdot_comm : forall {n} (v1 v2 : rvec n), (<v1,v2> == <v2,v1>)%A.
+  Lemma rvdot_comm : forall {n} (v1 v2 : rvec n), (<v1,v2> == <v2,v1>)%T.
   Proof. intros. apply rvdot_comm. Qed.
 
   (** <v1 + v2,v3> = <v1,v3> + <v2,v3> *)
   Lemma rvdot_vadd_distr_l : forall {n} (v1 v2 v3 : rvec n),
-      (<(v1 + v2)%RV,v3> == <v1,v3> + <v2,v3>)%A.
+      (<(v1 + v2)%RV,v3> == <v1,v3> + <v2,v3>)%T.
   Proof. intros. apply rvdot_add_distr_l. Qed.
 
   (** <v1, v2 + v3> = <v1,v2> + <v1,v3> *)
   Lemma rvdot_vadd_distr_r : forall {n} (v1 v2 v3 : rvec n),
-      (<v1,(v2 + v3)%RV> == <v1,v2> + <v1,v3>)%A.
+      (<v1,(v2 + v3)%RV> == <v1,v2> + <v1,v3>)%T.
   Proof. intros. apply rvdot_add_distr_r. Qed.
 
   (** <a c* v1, v2> = a * <v1,v2> *)
-  Lemma rvdot_vcmul_l : forall {n} (v1 v2 : rvec n) (a : A),
-      (<a c* v1,v2> == a * <v1,v2>)%A.
+  Lemma rvdot_vcmul_l : forall {n} (v1 v2 : rvec n) (a : T),
+      (<a c* v1,v2> == a * <v1,v2>)%T.
   Proof. intros. apply rvdot_cmul_l. Qed.
 
   (** <v1, a c* v2> == a * <v1,v2> *)
-  Lemma rvdot_vcmul_r : forall {n} (v1 v2 : rvec n) (a : A),
-      (<v1, a c* v2> == a * <v1,v2>)%A.
+  Lemma rvdot_vcmul_r : forall {n} (v1 v2 : rvec n) (a : T),
+      (<v1, a c* v2> == a * <v1,v2>)%T.
   Proof. intros. apply rvdot_cmul_r. Qed.
 
   (** <0,v> = 0 *)
-  Lemma rvdot_0_l : forall {n} (v : rvec n), (<rvec0,v> == Azero)%A.
+  Lemma rvdot_0_l : forall {n} (v : rvec n), (<rvec0,v> == T0)%T.
   Proof. intros. apply rvdot_0_l. Qed.
 
   (** <v,0> = 0 *)
-  Lemma rvdot_0_r : forall {n} (v : rvec n), (<v,rvec0> == Azero)%A.
+  Lemma rvdot_0_r : forall {n} (v : rvec n), (<v,rvec0> == T0)%T.
   Proof. intros. apply rvdot_0_r. Qed.
 
   
@@ -522,7 +522,7 @@ Module RingVectorTheory (E : RingElementType).
   (* ==================================== *)
   (** ** Vector addition *)
 
-  Definition cvadd {n} (v1 v2 : cvec n) : cvec n := @cvadd _ Aadd _ v1 v2.
+  Definition cvadd {n} (v1 v2 : cvec n) : cvec n := @cvadd _ Tadd _ v1 v2.
   Infix "+" := cvadd : cvec_scope.
   
   (** v1 + v2 = v2 + v1 *)
@@ -549,7 +549,7 @@ Module RingVectorTheory (E : RingElementType).
   (* ==================================== *)
   (** ** Vector opposition *)
 
-  Definition cvopp {n} (v : cvec n) : cvec n := @cvopp _ Aopp _ v.
+  Definition cvopp {n} (v : cvec n) : cvec n := @cvopp _ Topp _ v.
   Notation "- v" := (cvopp v) : cvec_scope.
 
   (** (- v) + v = vec0 *)
@@ -612,16 +612,16 @@ Module RingVectorTheory (E : RingElementType).
   (** ** Vector scalar multiplication *)
 
   (** Left scalar multiplication *)
-  Definition cvcmul {n} a (v : cvec n) : cvec n := @cvcmul _ Amul _ a v.
+  Definition cvcmul {n} a (v : cvec n) : cvec n := @cvcmul _ Tmul _ a v.
   Infix "c*" := cvcmul : cvec_scope.
 
   (** (a * v)[i] = a * [i] *)
-  Lemma cvcmul_nth : forall {n} (v : cvec n) (a : A) i,
-      i < n -> (a c* v)$i = (a * (v$i))%A.
+  Lemma cvcmul_nth : forall {n} (v : cvec n) (a : T) i,
+      i < n -> (a c* v)$i = (a * (v$i))%T.
   Proof. intros. apply cvcmul_nth; auto. Qed.
 
   (** a c* (b c* v) = (a * b) c* v *)
-  Lemma cvcmul_assoc : forall {n} a b (v : cvec n), a c* (b c* v) == (a * b)%A c* v.
+  Lemma cvcmul_assoc : forall {n} a b (v : cvec n), a c* (b c* v) == (a * b)%T c* v.
   Proof. intros. apply cvcmul_assoc. Qed.
 
   (** a c* (b c* v) = b c* (a c* v) *)
@@ -630,7 +630,7 @@ Module RingVectorTheory (E : RingElementType).
 
   (** (a + b) c* v = (a c* v) + (b c* v) *)
   Lemma cvcmul_add_distr : forall {n} a b (v : cvec n),
-      (a + b)%A c* v == (a c* v) + (b c* v).
+      (a + b)%T c* v == (a c* v) + (b c* v).
   Proof. intros. apply cvcmul_add_distr. Qed.
 
   (** a c* (v1 + v2) = (a c* v1) + (a c* v2) *)
@@ -639,19 +639,19 @@ Module RingVectorTheory (E : RingElementType).
   Proof. intros. apply cvcmul_vadd_distr. Qed.
 
   (** 1 c* v = v *)
-  Lemma cvcmul_1_l : forall {n} (v : cvec n), Aone c* v == v.
+  Lemma cvcmul_1_l : forall {n} (v : cvec n), T1 c* v == v.
   Proof. intros. apply cvcmul_1_l. Qed.
 
   (** 0 c* v = cvec0 *)
-  Lemma cvcmul_0_l : forall {n} (v : cvec n), Azero c* v == cvec0.
+  Lemma cvcmul_0_l : forall {n} (v : cvec n), T0 c* v == cvec0.
   Proof. intros. apply cvcmul_0_l. Qed.
 
   (** a c* 0 = cvec0 *)
-  Lemma cvcmul_0_r : forall {n} a, a c* cvec0 == (@Vector.cvec0 _ Azero n).
+  Lemma cvcmul_0_r : forall {n} a, a c* cvec0 == (@Vector.cvec0 _ T0 n).
   Proof. intros. apply cvcmul_0_r. Qed.
 
   (** - (a c* v) = (-a) c* v *)
-  Lemma cvopp_vcmul : forall {n} a (v : cvec n), - (a c* v) == (-a)%A c* v.
+  Lemma cvopp_vcmul : forall {n} a (v : cvec n), - (a c* v) == (-a)%T c* v.
   Proof. intros. apply cvopp_cmul. Qed.
 
   (** a c* (v1 - v2) = (a c* v1) - (a c* v2) *)
@@ -660,17 +660,17 @@ Module RingVectorTheory (E : RingElementType).
   Proof. intros. apply cvcmul_sub. Qed.
 
   (** a c* (m * v) = (a c* m) * v *)
-  Lemma cvcmul_mmul_assoc_l : forall {r c} (a : A) (m : mat r c) (v : cvec c), 
+  Lemma cvcmul_mmul_assoc_l : forall {r c} (a : T) (m : mat r c) (v : cvec c), 
       a c* (m * v) == (a c* m)%M * v.
   Proof. intros. apply cvcmul_mmul_assoc_l. Qed.
 
   (** a c* (m * v) = m c* (a c* v) *)
-  Lemma cvcmul_mmul_assoc_r : forall {r c} (a : A) (m : mat r c) (v : cvec c), 
+  Lemma cvcmul_mmul_assoc_r : forall {r c} (a : T) (m : mat r c) (v : cvec c), 
       a c* (m * v) == m * (a c* v).
   Proof. intros. apply cvcmul_mmul_assoc_r. Qed.
 
   (** Right scalar multiplication *)
-  Definition cvmulc {n} (v : cvec n) a : cvec n := @cvmulc _ Amul _ v a.
+  Definition cvmulc {n} (v : cvec n) a : cvec n := @cvmulc _ Tmul _ v a.
   Infix "*c" := cvmulc : cvec_scope.
 
   (** v *c a = a c* v *)
@@ -678,11 +678,11 @@ Module RingVectorTheory (E : RingElementType).
   Proof. intros. apply cvmulc_eq_vcmul. Qed.
 
   (** (v *c a) *c b = v *c (a * b) *)
-  Lemma cvmulc_assoc : forall {n} (v : cvec n) (a b : A), (v *c a) *c b == v *c (a * b)%A.
+  Lemma cvmulc_assoc : forall {n} (v : cvec n) (a b : T), (v *c a) *c b == v *c (a * b)%T.
   Proof. intros. apply cvmulc_assoc. Qed.
 
   (** (v *c a) *c b = (v *c b) c* a *)
-  Lemma cvmulc_perm : forall {n} (v : cvec n) (a b : A), (v *c a) *c b == (v *c b) *c a.
+  Lemma cvmulc_perm : forall {n} (v : cvec n) (a b : T), (v *c a) *c b == (v *c b) *c a.
   Proof. intros. apply cvmulc_perm. Qed.
 
   
@@ -690,57 +690,57 @@ Module RingVectorTheory (E : RingElementType).
   (** ** Vector dot product *)
 
   (** dot production of two vectors. *)
-  Definition cvdot {n : nat} (v1 v2 : cvec n) : A := @cvdot _ Aadd Azero Amul _ v1 v2.
+  Definition cvdot {n : nat} (v1 v2 : cvec n) : T := @cvdot _ Tadd T0 Tmul _ v1 v2.
   Notation "< a , b >" := (cvdot a b) : cvec_scope.
 
   (** <row(m1,i)\T, col(m2,j)> = [m1 * m2].ij *)
   Lemma cvdot_row_col_eq_mnth : forall {r c s} (m1 : mat r c) (m2 : mat c s) i j,
-      i < r -> j < s -> (<(mrow m1 i)\T, mcol m2 j> == (m1 * m2)%M $ i $ j)%A.
+      i < r -> j < s -> (<(mrow m1 i)\T, mcol m2 j> == (m1 * m2)%M $ i $ j)%T.
   Proof. intros. apply cvdot_row_col_eq_mnth; auto. Qed.
 
   (** <v1,v2> = v1\T * v2 *)
   Lemma cvdot_eq_mul_trans : forall {n} (v1 v2 : cvec n),
-      (<v1,v2> == scalar_of_mat (v1\T * v2)%M)%A.
+      (<v1,v2> == scalar_of_mat (v1\T * v2)%M)%T.
   Proof. intros. apply cvdot_eq_mul_trans. Qed.
 
   (** <v1,v2> = <v2,v1> *)
-  Lemma cvdot_comm : forall {n} (v1 v2 : cvec n), (<v1,v2> == <v2,v1>)%A.
+  Lemma cvdot_comm : forall {n} (v1 v2 : cvec n), (<v1,v2> == <v2,v1>)%T.
   Proof. intros. apply cvdot_comm. Qed.
 
   (** <v1 + v2, v3> = <v1,v3> + <v2,v3> *)
   Lemma cvdot_vadd_distr_l : forall {n} (v1 v2 v3 : cvec n),
-      (<(v1 + v2)%CV,v3> == <v1,v3> + <v2,v3>)%A.
+      (<(v1 + v2)%CV,v3> == <v1,v3> + <v2,v3>)%T.
   Proof. intros. apply cvdot_add_distr_l. Qed.
 
   (** <v1, v2 + v3> = <v1,v2> + <v1,v3> *)
   Lemma cvdot_vadd_distr_r : forall {n} (v1 v2 v3 : cvec n),
-      (<v1, (v2 + v3)%CV> == <v1,v2> + <v1,v3>)%A.
+      (<v1, (v2 + v3)%CV> == <v1,v2> + <v1,v3>)%T.
   Proof. intros. apply cvdot_add_distr_r. Qed.
 
   (** <a c* v1, v2> = a * <v1,v2> *)
-  Lemma cvdot_vcmul_l : forall {n} (v1 v2 : cvec n) (a : A),
-      (<a c* v1, v2> == a * <v1,v2>)%A.
+  Lemma cvdot_vcmul_l : forall {n} (v1 v2 : cvec n) (a : T),
+      (<a c* v1, v2> == a * <v1,v2>)%T.
   Proof. intros. apply cvdot_vcmul_l. Qed.
 
   (** <v1, a c* v2> == a * <v1,v2> *)
-  Lemma cvdot_vcmul_r : forall {n} (v1 v2 : cvec n) (a : A),
-      (<v1, a c* v2> == a * <v1,v2>)%A.
+  Lemma cvdot_vcmul_r : forall {n} (v1 v2 : cvec n) (a : T),
+      (<v1, a c* v2> == a * <v1,v2>)%T.
   Proof. intros. apply cvdot_vcmul_r. Qed.
 
   (** <0,v> = 0 *)
-  Lemma cvdot_0_l : forall {n} (v : cvec n), (<cvec0,v> == Azero)%A.
+  Lemma cvdot_0_l : forall {n} (v : cvec n), (<cvec0,v> == T0)%T.
   Proof. intros. apply cvdot_0_l. Qed.
 
   (** <v,0> = 0 *)
-  Lemma cvdot_0_r : forall {n} (v : cvec n), (<v,cvec0> == Azero)%A.
+  Lemma cvdot_0_r : forall {n} (v : cvec n), (<v,cvec0> == T0)%T.
   Proof. intros. apply cvdot_0_r. Qed.
   
   (** < - v1, v2> = - <v1,v2> *)
-  Lemma cvdot_vopp_l : forall {n} (v1 v2 : cvec n), (< (-v1)%CV, v2> == - <v1,v2>)%A.
+  Lemma cvdot_vopp_l : forall {n} (v1 v2 : cvec n), (< (-v1)%CV, v2> == - <v1,v2>)%T.
   Proof. intros. apply cvdot_vopp_l. Qed.
   
   (** < v1, - v2> = - <v1,v2> *)
-  Lemma cvdot_vopp_r : forall {n} (v1 v2 : cvec n), (< v1, (-v2)%CV> == - <v1,v2>)%A.
+  Lemma cvdot_vopp_r : forall {n} (v1 v2 : cvec n), (< v1, (-v2)%CV> == - <v1,v2>)%T.
   Proof. intros. apply cvdot_vopp_r. Qed.
 
 

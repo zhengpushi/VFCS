@@ -80,32 +80,32 @@ Reserved Notation "| r |"   (at level 30, r at level 25, format "| r |").  (* Ra
 (* this level is consistent with Mathcomp.ssreflect.ssrnotations.v *)
 
 (* safe access (any index) *)
-Reserved Notation "m ! i ! j"  (at level 20, i at next level).    (* nth of mat *)
+Reserved Notation "A ! i ! j"  (at level 20, i at next level).    (* nth of mat *)
 Reserved Notation "v ! i"      (at level 20, i at next level).    (* nth of vec *)
 (* unsafe access (developer must give valid index) *)
-Reserved Notation "m $ i $ j"  (at level 20, i at next level).    (* nth of mat, raw *)
+Reserved Notation "A $ i $ j"  (at level 20, i at next level).    (* nth of mat, raw *)
 Reserved Notation "v $ i"      (at level 20, i at next level).    (* nth of vec, raw *)
 
 (* index-of-matrix or index-of-nat-nat-function.
  Note, there are two style of start number to count index, 0 or 1.
  Many programming language use 0, but MATLAB and many mathematical textbook use 1.
  Maybe it is a convention problem, we choose 1. *)
-Reserved Notation "m .11"      (at level 20, format "m .11").     (* m[1,1] *)
-Reserved Notation "m .12"      (at level 20, format "m .12").
-Reserved Notation "m .13"      (at level 20, format "m .13").
-Reserved Notation "m .14"      (at level 24, format "m .14").
-Reserved Notation "m .21"      (at level 20, format "m .21").
-Reserved Notation "m .22"      (at level 20, format "m .22").
-Reserved Notation "m .23"      (at level 20, format "m .23").
-Reserved Notation "m .24"      (at level 20, format "m .24").
-Reserved Notation "m .31"      (at level 20, format "m .31").
-Reserved Notation "m .32"      (at level 20, format "m .32").
-Reserved Notation "m .33"      (at level 20, format "m .33").
-Reserved Notation "m .34"      (at level 20, format "m .34").
-Reserved Notation "m .41"      (at level 20, format "m .41").
-Reserved Notation "m .42"      (at level 20, format "m .42").
-Reserved Notation "m .43"      (at level 20, format "m .43").
-Reserved Notation "m .44"      (at level 20, format "m .44").
+Reserved Notation "A .11"      (at level 20, format "A .11").     (* m[1,1] *)
+Reserved Notation "A .12"      (at level 20, format "A .12").
+Reserved Notation "A .13"      (at level 20, format "A .13").
+Reserved Notation "A .14"      (at level 24, format "A .14").
+Reserved Notation "A .21"      (at level 20, format "A .21").
+Reserved Notation "A .22"      (at level 20, format "A .22").
+Reserved Notation "A .23"      (at level 20, format "A .23").
+Reserved Notation "A .24"      (at level 20, format "A .24").
+Reserved Notation "A .31"      (at level 20, format "A .31").
+Reserved Notation "A .32"      (at level 20, format "A .32").
+Reserved Notation "A .33"      (at level 20, format "A .33").
+Reserved Notation "A .34"      (at level 20, format "A .34").
+Reserved Notation "A .41"      (at level 20, format "A .41").
+Reserved Notation "A .42"      (at level 20, format "A .42").
+Reserved Notation "A .43"      (at level 20, format "A .43").
+Reserved Notation "A .44"      (at level 20, format "A .44").
 
 (* index-of-vector or index-of-nat-function. We choose 0 as start number. *)
 Reserved Notation "v .1"       (at level 20, format "v .1").      (* v[1] *)
@@ -213,8 +213,8 @@ Qed.
 
 (** ** Class *)
 
-Class Dec {A : Type} (Aeq : relation A) := {
-    dec : forall (a b : A), {Aeq a b} + {~(Aeq a b)};
+Class Dec {T : Type} (Teq : relation T) := {
+    dec : forall (a b : T), {Teq a b} + {~(Teq a b)};
   }.
 Infix "==?" := (dec).
 Infix "<>?" := (fun a b => sumbool_not _ _ (a ==? b)).
@@ -239,20 +239,20 @@ Section Instances.
   Global Instance Dec_R : Dec (@eq R).
   Proof. constructor. apply Req_EM_T. Defined.
 
-  Global Instance Dec_list `{D:Dec} : Dec (eqlistA Aeq).
+  Global Instance Dec_list `{D:Dec} : Dec (eqlistA Teq).
   Proof.
   constructor. intros l1. induction l1.
     - intros l2. destruct l2; auto.
       right. intro. easy.
     - intros l2. destruct l2.
       + right. intro. easy.
-      + destruct (dec a a0), (IHl1 l2); auto.
+      + destruct (dec a t), (IHl1 l2); auto.
         * right. intro. inversion H. easy.
         * right. intro. inversion H. easy.
         * right. intro. inversion H. easy.
   Defined.
 
-  Global Instance Dec_dlist `{D:Dec} : Dec (eqlistA (eqlistA Aeq)).
+  Global Instance Dec_dlist `{D:Dec} : Dec (eqlistA (eqlistA Teq)).
   Proof. constructor. intros. apply dec. Defined.
 
 End Instances.
@@ -261,29 +261,29 @@ End Instances.
 Section Dec_theory.
 
   Context `{D : Dec}.
-  Infix "==" := Aeq.
+  Infix "==" := Teq.
 
   (** Tips: these theories are useful for R type *)
   
   (** Calculate equality to boolean, with the help of equality decidability *)
-  Definition Aeqb (a b : A) : bool := if a ==? b then true else false.
-  Infix "=?" := Aeqb.
+  Definition Teqb (a b : T) : bool := if a ==? b then true else false.
+  Infix "=?" := Teqb.
 
-  (** Aeqb is true iff equal. *)
-  Lemma Aeqb_true : forall a b, a =? b = true <-> a == b.
+  (** Teqb is true iff equal. *)
+  Lemma Teqb_true : forall a b, a =? b = true <-> a == b.
   Proof.
-    intros. unfold Aeqb. destruct dec; split; intros; easy.
+    intros. unfold Teqb. destruct dec; split; intros; easy.
   Qed.
 
-  (** Aeqb is false iff not equal *)
-  Lemma Aeqb_false : forall a b, a =? b = false <-> ~(a == b).
+  (** Teqb is false iff not equal *)
+  Lemma Teqb_false : forall a b, a =? b = false <-> ~(a == b).
   Proof.
-    intros. unfold Aeqb. destruct dec; split; intros; easy.
+    intros. unfold Teqb. destruct dec; split; intros; easy.
   Qed.
 
-  Lemma Aeq_reflect : forall a b : A, reflect (a == b) (a =? b).
+  Lemma Teq_reflect : forall a b : T, reflect (a == b) (a =? b).
   Proof.
-    intros. unfold Aeqb. destruct (dec a b); constructor; auto.
+    intros. unfold Teqb. destruct (dec a b); constructor; auto.
   Qed.
 
 End Dec_theory.
@@ -297,9 +297,9 @@ Goal forall a b : nat, {a = b} + {a <> b}.
 (** * Usually used scopes *)
 
 (** Scope for matrix/vector/list element type *)
-Declare Scope A_scope.
-Delimit Scope A_scope with A.
-Open Scope A.
+Declare Scope T_scope.
+Delimit Scope T_scope with T.
+Open Scope T.
 
 (** Scope for list type *)
 Declare Scope list_scope.

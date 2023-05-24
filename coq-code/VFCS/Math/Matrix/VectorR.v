@@ -83,8 +83,8 @@ Open Scope cvec_scope.
 (** ** Kronecker delta function *)
 Section kronecker.
   
-  Definition kronecker_fun {A} {Azero Aone : A} (i j : nat) :=
-    if (i =? j)%nat then Aone else Azero.
+  Definition kronecker_fun {T} {T0 T1 : T} (i j : nat) :=
+    if (i =? j)%nat then T1 else T0.
 
 End kronecker.
 
@@ -101,7 +101,7 @@ Section vcmul.
 
   (** If k times a non-zero vector equal to zero, then k must be zero *)
   Lemma cvcmul_nonzero_eq_zero_imply_k0 : forall {n} (v : cvec n) k,
-      cvnonzero v -> k c* v == cvec0 -> (k == Azero)%A.
+      cvnonzero v -> k c* v == cvec0 -> (k == T0)%T.
   Proof.
     (* idea:
     v <> 0 ==> ~(∀ i, v[i] = 0)
@@ -111,10 +111,10 @@ Section vcmul.
     ∃ i, v[i] <> 0, then, k*v[i] <> 0, thus, contradict.
      *)
     intros. destruct v as [v]. cbv in *.
-    destruct (k ==? Azero); auto.
+    destruct (k ==? T0); auto.
     (* idea: from "~(∀ij(v i j = 0)" to "∃ij(v i j≠0)" *)
     (* Tips, a good practice of logic proposition *)
-    assert (exists (ij:nat*nat), let (i,j) := ij in (i<n)%nat /\ (j<1)%nat /\ (v i j != Azero)%A).
+    assert (exists (ij:nat*nat), let (i,j) := ij in (i<n)%nat /\ (j<1)%nat /\ (v i j != T0)%T).
     { clear k H0 n0.
       apply not_all_not_ex. intro.
       destruct H. intros. specialize (H0 (i,0)%nat). simpl in H0.
@@ -200,7 +200,7 @@ Section cvparallel.
       apply Rmult_integral_contrapositive_currified; auto.
       apply Rinv_neq_0_compat; auto.
     - rewrite cvcmul_assoc.
-      replace (k / a * a)%A with k; auto. cbv. field; auto.
+      replace (k / a * a)%T with k; auto. cbv. field; auto.
   Qed.
 
   (** v1 ∥ v2 -> v1 ∥ (a c* v2) *)
@@ -259,7 +259,7 @@ Section vdot.
   Lemma cvdot_ge0 : forall {n} (v : cvec n), 0 <= <v,v>.
   Proof.
     intros. cvec2fun. unfold cvdot,Vector.cvdot. simpl.
-    revert v. induction n; intros; simpl; autounfold with A; ra.
+    revert v. induction n; intros; simpl; autounfold with T; ra.
   Qed.
 
   (** <v,v> = 0 <-> v = 0 *)
@@ -288,7 +288,7 @@ Section vdot.
     - rewrite H. rewrite cvdot_0_l. auto.
   Qed.
       
-  (** <v, v> != Azero <-> cvnonzero v *)
+  (** <v, v> != T0 <-> cvnonzero v *)
   Lemma cvdot_same_neq0 : forall {n} (v : cvec n),
       <v, v> <> 0 <-> cvnonzero v.
   Proof.
@@ -499,7 +499,7 @@ Section vnormalize.
      = sqrt(v⋅v) / |v| = |v| / |v| = 1 *)
     intros. unfold cvnormalize. unfold cvlen.
     rewrite !cvdot_vcmul_l, !cvdot_vcmul_r. rewrite cvdot_same.
-    remember (||v||). autounfold with A. autorewrite with R.
+    remember (||v||). autounfold with T. autorewrite with R.
     apply sqrt_eq1_imply_eq1_rev.
     assert (|r| = r). { pose proof (cvlen_ge0 v). subst. ra. }
     rewrite H0. cbv. field. subst. apply cvlen_neq0_iff_neq0; auto.
@@ -515,10 +515,10 @@ Section vnormalize.
   (** The component of a normalized vector is equivalent to its original component 
       divide the vector's length *)
   Lemma cvnormalize_nth : forall {n} (v : cvec n) i,
-      cvnonzero v -> (i < n)%nat -> ((cvnormalize v) $ i == v $ i / (||v||))%A.
+      cvnonzero v -> (i < n)%nat -> ((cvnormalize v) $ i == v $ i / (||v||))%T.
   Proof.
     intros. unfold cvnormalize. rewrite cvcmul_nth; auto.
-    autounfold with A. field. apply cvlen_neq0_iff_neq0; auto.
+    autounfold with T. field. apply cvlen_neq0_iff_neq0; auto.
   Qed.
 
   (** Normalization is idempotent *)
@@ -526,8 +526,8 @@ Section vnormalize.
       cvnonzero v -> cvnormalize (cvnormalize v) == cvnormalize v.
   Proof.
     intros. unfold cvnormalize. rewrite cvcmul_assoc.
-    assert (1 / (||1 / (||v||) c* v||) == Aone)%A.
-    { rewrite cvlen_cmul. remember (||v||) as r. autounfold with A.
+    assert (1 / (||1 / (||v||) c* v||) == T1)%T.
+    { rewrite cvlen_cmul. remember (||v||) as r. autounfold with T.
       replace (|(1/r)|) with (1/r); try field.
       + rewrite Heqr. apply cvlen_neq0_iff_neq0; auto.
       + rewrite Rabs_right; auto.
@@ -543,7 +543,7 @@ Section vnormalize.
   Proof.
     intros. unfold cvparallel. unfold cvnormalize. exists (||v||). split.
     - apply cvlen_neq0_iff_neq0; auto.
-    - rewrite cvcmul_assoc. autounfold with A.
+    - rewrite cvcmul_assoc. autounfold with T.
       match goal with | |- context[?a c* _] => replace a with 1 end.
       apply cvcmul_1_l. field. apply cvlen_neq0_iff_neq0; auto.
   Qed.
@@ -616,7 +616,7 @@ Section vangle.
     { rewrite <- !cvdot_same. unfold cvsub.
       rewrite !cvdot_vadd_distr_l, !cvdot_vadd_distr_r.
       rewrite !cvdot_vopp_l, !cvdot_vopp_r. rewrite (cvdot_comm b a).
-      autounfold with A; ring. }
+      autounfold with T; ring. }
     pose proof (cosine_law a b). ra.
   Qed.
 
@@ -661,7 +661,7 @@ Section vangle.
   (*     unfold cvnormalize. *)
   (*     rewrite cvcmul_assoc, !cvdot_cvcmul_l, !cvdot_cvcmul_r. *)
   (*     rewrite cvlen_cmul. rewrite cvdot_same. rewrite Rabs_right; ra. *)
-  (*     autounfold with A. field. *)
+  (*     autounfold with T. field. *)
   (*     apply cvlen_neq0_iff_neq0 in H,H0. lra. } *)
   (*   1:{ *)
   (*     rewrite <- acos_1 in H1. apply acos_inj in H1; ra. *)
@@ -836,7 +836,7 @@ Section cvproj.
       cvnonzero b -> (cvproj (a1 + a2) b == cvproj a1 b + cvproj a2 b)%CV.
   Proof.
     intros. unfold cvproj. rewrite cvdot_vadd_distr_l.
-    rewrite <- cvcmul_add_distr. f_equiv. autounfold with A. field.
+    rewrite <- cvcmul_add_distr. f_equiv. autounfold with T. field.
     rewrite cvdot_same. apply cvlen_gt0 in H. ra.
   Qed.
 
@@ -845,7 +845,7 @@ Section cvproj.
       cvnonzero b -> (cvproj (k c* a) b == k c* (cvproj a b))%CV.
   Proof.
     intros. unfold cvproj. rewrite cvdot_vcmul_l. rewrite cvcmul_assoc. f_equiv.
-    autounfold with A. field.
+    autounfold with T. field.
     rewrite cvdot_same. apply cvlen_gt0 in H. ra.
   Qed.
   
@@ -1006,8 +1006,8 @@ Section cvorthogonal.
     cvec2fun. simpl.
     unfold cvdot, Vector.cvdot. simpl.
     autorewrite with R.
-    remember (seqsum (fun i0 : nat => v i0 0%nat * v i0 0%nat) n)%A as r1.
-    remember (seqsum (fun i0 : nat => u i0 0%nat * v i0 0%nat) n)%A as r2.
+    remember (seqsum (fun i0 : nat => v i0 0%nat * v i0 0%nat) n)%T as r1.
+    remember (seqsum (fun i0 : nat => u i0 0%nat * v i0 0%nat) n)%T as r2.
   Abort.
   
 End cvorthogonal.
@@ -1022,12 +1022,12 @@ Section cvorthogonalset.
       each pairing of them is orthogonal. Such a set is called an orthogonal set.
       Note: each pair means {(vi,vj)|i≠j}  *)
   Definition cvorthogonalset {r c} (m : mat r c) : Prop :=
-    forall j1 j2, (j1 < c)%nat -> (j2 < c)%nat -> (j1 <> j2) -> <mcol m j1, mcol m j2> = Azero.
+    forall j1 j2, (j1 < c)%nat -> (j2 < c)%nat -> (j1 <> j2) -> <mcol m j1, mcol m j2> = T0.
 
   (** (bool version) *)
   Definition cvorthogonalsetb {r c} (m : mat r c) : bool :=
     (* two column vectors is orthogonal *)
-    let orth (i j : nat) : bool := (<mcol m i, mcol m j> =? Azero)%R in
+    let orth (i j : nat) : bool := (<mcol m i, mcol m j> =? T0)%R in
     (* remain column indexes after this column *)
     let cids (i : nat) : list nat := seq (S i) (c - S i) in
     (* the column is orthogonal to right-side remain columns *)
@@ -1040,7 +1040,7 @@ Section cvorthogonalset.
   Admitted.
 
   Example cvorthogonalset_ex1 :
-    cvorthogonalset (@l2m 3 3 [[1;1;1];[0;sqrt 2; -(sqrt 2)];[-1;1;1]])%A.
+    cvorthogonalset (@l2m 3 3 [[1;1;1];[0;sqrt 2; -(sqrt 2)];[-1;1;1]])%T.
   Proof.
     apply cvorthogonalsetb_true_iff. cbv.
     (** Auto solve equality contatin "Req_EM_T" *)
@@ -1064,7 +1064,7 @@ Section mcolsOrthonormal.
 
   (** bool version *)
   Definition mcolsOrthogonalb {r c} (m : mat r c) : bool :=
-    let is_orth (i j : nat) : bool := (<mcol m i, mcol m j> =? Azero)%R in
+    let is_orth (i j : nat) : bool := (<mcol m i, mcol m j> =? T0)%R in
     let cids (i : nat) : list nat := seq (S i) (c - S i) in
     let chk_col (j : nat) : bool := and_blist (map (fun k => is_orth j k) (cids j)) in
     and_blist (map (fun j => chk_col j) (seq 0 c)).
@@ -1199,8 +1199,8 @@ Section test.
   (* Compute cv2l v2. *)
 
 
-  Variable a1 a2 a3 : A.
-  Variable f : A -> A.
+  Variable a1 a2 a3 : T.
+  Variable f : T -> T.
   Let v3 := t2rv_3 (a1,a2,a3).
   Let v4 := t2cv_3 (a1,a2,a3).
   (* Compute rv2l (rvmap v3 f). *)

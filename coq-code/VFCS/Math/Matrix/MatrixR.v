@@ -66,12 +66,12 @@ Section morthogonal.
 
   (** orthogonal m -> |m| = ± 1 *)
   Lemma morthogonal_mdet : forall {n} (m : smat n),
-      morthogonal m -> (mdet m == 1 \/ mdet m == - (1))%A.
+      morthogonal m -> (mdet m == 1 \/ mdet m == - (1))%T.
   Proof.
     intros.
     assert (m\T * m == mat1).
     { unfold morthogonal in H. unfold Matrix.morthogonal in H. rewrite H. easy. }
-    assert (mdet (m\T * m)%M == mdet (@mat1 n))%A.
+    assert (mdet (m\T * m)%M == mdet (@mat1 n))%T.
     { rewrite H0. easy. }
     rewrite mdet_mmul in H1. rewrite mdet_mtrans in H1. rewrite mdet_1 in H1.
     apply Rsqr_eq1 in H1. easy.
@@ -108,8 +108,8 @@ Section test.
   (* Compute m2l (mmap Ropp m1). *)
   (* Compute m2l (m1 * m1). *)
 
-  Variable a11 a12 a21 a22 : A.
-  Variable f : A -> A.
+  Variable a11 a12 a21 a22 : T.
+  Variable f : T -> T.
   Let m2 := @l2m 2 2 [[a11;a12];[a21;a22]].
   (* Compute m2l m2.     (* = [[a11; a12]; [a21; a22]] *) *)
   (* Compute m2l (mmap f m2).       (* = [[f a11; f a12]; [f a21; f a22]] *) *)
@@ -119,7 +119,7 @@ Section test.
   Proof. intros. apply madd_comm. Qed.
 
   (** Simulate Outer/inner product of two vectors *)
-  Variables a1 a2 a3 b1 b2 b3 : A.
+  Variables a1 a2 a3 b1 b2 b3 : T.
   Let m31 := @l2m 3 1 [[a1];[a2];[a3]].
   Let m13 := @l2m 1 3 [[b1;b2;b3]].
   (* Compute m2l (m31 * m13). *)
@@ -174,7 +174,7 @@ Module Exercise_Ch1_Symbol.
       mdet m = (a - b)^3)%R.
   Proof. intros. cbv. ring. Qed.
   
-  Example ex6_2 : forall a b x y z : A,
+  Example ex6_2 : forall a b x y z : T,
       (let m1 := mk_mat_3_3
                    (a*x+b*y) (a*y+b*z) (a*z+b*x)
                    (a*y+b*z) (a*z+b*x) (a*x+b*y)
@@ -183,7 +183,7 @@ Module Exercise_Ch1_Symbol.
        mdet m1 = (a^3 + b^3) * mdet m2)%R.
   Proof. intros. cbv. ring. Qed.
   
-  Example ex6_3 : forall a b e d : A,
+  Example ex6_3 : forall a b e d : T,
       (let m := mk_mat_4_4
                  (a*a) ((a+1)^2) ((a+2)^2) ((a+3)^2)
                  (b*b) ((b+1)^2) ((b+2)^2) ((b+3)^2)
@@ -192,7 +192,7 @@ Module Exercise_Ch1_Symbol.
       mdet m = 0)%R.
   Proof. intros. cbv. ring. Qed.
   
-  Example ex6_4 : forall a b e d : A,
+  Example ex6_4 : forall a b e d : T,
       let m := mk_mat_4_4
                  1 1 1 1
                  a b e d

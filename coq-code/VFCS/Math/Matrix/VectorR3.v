@@ -163,7 +163,7 @@ Section cv3normalize.
       (v'.1 = v.1 / ||v||) /\ (v'.2 = v.2 / ||v||) /\ (v'.3 = v.3 / ||v||).
   Proof.
     intros. unfold v', cvnormalize. cvec2fun.
-    autounfold with A. repeat split; try field.
+    autounfold with T. repeat split; try field.
     all: apply cvlen_neq0_iff_neq0; auto.
   Qed.
 
@@ -346,7 +346,7 @@ Section cv3cross.
     rewrite cvcmul_assoc.
     match goal with |- context [(?a c* _)%CV] => replace a with 1 end.
     rewrite cvcmul_1_l; easy.
-    autounfold with A. field. split.
+    autounfold with T. field. split.
     - pose proof (sin_cvangle_gt0 v1 v2 H1 H2). ra.
     - split; apply cvlen_neq0_iff_neq0; auto.
   Qed.
@@ -477,7 +477,7 @@ Section skew.
   Lemma cv3skew_skew2v_id : forall (m : mat 3 3), cv3skewP m -> cv3skew (cv3vex m) == m.
   Proof.
     intros [m]. simpl. intros. apply cv3skewP_spec in H.
-    do 5 destruct H as [? H]. lma. autounfold with A. ra.
+    do 5 destruct H as [? H]. lma. autounfold with T. ra.
   Qed.
 
   Lemma cv3skew2v_skew_id : forall (v : cvec 3), cv3vex (cv3skew v) == v.
@@ -587,7 +587,7 @@ Section AxisAngle.
     intros.
     unfold rotAxisAngle.
     assert (v_para == <v,n> c* n) as H1.
-    { unfold v_para, cvproj. rewrite H. f_equiv. autounfold with A. field. }
+    { unfold v_para, cvproj. rewrite H. f_equiv. autounfold with T. field. }
     assert (v_perp == v - <v,n> c* n) as H2.
     { unfold v_perp. rewrite <- H1. easy. }
     assert (w == n × v) as H3.
@@ -610,7 +610,7 @@ Section AxisAngle.
     rewrite <- cvadd_assoc. rewrite cvadd_perm. rewrite cvadd_comm. f_equiv.
     unfold Rminus. rewrite Rmult_plus_distr_l. autorewrite with R.
     rewrite cvcmul_add_distr. rewrite cvadd_comm. f_equiv.
-    rewrite cvopp_vcmul. rewrite cvcmul_assoc. f_equiv. autounfold with A. ring.
+    rewrite cvopp_vcmul. rewrite cvcmul_assoc. f_equiv. autounfold with T. ring.
   Qed.
 
   (** Matrix formula of roation with axis-angle *)
@@ -673,13 +673,13 @@ Section AxisAngle.
         cvunit k -> Rrod θ k == RrodM θ k.
     Proof.
       intros. lma;
-        pose proof (cv3unit_eq1 k H); autounfold with A in *;
+        pose proof (cv3unit_eq1 k H); autounfold with T in *;
         ring_simplify; autorewrite with R; rewrite H0; field.
     Qed.
 
     (** R(-θ) = R(θ)\T *)
     Lemma Rrod_neg_eq_trans : forall (θ : R) (n : cvec 3), Rrod (-θ) n == (Rrod θ n)\T.
-      (* Proof. lma; autounfold with A; autorewrite with R; ring. Qed. *)
+      (* Proof. lma; autounfold with T; autorewrite with R; ring. Qed. *)
     Admitted. (* to speed up the compile process *)
 
     (** R(θ) * R(θ)\T = I *)
@@ -690,7 +690,7 @@ Section AxisAngle.
     (*   pose proof (cv3unit_eq1 n H) as H1. *)
     (*   pose proof (cv3unit_eq2 n H) as H2. *)
     (*   pose proof (cv3unit_eq3 n H) as H3. *)
-    (*   lma; autounfold with A in *; cvec2fun; cbv; ring_simplify; autorewrite with R. *)
+    (*   lma; autounfold with T in *; cvec2fun; cbv; ring_simplify; autorewrite with R. *)
     (*   - rewrite H1. rewrite RealFunction.cos2_eq. cbv; ring. *)
     (*   - rewrite H3. rewrite RealFunction.cos2_eq. cbv; ring. *)
     (*   - rewrite H2. rewrite RealFunction.cos2_eq. cbv; ring. *)
@@ -793,7 +793,7 @@ Section RotationMatrix3D.
   Lemma R3x_inv_eq_trans : forall θ : R, (R3x θ)⁻¹ == (R3x θ)\T.
   Proof.
     (* method 1 : prove by computing (too slow, 0.8s) *)
-    (* lma; autounfold with A; autorewrite with R; try easy. *)
+    (* lma; autounfold with T; autorewrite with R; try easy. *)
     (* method 2 : prove by reasoning *)
     intros; apply (SOn_imply_inv_eq_trans (R3x_SO3 θ)).
   Qed.
@@ -817,7 +817,7 @@ Section RotationMatrix3D.
   (** R(-θ) * R(θ) = I *)
   Lemma R3x_neg_R3x_inv : forall θ : R, R3x (- θ) * R3x θ == mat1.
   Proof.
-    (* lma; autounfold with A; autorewrite with R; auto; ring. *)
+    (* lma; autounfold with T; autorewrite with R; auto; ring. *)
     intros; rewrite R3x_neg_eq_trans, <- R3x_inv_eq_trans, mmul_minv_l; easy.
   Qed.
   

@@ -12,14 +12,15 @@ Require Export NatExt.
 Require Export Basic AlgebraStructure.
 Require RExt.
 
-Generalizable Variable A B Aeq Beq Aadd Azero Aopp Amul Aone Ainv.
+Generalizable Variable T Teq Tadd Topp Tmul Tinv.
+Generalizable Variable U Ueq.
 
 
 (* ######################################################################### *)
 (** * Sequence by function, f : nat -> A  *)
 
 Open Scope nat_scope.
-Open Scope A_scope.
+Open Scope T_scope.
 
 Declare Scope seq_scope.
 Delimit Scope seq_scope with seq.
@@ -51,25 +52,25 @@ Notation "f .44" := (f 3%nat 3%nat) : fun_scope.
 (** ** Equality of sequence *)
 Section seqeq.
 
-  Context `{Equiv_Aeq : Equivalence A Aeq}.
-  Infix "==" := Aeq : A_scope.
+  Context `{Equiv_Teq : Equivalence T Teq}.
+  Infix "==" := Teq : T_scope.
 
   (** Equality of two sequence which have one index *)
-  Definition seqeq n (f g : nat -> A) := forall i, i < n -> f i == g i.
+  Definition seqeq n (f g : nat -> T) := forall i, i < n -> f i == g i.
 
   (** seqeq is an equivalence relation *)
   Section seqeq_equiv.
 
     Context {n : nat}.
-    Infix "==" := (seqeq n) : A_scope.
+    Infix "==" := (seqeq n) : T_scope.
     
-    Lemma seqeq_refl : forall (f : nat -> A), f == f.
+    Lemma seqeq_refl : forall (f : nat -> T), f == f.
     Proof. intros. hnf. easy. Qed.
 
-    Lemma seqeq_sym : forall (f g : nat -> A), f == g -> g == f.
+    Lemma seqeq_sym : forall (f g : nat -> T), f == g -> g == f.
     Proof. intros. hnf in *. intros. rewrite <- H; easy. Qed.
 
-    Lemma seqeq_trans : forall (f g h : nat -> A), f == g -> g == h -> f == h.
+    Lemma seqeq_trans : forall (f g h : nat -> T), f == g -> g == h -> f == h.
     Proof. intros. hnf in *. intros. rewrite H, <- H0; easy. Qed.
 
     Lemma seqeq_equiv : Equivalence (seqeq n).
@@ -85,19 +86,19 @@ Section seqeq.
 
 
   (** seqeq of S has a equivalent form. *)
-  Lemma seqeq_S : forall n (f g : nat -> A),
+  Lemma seqeq_S : forall n (f g : nat -> T),
       seqeq (S n) f g <-> (seqeq n f g) /\ (f n == g n).
   Proof.
     split; intros.
     - split; auto. unfold seqeq in *. auto.
     - unfold seqeq in *. intros. destruct H.
-      (* Note: Aeq_reflect is come from typeclass of Decidable theory. *)
-      destruct (Aeq_reflect i n); subst; auto. apply H. lia.
+      (* Note: Teq_reflect is come from typeclass of Decidable theory. *)
+      destruct (Teq_reflect i n); subst; auto. apply H. lia.
   Qed.
 
   (** If a seq f satisfy P for all top n elements, and P (f(n)) also hold,
       then the seq f satisfy P for all top (n+1) elements. *)
-  Lemma seq_prop_extend_r : forall (f : nat -> A) (n : nat) (P : A -> Prop),
+  Lemma seq_prop_extend_r : forall (f : nat -> T) (n : nat) (P : T -> Prop),
       (forall i, (i < n)%nat -> P (f i)) -> P (f n) ->
       (forall i, (i < S n)%nat -> P (f i)).
   Proof.
@@ -107,13 +108,13 @@ Section seqeq.
   Qed.
   
   (** seqeq is decidable  *)
-  Global Instance seqeq_dec {Dec_Aeq : Dec Aeq} : forall n, Dec (seqeq n).
+  Global Instance seqeq_dec {Dec_Teq : Dec Teq} : forall n, Dec (seqeq n).
   Proof.
     induction n; constructor; intros.
     - left. unfold seqeq. easy.
     - unfold seqeq in *.
       destruct (a ==? b), (a n ==? b n).
-      + left. intros. destruct (eqb_reflect i n); subst; auto. apply a0. lia.
+      + left. intros. destruct (eqb_reflect i n); subst; auto. apply t. lia.
       + right. intro. destruct n0. apply H. auto.
       + right. intro. destruct n0. intros. auto.
       + right. intro. destruct n0. intros. auto.
@@ -121,19 +122,19 @@ Section seqeq.
 
   (** *** seqeq is decidable with the help of bool equality *)
   Section seqeq_dec_with_eqb.
-    Context {HDec: Dec Aeq}.
+    Context {HDec: Dec Teq}.
 
     (** Boolean equality of two sequence *)
-    Fixpoint seqeqb n (f g : nat -> A) : bool :=
+    Fixpoint seqeqb n (f g : nat -> T) : bool :=
       match n with
       | O => true
-      | 1 => Aeqb (f 0) (g 0)
-      | S n' => (seqeqb n' f g) && Aeqb (f n') (g n')
+      | 1 => Teqb (f 0) (g 0)
+      | S n' => (seqeqb n' f g) && Teqb (f n') (g n')
       end.
     
     (** seqeqb of S has a equivalent form. *)
-    Lemma seqeqb_S : forall {n} (f g : nat -> A), 
-        seqeqb (S n) f g = (seqeqb n f g) && (Aeqb (f n) (g n)).
+    Lemma seqeqb_S : forall {n} (f g : nat -> T), 
+        seqeqb (S n) f g = (seqeqb n f g) && (Teqb (f n) (g n)).
     Proof.
       intros. destruct n; auto.
     Qed.
@@ -145,7 +146,7 @@ Section seqeq.
       - unfold seqeqb, seqeq. split; intros; auto. lia.
       - rewrite seqeqb_S. rewrite seqeq_S.
         rewrite andb_true_iff.
-        rewrite Aeqb_true. rewrite IHn. split; auto.
+        rewrite Teqb_true. rewrite IHn. split; auto.
     Qed.
     
     (** seqeqb = false <-> ~seqeq *)
@@ -155,7 +156,7 @@ Section seqeq.
       - unfold seqeqb, seqeq. split; intros; try easy. destruct H. easy.
       - rewrite seqeqb_S. rewrite seqeq_S.
         rewrite andb_false_iff.
-        rewrite IHn. rewrite Aeqb_false. split; intros.
+        rewrite IHn. rewrite Teqb_false. split; intros.
         + apply Classical_Prop.or_not_and; auto.
         + apply Classical_Prop.not_and_or in H; auto.
     Qed.
@@ -177,16 +178,16 @@ End seqeq.
 (** ** Equality of sequence with two index *)
 Section seq2eq.
 
-  Context `{Equiv_Aeq : Equivalence A Aeq}.
-  Infix "==" := Aeq : A_scope.
-  Notation seqeq := (seqeq (Aeq:=Aeq)).
+  Context `{Equiv_Teq : Equivalence T Teq}.
+  Infix "==" := Teq : T_scope.
+  Notation seqeq := (seqeq (Teq:=Teq)).
 
   (** Equality of two sequence which have two indexes *)
-  Definition seq2eq r c (f g : nat -> nat -> A) := 
+  Definition seq2eq r c (f g : nat -> nat -> T) := 
     forall ri ci, ri < r -> ci < c -> f ri ci == g ri ci.
   
   (** seq2eq of Sr has a equivalent form. *)
-  Lemma seq2eq_Sr : forall r c (f g : nat -> nat -> A), 
+  Lemma seq2eq_Sr : forall r c (f g : nat -> nat -> T), 
       seq2eq (S r) c f g <-> (seq2eq r c f g) /\ (seqeq c (f r) (g r)).
   Proof.
     split.
@@ -194,11 +195,11 @@ Section seq2eq.
       + unfold seq2eq in *. intros. apply H; auto.
       + unfold seq2eq, seqeq in *. intros. auto.
     - unfold seq2eq,seqeq. intros. destruct H.
-      destruct (Aeq_reflect ri r); subst; auto. apply H; auto. lia.
+      destruct (Teq_reflect ri r); subst; auto. apply H; auto. lia.
   Qed.
 
   (** seq2eq of Sc has a equivalent form. *)
-  Lemma seq2eq_Sc : forall r c (f g : nat -> nat -> A), 
+  Lemma seq2eq_Sc : forall r c (f g : nat -> nat -> T), 
       seq2eq r (S c) f g <-> (seq2eq r c f g) /\ (seqeq r (fun i => f i c) (fun i => g i c)).
   Proof.
     split.
@@ -206,19 +207,19 @@ Section seq2eq.
       + unfold seq2eq in *. intros. apply H; auto.
       + unfold seq2eq, seqeq in *. intros. auto.
     - unfold seq2eq,seqeq. intros. destruct H.
-      destruct (Aeq_reflect ci c); subst; auto. apply H; auto. lia.
+      destruct (Teq_reflect ci c); subst; auto. apply H; auto. lia.
   Qed.
 
   (** seq2eq is a equivalence relation *)
-  Lemma seq2eq_refl : forall r c (f : nat -> nat -> A),
+  Lemma seq2eq_refl : forall r c (f : nat -> nat -> T),
       let R := seq2eq r c in R f f.
   Proof. intros. hnf. easy. Qed.
 
-  Lemma seq2eq_sym : forall r c (f g : nat -> nat -> A),
+  Lemma seq2eq_sym : forall r c (f g : nat -> nat -> T),
       let R := seq2eq r c in R f g -> R g f.
   Proof. intros. hnf in *. intros. rewrite <- H; easy. Qed.
 
-  Lemma seq2eq_trans : forall r c (f g h : nat -> nat -> A),
+  Lemma seq2eq_trans : forall r c (f g h : nat -> nat -> T),
       let R := seq2eq r c in R f g -> R g h -> R f h.
   Proof. intros. hnf in *. intros. rewrite H, <- H0; easy. Qed.
 
@@ -234,7 +235,7 @@ Section seq2eq.
   
   (** *** seq2eq is decidable with the help of bool equality *)
   Section seq2eq_dec_with_eqb.
-    Context {HDec: Dec Aeq}.
+    Context {HDec: Dec Teq}.
 
     (** seq2eq is decidable  *)
     Lemma seq2eq_dec : forall r c, Dec (seq2eq r c).
@@ -244,18 +245,18 @@ Section seq2eq.
       - unfold seq2eq in *. specialize (IHr c).
         destruct (f ==? g).
         + (* Tips: need to construct a prop *)
-          assert (Dec (fun f g : nat -> nat -> A =>
+          assert (Dec (fun f g : nat -> nat -> T =>
                          forall ci, ci < c -> f r ci == g r ci)) as H.
           { constructor. intros. apply seqeq_dec. }
           destruct (f ==? g).
-          * left. intros. destruct (Aeq_reflect ri r); subst; auto.
-            apply a; try easy. lia.
+          * left. intros. destruct (Teq_reflect ri r); subst; auto.
+            apply t; try easy. lia.
           * right. intro. destruct n. intros. apply H0; auto.
         + right. intro. destruct n. intros. auto.
     Qed.
 
     (** Boolean equality of two sequence *)
-    Fixpoint seq2eqb r c (f g : nat -> nat -> A) : bool :=
+    Fixpoint seq2eqb r c (f g : nat -> nat -> T) : bool :=
       match r with
       | O => true
       | 1 => seqeqb c (f 0) (g 0)
@@ -263,7 +264,7 @@ Section seq2eq.
       end.
     
     (** seq2eqb of Sr has a equivalent form. *)
-    Lemma seq2eqb_Sr : forall r c (f g : nat -> nat -> A), 
+    Lemma seq2eqb_Sr : forall r c (f g : nat -> nat -> T), 
         seq2eqb (S r) c f g = (seq2eqb r c f g) && (seqeqb c (f r) (g r)).
     Proof.
       intros. destruct r; auto.
@@ -306,20 +307,20 @@ End seq2eq.
 (** ** Fold of a sequence *)
 Section Fold.
 
-  (* Context `{Equiv_Aeq : Equivalence A Aeq}. *)
+  (* Context `{Equiv_Teq : Equivalence T Teq}. *)
   (* Context `{Equiv_Beq : Equivalence B Beq}. *)
-  (* Variable g : A -> B -> B. *)
+  (* Variable g : T -> B -> B. *)
   
-  (* Infix "==" := Beq : A_scope. *)
-  (* Infix "+" := g : A_scope. *)
+  (* Infix "==" := Beq : T_scope. *)
+  (* Infix "+" := g : T_scope. *)
 
-  Context {A : Type}.
+  Context {T : Type}.
   Context {B : Type}.
   (* Context `{Equiv_Beq : Equivalence B Beq}. *)
-  (* Infix "==" := Beq : A_scope. *)
+  (* Infix "==" := Beq : T_scope. *)
   
   (** Fold of a sequence *)
-  Fixpoint seqfold (f : nat -> A) (n : nat) (g : B -> A -> B) (b0 : B) : B :=
+  Fixpoint seqfold (f : nat -> T) (n : nat) (g : B -> T -> B) (b0 : B) : B :=
     match n with
     | O => b0
     | S n' => g (seqfold f n' g b0) (f n')
@@ -334,24 +335,24 @@ Section Sum.
 
   (** Let's have a monoid structure *)
   Context `{M : Monoid}.
-  Infix "==" := Aeq : A_scope.
-  Infix "+" := Aadd : A_scope.
+  Infix "==" := Teq : T_scope.
+  Infix "+" := Tadd : T_scope.
 
   (** Sum of a sequence *)
-  Fixpoint seqsum (f : nat -> A) (n : nat) : A := 
+  Fixpoint seqsum (f : nat -> T) (n : nat) : T := 
     match n with
-    | O => Azero
+    | O => T0
     | S n' => seqsum f n' + f n'
     end.
 
   (** seqsum is equivalent to seqfold *)
-  Lemma seqsum_eq_seqfold : forall (f : nat -> A) (n : nat),
-      seqsum f n == seqfold f n Aadd Azero.
+  Lemma seqsum_eq_seqfold : forall (f : nat -> T) (n : nat),
+      seqsum f n == seqfold f n Tadd T0.
   Proof. induction n; simpl; try easy. f_equiv. auto. Qed.
     
   (** Sum of a sequence which every element is zero get zero. *)
-  Lemma seqsum_eq0 : forall (f : nat -> A) (n : nat), 
-      (forall i, i < n -> f i == Azero) -> seqsum f n == Azero.
+  Lemma seqsum_eq0 : forall (f : nat -> T) (n : nat), 
+      (forall i, i < n -> f i == T0) -> seqsum f n == T0.
   Proof.
     intros f n H. induction n; simpl. easy.
     rewrite H; auto. rewrite IHn; auto. monoid_simp.
@@ -359,7 +360,7 @@ Section Sum.
 
   (** Corresponding elements of two sequences are equal, imply the sum are 
       equal. *)
-  Lemma seqsum_eq : forall (f g : nat -> A) (n : nat),
+  Lemma seqsum_eq : forall (f g : nat -> T) (n : nat),
       (forall i, i < n -> f i == g i) -> seqsum f n == seqsum g n.
   Proof. 
     intros f g n H. 
@@ -367,10 +368,10 @@ Section Sum.
   Qed.
   
   (** Let's have an abelian monoid structure *)
-  Context {AM : AMonoid Aadd Azero Aeq}.
+  Context {AM : AMonoid Tadd T0 Teq}.
 
   (** Sum with plus of two sequence equal to plus with two sum. *)
-  Lemma seqsum_add : forall (f g : nat -> A) (n : nat),
+  Lemma seqsum_add : forall (f g : nat -> T) (n : nat),
       seqsum (fun i => f i + g i) n == seqsum f n + seqsum g n.  
   Proof. 
     intros f g n. induction n; simpl. monoid_simp. rewrite IHn.
@@ -379,11 +380,11 @@ Section Sum.
   Qed.
 
   (** Let's have a group structure *)
-  Context `{G : Group A Aadd Azero Aopp Aeq}.
-  Notation "- a" := (Aopp a) : A_scope.
+  Context `{G : Group T Tadd T0 Topp Teq}.
+  Notation "- a" := (Topp a) : T_scope.
 
   (** Opposition of the sum of a sequence. *)
-  Lemma seqsum_opp : forall (f : nat -> A) (n : nat),
+  Lemma seqsum_opp : forall (f : nat -> T) (n : nat),
       - (seqsum f n) == seqsum (fun i => - f i) n.
   Proof.
     intros f n. induction n; simpl. apply group_inv_id.
@@ -392,13 +393,13 @@ Section Sum.
 
   
   (** Let's have an ring structure *)
-  Context `{R : Ring A Aadd Azero Aopp Amul Aone Aeq}.
+  Context `{R : Ring T Tadd T0 Topp Tmul T1 Teq}.
   Add Ring ring_inst : (make_ring_theory R).
   
-  Infix "*" := Amul : A_scope.
+  Infix "*" := Tmul : T_scope.
   
   (** Constant left multiply to the sum of a sequence. *)
-  Lemma seqsum_cmul_l : forall c (f : nat -> A) (n : nat),
+  Lemma seqsum_cmul_l : forall c (f : nat -> T) (n : nat),
       c * seqsum f n == seqsum (fun i => c * f i) n.  
   Proof.  
     intros c f n. induction n; simpl. ring.
@@ -406,7 +407,7 @@ Section Sum.
   Qed.
 
   (** Constant right multiply to the sum of a sequence. *)
-  Lemma seqsum_cmul_r : forall c (f : nat -> A) (n : nat),
+  Lemma seqsum_cmul_r : forall c (f : nat -> T) (n : nat),
       seqsum f n * c == seqsum (fun i => f i * c) n.  
   Proof.
     intros c f n. induction n; simpl; try ring.
@@ -414,17 +415,17 @@ Section Sum.
   Qed.
 
   (** Sum a sequence which only one item in nonzero, then got this item. *)
-  Lemma seqsum_unique : forall (f : nat -> A) (k : A) (n i : nat), 
-      i < n -> f i == k -> (forall j, i <> j -> f j == Azero) -> seqsum f n == k.
+  Lemma seqsum_unique : forall (f : nat -> T) (k : T) (n i : nat), 
+      i < n -> f i == k -> (forall j, i <> j -> f j == T0) -> seqsum f n == k.
   Proof.
     (* key idea: induction n, and case {x =? n} *)
     intros f k n. induction n; intros. easy. simpl.
-    destruct (Aeq_reflect i n).
+    destruct (Teq_reflect i n).
     - subst.
-      assert (seqsum f n == Azero) as H2.
+      assert (seqsum f n == T0) as H2.
       + apply seqsum_eq0. intros. apply H1. lia.
       + rewrite H2. rewrite H0. ring.
-    - assert (f n == Azero) as H2.
+    - assert (f n == T0) as H2.
       + apply H1; auto.
       + rewrite H2. monoid_simp. apply IHn with i; auto. lia.
   Qed.
@@ -565,7 +566,7 @@ Section test.
   Import RExt.
 
   Example seq1 := fun n => Z2R (Z.of_nat n).
-  Notation seqsum := (seqsum (Aadd:=Rplus) (Azero:=R0)).
+  Notation seqsum := (seqsum (Tadd:=Rplus) (T0:=R0)).
 
   (* Compute seqsum seq1 3. *)
   (* Eval simpl in seqeqb 5 seq1 seq1. *)

@@ -31,8 +31,8 @@ Open Scope cvec_scope.
 (** * Usage demo *)
 Section test.
 
-  Variable a1 a2 a3 : A.
-  Variable f : A -> A.
+  Variable a1 a2 a3 : T.
+  Variable f : T -> T.
   Let v3 := t2rv_3 (a1,a2,a3).
   Let v4 := t2cv_3 (a1,a2,a3).
   (* Compute rv2l (rvmap v3 f). *)

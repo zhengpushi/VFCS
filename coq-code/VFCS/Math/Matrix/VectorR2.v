@@ -375,12 +375,12 @@ Section RotationMatrix2D.
     - unfold vx'. unfold l. unfold α.
       rewrite cos_plus. unfold Rminus. rewrite Rmult_plus_distr_l.
       rewrite cos_cv2angle_i, sin_cv2angle_i; auto.
-      autounfold with A. autorewrite with R. field.
+      autounfold with T. autorewrite with R. field.
       apply cvlen_neq0_iff_neq0; auto.
     - unfold vy'. unfold l. unfold α.
       rewrite sin_plus. rewrite Rmult_plus_distr_l.
       rewrite cos_cv2angle_i, sin_cv2angle_i; auto.
-      autounfold with A. autorewrite with R. field.
+      autounfold with T. autorewrite with R. field.
       apply cvlen_neq0_iff_neq0; auto.
   Qed.
 
@@ -428,7 +428,7 @@ Section RotationMatrix2D.
 
   (** R的乘法等价于对参数的加法: R(θ1) * R(θ2) = R(θ1 + θ2) *)
   Lemma R2_mul_eq_sum : forall (θ1 θ2 : R), (R2 θ1) * (R2 θ2) == R2 (θ1 + θ2).
-  Proof. lma; autounfold with A; autorewrite with R; ring. Qed.
+  Proof. lma; autounfold with T; autorewrite with R; ring. Qed.
 
 End RotationMatrix2D.
 

@@ -34,15 +34,15 @@ Section test.
   (* Compute m2l (mmap Qcopp m1). *)
   (* Compute m2l (m1 * m1). *)
 
-  Variable a11 a12 a21 a22 : A.
-  Variable f : A -> A.
+  Variable a11 a12 a21 a22 : T.
+  Variable f : T -> T.
   Let m2 := @l2m 2 2 [[a11;a12];[a21;a22]].
   (* Compute m2l m2.     (* = [[a11; a12]; [a21; a22]] *) *)
   (* Compute m2l (mmap f m2).       (* = [[f a11; f a12]; [f a21; f a22]] *) *)
 
 
   (** matrix inversion by gauss elimnation *)
-  Opaque Aadd Amul Aopp.
+  Opaque Tadd Tmul Topp.
   (* Eval cbn in minv_gauss (l2m 1 1 [[1]]). *)
   (* Eval cbv in minv_gauss (l2m 1 1 [[1]]). *)
   (* Eval cbn in minv_gauss (l2m 2 2 [[1;0];[0;1]]). *)

@@ -487,7 +487,7 @@ Module R2Euler.
                  [cos (ψ - ϕ); - sin (ψ - ϕ); 0]].
       Proof.
         intros; rewrite H.
-        lma; autounfold with A; autorewrite with R; auto; try field.
+        lma; autounfold with T; autorewrite with R; auto; try field.
       Qed.
       
       (** If θ = π/2, then the rotation matrix has following form. *)
@@ -499,7 +499,7 @@ Module R2Euler.
                  [- cos (ϕ + ψ); sin (ϕ + ψ); 0]].
       Proof.
         intros; rewrite H.
-        lma; autounfold with A; autorewrite with R; auto; try field.
+        lma; autounfold with T; autorewrite with R; auto; try field.
       Qed.
 
       (** If θ = -π/2, then there are infinite ϕ can generate a same matrix. *)

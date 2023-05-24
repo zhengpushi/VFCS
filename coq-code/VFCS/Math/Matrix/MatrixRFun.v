@@ -34,25 +34,25 @@ Open Scope mat_scope.
 (* Variable f : R -> R. *)
 (* Set Printing All. *)
 (* Check f '. *)
-(* Definition mderiv {r c} (a : A) (X : mat r c) := *)
+(* Definition mderiv {r c} (a : T) (X : mat r c) := *)
   
 
 (* ======================================================================= *)
 (** * Usage demo *)
 
 Section test.
-  Let f00 : A := fun t => 1.
-  Let f01 : A := fun t => 2.
-  Let f10 : A := fun t => 3.
-  Let f11 : A := fun t => 4.
+  Let f00 : T := fun t => 1.
+  Let f01 : T := fun t => 2.
+  Let f10 : T := fun t => 3.
+  Let f11 : T := fun t => 4.
   Let l1 := [[f00;f01];[f10;f11]].
   Let m1 := @l2m 2 2 l1.
   (* Compute m2l m1. *)
-  (* Compute m2l (mmap Aopp m1). *)
+  (* Compute m2l (mmap Topp m1). *)
   (* Compute m2l (m1 * m1). *)
 
-  Variable a00 a01 a10 a11 : A.
-  Variable f : A -> A.
+  Variable a00 a01 a10 a11 : T.
+  Variable f : T -> T.
   Let m2 := @l2m 2 2 [[a00;a01];[a10;a11]].
   (* Compute m2l m2.       (* = [[a00; a01]; [a10; a11]] *) *)
   (* Compute m2l (mmap f m2).     (* = [[f a00; f a01]; [f a10; f a11]] *) *)
@@ -72,20 +72,20 @@ End test.
 
 Section Example4CoordinateSystem.
   Open Scope fun_scope.
-  Notation "1" := Aone : fun_scope.
-  Notation "0" := Azero : fun_scope.
-  (* Infix "+" := Aadd : fun_scope. *)
-  (* Notation "- a" := (Aopp a) : fun_scope. *)
-  (* Infix "*" := Amul : fun_scope. *)
+  Notation "1" := T1 : fun_scope.
+  Notation "0" := T0 : fun_scope.
+  (* Infix "+" := Tadd : fun_scope. *)
+  (* Notation "- a" := (Topp a) : fun_scope. *)
+  (* Infix "*" := Tmul : fun_scope. *)
 
   
-  Variable ψ θ ϕ : A.
-  Let cθ : A := fun t => cos (θ t).
-  Let sθ : A := fun t => sin (θ t).
-  Let cψ : A := fun t => cos (ψ t).
-  Let sψ : A := fun t => sin (ψ t).
-  Let cϕ : A := fun t => cos (ϕ t).
-  Let sϕ : A := fun t => sin (ϕ t).
+  Variable ψ θ ϕ : T.
+  Let cθ : T := fun t => cos (θ t).
+  Let sθ : T := fun t => sin (θ t).
+  Let cψ : T := fun t => cos (ψ t).
+  Let sψ : T := fun t => sin (ψ t).
+  Let cϕ : T := fun t => cos (ϕ t).
+  Let sϕ : T := fun t => sin (ϕ t).
   
   Let Rx := mk_mat_3_3 1 0 0 0 cϕ sϕ 0 (-sϕ) cϕ.
   Let Ry := mk_mat_3_3 cθ 0 (-sθ) 0 1 0 sθ 0 cθ.
@@ -98,7 +98,7 @@ Section Example4CoordinateSystem.
           (sψ * sθ * cϕ - cψ * sϕ)
           (-sθ) (sϕ * cθ) (cϕ * cθ).
   Lemma Rbe_ok : (Rbe == Rz\T * Ry\T * Rx\T)%M.
-  Proof. lma; unfold Aadd,Azero,Amul,Aone,Aeq,A; ring_simplify; auto. Qed.
+  Proof. lma; unfold Tadd,T0,Tmul,T1,Teq,T; ring_simplify; auto. Qed.
     
 End Example4CoordinateSystem.
 

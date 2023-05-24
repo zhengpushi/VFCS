@@ -733,7 +733,7 @@ Section test.
 End test.
 
 (** add this declaration to enable ring support over "R->R" type *)
-Add Ring ring_inst : (make_ring_theory Ring_Rfun (A:=(R->R))).
+Add Ring ring_inst : (make_ring_theory Ring_Rfun (T:=(R->R))).
 
 Section test.
   Goal let f : R -> R := fone in f = f.
