@@ -229,6 +229,16 @@ Section cv3cross.
   Lemma cv3cross_vopp_r : forall v1 v2 : cvec 3, v1 × (-v2) == - (v1 × v2).
   Proof. lma. Qed.
 
+  (** (v1 - v2) × v3 = (v1 × v3) - (v2 × v3) *)
+  Lemma cv3cross_sub_distr_l : forall v1 v2 v3 : cvec 3,
+      (v1 - v2) × v3 == (v1 × v3) - (v2 × v3).
+  Proof. lma. Qed.
+
+  (** v1 × (v2 - v3) = (v1 × v2) - (v1 × v3) *)
+  Lemma cv3cross_sub_distr_r : forall v1 v2 v3 : cvec 3,
+      v1 × (v2 - v3) == (v1 × v2) - (v1 × v3).
+  Proof. lma. Qed.
+
   (** (a c* v1) × v2 = a c* (v1 × v2) *)
   Lemma cv3cross_cmul_assoc_l : forall (a : R) (v1 v2 : cvec 3),
       (a c* v1) × v2 == a c* (v1 × v2).
@@ -370,6 +380,10 @@ Section cv3proj.
     (1/<b,b>) c* (M * a).
 
   Lemma cv3proj_spec : forall a b : cvec 3, cv3proj a b == cvproj a b.
+  Proof. lma. Qed.
+
+  (** b × (proj a b) = 0 *)
+  Lemma cv3cross_cv3proj_eq0 : forall a b : cvec 3, b × cv3proj a b == cvec0.
   Proof. lma. Qed.
 
 End cv3proj.
@@ -566,43 +580,43 @@ End cv3mixed.
 (** Axis-angle representation *)
 Section AxisAngle.
 
-  (** 推导绕任意轴 k̂ 旋转 θ 角度的矩阵 R(n̂,θ)，使得 v' = R(n̂,θ) * v *)
+  (** 推导绕任意轴 n̂ 旋转 θ 角度的矩阵 R(n̂,θ)，使得 a' = R(n̂,θ) * a *)
 
-  (** Rotate a vector v in R^3 by an axis described with a unit vector n and 
+  (** Rotate one vector a in R^3 by an axis described with a unit vector n and 
         an angle θ according to right handle rule, we got the rotated vector as
         follows. This formula is known as Rodrigues formula. *)
-  Definition rotAxisAngle (θ : R) (n : cvec 3) (v : cvec 3) : cvec 3 :=
-    (cos θ) c* (v - <v,n> c* n) + (sin θ) c* (n×v) + <v,n> c* n.
+  Definition rotAxisAngle (θ : R) (n : cvec 3) (a : cvec 3) : cvec 3 :=
+    (cos θ) c* (a - <a,n> c* n) + (sin θ) c* (n × a) + <a,n> c* n.
 
   (** Proof its correctness *)
-  Theorem rotAxisAngle_spec : forall (θ : R) (n : cvec 3) (v : cvec 3),
-      let v_para : cvec 3 := cvproj v n in
-      let v_perp : cvec 3 := cvperp v n in
-      let w : cvec 3 := n × v_perp in
-      let v_perp' : cvec 3 := (cos θ) c* v_perp + (sin θ) c* w in
-      let v' : cvec 3 := v_perp' + v_para in
+  Theorem rotAxisAngle_spec : forall (θ : R) (n : cvec 3) (a : cvec 3),
+      let a_para : cvec 3 := cvproj a n in
+      let a_perp : cvec 3 := cvperp a n in
+      let b : cvec 3 := n × a_perp in
+      let a_perp' : cvec 3 := (cos θ) c* a_perp + (sin θ) c* b in
+      let a' : cvec 3 := a_perp' + a_para in
       cvunit n ->
-      v' == rotAxisAngle θ n v.
+      a' == rotAxisAngle θ n a.
   Proof.
     intros.
     unfold rotAxisAngle.
-    assert (v_para == <v,n> c* n) as H1.
-    { unfold v_para, cvproj. rewrite H. f_equiv. autounfold with T. field. }
-    assert (v_perp == v - <v,n> c* n) as H2.
-    { unfold v_perp. rewrite <- H1. easy. }
-    assert (w == n × v) as H3.
-    { unfold w. rewrite H2.
+    assert (a_para == <a,n> c* n) as H1.
+    { unfold a_para, cvproj. rewrite H. f_equiv. autounfold with T. field. }
+    assert (a_perp == a - <a,n> c* n) as H2.
+    { unfold a_perp. rewrite <- H1. easy. }
+    assert (b == n × a) as H3.
+    { unfold b. rewrite H2.
       (* lma. (* auto solvable. But the detail also be shown below. *) *)
       unfold cvsub, Vector.cvsub. rewrite cv3cross_add_distr_r.
       unfold cvcmul. rewrite cvopp_vcmul. rewrite cv3cross_cmul_assoc_r.
       rewrite cv3cross_self. rewrite cvcmul_0_r. rewrite cvadd_0_r. easy. }
-    unfold v'. unfold v_perp'. rewrite H1. rewrite H2. rewrite H3. easy.
+    unfold a'. unfold a_perp'. rewrite H1. rewrite H2. rewrite H3. easy.
   Qed.
 
   (** Another form of the formula *)
-  Lemma rotAxisAngle_form1 : forall (θ : R) (n : cvec 3) (v : cvec 3),
-      rotAxisAngle θ n v ==
-        v *c (cos θ) + (n × v) *c (sin θ) + n *c (<v,n> * (1 - cos θ))%R.
+  Lemma rotAxisAngle_form1 : forall (θ : R) (n : cvec 3) (a : cvec 3),
+      rotAxisAngle θ n a ==
+        a *c (cos θ) + (n × a) *c (sin θ) + n *c (<a,n> * (1 - cos θ))%R.
   Proof.
     intros. unfold rotAxisAngle.
     rewrite !cvmulc_eq_vcmul. rewrite cvcmul_vsub. rewrite cvsub_rw.
@@ -619,33 +633,33 @@ Section AxisAngle.
     let N := cv3skew n in
     (mat1 + (sin θ) c* N + (1 - cos θ)%R c* N * N)%M.
 
-  Lemma rotAxisAngleMat_spec : forall (θ : R) (n : cvec 3) (v : cvec 3),
-      cvunit n -> (rotAxisAngleMat θ n) * v == rotAxisAngle θ n v.
+  Lemma rotAxisAngleMat_spec : forall (θ : R) (n : cvec 3) (a : cvec 3),
+      cvunit n -> (rotAxisAngleMat θ n) * a == rotAxisAngle θ n a.
   Proof.
     intros.
     (* unfold rotAxisAngleMat. *)
     rewrite rotAxisAngle_form1.
-    (* v * cosθ + (n × v) * sinθ + n *c (<v,n> * (1-cosθ)) *)
+    (* a * cosθ + (n × a) * sinθ + n *c (<a,n> * (1-cosθ)) *)
     rewrite <- cvmulc_assoc.
-    (* v * cosθ + (n × v) * sinθ + (k *c <v,n>) *c (1-cosθ) *)
+    (* a * cosθ + (n × a) * sinθ + (k *c <a,n>) *c (1-cosθ) *)
     remember (cv3skew n) as N.
-    assert ((n *c <n,v>) == v + N * (N * v)).
+    assert ((n *c <n,a>) == a + N * (N * a)).
     {
-      assert ((n *c <n,v>) == v - cvperp v n).
+      assert ((n *c <n,a>) == a - cvperp a n).
       { unfold cvperp. unfold cvproj. rewrite H. rewrite cvdot_comm. lma. }
       rewrite H0. rewrite cv3perp_spec; auto. unfold cv3perp.
-      rewrite cv3cross_anticomm. rewrite (cv3cross_anticomm v).
+      rewrite cv3cross_anticomm. rewrite (cv3cross_anticomm a).
       rewrite cv3cross_vopp_r.
       rewrite !cv3cross_eq_skew_mul. rewrite <- HeqN.
       unfold cvsub. rewrite ?cvopp_vopp. easy. }
-    rewrite (cvdot_comm v n). rewrite H0.
-    (* v * cosθ + (n × v) * sinθ + (v + N * (N * v)) * (1 - cosθ) *)
+    rewrite (cvdot_comm a n). rewrite H0.
+    (* a * cosθ + (n × a) * sinθ + (a + N * (N * a)) * (1 - cosθ) *)
     rewrite !cvmulc_eq_vcmul.
     rewrite !cvcmul_vadd_distr.
     rewrite cv3cross_eq_skew_mul.
     rewrite !cvcmul_mmul_assoc_l. rewrite <- !mmul_assoc.
-    move2h ((1 - cos θ)%R c* v). rewrite <- !associative.
-    assert ((1 - cos θ)%R c* v + cos θ c* v == v) by lma. rewrite H1.
+    move2h ((1 - cos θ)%R c* a). rewrite <- !associative.
+    assert ((1 - cos θ)%R c* a + cos θ c* a == a) by lma. rewrite H1.
     (* right side is ready *)
     unfold rotAxisAngleMat.
     rewrite !mmul_madd_distr_r. rewrite <- HeqN. f_equiv. f_equiv. apply mmul_1_l.

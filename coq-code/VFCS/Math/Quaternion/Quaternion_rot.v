@@ -18,6 +18,7 @@
   3. (Krasjet) Quaternion and 3D rotation（四元数与三维旋转）
  *)
 
+Require Export Ratan2.
 Require Export Quaternion_base.
 
 Open Scope R.

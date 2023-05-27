@@ -1385,6 +1385,49 @@ End compare_with_PI.
 
 
 (* ######################################################################### *)
+(** ** Split a large range to small pieces *)
+
+(** Split the range of (-π,π) to several small ranges *)
+Section a_strange_problem.
+
+  (** A strange problem about "lra":
+      If I declare a condition here, the next proof will be finished by lra,
+      otherwise, the next proof will not be done. *)
+  Variable b: R.
+  Hypotheses Hb : - PI < b < PI.
+
+  Lemma Rsplit_neg_pi_to_pi' : forall a : R,
+      -PI < a < PI <->
+        a = -PI/2 \/ a = 0 \/ a = PI/2 \/
+          (-PI < a < -PI/2) \/ (-PI/2 < a < 0) \/
+          (0 < a < PI/2) \/ (PI/2 < a < PI).
+  Proof.
+    intros.
+    (* Here, the automatic process is determined by the existence of "Hb", Why ?
+       可能的原因，-PI < -PI/2 < PI 无法被lra证明，但有了 Hb 后就能证了，
+       虽然 b 和 a 没有关系，但确实完成了证明。暂不知原理。
+       
+       同时，也发现了一个技巧，虽然 PI 不能被 lra 证明，但可以设定一个近似表示，比如
+       “3.14 < PI < 3.15”，然后 lra 就能用了。
+     *)
+    lra.
+  Qed.
+End a_strange_problem.
+
+Lemma Rsplit_neg_pi_to_pi : forall a : R,
+    -PI < a < PI <->
+      a = -PI/2 \/ a = 0 \/ a = PI/2 \/
+        (-PI < a < -PI/2) \/ (-PI/2 < a < 0) \/
+        (0 < a < PI/2) \/ (PI/2 < a < PI).
+Proof.
+  intros.
+  (* 引入 PI 的不等式，以便 lra 能够使用 *)
+  pose proof (PI_lt_gt) as H; unfold PI_lb,PI_ub in H.
+  ra.
+Qed.
+
+
+(* ######################################################################### *)
 (** * atan *)
 
 (** 背景：
@@ -1399,73 +1442,6 @@ Proof. intros. f_equal. field. ra. Qed.
 Lemma atan_ak_bk : forall a b k : R,
     b <> 0 -> k <> 0 -> atan ((a * k) /(b * k)) = atan (a/b).
 Proof. intros. f_equal. field. ra. Qed.
-
-
-(* ######################################################################### *)
-(** * atan2 *)
-
-(** 背景：
-    计算 θ 用 arctan(y/x)，但是有一些问题：
-    1. 如果 x = 0，除法是未定义的
-    2. arctan 的范围仅是 [-π/2, π/2]，原因是除法y/x丢失了一些有用信息。
-    x和y都可以是正或负，从而有4种可能，对应于4个不同象限。但y/x得到了单个值。
-    由于这些问题，使得我们需要一些“if”判断来处理每个象限。
-    好消息是，有 atan2 函数，它可以正确计算所有 x 和 y 的角度，除了原点这种情况。*)
-
-(** atan2.
-  Note that the parameters are y,x, not x,y. Because: tanθ=sinθ/cosθ=y/x
-
-  atan2 y x =
-    atan (y/x),       x > 0
-    atan (y/x) + pi,  x < 0, y >= 0
-    atan (y/x) - pi,  x < 0, y < 0
-    +pi/2,            x = 0, y > 0
-    -pi/2,            x = 0, y < 0
-    undefined,        x = 0, y = 0
- *)
-Definition atan2 (y x : R) : R :=
-  if x >? 0
-  then atan (y/x)               (* x > 0 *)
-  else
-    if x <? 0
-    then
-      if y >=? 0
-      then atan (y/x) + PI      (* x < 0, y >= 0 *)
-      else atan (y/x) - PI      (* x < 0, y < 0 *)
-    else
-      if y >? 0
-      then PI / 2               (* x = 0, y > 0 *)
-      else
-        if y <? 0
-        then - PI / 2           (* x = 0, y < 0 *)
-        else 0                  (* x = 0, y = 0 *) (* mostly, it is undefined *)
-.
-
-(** Automaticaly destruct inequalities on R, such as Rlt_le_dec. *)
-Ltac destruct_rineq :=
-  repeat
-    match goal with
-    | |- context [Rlt_le_dec _ _] => destruct Rlt_le_dec
-    | |- context [Rle_lt_dec _ _] => destruct Rle_lt_dec
-    end; try lra.
-
-Lemma atan2_spec1 : forall y x, x > 0 -> atan2 y x = atan (y/x).
-Proof. intros. cbv. destruct_rineq. Qed.
-
-Lemma atan2_spec2 : forall y x, x < 0 -> y < 0 -> atan2 y x = (atan (y/x) - PI)%R.
-Proof. intros. cbv. destruct_rineq. Qed.
-
-Lemma atan2_spec3 : forall y x, x < 0 -> y >= 0 -> atan2 y x = (atan (y/x) + PI)%R.
-Proof. intros. cbv. destruct_rineq. Qed.
-
-Lemma atan2_spec4 : forall y x, x = 0 -> y > 0 -> atan2 y x = PI/2.
-Proof. intros. cbv. destruct_rineq. Qed.
-
-Lemma atan2_spec5 : forall y x, x = 0 -> y < 0 -> atan2 y x = - PI/2.
-Proof. intros. cbv. destruct_rineq. Qed.
-
-Lemma atan2_spec6 : forall y x, x = 0 -> y = 0 -> atan2 y x = 0.
-Proof. intros. cbv. destruct_rineq. Qed.
 
 
 (* ######################################################################### *)
@@ -1533,48 +1509,6 @@ Proof.
   intros. intro. destruct H1. subst.
   apply lt_IZR in H0.
   apply lt_IZR in H. lia.
-Qed.
-
-(* ######################################################################### *)
-(** ** Split a large range to small pieces *)
-
-(** Split the range of (-π,π) to several small ranges *)
-Section a_strange_problem.
-
-  (** A strange problem about "lra":
-      If I declare a condition here, the next proof will be finished by lra,
-      otherwise, the next proof will not be done. *)
-  Variable b: R.
-  Hypotheses Hb : - PI < b < PI.
-
-  Lemma Rsplit_neg_pi_to_pi' : forall a : R,
-      -PI < a < PI <->
-        a = -PI/2 \/ a = 0 \/ a = PI/2 \/
-          (-PI < a < -PI/2) \/ (-PI/2 < a < 0) \/
-          (0 < a < PI/2) \/ (PI/2 < a < PI).
-  Proof.
-    intros.
-    (* Here, the automatic process is determined by the existence of "Hb", Why ?
-       可能的原因，-PI < -PI/2 < PI 无法被lra证明，但有了 Hb 后就能证了，
-       虽然 b 和 a 没有关系，但确实完成了证明。暂不知原理。
-       
-       同时，也发现了一个技巧，虽然 PI 不能被 lra 证明，但可以设定一个近似表示，比如
-       “3.14 < PI < 3.15”，然后 lra 就能用了。
-     *)
-    lra.
-  Qed.
-End a_strange_problem.
-
-Lemma Rsplit_neg_pi_to_pi : forall a : R,
-    -PI < a < PI <->
-      a = -PI/2 \/ a = 0 \/ a = PI/2 \/
-        (-PI < a < -PI/2) \/ (-PI/2 < a < 0) \/
-        (0 < a < PI/2) \/ (PI/2 < a < PI).
-Proof.
-  intros.
-  (* 引入 PI 的不等式，以便 lra 能够使用 *)
-  pose proof (PI_lt_gt) as H; unfold PI_lb,PI_ub in H.
-  ra.
 Qed.
 
 

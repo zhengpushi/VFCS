@@ -175,23 +175,23 @@ End mnth.
 Arguments mnth {T} T0 {r c}.
 
 Global Hint Unfold mnth : core.
-Notation "m $ i $ j " := (m2f m i j) : mat_scope.
-Notation "m .11" := (m $ 0 $ 0) : mat_scope.
-Notation "m .12" := (m $ 0 $ 1) : mat_scope.
-Notation "m .13" := (m $ 0 $ 2) : mat_scope.
-Notation "m .14" := (m $ 0 $ 3) : mat_scope.
-Notation "m .21" := (m $ 1 $ 0) : mat_scope.
-Notation "m .22" := (m $ 1 $ 1) : mat_scope.
-Notation "m .23" := (m $ 1 $ 2) : mat_scope.
-Notation "m .24" := (m $ 1 $ 3) : mat_scope.
-Notation "m .31" := (m $ 2 $ 0) : mat_scope.
-Notation "m .32" := (m $ 2 $ 1) : mat_scope.
-Notation "m .33" := (m $ 2 $ 2) : mat_scope.
-Notation "m .34" := (m $ 2 $ 3) : mat_scope.
-Notation "m .41" := (m $ 3 $ 0) : mat_scope.
-Notation "m .42" := (m $ 3 $ 1) : mat_scope.
-Notation "m .43" := (m $ 3 $ 2) : mat_scope.
-Notation "m .44" := (m $ 3 $ 3) : mat_scope.
+Notation "A $ i $ j " := (m2f A i j) : mat_scope.
+Notation "A .11" := (A $ 0 $ 0) : mat_scope.
+Notation "A .12" := (A $ 0 $ 1) : mat_scope.
+Notation "A .13" := (A $ 0 $ 2) : mat_scope.
+Notation "A .14" := (A $ 0 $ 3) : mat_scope.
+Notation "A .21" := (A $ 1 $ 0) : mat_scope.
+Notation "A .22" := (A $ 1 $ 1) : mat_scope.
+Notation "A .23" := (A $ 1 $ 2) : mat_scope.
+Notation "A .24" := (A $ 1 $ 3) : mat_scope.
+Notation "A .31" := (A $ 2 $ 0) : mat_scope.
+Notation "A .32" := (A $ 2 $ 1) : mat_scope.
+Notation "A .33" := (A $ 2 $ 2) : mat_scope.
+Notation "A .34" := (A $ 2 $ 3) : mat_scope.
+Notation "A .41" := (A $ 3 $ 0) : mat_scope.
+Notation "A .42" := (A $ 3 $ 1) : mat_scope.
+Notation "A .43" := (A $ 3 $ 2) : mat_scope.
+Notation "A .44" := (A $ 3 $ 3) : mat_scope.
 
 
 (* ======================================================================= *)
