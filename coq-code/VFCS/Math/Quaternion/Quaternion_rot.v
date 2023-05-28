@@ -619,14 +619,13 @@ Module qrot_spec_method2.
         (* elim cvperp *)
         rewrite !cvorthogonal_cvperp; auto.
         - (* (v0+v1) 到 (v2+v3) 的角度也是 θ *)
-          rewrite !cvangle_cvadd, !cvangle_cvcmul_l, !cvangle_cvcmul_r; auto.
+          rewrite ?cvangle_cvadd; rewrite ?cvangle_cvcmul_l, ?cvangle_cvcmul_r; auto.
           + apply v02_angle_θ.
           + apply cvcmul_cvnonzero; auto. apply cvunit_neq0; auto.
           + apply cvcmul_cvnonzero; auto. apply cvunit_neq0; auto.
           + rewrite !cvlen_cmul, !cvlen_cvunit; auto. apply v2_cvunit.
           + rewrite !cvlen_cmul, !cvlen_cvunit; auto. apply v3_cvunit.
-          + rewrite !cvangle_cvcmul_l, !cvangle_cvcmul_r; auto.
-            rewrite v23_v12_same_angle, v12_v01_same_angle; auto.
+          + rewrite v23_v12_same_angle, v12_v01_same_angle; auto.
         - (* v3 ⟂ n *) apply v3_orth_n.
         - (* v2 ⟂ n *) apply v2_orth_n.
         - (* v1 ⟂ n *) apply v1_orth_n.
@@ -642,16 +641,14 @@ Module qrot_spec_method2.
       let q : quat := aa2quat (θ, n) in
       let v : cvec 3 := (s0 c* v0 + s1 c* v1 + s2 c* n)%CV in
       let v' : cvec 3 := qrotv q v in
-      cvunit n -> cvunit v0 -> cvunit v1 ->
+      cvunit v0 -> cvunit v1 ->
       0 < θ < 2 * PI ->
       cvnormalize (v0 × v1) == n ->
       cvangle v0 v1 = θ/2 ->
       s0 <> 0 -> s1 <> 0 ->
       (||v'|| = ||v||)%CV /\ cvperp v n ∠ cvperp v' n = θ.
   Proof.
-    intros. split.
-    - apply cvlen_v'_eq_v; auto.
-    - apply v'_v_proj_θ; auto.
+    intros. split; [apply cvlen_v'_eq_v| apply v'_v_proj_θ]; auto.
   Qed.
 
 End qrot_spec_method2.

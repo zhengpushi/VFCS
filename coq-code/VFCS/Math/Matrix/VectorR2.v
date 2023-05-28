@@ -321,7 +321,7 @@ Section RotationMatrix2D.
     l2m [[c;-s];[s;c]]%R.
 
   (** R2 is orthogonal matrix *)
-  Lemma R2_orthogonal : forall (θ : R), morthogonal (R2 θ).
+  Lemma R2_orthogonal : forall (θ : R), morth (R2 θ).
   Proof. lma; autorewrite with R; easy. Qed.
 
   (** The determinant of R2 is 1 *)

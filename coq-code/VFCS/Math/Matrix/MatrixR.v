@@ -62,22 +62,22 @@ End matrix_norm.
 
 (* ==================================== *)
 (** ** Orthogonal matrix *)
-Section morthogonal.
+Section morth.
 
   (** orthogonal m -> |m| = ± 1 *)
-  Lemma morthogonal_mdet : forall {n} (m : smat n),
-      morthogonal m -> (mdet m == 1 \/ mdet m == - (1))%T.
+  Lemma morth_mdet : forall {n} (m : smat n),
+      morth m -> (mdet m == 1 \/ mdet m == - (1))%T.
   Proof.
     intros.
     assert (m\T * m == mat1).
-    { unfold morthogonal in H. unfold Matrix.morthogonal in H. rewrite H. easy. }
+    { unfold morth in H. unfold Matrix.morth in H. rewrite H. easy. }
     assert (mdet (m\T * m)%M == mdet (@mat1 n))%T.
     { rewrite H0. easy. }
     rewrite mdet_mmul in H1. rewrite mdet_mtrans in H1. rewrite mdet_1 in H1.
     apply Rsqr_eq1 in H1. easy.
   Qed.
 
-End morthogonal.
+End morth.
 
 
 (* ==================================== *)
@@ -94,7 +94,7 @@ Section SOn.
   Variable m : SO3.
 
   Goal m\T == m⁻¹.
-  Proof. destruct m. rewrite morthogonal_imply_inv_eq_trans; try easy. Qed.
+  Proof. destruct m. rewrite morth_imply_inv_eq_trans; try easy. Qed.
 
 End SOn.
 

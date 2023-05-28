@@ -964,55 +964,55 @@ Module FieldMatrixTheory (E : FieldElementType).
   (** ** orthogonal matrix *)
   
   (** A square matrix m is an orthogonal matrix *)
-  Definition morthogonal {n} (m : smat n) : Prop :=
-   (@morthogonal _ Tadd T0 Tmul T1 Teq _ m).
+  Definition morth {n} (m : smat n) : Prop :=
+   (@morth _ Tadd T0 Tmul T1 Teq _ m).
 
   (** orthogonal m -> invertible m *)
-  Lemma morthogonal_invertible : forall {n} (m : smat n),
-      morthogonal m -> minvertible m.
-  Proof. intros. apply morthogonal_invertible; auto. Qed.
+  Lemma morth_invertible : forall {n} (m : smat n),
+      morth m -> minvertible m.
+  Proof. intros. apply morth_invertible; auto. Qed.
 
   (** orthogonal m -> m⁻¹ = m\T *)
-  Lemma morthogonal_imply_inv_eq_trans : forall {n} (m : smat n),
-      morthogonal m -> m⁻¹ == m\T.
-  Proof. intros. apply morthogonal_imply_inv_eq_trans; auto. Qed.
+  Lemma morth_imply_inv_eq_trans : forall {n} (m : smat n),
+      morth m -> m⁻¹ == m\T.
+  Proof. intros. apply morth_imply_inv_eq_trans; auto. Qed.
 
   (** m⁻¹ = m\T -> orthogonal m*)
-  Lemma minv_eq_trans_imply_morthogonal : forall {n} (m : smat n),
-      m⁻¹ == m\T -> morthogonal m.
-  Proof. intros. apply minv_eq_trans_imply_morthogonal; auto. Qed.
+  Lemma minv_eq_trans_imply_morth : forall {n} (m : smat n),
+      m⁻¹ == m\T -> morth m.
+  Proof. intros. apply minv_eq_trans_imply_morth; auto. Qed.
 
   (** orthogonal m <-> m\T * m = mat1 *)
-  Lemma morthogonal_iff_mul_trans_l : forall {n} (m : smat n),
-      morthogonal m <-> m\T * m == mat1.
-  Proof. intros. apply morthogonal_iff_mul_trans_l; auto. Qed.
+  Lemma morth_iff_mul_trans_l : forall {n} (m : smat n),
+      morth m <-> m\T * m == mat1.
+  Proof. intros. apply morth_iff_mul_trans_l; auto. Qed.
 
   (** orthogonal m <-> m * m\T = mat1 *)
-  Lemma morthogonal_iff_mul_trans_r : forall {n} (m : smat n),
-      morthogonal m <-> m * m\T == mat1.
-  Proof. intros. apply morthogonal_iff_mul_trans_r; auto. Qed.
+  Lemma morth_iff_mul_trans_r : forall {n} (m : smat n),
+      morth m <-> m * m\T == mat1.
+  Proof. intros. apply morth_iff_mul_trans_r; auto. Qed.
 
   (** orthogonal mat1 *)
-  Lemma morthogonal_1 : forall {n}, morthogonal (@mat1 n).
-  Proof. intros. apply morthogonal_1; auto. Qed.
+  Lemma morth_1 : forall {n}, morth (@mat1 n).
+  Proof. intros. apply morth_1; auto. Qed.
 
   (** orthogonal m -> orthogonal p -> orthogonal (m * p) *)
-  Lemma morthogonal_mul : forall {n} (m p : smat n),
-      morthogonal m -> morthogonal p -> morthogonal (m * p).
-  Proof. intros. apply morthogonal_mul; auto. Qed.
+  Lemma morth_mul : forall {n} (m p : smat n),
+      morth m -> morth p -> morth (m * p).
+  Proof. intros. apply morth_mul; auto. Qed.
 
   (** orthogonal m -> orthogonal m\T *)
-  Lemma morthogonal_mtrans : forall {n} (m : smat n), morthogonal m -> morthogonal (m\T).
-  Proof. intros. apply morthogonal_mtrans; auto. Qed.
+  Lemma morth_mtrans : forall {n} (m : smat n), morth m -> morth (m\T).
+  Proof. intros. apply morth_mtrans; auto. Qed.
 
   (** orthogonal m -> orthogonal m⁻¹ *)
-  Lemma morthogonal_minv : forall {n} (m : smat n), morthogonal m -> morthogonal (m⁻¹).
-  Proof. intros. apply morthogonal_minv; auto. Qed.
+  Lemma morth_minv : forall {n} (m : smat n), morth m -> morth (m⁻¹).
+  Proof. intros. apply morth_minv; auto. Qed.
 
   (* (** orthogonal m -> |m| = ± 1 *) *)
-  (* Lemma morthogonal_mdet : forall {n} (m : smat n) (HDec : Dec Teq), *)
-  (*     morthogonal m -> (mdet m == T1 \/ mdet m == - (T1))%T. *)
-  (* Proof. intros. apply morthogonal_mdet; auto. Qed. *)
+  (* Lemma morth_mdet : forall {n} (m : smat n) (HDec : Dec Teq), *)
+  (*     morth m -> (mdet m == T1 \/ mdet m == - (T1))%T. *)
+  (* Proof. intros. apply morth_mdet; auto. Qed. *)
 
   
   (* ==================================== *)
@@ -1085,7 +1085,7 @@ Module FieldMatrixTheory (E : FieldElementType).
   (** The set of SOn *)
   Definition SOn (n: nat) := (@SOn _ Tadd T0 Topp Tmul T1 Teq n).
 
-  Definition mk_SOn {n : nat} (m : smat n) (H : morthogonal m /\ (mdet m == T1)%T)
+  Definition mk_SOn {n : nat} (m : smat n) (H : morth m /\ (mdet m == T1)%T)
     : SOn n := Build_SOn n m H.
 
   Definition SOn_eq {n} (s1 s2 : SOn n) : Prop := SOn_mat _ s1 == SOn_mat _ s2.

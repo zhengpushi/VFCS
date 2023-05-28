@@ -1784,7 +1784,7 @@ Section OrthogonalMatrix.
   another orthonormal basis. This orthonormality condition can be expressed in 
   the form 
      R\T * R = R * R\T = I,
-  where R\TT denotes the transpose of R and I is the 3 × 3 identity matrix. 
+  where R\T denotes the transpose of R and I is the 3 × 3 identity matrix. 
   Matrices for which this property holds are called orthogonal matrices.
 
   The group of all 3 × 3 orthogonal matrices is denoted O(3), and consists of all 
@@ -1872,31 +1872,31 @@ Section OrthogonalMatrix.
   (** *** Orthogonal matrix *)
 
   (** A square matrix m is an orthogonal matrix *)
-  Definition morthogonal {n} (m : smat n) : Prop := m\T * m == mat1 n.
+  Definition morth {n} (m : smat n) : Prop := m\T * m == mat1 n.
 
   (** orthogonal m -> invertible m *)
-  Lemma morthogonal_invertible : forall {n} (m : smat n),
-      morthogonal m -> minvertible m.
+  Lemma morth_invertible : forall {n} (m : smat n),
+      morth m -> minvertible m.
   Proof. intros. hnf in *. exists (m\T). auto. Qed.
 
   (** orthogonal m -> m⁻¹ = m\T *)
-  Lemma morthogonal_imply_inv_eq_trans : forall {n} (m : smat n),
-      morthogonal m -> m⁻¹ == m\T.
+  Lemma morth_imply_inv_eq_trans : forall {n} (m : smat n),
+      morth m -> m⁻¹ == m\T.
   Proof. intros. red in H. apply mmul_eq1_iff_minv_r in H. auto. Qed.
 
   (** m⁻¹ = m\T -> orthogonal m*)
-  Lemma minv_eq_trans_imply_morthogonal : forall {n} (m : smat n),
-      m⁻¹ == m\T -> morthogonal m.
+  Lemma minv_eq_trans_imply_morth : forall {n} (m : smat n),
+      m⁻¹ == m\T -> morth m.
   Proof. intros. apply mmul_eq1_iff_minv_r in H. auto. Qed.
 
   (** orthogonal m <-> m\T * m = mat1 *)
-  Lemma morthogonal_iff_mul_trans_l : forall {n} (m : smat n),
-      morthogonal m <-> m\T * m == mat1 n.
+  Lemma morth_iff_mul_trans_l : forall {n} (m : smat n),
+      morth m <-> m\T * m == mat1 n.
   Proof. intros. red. auto. Qed.
 
   (** orthogonal m <-> m * m\T = mat1 *)
-  Lemma morthogonal_iff_mul_trans_r : forall {n} (m : smat n),
-      morthogonal m <-> m * m\T == mat1 n.
+  Lemma morth_iff_mul_trans_r : forall {n} (m : smat n),
+      morth m <-> m * m\T == mat1 n.
   Proof.
     intros. split; intros H.
     - apply mmul_eq1_iff_minv_r in H. rewrite <- H. apply mmul_minv_r.
@@ -1904,12 +1904,12 @@ Section OrthogonalMatrix.
   Qed.
 
   (** orthogonal mat1 *)
-  Lemma morthogonal_1 : forall {n}, morthogonal (mat1 n).
+  Lemma morth_1 : forall {n}, morth (mat1 n).
   Proof. intros. red. rewrite mtrans_1, mmul_1_r. easy. Qed.
 
   (** orthogonal m -> orthogonal p -> orthogonal (m * p) *)
-  Lemma morthogonal_mul : forall {n} (m p : smat n),
-      morthogonal m -> morthogonal p -> morthogonal (m * p).
+  Lemma morth_mul : forall {n} (m p : smat n),
+      morth m -> morth p -> morth (m * p).
   Proof.
     intros. red. red in H, H0. rewrite mtrans_mmul.
     rewrite mmul_assoc. rewrite <- (mmul_assoc _ m).
@@ -1917,20 +1917,19 @@ Section OrthogonalMatrix.
   Qed.
 
   (** orthogonal m -> orthogonal m\T *)
-  Lemma morthogonal_mtrans : forall {n} (m : smat n), morthogonal m -> morthogonal (m\T).
+  Lemma morth_mtrans : forall {n} (m : smat n), morth m -> morth (m\T).
   Proof.
     intros. red. rewrite mtrans_mtrans.
-    apply morthogonal_iff_mul_trans_r in H. auto.
+    apply morth_iff_mul_trans_r in H. auto.
   Qed.
 
   (** orthogonal m -> orthogonal m⁻¹ *)
-  Lemma morthogonal_minv : forall {n} (m : smat n), morthogonal m -> morthogonal (m⁻¹).
+  Lemma morth_minv : forall {n} (m : smat n), morth m -> morth (m⁻¹).
   Proof.
     intros. red.
-    rewrite morthogonal_imply_inv_eq_trans; auto. rewrite mtrans_mtrans.
-    apply morthogonal_iff_mul_trans_r; auto.
+    rewrite morth_imply_inv_eq_trans; auto. rewrite mtrans_mtrans.
+    apply morth_iff_mul_trans_r; auto.
   Qed.
-
   
   (* ==================================== *)
   (** *** O(n): General Orthogonal Group, General Linear Group *)
@@ -1940,7 +1939,7 @@ Section OrthogonalMatrix.
     (** The set of GOn *)
     Record GOn (n: nat) := {
         GOn_mat :> smat n;
-        GOn_props : morthogonal GOn_mat
+        GOn_props : morth GOn_mat
       }.
 
     (** Equality of elements in GOn *)
@@ -1957,13 +1956,13 @@ Section OrthogonalMatrix.
     Definition GOn_mul {n} (s1 s2 : GOn n) : GOn n.
       refine (Build_GOn n (s1 * s2) _).
       destruct s1 as [s1 H1], s2 as [s2 H2]. simpl.
-      apply morthogonal_mul; auto.
+      apply morth_mul; auto.
     Defined.
 
     (** Identity element in GOn *)
     Definition GOn_1 {n} : GOn n.
       refine (Build_GOn n (mat1 n) _).
-      apply morthogonal_1.
+      apply morth_1.
     Defined.
 
     (** GOn_mul is a proper morphism respect to GOn_eq *)
@@ -1996,7 +1995,7 @@ Section OrthogonalMatrix.
     (** Inverse operation of multiplication in GOn *)
     Definition GOn_inv {n} (s : GOn n) : GOn n.
       refine (Build_GOn n (s\T) _). destruct s as [s H1]. simpl.
-      apply morthogonal_mtrans; auto.
+      apply morth_mtrans; auto.
     Defined.
 
     (** GOn_inv is a proper morphism respect to GOn_eq *)
@@ -2011,7 +2010,7 @@ Section OrthogonalMatrix.
     Lemma GOn_mul_inv_r : forall n, InverseRight GOn_mul GOn_1 GOn_inv (@GOn_eq n).
     Proof.
       unfold GOn_eq. intros. constructor. intros; simpl.
-      apply morthogonal_iff_mul_trans_r. apply a.
+      apply morth_iff_mul_trans_r. apply a.
     Qed.
 
     (** <GOn, +, 1, /s> is a group *)
@@ -2033,7 +2032,7 @@ Section OrthogonalMatrix.
         m⁻¹ == m\T.
     Proof.
       intros. unfold m. destruct s as [m' H]. simpl in *.
-      rewrite morthogonal_imply_inv_eq_trans; auto. easy.
+      rewrite morth_imply_inv_eq_trans; auto. easy.
     Qed.
 
   End GOn.
@@ -2047,7 +2046,7 @@ Section OrthogonalMatrix.
     (** The set of SOn *)
     Record SOn (n: nat) := {
         SOn_mat :> smat n;
-        SOn_props : (morthogonal SOn_mat) /\ (mdet SOn_mat == 1)%T
+        SOn_props : (morth SOn_mat) /\ (mdet SOn_mat == 1)%T
       }.
 
     Definition SOn_eq {n} (s1 s2 : SOn n) : Prop := SOn_mat _ s1 == SOn_mat _ s2.
@@ -2055,13 +2054,13 @@ Section OrthogonalMatrix.
     Definition SOn_mul {n} (s1 s2 : SOn n) : SOn n.
       refine (Build_SOn n (s1 * s2) _).
       destruct s1 as [s1 [H1 H1']], s2 as [s2 [H2 H2']]. simpl. split.
-      - apply morthogonal_mul; auto.
+      - apply morth_mul; auto.
       - rewrite mdet_mmul. rewrite H1', H2'. ring.
     Defined.
 
     Definition SOn_1 {n} : SOn n.
       refine (Build_SOn n (mat1 n) _). split.
-      apply morthogonal_1. apply mdet_1.
+      apply morth_1. apply mdet_1.
     Defined.
 
     (** SOn_eq is equivalence relation *)
@@ -2101,7 +2100,7 @@ Section OrthogonalMatrix.
     Definition SOn_inv {n} (s : SOn n) : SOn n.
       refine (Build_SOn n (s\T) _).
       destruct s as [s [H1 H2]]; simpl. split.
-      apply morthogonal_mtrans; auto. rewrite mdet_mtrans. auto.
+      apply morth_mtrans; auto. rewrite mdet_mtrans. auto.
     Defined.
 
     (** SOn_inv is a proper morphism respect to SOn_eq *)
@@ -2116,7 +2115,7 @@ Section OrthogonalMatrix.
     Lemma SOn_mul_inv_r : forall n, InverseRight SOn_mul SOn_1 SOn_inv (@SOn_eq n).
     Proof.
       unfold SOn_eq. intros. constructor. intros; simpl.
-      apply morthogonal_iff_mul_trans_r. apply a.
+      apply morth_iff_mul_trans_r. apply a.
     Qed.
 
     (** <SOn, +, 1, /s> is a group *)
@@ -2138,7 +2137,7 @@ Section OrthogonalMatrix.
         m⁻¹ == m\T.
     Proof.
       intros. unfold m. destruct s as [m' [H1 H2]]. simpl in *.
-      rewrite morthogonal_imply_inv_eq_trans; auto. easy.
+      rewrite morth_imply_inv_eq_trans; auto. easy.
     Qed.
 
   End SOn.

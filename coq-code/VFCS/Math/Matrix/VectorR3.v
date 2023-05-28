@@ -776,13 +776,13 @@ Section RotationMatrix3D.
   Proof. lma. Qed.
   
   (** R3x,R3y,R3z are orthogonal matrix *)
-  Lemma R3x_orthogonal : forall (θ : R), morthogonal (R3x θ).
+  Lemma R3x_orthogonal : forall (θ : R), morth (R3x θ).
   Proof. lma; autorewrite with R; easy. Qed.
   
-  Lemma R3y_orthogonal : forall (θ : R), morthogonal (R3y θ).
+  Lemma R3y_orthogonal : forall (θ : R), morth (R3y θ).
   Proof. lma; autorewrite with R; easy. Qed.
   
-  Lemma R3z_orthogonal : forall (θ : R), morthogonal (R3z θ).
+  Lemma R3z_orthogonal : forall (θ : R), morth (R3z θ).
   Proof. lma; autorewrite with R; easy. Qed.
 
   (** The determinant of R3x,R3y,R3z are 1 *)

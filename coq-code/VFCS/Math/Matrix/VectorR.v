@@ -1106,14 +1106,14 @@ End mcolsOrthonormal.
 
 (* ==================================== *)
 (** ** Orthogonal matrix *)
-Section morthogonal.
+Section morth.
 
   (** matrix m is orthogonal <-> columns of m are orthogomal *)
-  Lemma morthogonal_iff_mcolsOrthonormal : forall {n} (m : smat n),
-      morthogonal m <-> mcolsOrthonormal m.
+  Lemma morth_iff_mcolsOrthonormal : forall {n} (m : smat n),
+      morth m <-> mcolsOrthonormal m.
   Proof.
     intros.
-    unfold morthogonal,mcolsOrthonormal.
+    unfold morth,mcolsOrthonormal.
     unfold mcolsOrthogonal, mcolsUnit.
     unfold cvorthogonal, cvunit.
     split; intros.
@@ -1127,45 +1127,45 @@ Section morthogonal.
   Qed.
 
   (** Transformation by orthogonal matrix will keep inner-product *)
-  Theorem morthogonal_keep_dot : forall {n} (m : smat n) (v1 v2 : cvec n),
-      morthogonal m -> <m * v1, m * v2> = <v1, v2>.
+  Theorem morth_keep_dot : forall {n} (m : smat n) (v1 v2 : cvec n),
+      morth m -> <m * v1, m * v2> = <v1, v2>.
   Proof.
     intros.
     rewrite cvdot_eq_mul_trans.
     unfold scalar_of_mat, Matrix.scalar_of_mat.
     rewrite (m2f_mor _ (v1\T * v2)); auto.
     rewrite mtrans_mmul. rewrite mmul_assoc. rewrite <- (mmul_assoc _ m).
-    rewrite morthogonal_iff_mul_trans_l in H. rewrite H.
+    rewrite morth_iff_mul_trans_l in H. rewrite H.
     rewrite mmul_1_l. easy.
   Qed.
 
   (** Transformation by orthogonal matrix will keep length. *)
-  Corollary morthogonal_keep_length : forall {n} (m : smat n) (v : cvec n),
-      morthogonal m -> ||m * v|| = ||v||.
+  Corollary morth_keep_length : forall {n} (m : smat n) (v : cvec n),
+      morth m -> ||m * v|| = ||v||.
   Proof.
-    intros. rewrite cvlen_eq_iff_dot_eq. apply morthogonal_keep_dot. auto.
+    intros. rewrite cvlen_eq_iff_dot_eq. apply morth_keep_dot. auto.
   Qed.
 
   (** Transformation by orthogonal matrix will keep normalization. *)
-  Corollary morthogonal_keep_normalize : forall {n} (m : smat n) (v : cvec n),
-      morthogonal m -> cvnormalize (m * v) == m * (cvnormalize v).
+  Corollary morth_keep_normalize : forall {n} (m : smat n) (v : cvec n),
+      morth m -> cvnormalize (m * v) == m * (cvnormalize v).
   Proof.
     intros. unfold cvnormalize.
-    rewrite morthogonal_keep_length; auto. apply mcmul_mmul_assoc_r.
+    rewrite morth_keep_length; auto. apply mcmul_mmul_assoc_r.
   Qed.
 
   (** Transformation by orthogonal matrix will keep angle. *)
-  Corollary morthogonal_keep_angle : forall {n} (m : smat n) (v1 v2 : cvec n),
-      morthogonal m -> m * v1 ∠ m * v2 = v1 ∠ v2.
+  Corollary morth_keep_angle : forall {n} (m : smat n) (v1 v2 : cvec n),
+      morth m -> m * v1 ∠ m * v2 = v1 ∠ v2.
   Proof.
-    intros. unfold cvangle. f_equal. rewrite !morthogonal_keep_normalize; auto.
-    rewrite morthogonal_keep_dot; auto.
+    intros. unfold cvangle. f_equal. rewrite !morth_keep_normalize; auto.
+    rewrite morth_keep_dot; auto.
   Qed.
 
   (** 由于正交矩阵可保持变换向量的长度和角度，它可保持坐标系的整体结构不变。
       因此，正交矩阵仅可用于旋转变换和反射变换或二者的组合变换。
       当正交矩阵的行列式为1，表示一个旋转，行列式为-1，表示一个反射。*)
-End morthogonal.
+End morth.
 
 
 (* ==================================== *)
