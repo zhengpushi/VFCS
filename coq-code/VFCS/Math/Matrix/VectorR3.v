@@ -361,6 +361,14 @@ Section cv3cross.
     - split; apply cvlen_neq0_iff_neq0; auto.
   Qed.
 
+  (** If v0∠v1∈(0,π) (that is they are Linear-Independent), then v0×v1 nonzero. *)
+  Lemma cv3cross_neq0_if_angle_in_0_pi : forall (v0 v1 : cvec 3),
+      cvnonzero v0 -> cvnonzero v1 -> 0 < v0 ∠ v1 < PI -> cvnonzero (v0 × v1).
+  Proof.
+    intros. apply cvlen_neq0_iff_neq0.
+    intro. apply cvlen_cv3cross_eq0_iff_angle_0_pi in H2; auto. lra.
+  Qed.
+
 End cv3cross.
 Infix "×" := cv3cross : cvec_scope.
 

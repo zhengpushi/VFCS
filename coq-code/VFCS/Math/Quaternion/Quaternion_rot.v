@@ -41,7 +41,15 @@ Definition qrotv (q : quat) (v : cvec 3) : cvec 3 := (qrot q (qpure v)).Im.
 Lemma qrot_twice : forall (q1 q2 : quat) (v : quat),
     q1 <> qzero -> q2 <> qzero -> qrot q2 (qrot q1 v) = qrot (q2 * q1) v.
 Proof.
-  intros. unfold qrot. rewrite qinv_qmul; auto. rewrite !qmul_assoc. auto.
+  intros. unfold qrot. rewrite qinv_qmul, !qmul_assoc; auto.
+Qed.
+
+(** Another proof, vector form *)
+Lemma qrot_twice' : forall (q1 q2 : quat) (v : cvec 3),
+    q1 <> qzero -> q2 <> qzero ->
+    qrot q2 (qrot q1 (qpure v)) = qrot (q2 * q1) (qpure v).
+Proof.
+  intros. unfold qrot. rewrite qinv_qmul, !qmul_assoc; auto.
 Qed.
 
 (** 备注：四元数乘法可以连接多个旋转，就像矩阵乘法一样。
@@ -101,45 +109,51 @@ End qrot_spec_method1.
 Module qrot_spec_method2.
 
   (* 1. 任给单位四元数q，总能写成
-     q = [cos(θ/2), v * sin(θ/2)]
-     其中，v是带单位向量，表示旋转轴，θ是旋转的角度，q表示绕v旋转θ。
+     q = [cos(θ/2), n * sin(θ/2)]
+     其中，n是带单位向量，表示旋转轴，θ是旋转的角度，q表示绕n旋转θ。
 
-     我们声称，以下公式能够将向量 v1 按照q的作用旋转到 v1'
-     [0,v1'] = q⊗[0,v1]⊗ q^{-1}
+     我们声称，以下公式能够将任意向量 v 按照q的作用旋转到 v'
+     [0,v'] = q⊗[0,v]⊗ q^{-1}
      其中，q是单位四元数。
 
      下面，证明这个结论。
      1. 第一行可以验证是成立的（即从纯四元数得到了纯四元数）。
         这里其实分了两步，左乘，右乘。每一步都使得w不为0，但两次抵消了。
-     2. 经过变换，v1' 和 v1 的长度不变。
+     2. 经过变换，v' 和 v 的长度不变。
      3. 非零实数s乘以q以后，仍然是相同的作用。
      4. 表示旋转的论证
-     (1). 两个3D单位向量 v0 v1 (v0 ≠ ± v1，即，
-        θ/2 为 v0 到 v1 之间的夹角，<v0,v1> = cos(θ/2),
-        同时，确定了一个新的向量 
-        v = (v0 × v1) / |v0 × v1| 
-        = (v0 × v1) / (|v0| * |v1| * sin(θ/2))
-        = (v0 × v1) / sin(θ/2)
-        所以，v0 × v1 = v * sin(θ/2)
-        所以，q = [<v0,v1>, v0 × v1] = [0,v1] ⊗ [0,v0]*
-     (2) 定义 [0,v2] = q⊗[0,v0]⊗q^{-1}
-        可证明 [<v1,v2>, v1 × v2] = [0,v2] ⊗ [0,v1]* = q
-        于是，现在可知 <v1,v2> = <v0,v1> 且 v1 × v2 = v0 × v1
-        这表明：
-        v2位于v0和v1所在的平面，且v1与v2夹角是θ/2
-        所以对v0作用单位向量q，可看作是把v0绕v旋转θ后得到v2。
-     (3) 定义 [0,v3] = q⊗[0,v1]⊗q^{-1}
-        可证明 [<v2,v3>, v1 × v2] = [0,v3] ⊗ [0,v2]* = q
-        于是，现在可知 <v2,v3> = <v1,v2> 且 v2 × v3 = v1 × v2
-        这表明：
-        v3位于v1和v2所在的平面，且v2与v3夹角是θ/2
-        所以对v1作用单位向量q，可看作是把v1绕v旋转θ后得到v3。
-     (4) 还能很容易验证 q ⊗ [0,v] = [0,v] ⊗ q，进一步可验证
-        q ⊗ [0,v] ⊗ q* = [0,v] ⊗ q ⊗ q* = [0,v]
-        这表明，v是旋转轴（经过作用后没有变化）。
+     (1). 给定两个不相关的3D单位向量 v0 v1 (v0 ≠ ± v1），使得
+     1': <v0,v1> = cos(θ/2),即，θ/2 为 v0 到 v1 之间的夹角，
+     2': n = cvnormalize(v0×v1)
+     即，v0,v1是以n为法向量的平面上的一对基向量。
+     我们可以得到这些结论：
+     n = (v0 × v1) / |v0 × v1| 
+       = (v0 × v1) / (|v0| * |v1| * sin(θ/2))
+       = (v0 × v1) / sin(θ/2)
+     所以，v0 × v1 = v * sin(θ/2)
+     所以，q = [<v0,v1>, v0 × v1] = [0,v1] ⊗ [0,v0]*
+
+     (2) 使用四元数旋转公式将v0变换到v1，即：[0,v2] = q⊗[0,v0]⊗q^{-1}
+     可证明 [<v1,v2>, v1 × v2] = [0,v2] ⊗ [0,v1]* = q
+     于是，现在可知 <v1,v2> = <v0,v1> 且 v1 × v2 = v0 × v1
+     这表明：
+     v2位于v0和v1所在的平面，且v1与v2夹角是θ/2
+     所以对v0作用单位向量q，可看作是把v0绕v旋转θ后得到v2。
+
+     (3) 变换v1到v3，即：[0,v3] = q⊗[0,v1]⊗q^{-1}
+     可证明 [<v2,v3>, v1 × v2] = [0,v3] ⊗ [0,v2]* = q
+     于是，现在可知 <v2,v3> = <v1,v2> 且 v2 × v3 = v1 × v2
+     这表明：
+     v3位于v1和v2所在的平面，且v2与v3夹角是θ/2
+     所以对v1作用单位向量q，可看作是把v1绕v旋转θ后得到v3。
+
+     (4) 还可以验证 q ⊗ [0,v] = [0,v] ⊗ q，进一步可验证
+     q ⊗ [0,v] ⊗ q* = [0,v] ⊗ q ⊗ q* = [0,v]
+     这表明，v是旋转轴（经过作用后没有变化）。
+
      (5) 任意向量 vt 可分解为 vt = s0*v0 + s1*v1 + s2*v,
-        由双线性性质，我们可以分别对v0,v1,v2作用。
-        因此，q对向量vt的作用是绕v进行θ角的一次旋转。
+     由双线性性质，我们可以分别对v0,v1,v2作用。
+     因此，q对向量vt的作用是绕v进行θ角的一次旋转。
 
      一般化定理5.1，可知每个3D旋转对应一个单位四元数。
      进一步，若q1,q2两次相继旋转可得到进一步的公式。
@@ -276,7 +290,7 @@ Module qrot_spec_method2.
 
   End qrot_keep_dot.
 
-  (* 公式5.25中的四元数作用：绕v轴旋转θ角度。
+  (* 公式5.25中的四元数作用：绕n轴旋转θ角度。
        换言之，公式5.25是如何构造的？它为什么能表示旋转 *)
 
   (* 计算两个向量的夹角 *)
@@ -312,10 +326,10 @@ Module qrot_spec_method2.
 
   (** 任给两个单位向量v0,v1，并由它们的夹角和垂直轴确定出一个四元数q，若将v1由q
         旋转后得到v2，则(v1,v2)所确定的四元数也等于q q *)
-  Lemma uv2q_eq : forall (v0 v1 : cvec 3) (H0 : cvunit v0) (H1 : cvunit v1),
+  Lemma uv2q_eq : forall (v0 v1 : cvec 3),
       let q : quat := uv2q v0 v1 in
       let v2 : cvec 3 := qrotv q v0 in
-      uv2q v1 v2 = q.
+      cvunit v0 -> cvunit v1 -> uv2q v1 v2 = q.
   Proof.
     intros.
     rewrite uv2q_eq_uv2q'. unfold uv2q'. unfold v2. unfold qrotv.
@@ -341,89 +355,87 @@ Module qrot_spec_method2.
 
   (** 论证旋转，需要构造一些中间变量，所以逻辑有点绕 *)
   Section rotation_derivation.
-    (* 任给(0,2π)内的旋转角θ, 旋转轴v，并按照轴角方式构造一个四元数 *)
-    Variable θ : R.
-    Variable v : cvec 3.
+    (* 任给(0,2π)内的旋转角θ, 旋转轴n，
+       在以n为法线的平面上给出夹角为θ/2的两个3D单位向量v0,v1 *)
+    Variables (θ : R) (n v0 v1 : cvec 3).
     Hypotheses Hbound_θ : 0 < θ < 2 * PI.
-    Hypotheses Hunit_v : cvunit v.
-    Let q : quat := aa2quat (θ, v).
-    (* 在以v为法线的平面上给出夹角为θ/2的两个3D单位向量v0,v1 *)
-    Variable v0 v1 : cvec 3.
     Hypotheses Hunit_v0 : cvunit v0.
     Hypotheses Hunit_v1 : cvunit v1.
-    Hypotheses Hnorm_v01_v : cvnormalize (v0 × v1) == v.
+    Hypotheses Hnorm_v01_n : cvnormalize (v0 × v1) == n.
     Hypotheses Hangle_v01_θ : cvangle v0 v1 = θ/2.
+    
+    (* 并按照轴角方式构造一个四元数 *)
+    Let q : quat := aa2quat (θ, n).
+
+    (** *** 一组关于 θ 的断言，暂时未使用 *)
+    Section about_θ.
+      (** 0 < sin (θ/2) *)
+      Fact sin_θ2_gt0 : 0 < sin (θ/2).
+      Proof. rewrite <- Hangle_v01_θ. apply sin_gt_0; ra. Qed.
+
+      (* (** θ = 0 <-> v0 = v1 *) *)
+      (* Fact θ_eq0_iff_v0_eq_v1 : θ = 0 <-> v0 == v1. *)
+      (* Proof. rewrite cv3eq_iff_len_angle0. rewrite !cvlen_cvunit; auto. ra. Qed. *)
+
+      (** θ = 0 <-> sin (θ/2) = 0 *)
+      Fact θ_eq0_iff_sin_θ2_eq0 : θ = 0 <-> sin (θ/2) = 0.
+      Proof.
+        split; intros H.
+        - apply sin_eq_O_2PI_1; ra.
+        - apply sin_eq_O_2PI_0 in H; ra.
+      Qed.
+      
+      (** θ ≠ 0 <-> sin (θ/2) ≠ 0*)
+      Fact θ_neq0_iff_sin_θ2_neq0 : θ <> 0 <-> sin (θ/2) <> 0.
+      Proof. rewrite θ_eq0_iff_sin_θ2_eq0. easy. Qed.
+      
+      (** θ = 0 <-> ||v0×v1|| = 0 *)
+      Fact θ_eq0_iff_v01_cross_len0 : θ = 0 <-> (||v0 × v1|| = 0)%CV.
+      Proof.
+        rewrite cvlen_cv3cross_eq0_iff_angle_0_pi; auto; ra.
+        all: apply cvunit_neq0; auto.
+      Qed.
+      
+      (** θ = 0 <-> v0 × v1 = cvec0 *)
+      Fact θ_eq0_iff_cross_eq0 : θ = 0 <-> v0 × v1 == cvec0.
+      Proof.
+        rewrite <- (cvlen_eq0_iff_eq0 (v0 × v1)).
+        rewrite θ_eq0_iff_v01_cross_len0. easy.
+      Qed.
+    End about_θ.
 
     (** *** 1. 基本的事实 *)
 
-    (** <v0,v1> = cos (θ / 2) *)
-    Fact dot01_eq : <v0,v1> = cos (θ / 2).
+    (** v0 ⟂ n *)
+    Fact v0_orth_n : v0 ⟂ n.
     Proof.
-      rewrite cvdot_eq_cos_angle. rewrite <- Hangle_v01_θ.
-      rewrite !cvlen_cvunit; auto. autounfold with T; ring.
+      rewrite <- Hnorm_v01_n. apply cvorthogonal_cvnormalize_r.
+      apply cvorthogonal_comm. apply cv3cross_orthogonal_l.
     Qed.
 
-    (** 0 < sin (θ/2) *)
-    Fact sin_θ2_gt0 : 0 < sin (θ/2).
-    Proof. rewrite <- Hangle_v01_θ. apply sin_gt_0; ra. Qed.
+    (** v1 ⟂ v *)
+    Fact v1_orth_n : v1 ⟂ n.
+    Proof.
+      rewrite <- Hnorm_v01_n. apply cvorthogonal_cvnormalize_r.
+      apply cvorthogonal_comm. apply cv3cross_orthogonal_r.
+    Qed.
 
-    (* (** θ = 0 <-> v0 = v1 *) *)
-    (* Fact θ_eq0_iff_v0_eq_v1 : θ = 0 <-> v0 == v1. *)
-    (* Proof. rewrite cv3eq_iff_len_angle0. rewrite !cvlen_cvunit; auto. ra. Qed. *)
-
-    (** θ = 0 <-> sin (θ/2) = 0 *)
-    Fact θ_eq0_iff_sin_θ2_eq0 : θ = 0 <-> sin (θ/2) = 0.
+    (** n is unit *)
+    Fact Hunit_n : cvunit n.
     Proof.
-      split; intros H.
-      - apply sin_eq_O_2PI_1; ra.
-      - apply sin_eq_O_2PI_0 in H; ra.
-    Qed.
-    
-    (** θ ≠ 0 <-> sin (θ/2) ≠ 0*)
-    Fact θ_neq0_iff_sin_θ2_neq0 : θ <> 0 <-> sin (θ/2) <> 0.
-    Proof. rewrite θ_eq0_iff_sin_θ2_eq0. easy. Qed.
-    
-    (** θ = 0 <-> ||v0×v1|| = 0 *)
-    Fact θ_eq0_iff_v01_cross_len0 : θ = 0 <-> (||v0 × v1|| = 0)%CV.
-    Proof.
-      rewrite cvlen_cv3cross_eq0_iff_angle_0_pi; auto; ra.
-      all: apply cvunit_neq0; auto.
-    Qed.
-    
-    (** θ = 0 <-> v0 × v1 = cvec0 *)
-    Fact θ_eq0_iff_cross_eq0 : θ = 0 <-> v0 × v1 == cvec0.
-    Proof.
-      rewrite <- (cvlen_eq0_iff_eq0 (v0 × v1)).
-      rewrite θ_eq0_iff_v01_cross_len0. easy.
-    Qed.
-    
-    (** v0 × v1 == sin (θ/2) * v *)
-    Fact cross01_eq : v0 × v1 == (sin (θ / 2) c* v)%CV.
-    Proof.
-      rewrite cv3cross_eq_cmul; ra.
-      rewrite Hangle_v01_θ, Hnorm_v01_v, !cvlen_cvunit; auto.
-      autorewrite with R. easy. all: apply cvunit_neq0; auto.
+      rewrite <- Hnorm_v01_n. apply cvnormalize_unit.
+      apply cv3cross_neq0_if_angle_in_0_pi; try apply cvunit_neq0; auto. lra.
     Qed.
 
     (** (<v0,v1>, v0 × v1) = q *)
     Fact v01_eq_q : uv2q v0 v1 = q.
     Proof.
       unfold q. unfold aa2quat. unfold uv2q. f_equiv.
-      rewrite dot01_eq; auto. rewrite cross01_eq; easy.
-    Qed.
-
-    (** v0 ⟂ v *)
-    Fact v0_orth_v : v0 ⟂ v.
-    Proof.
-      rewrite <- Hnorm_v01_v. apply cvorthogonal_cvnormalize_r.
-      apply cvorthogonal_comm. apply cv3cross_orthogonal_l.
-    Qed.
-
-    (** v1 ⟂ v *)
-    Fact v1_orth_v : v1 ⟂ v.
-    Proof.
-      rewrite <- Hnorm_v01_v. apply cvorthogonal_cvnormalize_r.
-      apply cvorthogonal_comm. apply cv3cross_orthogonal_r.
+      - rewrite cvdot_eq_cos_angle. rewrite <- Hangle_v01_θ.
+        rewrite !cvlen_cvunit; auto. autounfold with T; ring.
+      - rewrite cv3cross_eq_cmul; ra.
+        rewrite Hangle_v01_θ, Hnorm_v01_n, !cvlen_cvunit; auto.
+        autorewrite with R. easy. all: apply cvunit_neq0; auto.
     Qed.
 
     (** q 是单位向量 *)
@@ -461,10 +473,10 @@ Module qrot_spec_method2.
       apply quat_of_s_v_inj in H; destruct H; auto.
     Qed.
 
-    (** v2 ⟂ v *)
-    Fact v2_orth_v : v2 ⟂ v.
+    (** v2 ⟂ n *)
+    Fact v2_orth_n : v2 ⟂ n.
     Proof.
-      rewrite <- v12_v01_keep_cvcross in Hnorm_v01_v. rewrite <- Hnorm_v01_v.
+      rewrite <- v12_v01_keep_cvcross in Hnorm_v01_n. rewrite <- Hnorm_v01_n.
       apply cvorthogonal_cvnormalize_r.
       apply cvorthogonal_comm. apply cv3cross_orthogonal_r.
     Qed.
@@ -484,12 +496,11 @@ Module qrot_spec_method2.
       rewrite v12_v01_same_angle; ra.
     Qed.
 
-    (** v0,v1,v2 共面 *)
-    Fact v012_coplanar : cv3coplanar v0 v1 v2.
-    Proof.
-      apply cv3cross_same_cv3coplanar. symmetry. apply v12_v01_keep_cvcross.
-    Qed.
-
+    (* (** v0,v1,v2 共面 *) *)
+    (* Fact v012_coplanar : cv3coplanar v0 v1 v2. *)
+    (* Proof. *)
+    (*   apply cv3cross_same_cv3coplanar. symmetry. apply v12_v01_keep_cvcross. *)
+    (* Qed. *)
     
     (** *** 3. 证明 (v2,v3) 与 (v1,v2) 的几何关系 *)    
     
@@ -521,12 +532,12 @@ Module qrot_spec_method2.
       apply quat_of_s_v_inj in H; destruct H; auto.
     Qed.
 
-    (** v3 ⟂ v *)
-    Fact v3_orth_v : v3 ⟂ v.
+    (** v3 ⟂ n *)
+    Fact v3_orth_n : v3 ⟂ n.
     Proof.
       assert (v0 × v1 == v2 × v3) as H.
       { rewrite v23_v12_keep_cvcross, v12_v01_keep_cvcross. easy. }
-      rewrite H in Hnorm_v01_v. rewrite <- Hnorm_v01_v.
+      rewrite H in Hnorm_v01_n. rewrite <- Hnorm_v01_n.
       apply cvorthogonal_cvnormalize_r.
       apply cvorthogonal_comm. apply cv3cross_orthogonal_r.
     Qed.
@@ -547,63 +558,62 @@ Module qrot_spec_method2.
       rewrite v23_v12_same_angle, v12_v01_same_angle; lra.
     Qed.
 
-    (** v1,v2,v3 共面 *)
-    Fact v123_coplanar : cv3coplanar v1 v2 v3.
-    Proof.
-      apply cv3cross_same_cv3coplanar. symmetry. apply v23_v12_keep_cvcross.
-    Qed.
+    (* (** v1,v2,v3 共面 *) *)
+    (* Fact v123_coplanar : cv3coplanar v1 v2 v3. *)
+    (* Proof. *)
+    (*   apply cv3cross_same_cv3coplanar. symmetry. apply v23_v12_keep_cvcross. *)
+    (* Qed. *)
 
-    (** *** 4. 证明 q 与 v 的几何关系 *)
+    (** *** 4. 证明 q 对 n 不起作用 *)
 
-    (** q ⊗ [0,v] = [0,v] ⊗ q *)
-    Fact qv_eq_vq : q * qpure v = qpure v * q.
+    (** q ⊗ [0,n] = [0,n] ⊗ q *)
+    Fact qn_eq_nq : q * qpure n = qpure n * q.
     Proof. lqa. (* 这里可计算式的证明，但我暂不知如何推导这个命题。*) Qed.
     
-    (** 使用 q 对 v 旋转，不改变 q。即，符合几何上的直观含义：q 是旋转轴。 *)
-    Fact rot_v_eq_v : qrotv q v == v.
+    (** 使用 q 对 n 旋转，不改变 n。即，符合几何上的直观含义：n 是旋转轴。 *)
+    Fact rot_n_eq_n : qrotv q n == n.
     Proof.
-      unfold qrotv, qrot. rewrite qv_eq_vq. rewrite qmul_assoc.
+      unfold qrotv, qrot. rewrite qn_eq_nq. rewrite qmul_assoc.
       rewrite qmul_qinv_r. rewrite qmul_1_r. apply qim_qpure.
       apply qunit_neq0. apply q_qunit.
     Qed.
     
-    (** *** 5. 证明 q 与任意向量 vt 的几何关系 *)
+    (** *** 5. 证明 q 与任意向量 v 的几何关系 *)
     Section main_theorem_analysis.
       
-      (* 由于v0,v1,v2是线性无关的一组基，所以任意向量vt都可以由它们线性表出。
-           这里跳过了这部分理论的论证。即 vt 的定义的合理性。
-           假设用(v0,v1,v)和给定的一组系数(s0,s1,s2)表出了一个向量 *)
+      (* 由于v0,v1,n是线性无关的一组基，所以任意向量v都可以由它们线性表出。
+         这里跳过了这部分理论的论证。即 v 的定义的合理性。
+         假设用(v0,v1,n)和给定的一组系数(s0,s1,s2)表出了一个向量 *)
       Variable s0 s1 s2 : R.
       Hypotheses Hs0_neq0 : s0 <> 0.
       Hypotheses Hs1_neq0 : s1 <> 0.
-      Hypotheses Hs2_neq0 : s2 <> 0.
-      Let vt : cvec 3 := (s0 c* v0 + s1 c* v1 + s2 c* v)%CV.
-      (* 假设 vt 被 qrot 作用后成为了 vt' *)
-      Let vt' : cvec 3 := qrotv q vt.
+      Let v : cvec 3 := (s0 c* v0 + s1 c* v1 + s2 c* n)%CV.
+      (* 假设 v 被 qrot 作用后成为了 v' *)
+      Let v' : cvec 3 := qrotv q v.
 
       (** 我们证明如下结论：
-          (1) vt和vt'的长度相等
-          (2) vt和vt'在v的法平面上的投影的夹角是θ
-          这说明了 qrot 将 vt 绕 v 轴旋转了 θ 度，到达 vt'。
+          (1) v和v'的长度相等
+          (2) v和v'在n的法平面上的投影的夹角是θ
+          这说明了 qrot 将 v 绕 n 轴旋转了 θ 度，到达 v'。
           所以，单位四元数旋转公式
-          [0 v'] = qrot (q, v) = q ⊗ [0 v] ⊗ q∗, 其中，q = (cos(θ/2), sin(θ/2)*v)
+          [0 v'] = qrot (q, v) = q ⊗ [0 n] ⊗ q∗, 其中，q = (cos(θ/2), sin(θ/2)*n)
           表达式了我们想要的旋转。
        *)
 
-      (** vt和vt'的长度相等 *)
-      Fact cvlen_vt'_eq_vt : (||vt'|| = ||vt||)%CV.
+      (** v和v'的长度相等 *)
+      Fact cvlen_v'_eq_v : (||v'|| = ||v||)%CV.
       Proof.
-        unfold vt',vt. rewrite qrot_keep_cvlen; auto. apply q_qunit.
+        unfold v',v. rewrite qrot_keep_cvlen; auto. apply q_qunit.
       Qed.
 
-      (** vt和vt'在v的法平面上的投影的夹角是θ *)
-      Fact vt'_vt_proj_θ : cvperp vt v ∠ cvperp vt' v = θ.
+      (** v和v'在n的法平面上的投影的夹角是θ *)
+      Fact v'_v_proj_θ : cvperp v n ∠ cvperp v' n = θ.
       Proof.
-        pose proof (cvunit_neq0 v Hunit_v).
-        unfold vt',vt.
+        pose proof (cvunit_neq0 n Hunit_n).
+        unfold v',v.
         rewrite !qrot_linear_cvadd, !qrot_linear_cvcmul.
-        fold v2. fold v3. rewrite rot_v_eq_v.
-        (* elim (s2 c* v) *)
+        fold v2. fold v3. rewrite rot_n_eq_n.
+        (* elim (s2 c* n) *)
         rewrite !cvperp_linear_cvadd, !cvperp_linear_cvcmul; auto.
         rewrite cvperp_same; auto. rewrite cvcmul_0_r, !cvadd_0_r.
         (* elim cvperp *)
@@ -617,32 +627,31 @@ Module qrot_spec_method2.
           + rewrite !cvlen_cmul, !cvlen_cvunit; auto. apply v3_cvunit.
           + rewrite !cvangle_cvcmul_l, !cvangle_cvcmul_r; auto.
             rewrite v23_v12_same_angle, v12_v01_same_angle; auto.
-        - (* v3 ⟂ v *) apply v3_orth_v.
-        - (* v2 ⟂ v *) apply v2_orth_v.
-        - (* v1 ⟂ v *) apply v1_orth_v.
-        - (* v0 ⟂ v *) apply v0_orth_v.
+        - (* v3 ⟂ n *) apply v3_orth_n.
+        - (* v2 ⟂ n *) apply v2_orth_n.
+        - (* v1 ⟂ n *) apply v1_orth_n.
+        - (* v0 ⟂ n *) apply v0_orth_n.
       Qed.
       
     End main_theorem_analysis.
 
   End rotation_derivation.
   
-  (** 四元数乘法能表示旋转（这一版，仍然使用 v0,v1 这两个中间变量，以后去掉） *)
-  Theorem qrot_valid : forall (v0 v1 : cvec 3) (s0 s1 s2 : R) (α : R) (v : cvec 3),
-      let q : quat := aa2quat (α, v) in
-      let vt : cvec 3 := (s0 c* v0 + s1 c* v1 + s2 c* v)%CV in
-      let vt' : cvec 3 := qrotv q vt in
-      cvunit v0 -> cvunit v1 -> 0 < α < 2 * PI ->
-      cvnormalize (v0 × v1) == v ->
-      cvangle v0 v1 = α/2 ->
-      cvunit v -> s0 <> 0 -> s1 <> 0 ->
-      (||vt'|| = ||vt||)%CV /\ cvperp vt v ∠ cvperp vt' v = α.
+  (** 四元数乘法能表示旋转（这一版，仍然使用 v0,v1 这两个中间变量，以后也许能去掉） *)
+  Theorem qrot_valid : forall (v0 v1 : cvec 3) (s0 s1 s2 : R) (θ : R) (n : cvec 3),
+      let q : quat := aa2quat (θ, n) in
+      let v : cvec 3 := (s0 c* v0 + s1 c* v1 + s2 c* n)%CV in
+      let v' : cvec 3 := qrotv q v in
+      cvunit n -> cvunit v0 -> cvunit v1 ->
+      0 < θ < 2 * PI ->
+      cvnormalize (v0 × v1) == n ->
+      cvangle v0 v1 = θ/2 ->
+      s0 <> 0 -> s1 <> 0 ->
+      (||v'|| = ||v||)%CV /\ cvperp v n ∠ cvperp v' n = θ.
   Proof.
     intros. split.
-    - pose proof (cvlen_vt'_eq_vt α v H1 v0 v1 H H0 H2 H3 s0 s1 s2).
-      unfold vt', vt, q. auto.
-    - pose proof (vt'_vt_proj_θ α v H1 H4 v0 v1 H H0 H2 H3 s0 s1 s2 H5 H6).
-      unfold vt', vt, q. auto.
+    - apply cvlen_v'_eq_v; auto.
+    - apply v'_v_proj_θ; auto.
   Qed.
 
 End qrot_spec_method2.
