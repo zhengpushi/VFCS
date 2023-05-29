@@ -160,21 +160,21 @@ End vcmul.
 
 (* ==================================== *)
 (** ** Two vectors are parallel (or called collinear) *)
-Section cvparallel.
+Section cvpara.
 
   (* 注意：这个定义可能还需改进，因为有平行、反向平行两种情况，以及v1和v2的区分等问题 *)
   (** Two vectors are parallel, iff their components have k-times relation *)
-  Definition cvparallel {n} (v1 v2 : cvec n) : Prop :=
+  Definition cvpara {n} (v1 v2 : cvec n) : Prop :=
     exists k : R, k <> 0 /\ k c* v1 == v2.
 
-  Infix "∥" := cvparallel (at level 50) : cvec_scope.
+  Infix "∥" := cvpara (at level 50) : cvec_scope.
 
   (** vparallel is an equivalence relation *)
 
-  Lemma cvparallel_refl : forall {n} (v : cvec n), v ∥ v.
+  Lemma cvpara_refl : forall {n} (v : cvec n), v ∥ v.
   Proof. intros. exists 1. split; auto. apply cvcmul_1_l. Qed.
 
-  Lemma cvparallel_sym : forall {n} (v0 v1 : cvec n), v0 ∥ v1 -> v1 ∥ v0.
+  Lemma cvpara_sym : forall {n} (v0 v1 : cvec n), v0 ∥ v1 -> v1 ∥ v0.
   Proof.
     intros. destruct H as [k [H1 H2]]. exists (1/k). split.
     (* ToDo: 提高R的自动化程度 *)
@@ -183,7 +183,7 @@ Section cvparallel.
       unfold Rdiv. autorewrite with R. rewrite Rinv_l; auto. apply cvcmul_1_l.
   Qed.
 
-  Lemma cvparallel_trans : forall {n} (v0 v1 v2 : cvec n), v0 ∥ v1 -> v1 ∥ v2 -> v0 ∥ v2.
+  Lemma cvpara_trans : forall {n} (v0 v1 v2 : cvec n), v0 ∥ v1 -> v1 ∥ v2 -> v0 ∥ v2.
   Proof.
     intros. destruct H as [k1 [H1 H2]], H0 as [k2 [H3 H4]].
     exists (k2 * k1)%R. split; auto.
@@ -191,10 +191,10 @@ Section cvparallel.
   Qed.
 
   (** v1 ∥ v2 -> (a c* v1) ∥ v2 *)
-  Lemma cvcmul_cvparallel_l : forall {n} (v1 v2 : cvec n) (a : R),
+  Lemma cvcmul_cvpara_l : forall {n} (v1 v2 : cvec n) (a : R),
       v1 ∥ v2 -> a <> 0 -> (a c* v1) ∥ v2.
   Proof.
-    intros. unfold cvparallel in *. destruct H as [k [H1 H2]].
+    intros. unfold cvpara in *. destruct H as [k [H1 H2]].
     exists (k/a). split.
     - unfold Rdiv.
       apply Rmult_integral_contrapositive_currified; auto.
@@ -204,24 +204,24 @@ Section cvparallel.
   Qed.
 
   (** v1 ∥ v2 -> v1 ∥ (a c* v2) *)
-  Lemma cvcmul_cvparallel_r : forall {n} (v1 v2 : cvec n) (a : R),
+  Lemma cvcmul_cvpara_r : forall {n} (v1 v2 : cvec n) (a : R),
       v1 ∥ v2 -> a <> 0 -> v1 ∥ (a c* v2).
   Proof.
-    intros. apply cvparallel_sym. apply cvcmul_cvparallel_l; auto.
-    apply cvparallel_sym; auto.
+    intros. apply cvpara_sym. apply cvcmul_cvpara_l; auto.
+    apply cvpara_sym; auto.
   Qed.
 
   (** Zero vector is parallel to any other vectors. *)
-  Lemma cvparallel_0_l : forall {n} (v1 v2 : cvec n), cvzero v1 -> v1 ∥ v2.
+  Lemma cvpara_0_l : forall {n} (v1 v2 : cvec n), cvzero v1 -> v1 ∥ v2.
   Proof.
     intros. exists 0.
-    (* Note, it is not true, because the definition of cvparallel.  *)
+    (* Note, it is not true, because the definition of cvpara.  *)
   Abort.
 
 
 (* (** If two non-zero vectors are parallel, then there is a unique k such that *)
  (*     they are k times relation *) *)
-  (* Lemma cvparallel_vnonezero_imply_unique_k : *)
+  (* Lemma cvpara_vnonezero_imply_unique_k : *)
   (*   forall {n} (v1 v2 : cvec n) (H1 : cvnonzero v1) (H2 : cvnonzero v2), *)
   (*     v1 ∥ v2 -> (exists ! k, k c* v1 == v2). *)
   (* Proof. *)
@@ -233,7 +233,7 @@ Section cvparallel.
 
 (** A non-zero vector v1 is parallel to any other vector v2,
         iff there is a unique k such that v2 is k times v1. *)
-  (* Lemma cvparallel_iff1 : forall {n} (v1 v2 : cvec n), *)
+  (* Lemma cvpara_iff1 : forall {n} (v1 v2 : cvec n), *)
   (*     (cvnonzero v1 /\ (v1 ∥ v2)) <-> (exists ! k, v2 == k c* v1). *)
   (* Proof. *)
   (*   intros. split; intros. *)
@@ -242,13 +242,13 @@ Section cvparallel.
   (*       * rewrite vcmul_0_l. auto. *)
   (*       * intros. rewrite m in H1. *)
   (*         apply symmetry in H1. apply cvcmul_nonzero_eq_zero_imply_k0 in H1; auto. *)
-  (*     + apply cvparallel_vnonezero_imply_unique_k; auto. apply vparallel_sym; auto. *)
+  (*     + apply cvpara_vnonezero_imply_unique_k; auto. apply vparallel_sym; auto. *)
   (*   - destruct H0. destruct H0. apply vparallel_sym. right. right. exists x. auto. *)
   (* Qed. *)
 
 
-End cvparallel.
-Infix "∥" := cvparallel (at level 50) : cvec_scope.
+End cvpara.
+Infix "∥" := cvpara (at level 50) : cvec_scope.
 
 
 (* ==================================== *)
@@ -472,10 +472,10 @@ Section vunit.
   (*   a : mat 2 2 *)
   (* a1 : cvunit (mat2col a 0) *)
   (* a2 : cvunit (mat2col a 1) *)
-  (* a3 : cvorthogonal (mat2col a 0) (mat2col a 1) *)
+  (* a3 : cvorth (mat2col a 0) (mat2col a 1) *)
   (* b1 : cvunit (mat2col b 0) *)
   (* b2 : cvunit (mat2col b 1) *)
-  (* b3 : cvorthogonal (mat2col b 0) (mat2col b 1) *)
+  (* b3 : cvorth (mat2col b 0) (mat2col b 1) *)
   (* ============================ *)
   (* cvunit (mat2col (a * b) 0) *)
 End vunit.
@@ -541,7 +541,7 @@ Section vnormalize.
   Lemma cvnormalize_direction : forall {n} (v : cvec n),
       cvnonzero v -> (cvnormalize v) ∥ v.
   Proof.
-    intros. unfold cvparallel. unfold cvnormalize. exists (||v||). split.
+    intros. unfold cvpara. unfold cvnormalize. exists (||v||). split.
     - apply cvlen_neq0_iff_neq0; auto.
     - rewrite cvcmul_assoc. autounfold with T.
       match goal with | |- context[?a c* _] => replace a with 1 end.
@@ -650,7 +650,7 @@ Section vangle.
   Proof. intros. pose proof (cvangle_bound u v). apply sin_gt_0; ra. Qed.
 
   (* (** v1 ∠ v2 = 0 <-> v1,v2同向平行 *) *)
-  (* Lemma cvangle_eq0_cvparallel : forall {n} (v1 v2 : cvec n), *)
+  (* Lemma cvangle_eq0_cvpara : forall {n} (v1 v2 : cvec n), *)
   (*     cvnonzero v1 -> cvnonzero v2 -> *)
   (*     (cvangle v1 v2 = 0 <-> (exists k : R, k > 0 /\ k c* v1 == v2)). *)
   (* Proof. *)
@@ -896,55 +896,55 @@ End cvperp.
 
 (* ==================================== *)
 (** ** Orthogonal vectors 正交的两个向量 *)
-Section cvorthogonal.
+Section cvorth.
 
   (** Two vectors, x and y, in an inner product space V, are orthogonal if their 
     inner-product <x,y> is zero, and the relationship is denoted x ⟂ y. *)
 
   (** Two real column-vectors are orthogonal (also called perpendicular) *)
-  Definition cvorthogonal {n} (v1 v2 : cvec n) : Prop := <v1,v2> = 0.
+  Definition cvorth {n} (v1 v2 : cvec n) : Prop := <v1,v2> = 0.
 
   (** Bool version to determine if two vectors are orthogonal *)
-  Definition cvorthogonalb {n} (v1 v2 : cvec n) : bool := (<v1,v2> =? 0)%R.
-  Infix "⟂" := cvorthogonal ( at level 50).
+  Definition cvorthb {n} (v1 v2 : cvec n) : bool := (<v1,v2> =? 0)%R.
+  Infix "⟂" := cvorth ( at level 50).
 
-  #[export] Instance cvorthogonal_mor {n} :
-    Proper (meq ==> meq ==> impl) (@cvorthogonal n).
+  #[export] Instance cvorth_mor {n} :
+    Proper (meq ==> meq ==> impl) (@cvorth n).
   Proof.
-    simp_proper. intros. unfold cvorthogonal. rewrite H,H0. easy.
+    simp_proper. intros. unfold cvorth. rewrite H,H0. easy.
   Qed.
 
   (** u ⟂ v -> v ⟂ u *)
-  Lemma cvorthogonal_comm : forall (u v : cvec 3), u ⟂ v -> v ⟂ u.
-  Proof. intros. unfold cvorthogonal in *. rewrite cvdot_comm; auto. Qed.
+  Lemma cvorth_comm : forall (u v : cvec 3), u ⟂ v -> v ⟂ u.
+  Proof. intros. unfold cvorth in *. rewrite cvdot_comm; auto. Qed.
 
   (** u ⟂ v -> cvproj u v == cvec0 *)
-  Lemma cvorthogonal_cvproj : forall (u v : cvec 3),
+  Lemma cvorth_cvproj : forall (u v : cvec 3),
       cvnonzero v -> u ⟂ v -> cvproj u v == cvec0.
   Proof.
-    intros. unfold cvorthogonal in H0.
+    intros. unfold cvorth in H0.
     unfold cvproj. rewrite H0. autorewrite with R. rewrite cvcmul_0_l; easy.
     apply cvdot_same_neq0; auto.
   Qed.
   
   (** u ⟂ v -> cvperp u v == u *)
-  Lemma cvorthogonal_cvperp : forall (u v : cvec 3),
+  Lemma cvorth_cvperp : forall (u v : cvec 3),
       cvnonzero v -> u ⟂ v -> cvperp u v == u.
   Proof.
-    intros. unfold cvperp. rewrite cvorthogonal_cvproj; auto. apply cvsub_0_r.
+    intros. unfold cvperp. rewrite cvorth_cvproj; auto. apply cvsub_0_r.
   Qed.
 
   (** u ⟂ v -> cvnormalize u ⟂ v *)
-  Lemma cvorthogonal_cvnormalize_l : forall (u v : cvec 3), u ⟂ v -> cvnormalize u ⟂ v.
+  Lemma cvorth_cvnormalize_l : forall (u v : cvec 3), u ⟂ v -> cvnormalize u ⟂ v.
   Proof.
-    intros. unfold cvorthogonal, cvnormalize in *. rewrite cvdot_cvcmul_l; ra.
+    intros. unfold cvorth, cvnormalize in *. rewrite cvdot_cvcmul_l; ra.
   Qed.
 
   (** cvnormalize u ⟂ v -> u ⟂ v *)
-  Lemma cvorthogonal_cvnormalize_l_rev : forall (u v : cvec 3),
+  Lemma cvorth_cvnormalize_l_rev : forall (u v : cvec 3),
       u != cvec0 -> cvnormalize u ⟂ v -> u ⟂ v.
   Proof.
-    intros. unfold cvorthogonal, cvnormalize in *.
+    intros. unfold cvorth, cvnormalize in *.
     rewrite cvdot_cvcmul_l in H0; ra.
     assert (1 * / (||u||) <> 0)%R; ra.
     apply cvlen_neq0_iff_neq0 in H.
@@ -953,16 +953,16 @@ Section cvorthogonal.
   Qed.
 
   (** u ⟂ v -> cvnormalize u ⟂ v *)
-  Lemma cvorthogonal_cvnormalize_r : forall (u v : cvec 3), u ⟂ v -> u ⟂ cvnormalize v.
+  Lemma cvorth_cvnormalize_r : forall (u v : cvec 3), u ⟂ v -> u ⟂ cvnormalize v.
   Proof.
-    intros. unfold cvorthogonal, cvnormalize in *. rewrite cvdot_cvcmul_r; ra.
+    intros. unfold cvorth, cvnormalize in *. rewrite cvdot_cvcmul_r; ra.
   Qed.
 
   (** u ⟂ cvnormalize v -> u ⟂ v *)
-  Lemma cvorthogonal_cvnormalize_r_rev : forall (u v : cvec 3),
+  Lemma cvorth_cvnormalize_r_rev : forall (u v : cvec 3),
       v != cvec0 -> u ⟂ cvnormalize v -> u ⟂ v.
   Proof.
-    intros. unfold cvorthogonal, cvnormalize in *.
+    intros. unfold cvorth, cvnormalize in *.
     rewrite cvdot_cvcmul_r in H0; ra. assert (1 * / (||v||) <> 0)%R; ra.
     apply cvlen_neq0_iff_neq0 in H.
     apply Rmult_integral_contrapositive_currified; ra.
@@ -970,33 +970,33 @@ Section cvorthogonal.
   Qed.
   
   (** u ⟂ v -> (k c* u) ⟂ v *)
-  Lemma cvorthogonal_cvcmul_l : forall (u v : cvec 3) (k : R), u ⟂ v -> (k c* u) ⟂ v.
+  Lemma cvorth_cvcmul_l : forall (u v : cvec 3) (k : R), u ⟂ v -> (k c* u) ⟂ v.
   Proof.
-    intros. unfold cvorthogonal, cvnormalize in *. rewrite cvdot_cvcmul_l; ra.
+    intros. unfold cvorth, cvnormalize in *. rewrite cvdot_cvcmul_l; ra.
   Qed.
 
   (** (k c* u) ⟂ v -> u ⟂ v *)
-  Lemma cvorthogonal_cvcmul_l_rev : forall (u v : cvec 3) (k : R),
+  Lemma cvorth_cvcmul_l_rev : forall (u v : cvec 3) (k : R),
       k <> 0 -> (k c* u) ⟂ v -> u ⟂ v.
   Proof.
-    intros. unfold cvorthogonal, cvnormalize in *. rewrite cvdot_cvcmul_l in H0; ra.
+    intros. unfold cvorth, cvnormalize in *. rewrite cvdot_cvcmul_l in H0; ra.
   Qed.
 
   (** u ⟂ v -> u ⟂ (k c* v) *)
-  Lemma cvorthogonal_cvcmul_r : forall (u v : cvec 3) (k : R), u ⟂ v -> u ⟂ (k c* v).
+  Lemma cvorth_cvcmul_r : forall (u v : cvec 3) (k : R), u ⟂ v -> u ⟂ (k c* v).
   Proof.
-    intros. unfold cvorthogonal, cvnormalize in *. rewrite cvdot_cvcmul_r; ra.
+    intros. unfold cvorth, cvnormalize in *. rewrite cvdot_cvcmul_r; ra.
   Qed.
 
   (** u ⟂ (k c* v) -> u ⟂ v *)
-  Lemma cvorthogonal_cvcmul_r_rev : forall (u v : cvec 3) (k : R),
+  Lemma cvorth_cvcmul_r_rev : forall (u v : cvec 3) (k : R),
       k <> 0 -> u ⟂ (k c* v) -> u ⟂ v.
   Proof.
-    intros. unfold cvorthogonal, cvnormalize in *. rewrite cvdot_cvcmul_r in H0; ra.
+    intros. unfold cvorth, cvnormalize in *. rewrite cvdot_cvcmul_r in H0; ra.
   Qed.
 
   (** cvproj ⟂ cvperp *)
-  Lemma cvorthogonal_proj_perp : forall {n} (u v : cvec n), cvproj u v ⟂ cvperp u v.
+  Lemma cvorth_proj_perp : forall {n} (u v : cvec n), cvproj u v ⟂ cvperp u v.
   Proof.
     intros. hnf. unfold cvperp, cvproj.
     (* unfold cvperp. unfold cvsub. rewrite cvdot_vadd_distr_r. *)
@@ -1010,22 +1010,22 @@ Section cvorthogonal.
     remember (seqsum (fun i0 : nat => u i0 0%nat * v i0 0%nat) n)%T as r2.
   Abort.
   
-End cvorthogonal.
-Infix "⟂" := cvorthogonal ( at level 50).
+End cvorth.
+Infix "⟂" := cvorth ( at level 50).
 
 
 (* ==================================== *)
 (** ** Orthogonal set 正交向量组（集） *)
-Section cvorthogonalset.
+Section cvorthset.
 
   (** A set of vectors in an inner product space is called pairwise orthogonal if 
       each pairing of them is orthogonal. Such a set is called an orthogonal set.
       Note: each pair means {(vi,vj)|i≠j}  *)
-  Definition cvorthogonalset {r c} (m : mat r c) : Prop :=
+  Definition cvorthset {r c} (m : mat r c) : Prop :=
     forall j1 j2, (j1 < c)%nat -> (j2 < c)%nat -> (j1 <> j2) -> <mcol m j1, mcol m j2> = T0.
 
   (** (bool version) *)
-  Definition cvorthogonalsetb {r c} (m : mat r c) : bool :=
+  Definition cvorthsetb {r c} (m : mat r c) : bool :=
     (* two column vectors is orthogonal *)
     let orth (i j : nat) : bool := (<mcol m i, mcol m j> =? T0)%R in
     (* remain column indexes after this column *)
@@ -1035,14 +1035,14 @@ Section cvorthogonalset.
     (* all columns is mutually orthogonal (Note orthogonal is commutative) *)
     and_blist (map (fun j => allcols j) (seq 0 c)).
 
-  Lemma cvorthogonalsetb_true_iff : forall {r c} (m : mat r c),
-      cvorthogonalsetb m <-> cvorthogonalset m.
+  Lemma cvorthsetb_true_iff : forall {r c} (m : mat r c),
+      cvorthsetb m <-> cvorthset m.
   Admitted.
 
-  Example cvorthogonalset_ex1 :
-    cvorthogonalset (@l2m 3 3 [[1;1;1];[0;sqrt 2; -(sqrt 2)];[-1;1;1]])%T.
+  Example cvorthset_ex1 :
+    cvorthset (@l2m 3 3 [[1;1;1];[0;sqrt 2; -(sqrt 2)];[-1;1;1]])%T.
   Proof.
-    apply cvorthogonalsetb_true_iff. cbv.
+    apply cvorthsetb_true_iff. cbv.
     (** Auto solve equality contatin "Req_EM_T" *)
     repeat
       match goal with
@@ -1050,7 +1050,7 @@ Section cvorthogonalset.
       end.
     autorewrite with R sqrt in *; ra.
   Qed.
-End cvorthogonalset.
+End cvorthset.
 
 
 (* ==================================== *)
@@ -1059,18 +1059,18 @@ Section mcolsOrthonormal.
 
   (** All (different) column-vectors of a matrix are orthogonal each other.
       For example: [v1;v2;v3] => v1⟂v2 && v1⟂v3 && v2⟂v3. *)
-  Definition mcolsOrthogonal {r c} (m : mat r c) : Prop :=
+  Definition mcolsorth {r c} (m : mat r c) : Prop :=
     forall j1 j2, (j1 < c)%nat -> (j2 < c)%nat -> j1 <> j2 -> mcol m j1 ⟂ mcol m j2.
 
   (** bool version *)
-  Definition mcolsOrthogonalb {r c} (m : mat r c) : bool :=
+  Definition mcolsorthb {r c} (m : mat r c) : bool :=
     let is_orth (i j : nat) : bool := (<mcol m i, mcol m j> =? T0)%R in
     let cids (i : nat) : list nat := seq (S i) (c - S i) in
     let chk_col (j : nat) : bool := and_blist (map (fun k => is_orth j k) (cids j)) in
     and_blist (map (fun j => chk_col j) (seq 0 c)).
 
-  Lemma mcolsOrthogonalb_spec : forall {r c} (m : mat r c),
-      mcolsOrthogonalb m <-> mcolsOrthogonal m.
+  Lemma mcolsorthb_spec : forall {r c} (m : mat r c),
+      mcolsorthb m <-> mcolsorth m.
   Proof.
   Admitted.
 
@@ -1079,8 +1079,8 @@ Section mcolsOrthonormal.
     Let m1 : mat 1 3 := l2m [[a11;a12;a13];[a21;a22;a23]].
     Let m2 : mat 3 1 := l2m [[a11;a12];[a21;a22];[a31;a32]].
 
-    (* Compute mcolsOrthogonalb m1. *)
-    (* Compute mcolsOrthogonalb m2. (* because only one column, needn't be check *) *)
+    (* Compute mcolsorthb m1. *)
+    (* Compute mcolsorthb m2. (* because only one column, needn't be check *) *)
   End test.
 
   (** All column-vectors of a matrix are unit vector.
@@ -1099,7 +1099,7 @@ Section mcolsOrthonormal.
 
   (** The columns of a matrix is orthogomal *)
   Definition mcolsOrthonormal {r c} (m : mat r c) : Prop :=
-    mcolsOrthogonal m /\ mcolsUnit m.
+    mcolsorth m /\ mcolsUnit m.
 
 End mcolsOrthonormal.
 
@@ -1114,8 +1114,8 @@ Section morth.
   Proof.
     intros.
     unfold morth,mcolsOrthonormal.
-    unfold mcolsOrthogonal, mcolsUnit.
-    unfold cvorthogonal, cvunit.
+    unfold mcolsorth, mcolsUnit.
+    unfold cvorth, cvunit.
     split; intros.
     - split; intros.
       + rewrite cvdot_col_col; auto. rewrite H; auto. rewrite mnth_mat1_diff; auto.

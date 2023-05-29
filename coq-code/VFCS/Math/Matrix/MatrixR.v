@@ -21,6 +21,9 @@ Module Export MatrixTheoryR :=
 Open Scope R_scope.
 Open Scope mat_scope.
 
+(* Check mat1. *)
+(* Check @Matrix.mat1 R R0 R1. *)
+
 
 (* ======================================================================= *)
 (** * Matrix theory applied to this type *)

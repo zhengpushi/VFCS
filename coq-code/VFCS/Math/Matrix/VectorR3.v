@@ -114,7 +114,7 @@ Section cv3eq.
   (*   intros v1 v2 Hv1_neq0 Hv2_neq0. split; intros H. *)
   (*   - rewrite H. split; auto. apply cvangle_same_eq0; auto. *)
   (*   - destruct H as [H1 H2]. *)
-  (*     apply cvangle_eq0_cvparallel in H2; auto. destruct H2 as [k [H2 H3]]. *)
+  (*     apply cvangle_eq0_cvpara in H2; auto. destruct H2 as [k [H2 H3]]. *)
   (*     assert (|| k c* v1 || = || v2 ||)%CV as H4. { rewrite H3; auto. } *)
   (*     rewrite cvlen_cmul in H4. rewrite H1 in H4. *)
   (*     rewrite Rabs_right in H4; ra. *)
@@ -276,12 +276,12 @@ Section cv3cross.
   Proof. lma. Qed.
 
   (** (u × v) ⟂ u *)
-  Lemma cv3cross_orthogonal_l : forall u v : cvec 3, (u × v) ⟂ u.
-  Proof. intros. unfold cvorthogonal. apply cv3cross_dot_same_l. Qed.
+  Lemma cv3cross_orth_l : forall u v : cvec 3, (u × v) ⟂ u.
+  Proof. intros. unfold cvorth. apply cv3cross_dot_same_l. Qed.
 
   (** (u × v) ⟂ v *)
-  Lemma cv3cross_orthogonal_r : forall u v : cvec 3, (u × v) ⟂ v.
-  Proof. intros. unfold cvorthogonal. apply cv3cross_dot_same_r. Qed.
+  Lemma cv3cross_orth_r : forall u v : cvec 3, (u × v) ⟂ v.
+  Proof. intros. unfold cvorth. apply cv3cross_dot_same_r. Qed.
 
   (** i×j=k, j×k=i, k×i=j *)
   Lemma cv3cross_ij : cv3i × cv3j == cv3k. Proof. lma. Qed.
@@ -421,23 +421,23 @@ End cv3perp.
 
 
 (** Parallel vectors in 3D *)
-Section cv3parallel.
+Section cv3para.
   Local Open Scope fun_scope.
 
   (** Two vectors in 3D are parallel, can be determined by cross-product.
       That is: v1 ∥ v2 <-> v1 × v2 = 0 *)
-  Definition cv3parallel (v1 v2 : cvec 3) : Prop := cvzero (v1 × v2).
+  Definition cv3para (v1 v2 : cvec 3) : Prop := cvzero (v1 × v2).
   
-  Lemma cv3parallel_spec : forall (v1 v2 : cvec 3), v1 ∥ v2 <-> cv3parallel v1 v2.
+  Lemma cv3para_spec : forall (v1 v2 : cvec 3), v1 ∥ v2 <-> cv3para v1 v2.
   Proof.
-    intros. cvec2fun. unfold cvparallel,cv3parallel. split; intros.
+    intros. cvec2fun. unfold cvpara,cv3para. split; intros.
     - destruct H as [k [H1]].
       cbv. intros. rewrite <- !H; auto; simpl.
       repeat (destruct i; cbv; try ring).
     - cbv in *.
   Abort. (* 叉乘为零，则{1:两行线性相关，对应系数成比例; 2.存在零向量}。*)
   
-End cv3parallel.
+End cv3para.
 
 
 (** Direction cosine *)
@@ -776,13 +776,13 @@ Section RotationMatrix3D.
   Proof. lma. Qed.
   
   (** R3x,R3y,R3z are orthogonal matrix *)
-  Lemma R3x_orthogonal : forall (θ : R), morth (R3x θ).
+  Lemma R3x_orth : forall (θ : R), morth (R3x θ).
   Proof. lma; autorewrite with R; easy. Qed.
   
-  Lemma R3y_orthogonal : forall (θ : R), morth (R3y θ).
+  Lemma R3y_orth : forall (θ : R), morth (R3y θ).
   Proof. lma; autorewrite with R; easy. Qed.
   
-  Lemma R3z_orthogonal : forall (θ : R), morth (R3z θ).
+  Lemma R3z_orth : forall (θ : R), morth (R3z θ).
   Proof. lma; autorewrite with R; easy. Qed.
 
   (** The determinant of R3x,R3y,R3z are 1 *)
@@ -797,15 +797,15 @@ Section RotationMatrix3D.
 
   (** R3x,R3y,R3z are member of SO3 *)
   Definition R3x_SO3 (θ : R) : SO3.
-    refine (Build_SOn _ (R3x θ) _). split. apply R3x_orthogonal. apply R3x_det1.
+    refine (Build_SOn _ (R3x θ) _). split. apply R3x_orth. apply R3x_det1.
   Defined.
 
   Definition R3y_SO3 (θ : R) : SO3.
-    refine (Build_SOn _ (R3y θ) _). split. apply R3y_orthogonal. apply R3y_det1.
+    refine (Build_SOn _ (R3y θ) _). split. apply R3y_orth. apply R3y_det1.
   Defined.
 
   Definition R3z_SO3 (θ : R) : SO3.
-    refine (Build_SOn _ (R3z θ) _). split. apply R3z_orthogonal. apply R3z_det1.
+    refine (Build_SOn _ (R3z θ) _). split. apply R3z_orth. apply R3z_det1.
   Defined.
 
   (** 以下示例说明了使用群 SOn 可以解决一批问题(SO2, SO3等），并且比暴力证明的速度快 *)

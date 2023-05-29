@@ -164,6 +164,14 @@ Section construction.
       v.1 = q.W /\ v.2 = q.X /\ v.3 = q.Y /\ v.4 = q.Z.
   Proof. intros. cbv. auto. Qed.
 
+  (** cv2q (q2cv q) = q *)
+  Lemma cv2q_q2cv_id : forall (q : quat), cv2q (q2cv q) = q.
+  Proof. intros. destruct q. cbv. auto. Qed.
+
+  (** q2cv (cv2q v) = v *)
+  Lemma q2cv_cv2q_id : forall (v : cvec 4), q2cv (cv2q v) == v.
+  Proof. lma. Qed.
+
 End construction.
 
 Notation "q .Im" := (Im q) (at level 30, format "q .Im") : quat_scope.
@@ -285,7 +293,12 @@ Section qunit.
   Lemma qunit_imply_eq1 : forall q : quat,
       qunit q -> q.W ^ 2 = (1 - q.X ^ 2 - q.Y ^ 2 - q.Z ^ 2)%R.
   Proof. intros. apply qunit_iff_qlen2_eq1 in H. rewrite <- H. cbv. ring. Qed.
-
+  
+  (** qunit q -> q.W ^ 2 + q.X ^ 2 + q.Y ^ 2 + q.Z ^ 2 = 1 *)
+  Lemma qunit_imply_eq2 : forall q : quat,
+      qunit q -> (q.W ^ 2 + q.X ^ 2 + q.Y ^ 2 + q.Z ^ 2 = 1)%R.
+  Proof. intros. apply qunit_iff_qlen2_eq1 in H. rewrite <- H. cbv. ring. Qed.
+  
   (** qunit q -> q <> qzero *)
   Lemma qunit_neq0 : forall q : quat, qunit q -> q <> qzero.
   Proof. intros. apply qlen_neq0_iff. intro. unfold qunit in H. lra. Qed.

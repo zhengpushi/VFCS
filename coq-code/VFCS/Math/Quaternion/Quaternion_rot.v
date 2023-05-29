@@ -409,15 +409,15 @@ Module qrot_spec_method2.
     (** v0 ⟂ n *)
     Fact v0_orth_n : v0 ⟂ n.
     Proof.
-      rewrite <- Hnorm_v01_n. apply cvorthogonal_cvnormalize_r.
-      apply cvorthogonal_comm. apply cv3cross_orthogonal_l.
+      rewrite <- Hnorm_v01_n. apply cvorth_cvnormalize_r.
+      apply cvorth_comm. apply cv3cross_orth_l.
     Qed.
 
     (** v1 ⟂ v *)
     Fact v1_orth_n : v1 ⟂ n.
     Proof.
-      rewrite <- Hnorm_v01_n. apply cvorthogonal_cvnormalize_r.
-      apply cvorthogonal_comm. apply cv3cross_orthogonal_r.
+      rewrite <- Hnorm_v01_n. apply cvorth_cvnormalize_r.
+      apply cvorth_comm. apply cv3cross_orth_r.
     Qed.
 
     (** n is unit *)
@@ -477,8 +477,8 @@ Module qrot_spec_method2.
     Fact v2_orth_n : v2 ⟂ n.
     Proof.
       rewrite <- v12_v01_keep_cvcross in Hnorm_v01_n. rewrite <- Hnorm_v01_n.
-      apply cvorthogonal_cvnormalize_r.
-      apply cvorthogonal_comm. apply cv3cross_orthogonal_r.
+      apply cvorth_cvnormalize_r.
+      apply cvorth_comm. apply cv3cross_orth_r.
     Qed.
 
     (** (v1,v2)和(v0,v1)的这两个夹角相同 *)
@@ -538,8 +538,8 @@ Module qrot_spec_method2.
       assert (v0 × v1 == v2 × v3) as H.
       { rewrite v23_v12_keep_cvcross, v12_v01_keep_cvcross. easy. }
       rewrite H in Hnorm_v01_n. rewrite <- Hnorm_v01_n.
-      apply cvorthogonal_cvnormalize_r.
-      apply cvorthogonal_comm. apply cv3cross_orthogonal_r.
+      apply cvorth_cvnormalize_r.
+      apply cvorth_comm. apply cv3cross_orth_r.
     Qed.
 
     (** (v2,v3)和(v1,v2)的这两个夹角相同 *)
@@ -617,7 +617,7 @@ Module qrot_spec_method2.
         rewrite !cvperp_linear_cvadd, !cvperp_linear_cvcmul; auto.
         rewrite cvperp_same; auto. rewrite cvcmul_0_r, !cvadd_0_r.
         (* elim cvperp *)
-        rewrite !cvorthogonal_cvperp; auto.
+        rewrite !cvorth_cvperp; auto.
         - (* (v0+v1) 到 (v2+v3) 的角度也是 θ *)
           rewrite ?cvangle_cvadd; rewrite ?cvangle_cvcmul_l, ?cvangle_cvcmul_r; auto.
           + apply v02_angle_θ.
@@ -840,6 +840,47 @@ End qslerp.
 
 (** ** 四元数与旋转矩阵 *)
 
+Definition q2m (q : quat) : smat 3 :=
+  let (w,x,y,z) := q in
+  l2m [[w^2+x^2-y^2-z^2; 2*x*y-2*w*z; 2*x*z+2*w*y];
+       [2*x*y+2*w*z; w^2-x^2+y^2-z^2; 2*y*z-2*w*x];
+       [2*x*z-2*w*y; 2*y*z+2*w*x; w^2-x^2-y^2+z^2]]%R.
+
+Lemma q2m_spec : forall (q : quat) (v : cvec 3),
+    qunit q -> qrotv q v == ((q2m q) * v)%M.
+Proof.
+  intros. unfold qrotv,qrot. rewrite qinv_eq_qconj; auto. destruct q. lma.
+Qed.
+
+Definition Rsign (r : R) : R := if r >=? 0 then 1 else (-1).
+
+(** One rotation matrix corresponds to two quaternions, namely q, -q *)
+Definition m2q (A : smat 3) : quat :=
+  (let sign0 : R := 1 in
+  let sign1 : R := sign0 * (Rsign (A.32 - A.23)) in
+  let sign2 : R := sign0 * (Rsign (A.13 - A.31)) in
+  let sign3 : R := sign0 * (Rsign (A.21 - A.12)) in
+  let w : R := sign0 * (1/2) * sqrt (1 + A.11 + A.22 + A.33) in
+  let x : R := sign1 * (1/2) * sqrt (1 + A.11 - A.22 - A.33) in
+  let y : R := sign2 * (1/2) * sqrt (1 - A.11 + A.22 - A.33) in
+  let z : R := sign3 * (1/2) * sqrt (1 - A.11 - A.22 + A.33) in
+  quat_of_wxyz w x y z)%R.
+
+Lemma m2q_qunit : forall (A : smat 3), morth A -> qunit (m2q A).
+Admitted.
+
+(** 此处应该有两个值，该引理暂无法证明 *)
+Lemma q2m_m2q_id : forall (A : smat 3), morth A -> q2m (m2q A) == A.
+Admitted.
+
+Lemma m2q_spec : forall (A : smat 3) (v : cvec 3),
+    morth A -> (A * v)%M == qrotv (m2q A) v.
+Proof.
+  intros. rewrite q2m_spec. f_equiv.
+  - rewrite q2m_m2q_id; easy.
+  - apply m2q_qunit; auto.
+Qed.
+  
 
 (* Extract Constant Rabst => "__". *)
 (* Extract Constant Rrepr => "__". *)
