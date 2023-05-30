@@ -83,14 +83,14 @@ Section basis.
   Proof. intro. apply cv3eq_iff in H. destruct H as [H1 [H2 H3]]. ra. Qed.
 
   (** 标准基向量是规范化操作的不动点 *)
-  Lemma cv3i_cvnormalize_fixpoint : cvnormalize cv3i == cv3i.
-  Proof. apply cvnormalize_cvunit_fixpoint. apply cv3i_vunit. Qed.
+  Lemma cv3i_cvnorm_fixpoint : cvnorm cv3i == cv3i.
+  Proof. apply cvnorm_cvunit_fixpoint. apply cv3i_vunit. Qed.
   
-  Lemma cv3j_cvnormalize_fixpoint : cvnormalize cv3j == cv3j.
-  Proof. apply cvnormalize_cvunit_fixpoint. apply cv3j_vunit. Qed.
+  Lemma cv3j_cvnorm_fixpoint : cvnorm cv3j == cv3j.
+  Proof. apply cvnorm_cvunit_fixpoint. apply cv3j_vunit. Qed.
   
-  Lemma cv3k_cvnormalize_fixpoint : cvnormalize cv3k == cv3k.
-  Proof. apply cvnormalize_cvunit_fixpoint. apply cv3k_vunit. Qed.
+  Lemma cv3k_cvnorm_fixpoint : cvnorm cv3k == cv3k.
+  Proof. apply cvnorm_cvunit_fixpoint. apply cv3k_vunit. Qed.
 
   (** 标准基向量与任意向量v的点积等于v的各分量 *)
   Lemma cv3dot_i_l : forall v : cvec 3, <cv3i, v> = v.x. Proof. intros. cbv; ring. Qed.
@@ -158,11 +158,11 @@ Section cv3normalize.
   
   (** normalize v = (v.0/|v|, v.1/|v|, v.2/|v|) *)
   Lemma cv3normalize_eq : forall {n} (v : cvec n),
-      let v' := cvnormalize v in
+      let v' := cvnorm v in
       cvnonzero v ->
       (v'.1 = v.1 / ||v||) /\ (v'.2 = v.2 / ||v||) /\ (v'.3 = v.3 / ||v||).
   Proof.
-    intros. unfold v', cvnormalize. cvec2fun.
+    intros. unfold v', cvnorm. cvec2fun.
     autounfold with T. repeat split; try field.
     all: apply cvlen_neq0_iff_neq0; auto.
   Qed.
@@ -171,8 +171,8 @@ Section cv3normalize.
       let r := ||v|| in
       ((v.1 / r)² + (v.2 / r)² + (v.3 / r)² = 1)%R.
   Proof.
-    intros. pose proof (cvnormalize_len1 v).
-    unfold cvnormalize in H.
+    intros. pose proof (cvnorm_len1 v).
+    unfold cvnorm in H.
     rewrite <- H.
     unfold cvlen.
     unfold cvdot. cbn. autorewrite with R.
@@ -346,13 +346,13 @@ Section cv3cross.
     rewrite cvlen_eq0_iff_eq0. easy.
   Qed.
 
-  (** v1 × v2 = (sin (v1 ∠ v2) * ||v1|| * ||v2||) c* cvnormalize (v1 × v2) *)
+  (** v1 × v2 = (sin (v1 ∠ v2) * ||v1|| * ||v2||) c* cvnorm (v1 × v2) *)
   Lemma cv3cross_eq_cmul : forall (v1 v2 : cvec 3),
       cvnonzero v1 -> cvnonzero v2 ->
       v1 ∠ v2 <> 0 -> v1 ∠ v2 <> PI ->
-      v1 × v2 == ((sin (v1 ∠ v2) * ||v1|| * ||v2||)%R c* cvnormalize (v1 × v2))%CV.
+      v1 × v2 == ((sin (v1 ∠ v2) * ||v1|| * ||v2||)%R c* cvnorm (v1 × v2))%CV.
   Proof.
-    intros. unfold cvnormalize. rewrite cvlen_cv3cross.
+    intros. unfold cvnorm. rewrite cvlen_cv3cross.
     rewrite cvcmul_assoc.
     match goal with |- context [(?a c* _)%CV] => replace a with 1 end.
     rewrite cvcmul_1_l; easy.

@@ -487,17 +487,17 @@ Section vnormalize.
 
   (** Normalization of a non-zero vector v.
     That is, get a unit vector in the same directin as v. *)
-  Definition cvnormalize {n} (v : cvec n) : cvec n := (1/||v||) c* v.
+  Definition cvnorm {n} (v : cvec n) : cvec n := (1/||v||) c* v.
 
-  #[export] Instance cvnormalize_mor {n} : Proper (meq ==> meq) (@cvnormalize n).
-  Proof. simp_proper. intros. unfold cvnormalize. rewrite H. easy. Qed.
+  #[export] Instance cvnorm_mor {n} : Proper (meq ==> meq) (@cvnorm n).
+  Proof. simp_proper. intros. unfold cvnorm. rewrite H. easy. Qed.
 
-  Lemma cvnormalize_len1 : forall {n} (v : cvec n),
-      cvnonzero v -> ||cvnormalize v|| = 1.
+  Lemma cvnorm_len1 : forall {n} (v : cvec n),
+      cvnonzero v -> ||cvnorm v|| = 1.
   Proof.
     (* v̂ = v/|v|, |v̂| = sqrt (v/|v| ⋅ v/|v|) = sqrt ((v⋅v) / (|v|*|v|))
      = sqrt(v⋅v) / |v| = |v| / |v| = 1 *)
-    intros. unfold cvnormalize. unfold cvlen.
+    intros. unfold cvnorm. unfold cvlen.
     rewrite !cvdot_vcmul_l, !cvdot_vcmul_r. rewrite cvdot_same.
     remember (||v||). autounfold with T. autorewrite with R.
     apply sqrt_eq1_imply_eq1_rev.
@@ -505,27 +505,27 @@ Section vnormalize.
     rewrite H0. cbv. field. subst. apply cvlen_neq0_iff_neq0; auto.
   Qed.
 
-  (** Unit vector is fixpoint of cvnormalize operation *)
-  Lemma cvnormalize_cvunit_fixpoint : forall {n} (v : cvec n),
-      cvunit v -> cvnormalize v == v.
+  (** Unit vector is fixpoint of cvnorm operation *)
+  Lemma cvnorm_cvunit_fixpoint : forall {n} (v : cvec n),
+      cvunit v -> cvnorm v == v.
   Proof.
     intros. lma. rewrite (cvunit_spec v) in H. rewrite H. autorewrite with R. easy.
   Qed.
 
   (** The component of a normalized vector is equivalent to its original component 
       divide the vector's length *)
-  Lemma cvnormalize_nth : forall {n} (v : cvec n) i,
-      cvnonzero v -> (i < n)%nat -> ((cvnormalize v) $ i == v $ i / (||v||))%T.
+  Lemma cvnorm_nth : forall {n} (v : cvec n) i,
+      cvnonzero v -> (i < n)%nat -> ((cvnorm v) $ i == v $ i / (||v||))%T.
   Proof.
-    intros. unfold cvnormalize. rewrite cvcmul_nth; auto.
+    intros. unfold cvnorm. rewrite cvcmul_nth; auto.
     autounfold with T. field. apply cvlen_neq0_iff_neq0; auto.
   Qed.
 
   (** Normalization is idempotent *)
-  Lemma cvnormalize_idem : forall {n} (v : cvec n),
-      cvnonzero v -> cvnormalize (cvnormalize v) == cvnormalize v.
+  Lemma cvnorm_idem : forall {n} (v : cvec n),
+      cvnonzero v -> cvnorm (cvnorm v) == cvnorm v.
   Proof.
-    intros. unfold cvnormalize. rewrite cvcmul_assoc.
+    intros. unfold cvnorm. rewrite cvcmul_assoc.
     assert (1 / (||1 / (||v||) c* v||) == T1)%T.
     { rewrite cvlen_cmul. remember (||v||) as r. autounfold with T.
       replace (|(1/r)|) with (1/r); try field.
@@ -538,37 +538,37 @@ Section vnormalize.
   Qed.
 
   (** Keep the same direction as the original vector *)
-  Lemma cvnormalize_direction : forall {n} (v : cvec n),
-      cvnonzero v -> (cvnormalize v) ∥ v.
+  Lemma cvnorm_direction : forall {n} (v : cvec n),
+      cvnonzero v -> (cvnorm v) ∥ v.
   Proof.
-    intros. unfold cvpara. unfold cvnormalize. exists (||v||). split.
+    intros. unfold cvpara. unfold cvnorm. exists (||v||). split.
     - apply cvlen_neq0_iff_neq0; auto.
     - rewrite cvcmul_assoc. autounfold with T.
       match goal with | |- context[?a c* _] => replace a with 1 end.
       apply cvcmul_1_l. field. apply cvlen_neq0_iff_neq0; auto.
   Qed.
 
-  Lemma cvnormalize_spec : forall {n} (v : cvec n),
-      cvnonzero v -> (||cvnormalize v|| = 1 /\ (cvnormalize v) ∥ v).
+  Lemma cvnorm_spec : forall {n} (v : cvec n),
+      cvnonzero v -> (||cvnorm v|| = 1 /\ (cvnorm v) ∥ v).
   Proof.
-    intros. split. apply cvnormalize_len1; auto.
-    apply cvnormalize_direction; auto.
+    intros. split. apply cvnorm_len1; auto.
+    apply cvnorm_direction; auto.
   Qed.
 
   (** 单位化后的非零向量都是单位向量 *)
-  Lemma cvnormalize_unit : forall {n} (v : cvec n),
-      cvnonzero v -> cvunit (cvnormalize v).
-  Proof. intros. apply cvunit_spec. apply cvnormalize_len1; auto. Qed.
+  Lemma cvnorm_unit : forall {n} (v : cvec n),
+      cvnonzero v -> cvunit (cvnorm v).
+  Proof. intros. apply cvunit_spec. apply cvnorm_len1; auto. Qed.
 
 End vnormalize.
 
 
 (* ==================================== *)
-(* (** ** About {cvdot, cvunit,  cvnormalize} *) *)
-(* Section cvdot_cvunit_cvnormalize. *)
+(* (** ** About {cvdot, cvunit,  cvnorm} *) *)
+(* Section cvdot_cvunit_cvnorm. *)
   
 
-(* End cvdot_cvunit_cvangle_cvnormalize. *)
+(* End cvdot_cvunit_cvangle_cvnorm. *)
 
 
 (* ==================================== *)
@@ -577,8 +577,8 @@ Section vangle.
 
   (** The angle from vector v1 to vector v2, Here, θ ∈ [0,π] *)
   Definition cvangle {n} (v1 v2 : cvec n) : R :=
-    let v1' := cvnormalize v1 in
-    let v2' := cvnormalize v2 in
+    let v1' := cvnorm v1 in
+    let v2' := cvnorm v2 in
     acos (<v1', v2'>).
   
   Infix "∠" := cvangle (at level 60) : cvec_scope.
@@ -633,8 +633,8 @@ Section vangle.
   (** 单位化后的非零向量的点积介于 [-1,1] *)
   Lemma cvdot_vnormalize_bound : forall {n} (u v : cvec n),
       cvnonzero u -> cvnonzero v ->
-      -1 <= <cvnormalize u, cvnormalize v> <= 1.
-  Proof. intros. apply cvdot_unit_bound; apply cvnormalize_unit; auto. Qed.
+      -1 <= <cvnorm u, cvnorm v> <= 1.
+  Proof. intros. apply cvdot_unit_bound; apply cvnorm_unit; auto. Qed.
 
   (** 0 <= cvangle u v <= PI *)
   Lemma cvangle_bound : forall {n} (u v : cvec n), 0 <= cvangle u v <= PI.
@@ -658,7 +658,7 @@ Section vangle.
   (*   2:{ *)
   (*     destruct H1 as [k [H11 H12]]. *)
   (*     rewrite <- H12. rewrite <- acos_1. f_equal. *)
-  (*     unfold cvnormalize. *)
+  (*     unfold cvnorm. *)
   (*     rewrite cvcmul_assoc, !cvdot_cvcmul_l, !cvdot_cvcmul_r. *)
   (*     rewrite cvlen_cmul. rewrite cvdot_same. rewrite Rabs_right; ra. *)
   (*     autounfold with T. field. *)
@@ -669,7 +669,7 @@ Section vangle.
   (*     1:{ *)
   (*       (** *)
   (*          v1 ∠ v2 = 0 -> acos(<v1',v2'>) = 0, where v1',v2' is normalized v1,v2. *)
-  (*          then <v1',v2'> = 1. that is <cvnormlize v1, cvnormalize v2> = , *)
+  (*          then <v1',v2'> = 1. that is <cvnormlize v1, cvnorm v2> = , *)
   (*          then (1/(|v1|*|v2|)) * <v1,v2> = 1 *)
   (*          可以借助投影来表明 v1和v2是k倍的关系 *)
   (*        *) *)
@@ -682,7 +682,7 @@ Section vangle.
       cvnonzero v -> v ∠ v = 0.
   Proof.
     intros. unfold cvangle. rewrite cvdot_same.
-    rewrite cvnormalize_len1; auto. autorewrite with R. apply acos_1.
+    rewrite cvnorm_len1; auto. autorewrite with R. apply acos_1.
   Qed.
 
   (** v1 ∠ v3 = (v1 ∠ v2) + (v2 ∠ v3) *)
@@ -717,7 +717,7 @@ Section vangle.
   (*   { apply cvlen_neq0_iff_neq0 in Hneq0_v2. apply cvlen_neq0_iff_neq0. ra. } *)
   (*   unfold cvangle in *. f_equiv. *)
   (*   apply acos_inj in Hangle_eq; try apply cvdot_vnormalize_bound; auto. *)
-  (*   unfold cvnormalize in *. *)
+  (*   unfold cvnorm in *. *)
   (*   rewrite !cvdot_cvcmul_l, !cvdot_cvcmul_r in *. *)
   (*   (* remember (||(v1 + v2)%CV||) as r1. *) *)
   (*   (* remember (||(v1' + v2')%CV||) as r1'. *) *)
@@ -771,7 +771,7 @@ Section vangle.
     (* { apply cvlen_neq0_iff_neq0 in Hneq0_v2. apply cvlen_neq0_iff_neq0. ra. } *)
     (* unfold cvangle in *. f_equiv. *)
     (* apply acos_inj in Hangle_eq; try apply cvdot_vnormalize_bound; auto. *)
-    (* unfold cvnormalize in *. *)
+    (* unfold cvnorm in *. *)
     (* rewrite !cvdot_cvcmul_l, !cvdot_cvcmul_r in *. *)
     (* (* remember (||(v1 + v2)%CV||) as r1. *) *)
     (* (* remember (||(v1' + v2')%CV||) as r1'. *) *)
@@ -807,11 +807,11 @@ Section vangle.
   Proof.
   Admitted.
 
-  Lemma cvangle_cvnormalize_l : forall {n} (v1 v2 : cvec n),
-      cvnormalize v1 ∠ v2 = v1 ∠ v2.
+  Lemma cvangle_cvnorm_l : forall {n} (v1 v2 : cvec n),
+      cvnorm v1 ∠ v2 = v1 ∠ v2.
   Admitted.
-  Lemma cvangle_cvnormalize_r : forall {n} (v1 v2 : cvec n),
-      v1 ∠ cvnormalize v2 = v1 ∠ v2.
+  Lemma cvangle_cvnorm_r : forall {n} (v1 v2 : cvec n),
+      v1 ∠ cvnorm v2 = v1 ∠ v2.
   Admitted.
 
 End vangle.
@@ -934,17 +934,17 @@ Section cvorth.
     intros. unfold cvperp. rewrite cvorth_cvproj; auto. apply cvsub_0_r.
   Qed.
 
-  (** u ⟂ v -> cvnormalize u ⟂ v *)
-  Lemma cvorth_cvnormalize_l : forall (u v : cvec 3), u ⟂ v -> cvnormalize u ⟂ v.
+  (** u ⟂ v -> cvnorm u ⟂ v *)
+  Lemma cvorth_cvnorm_l : forall (u v : cvec 3), u ⟂ v -> cvnorm u ⟂ v.
   Proof.
-    intros. unfold cvorth, cvnormalize in *. rewrite cvdot_cvcmul_l; ra.
+    intros. unfold cvorth, cvnorm in *. rewrite cvdot_cvcmul_l; ra.
   Qed.
 
-  (** cvnormalize u ⟂ v -> u ⟂ v *)
-  Lemma cvorth_cvnormalize_l_rev : forall (u v : cvec 3),
-      u != cvec0 -> cvnormalize u ⟂ v -> u ⟂ v.
+  (** cvnorm u ⟂ v -> u ⟂ v *)
+  Lemma cvorth_cvnorm_l_rev : forall (u v : cvec 3),
+      u != cvec0 -> cvnorm u ⟂ v -> u ⟂ v.
   Proof.
-    intros. unfold cvorth, cvnormalize in *.
+    intros. unfold cvorth, cvnorm in *.
     rewrite cvdot_cvcmul_l in H0; ra.
     assert (1 * / (||u||) <> 0)%R; ra.
     apply cvlen_neq0_iff_neq0 in H.
@@ -952,17 +952,17 @@ Section cvorth.
     apply Rinv_neq_0_compat; auto.
   Qed.
 
-  (** u ⟂ v -> cvnormalize u ⟂ v *)
-  Lemma cvorth_cvnormalize_r : forall (u v : cvec 3), u ⟂ v -> u ⟂ cvnormalize v.
+  (** u ⟂ v -> cvnorm u ⟂ v *)
+  Lemma cvorth_cvnorm_r : forall (u v : cvec 3), u ⟂ v -> u ⟂ cvnorm v.
   Proof.
-    intros. unfold cvorth, cvnormalize in *. rewrite cvdot_cvcmul_r; ra.
+    intros. unfold cvorth, cvnorm in *. rewrite cvdot_cvcmul_r; ra.
   Qed.
 
-  (** u ⟂ cvnormalize v -> u ⟂ v *)
-  Lemma cvorth_cvnormalize_r_rev : forall (u v : cvec 3),
-      v != cvec0 -> u ⟂ cvnormalize v -> u ⟂ v.
+  (** u ⟂ cvnorm v -> u ⟂ v *)
+  Lemma cvorth_cvnorm_r_rev : forall (u v : cvec 3),
+      v != cvec0 -> u ⟂ cvnorm v -> u ⟂ v.
   Proof.
-    intros. unfold cvorth, cvnormalize in *.
+    intros. unfold cvorth, cvnorm in *.
     rewrite cvdot_cvcmul_r in H0; ra. assert (1 * / (||v||) <> 0)%R; ra.
     apply cvlen_neq0_iff_neq0 in H.
     apply Rmult_integral_contrapositive_currified; ra.
@@ -972,27 +972,27 @@ Section cvorth.
   (** u ⟂ v -> (k c* u) ⟂ v *)
   Lemma cvorth_cvcmul_l : forall (u v : cvec 3) (k : R), u ⟂ v -> (k c* u) ⟂ v.
   Proof.
-    intros. unfold cvorth, cvnormalize in *. rewrite cvdot_cvcmul_l; ra.
+    intros. unfold cvorth, cvnorm in *. rewrite cvdot_cvcmul_l; ra.
   Qed.
 
   (** (k c* u) ⟂ v -> u ⟂ v *)
   Lemma cvorth_cvcmul_l_rev : forall (u v : cvec 3) (k : R),
       k <> 0 -> (k c* u) ⟂ v -> u ⟂ v.
   Proof.
-    intros. unfold cvorth, cvnormalize in *. rewrite cvdot_cvcmul_l in H0; ra.
+    intros. unfold cvorth, cvnorm in *. rewrite cvdot_cvcmul_l in H0; ra.
   Qed.
 
   (** u ⟂ v -> u ⟂ (k c* v) *)
   Lemma cvorth_cvcmul_r : forall (u v : cvec 3) (k : R), u ⟂ v -> u ⟂ (k c* v).
   Proof.
-    intros. unfold cvorth, cvnormalize in *. rewrite cvdot_cvcmul_r; ra.
+    intros. unfold cvorth, cvnorm in *. rewrite cvdot_cvcmul_r; ra.
   Qed.
 
   (** u ⟂ (k c* v) -> u ⟂ v *)
   Lemma cvorth_cvcmul_r_rev : forall (u v : cvec 3) (k : R),
       k <> 0 -> u ⟂ (k c* v) -> u ⟂ v.
   Proof.
-    intros. unfold cvorth, cvnormalize in *. rewrite cvdot_cvcmul_r in H0; ra.
+    intros. unfold cvorth, cvnorm in *. rewrite cvdot_cvcmul_r in H0; ra.
   Qed.
 
   (** cvproj ⟂ cvperp *)
@@ -1148,9 +1148,9 @@ Section morth.
 
   (** Transformation by orthogonal matrix will keep normalization. *)
   Corollary morth_keep_normalize : forall {n} (m : smat n) (v : cvec n),
-      morth m -> cvnormalize (m * v) == m * (cvnormalize v).
+      morth m -> cvnorm (m * v) == m * (cvnorm v).
   Proof.
-    intros. unfold cvnormalize.
+    intros. unfold cvnorm.
     rewrite morth_keep_length; auto. apply mcmul_mmul_assoc_r.
   Qed.
 

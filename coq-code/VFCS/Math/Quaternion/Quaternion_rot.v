@@ -124,7 +124,7 @@ Module qrot_spec_method2.
      4. 表示旋转的论证
      (1). 给定两个不相关的3D单位向量 v0 v1 (v0 ≠ ± v1），使得
      1': <v0,v1> = cos(θ/2),即，θ/2 为 v0 到 v1 之间的夹角，
-     2': n = cvnormalize(v0×v1)
+     2': n = cvnorm(v0×v1)
      即，v0,v1是以n为法向量的平面上的一对基向量。
      我们可以得到这些结论：
      n = (v0 × v1) / |v0 × v1| 
@@ -201,10 +201,10 @@ Module qrot_spec_method2.
     Qed.
 
     (** 规范化操作和旋转操作是可交换的 *)
-    Lemma qrot_cvnormalize_comm : forall (q : quat) (v : cvec 3),
-        qunit q -> cvnormalize (qrotv q v) == qrotv q (cvnormalize v).
+    Lemma qrot_cvnorm_comm : forall (q : quat) (v : cvec 3),
+        qunit q -> cvnorm (qrotv q v) == qrotv q (cvnorm v).
     Proof.
-      intros. unfold cvnormalize. unfold cvlen.
+      intros. unfold cvnorm. unfold cvlen.
       rewrite qrot_keep_dot; auto. rewrite qrot_linear_cvcmul. easy.
     Qed.
     
@@ -218,7 +218,7 @@ Module qrot_spec_method2.
         qunit q -> v1 ∠ v2 = (qrotv q v1) ∠ (qrotv q v2).
     Proof.
       intros. unfold cvangle. f_equal.
-      rewrite !qrot_cvnormalize_comm; auto. rewrite qrot_keep_dot; auto.
+      rewrite !qrot_cvnorm_comm; auto. rewrite qrot_keep_dot; auto.
     Qed.
     
     (** qrot作用于单位向量，得到的仍然是单位向量 *)
@@ -252,10 +252,10 @@ Module qrot_spec_method2.
     Qed.
 
     (** 规范化操作和旋转操作是可交换的 *)
-    Lemma qrot_cvnormalize_comm' : forall (q : quat) (v : cvec 3),
-        q <> qzero -> cvnormalize (qrotv q v) == qrotv q (cvnormalize v).
+    Lemma qrot_cvnorm_comm' : forall (q : quat) (v : cvec 3),
+        q <> qzero -> cvnorm (qrotv q v) == qrotv q (cvnorm v).
     Proof.
-      intros. unfold cvnormalize. unfold cvlen.
+      intros. unfold cvnorm. unfold cvlen.
       rewrite qrot_keep_dot'; auto. rewrite qrot_linear_cvcmul. easy.
     Qed.
     
@@ -269,7 +269,7 @@ Module qrot_spec_method2.
         q <> qzero -> v1 ∠ v2 = (qrotv q v1) ∠ (qrotv q v2).
     Proof.
       intros. unfold cvangle. f_equal.
-      rewrite !qrot_cvnormalize_comm'; auto. rewrite qrot_keep_dot'; auto.
+      rewrite !qrot_cvnorm_comm'; auto. rewrite qrot_keep_dot'; auto.
     Qed.
     
     (** qrot作用于单位向量，得到的仍然是单位向量 *)
@@ -361,7 +361,7 @@ Module qrot_spec_method2.
     Hypotheses Hbound_θ : 0 < θ < 2 * PI.
     Hypotheses Hunit_v0 : cvunit v0.
     Hypotheses Hunit_v1 : cvunit v1.
-    Hypotheses Hnorm_v01_n : cvnormalize (v0 × v1) == n.
+    Hypotheses Hnorm_v01_n : cvnorm (v0 × v1) == n.
     Hypotheses Hangle_v01_θ : cvangle v0 v1 = θ/2.
     
     (* 并按照轴角方式构造一个四元数 *)
@@ -409,21 +409,21 @@ Module qrot_spec_method2.
     (** v0 ⟂ n *)
     Fact v0_orth_n : v0 ⟂ n.
     Proof.
-      rewrite <- Hnorm_v01_n. apply cvorth_cvnormalize_r.
+      rewrite <- Hnorm_v01_n. apply cvorth_cvnorm_r.
       apply cvorth_comm. apply cv3cross_orth_l.
     Qed.
 
     (** v1 ⟂ v *)
     Fact v1_orth_n : v1 ⟂ n.
     Proof.
-      rewrite <- Hnorm_v01_n. apply cvorth_cvnormalize_r.
+      rewrite <- Hnorm_v01_n. apply cvorth_cvnorm_r.
       apply cvorth_comm. apply cv3cross_orth_r.
     Qed.
 
     (** n is unit *)
     Fact Hunit_n : cvunit n.
     Proof.
-      rewrite <- Hnorm_v01_n. apply cvnormalize_unit.
+      rewrite <- Hnorm_v01_n. apply cvnorm_unit.
       apply cv3cross_neq0_if_angle_in_0_pi; try apply cvunit_neq0; auto. lra.
     Qed.
 
@@ -477,14 +477,14 @@ Module qrot_spec_method2.
     Fact v2_orth_n : v2 ⟂ n.
     Proof.
       rewrite <- v12_v01_keep_cvcross in Hnorm_v01_n. rewrite <- Hnorm_v01_n.
-      apply cvorth_cvnormalize_r.
+      apply cvorth_cvnorm_r.
       apply cvorth_comm. apply cv3cross_orth_r.
     Qed.
 
     (** (v1,v2)和(v0,v1)的这两个夹角相同 *)
     Fact v12_v01_same_angle : v1 ∠ v2 = v0 ∠ v1.
     Proof.
-      unfold cvangle. f_equal. rewrite !cvnormalize_cvunit_fixpoint; auto.
+      unfold cvangle. f_equal. rewrite !cvnorm_cvunit_fixpoint; auto.
       apply v12_v01_keep_cvdot. apply v2_cvunit.
     Qed.
     
@@ -538,14 +538,14 @@ Module qrot_spec_method2.
       assert (v0 × v1 == v2 × v3) as H.
       { rewrite v23_v12_keep_cvcross, v12_v01_keep_cvcross. easy. }
       rewrite H in Hnorm_v01_n. rewrite <- Hnorm_v01_n.
-      apply cvorth_cvnormalize_r.
+      apply cvorth_cvnorm_r.
       apply cvorth_comm. apply cv3cross_orth_r.
     Qed.
 
     (** (v2,v3)和(v1,v2)的这两个夹角相同 *)
     Fact v23_v12_same_angle : v2 ∠ v3 = v1 ∠ v2.
     Proof.
-      unfold cvangle. f_equal. rewrite !cvnormalize_cvunit_fixpoint; auto.
+      unfold cvangle. f_equal. rewrite !cvnorm_cvunit_fixpoint; auto.
       apply v23_v12_keep_cvdot. apply v3_cvunit. apply v2_cvunit.
     Qed.
     
@@ -643,7 +643,7 @@ Module qrot_spec_method2.
       let v' : cvec 3 := qrotv q v in
       cvunit v0 -> cvunit v1 ->
       0 < θ < 2 * PI ->
-      cvnormalize (v0 × v1) == n ->
+      cvnorm (v0 × v1) == n ->
       cvangle v0 v1 = θ/2 ->
       s0 <> 0 -> s1 <> 0 ->
       (||v'|| = ||v||)%CV /\ cvperp v n ∠ cvperp v' n = θ.

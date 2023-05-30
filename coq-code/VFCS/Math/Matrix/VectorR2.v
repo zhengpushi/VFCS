@@ -91,11 +91,11 @@ Section basis.
   Proof. intro. apply cv2eq_iff in H. inv H. ra. Qed.
 
   (** 标准基向量是规范化操作的不动点 *)
-  Lemma cv2i_cvnormalize_fixpoint : cvnormalize cv2i == cv2i.
-  Proof. apply cvnormalize_cvunit_fixpoint. apply cv2i_vunit. Qed.
+  Lemma cv2i_cvnorm_fixpoint : cvnorm cv2i == cv2i.
+  Proof. apply cvnorm_cvunit_fixpoint. apply cv2i_vunit. Qed.
 
-  Lemma cv2j_cvnormalize_fixpoint : cvnormalize cv2j == cv2j.
-  Proof. apply cvnormalize_cvunit_fixpoint. apply cv2j_vunit. Qed.
+  Lemma cv2j_cvnorm_fixpoint : cvnorm cv2j == cv2j.
+  Proof. apply cvnorm_cvunit_fixpoint. apply cv2j_vunit. Qed.
   
   (** 标准基向量与任意向量v的点积等于v的各分量 *)
   Lemma cv2dot_i_l : forall (v : cvec 2), <cv2i, v> = v.x. Proof. intros. cbv; ring. Qed.
@@ -232,8 +232,8 @@ Section cv2angle.
   Proof.
     intros. rewrite cos_cv2angle_eq_cos_cvangle.
     unfold cvangle. rewrite cos_acos.
-    - rewrite cv2i_cvnormalize_fixpoint. rewrite cv2dot_i_l.
-      rewrite cvnormalize_nth; auto.
+    - rewrite cv2i_cvnorm_fixpoint. rewrite cv2dot_i_l.
+      rewrite cvnorm_nth; auto.
     - apply cvdot_vnormalize_bound; auto. apply cv2i_nonzero.
   Qed.
 
@@ -244,16 +244,16 @@ Section cv2angle.
     intros. unfold cv2angle. destruct (cv2angleGtPI cv2i v) eqn:E1.
     - unfold Rminus. rewrite RealFunction.sin_2PI_add. rewrite sin_neg.
       apply cv2angleGtPI_i_true in E1. unfold cvangle. rewrite sin_acos.
-      + rewrite cv2i_cvnormalize_fixpoint. rewrite cv2dot_i_l.
-        rewrite cvnormalize_nth; auto. rewrite cv2len_eq.
+      + rewrite cv2i_cvnorm_fixpoint. rewrite cv2dot_i_l.
+        rewrite cvnorm_nth; auto. rewrite cv2len_eq.
         rewrite Rsqrt_1_minus_x_eq_y. field_simplify. f_equal.
         rewrite Rabs_left; auto. lra.
         all: try apply cvlen_neq0_iff_neq0 in H; rewrite cv2len_eq in H; auto.
         apply sqrt_neq0_iff in H. lra.
       + apply cvdot_vnormalize_bound; auto. apply cv2i_nonzero.
     - apply cv2angleGtPI_i_false in E1. unfold cvangle. rewrite sin_acos.
-      + rewrite cv2i_cvnormalize_fixpoint. rewrite cv2dot_i_l.
-        rewrite cvnormalize_nth; auto. rewrite cv2len_eq.
+      + rewrite cv2i_cvnorm_fixpoint. rewrite cv2dot_i_l.
+        rewrite cvnorm_nth; auto. rewrite cv2len_eq.
         rewrite Rsqrt_1_minus_x_eq_y.
         * f_equal. rewrite Rabs_right; auto. ra.
         * apply cvlen_neq0_iff_neq0 in H. rewrite cv2len_eq in H.
@@ -267,8 +267,8 @@ Section cv2angle.
   Proof.
     intros. rewrite cos_cv2angle_eq_cos_cvangle.
     unfold cvangle. rewrite cos_acos.
-    - rewrite cv2j_cvnormalize_fixpoint. rewrite cv2dot_j_l.
-      rewrite cvnormalize_nth; auto.
+    - rewrite cv2j_cvnorm_fixpoint. rewrite cv2dot_j_l.
+      rewrite cvnorm_nth; auto.
     - apply cvdot_vnormalize_bound; auto. apply cv2j_nonzero.
   Qed.
   
@@ -279,16 +279,16 @@ Section cv2angle.
     intros. unfold cv2angle. destruct (cv2angleGtPI cv2j v) eqn:E1.
     - unfold Rminus. rewrite RealFunction.sin_2PI_add. rewrite sin_neg.
       apply cv2angleGtPI_j_true in E1. unfold cvangle. rewrite sin_acos.
-      + rewrite cv2j_cvnormalize_fixpoint. rewrite cv2dot_j_l.
-        rewrite cvnormalize_nth; auto. rewrite cv2len_eq.
+      + rewrite cv2j_cvnorm_fixpoint. rewrite cv2dot_j_l.
+        rewrite cvnorm_nth; auto. rewrite cv2len_eq.
         rewrite Rsqrt_1_minus_y_eq_x.
         field_simplify. f_equal. rewrite Rabs_right; auto. lra.
         all: try apply cvlen_neq0_iff_neq0 in H; rewrite cv2len_eq in H; auto.
         apply sqrt_neq0_iff in H. lra.
       + apply cvdot_vnormalize_bound; auto. apply cv2j_nonzero.
     - apply cv2angleGtPI_j_false in E1. unfold cvangle. rewrite sin_acos.
-      + rewrite cv2j_cvnormalize_fixpoint. rewrite cv2dot_j_l.
-        rewrite cvnormalize_nth; auto. rewrite cv2len_eq.
+      + rewrite cv2j_cvnorm_fixpoint. rewrite cv2dot_j_l.
+        rewrite cvnorm_nth; auto. rewrite cv2len_eq.
         rewrite Rsqrt_1_minus_y_eq_x. f_equal; auto with R.
         apply cvlen_neq0_iff_neq0 in H; rewrite cv2len_eq in H;
           apply sqrt_neq0_iff in H. lra.
