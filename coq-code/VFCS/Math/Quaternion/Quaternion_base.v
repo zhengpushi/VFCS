@@ -87,32 +87,32 @@ Section construction.
     - intro. subst. lra.
   Qed.
 
-  (** Construct a quaternion by 4 scalar number *)
-  Definition quat_of_wxyz (w x y z : R) : quat := mk_quat w x y z.
+  (* (** Construct a quaternion by 4 scalar number *) *)
+  (* Definition quat_of_wxyz (w x y z : R) : quat := mk_quat w x y z. *)
 
-  Lemma quat_of_wxyz_ok : forall w x y z,
-      let q := quat_of_wxyz w x y z in
-      q.W = w /\ q.X = x  /\ q.Y = y /\ q.Z = z.
-  Proof. intros. split; auto. Qed.
+  (* Lemma quat_of_wxyz_ok : forall w x y z, *)
+  (*     let q := quat_of_wxyz w x y z in *)
+  (*     q.W = w /\ q.X = x  /\ q.Y = y /\ q.Z = z. *)
+  (* Proof. intros. split; auto. Qed. *)
 
   (** Construct a quaternion by a scalar number and a 3-dim vector *)
-  Definition quat_of_s_v (w : R) (v : cvec 3) := mk_quat w (v.1) (v.2) (v.3).
+  Definition sv2quat (w : R) (v : cvec 3) := mk_quat w (v.1) (v.2) (v.3).
 
-  #[export] Instance quat_of_s_v_mor : Proper (eq ==> meq ==> eq) quat_of_s_v.
+  #[export] Instance sv2quat_mor : Proper (eq ==> meq ==> eq) sv2quat.
   Proof.
     simp_proper. intros. hnf in *.
-    unfold quat_of_s_v; f_equal; auto; apply H0; auto.
+    unfold sv2quat; f_equal; auto; apply H0; auto.
   Qed.
 
-  Lemma quat_of_s_v_ok : forall w v,
-      let q := quat_of_s_v w v in
+  Lemma sv2quat_ok : forall w v,
+      let q := sv2quat w v in
       q.W = w /\ q.X = v.1  /\ q.Y = v.2 /\ q.Z = v.3.
   Proof. intros. split; auto. Qed.
 
-  Lemma quat_of_s_v_inj : forall w1 w2 v1 v2,
-      quat_of_s_v w1 v1 = quat_of_s_v w2 v2 -> w1 = w2 /\ v1 == v2.
+  Lemma sv2quat_inj : forall w1 w2 v1 v2,
+      sv2quat w1 v1 = sv2quat w2 v2 -> w1 = w2 /\ v1 == v2.
   Proof.
-    intros. unfold quat_of_s_v in H. inversion H. split; auto.
+    intros. unfold sv2quat in H. inversion H. split; auto.
     apply cv3eq_iff; auto.
   Qed.
 
@@ -125,15 +125,15 @@ Section construction.
   Proof. intros. cbv. auto. Qed.
 
   (** Construct a quaternion by a 3-dim vector *)
-  Definition qpure (v : cvec 3) : quat := quat_of_s_v 0 v.
+  Definition qpure (v : cvec 3) : quat := sv2quat 0 v.
   
   Lemma qpure_ok : forall v,
       let q := qpure v in
       q.W = R0 /\ q.X = v.1 /\ q.Y = v.2 /\ q.Z = v.3.
-  Proof. intros. apply quat_of_s_v_ok. Qed.
+  Proof. intros. apply sv2quat_ok. Qed.
 
-  Lemma quat_of_s_v_eq_qpure : forall v,
-      quat_of_s_v 0 v = qpure v.
+  Lemma sv2quat_eq_qpure : forall v,
+      sv2quat 0 v = qpure v.
   Proof. intros. unfold qpure. auto. Qed.
 
   (** (qpure v).Im = v *)
@@ -363,7 +363,7 @@ Section qmul.
       This formula is also known Graβmann Product. *)
   Lemma qmul_spec (p q : quat) :
     p * q =
-      quat_of_s_v
+      sv2quat
         (p.W * q.W - <p.Im, q.Im>)
         (p.W c* q.Im + q.W c* p.Im + p.Im × q.Im)%M.
   Proof. destruct p, q. lqa. Qed.
@@ -393,8 +393,8 @@ Section qmul.
   (** The multiplication is non-commutative. That is: p * q <> q * p. *)
   Lemma qmul_comm_fail : exists (p q : quat), p * q <> q * p.
   Proof.
-    exists (quat_of_wxyz 0 1 2 1).
-    exists (quat_of_wxyz 0 2 1 2).
+    exists (mk_quat 0 1 2 1).
+    exists (mk_quat 0 2 1 2).
     cbv. intros. inversion H. lra.
   Qed.
 
@@ -408,7 +408,7 @@ Section qmul.
 
   (** multplication of two pure quaternions: (0,u) * (0,v) = (-<u,v>, u × v)  *)
   Lemma qmul_qpure_eq (u v : cvec 3) :
-    (qpure u) * (qpure v) = quat_of_s_v (- <u,v>) (u × v).
+    (qpure u) * (qpure v) = sv2quat (- <u,v>) (u × v).
   Proof. lqa. Qed.
 
   (** (s1,0) * (s2,0) = (s1*s2,0) *)
@@ -426,7 +426,7 @@ Section qmul.
   (* 此定义也正确，但是太繁琐 *)
   (* Definition qcmul (a : R) (q : quat) : quat := (qscalar a) * q. *)
   Definition qcmul (a : R) (q : quat) : quat :=
-    quat_of_wxyz (a * q.W) (a * q.X) (a * q.Y) (a * q.Z).
+    mk_quat (a * q.W) (a * q.X) (a * q.Y) (a * q.Z).
   Notation "a c* q" := (qcmul a q) : quat_scope.
 
   (** 1 c* q = q *)
@@ -446,7 +446,7 @@ Section qmul.
   Proof. intros. destruct q. lqa. Qed.
 
   (* Variable q0 q1 q2 q3 a : R. *)
-  (* Let q : quat := quat_of_wxyz q0 q1 q2 q3. *)
+  (* Let q : quat := mk_quat q0 q1 q2 q3. *)
   (* Compute qlen2 (a c* q). *)
   (* Compute (a² * qlen2 (q))%R. *)
   (* Goal qlen2 (a c* q) = (a² * qlen2 (q))%R. *)
@@ -542,9 +542,9 @@ Section qone.
    *)
 
   (** (1,0,0,0) *)
-  Definition qone : quat := quat_of_wxyz 1 0 0 0.
+  Definition qone : quat := mk_quat 1 0 0 0.
   (** (-1,0,0,0) *)
-  Definition qone_neg : quat := quat_of_wxyz (-1) 0 0 0.
+  Definition qone_neg : quat := mk_quat (-1) 0 0 0.
 
   (** ToDo: 是否可证只有 qone 是唯一的恒等四元数？*)
   
@@ -568,7 +568,7 @@ Section qconj.
    *)
   
   (** Conjugate of a quaternion *)
-  Definition qconj (q : quat) : quat := quat_of_s_v (q.W) (- q.Im)%CV.
+  Definition qconj (q : quat) : quat := sv2quat (q.W) (- q.Im)%CV.
 
   Notation "q ∗" := (qconj q) (at level 30) : quat_scope.
   
@@ -768,7 +768,7 @@ Section quat_aa.
   (** Convert axis-angle value to unit quaternion *)
   Definition aa2quat (aa : AxisAngle) : quat :=
     let (θ,n) := aa in
-    quat_of_s_v (cos (θ/2)) (sin (θ/2) c* n)%CV.
+    sv2quat (cos (θ/2)) (sin (θ/2) c* n)%CV.
 
   (** Any quaternion constructed from axis-angle is unit quaternion *)
   Lemma aa2quat_unit : forall aa : AxisAngle,
@@ -818,5 +818,5 @@ End quat_aa.
 (* Extract Constant Rabst => "__". *)
 (* Extract Constant Rrepr => "__". *)
 (* Extraction "quat.ml" mk_mat_3_1. (* Why so many warning? *) *)
-(* Recursive Extraction mk_quat quat_of_wxyz quat_of_t4 qmul qconj qinv qlen rot_by_quat. *)
-(* Extraction "quat.ml" mk_quat quat_of_wxyz quat_of_t4 qmul qconj qinv. qlen rot_by_quat. *)
+(* Recursive Extraction mk_quat mk_quat quat_of_t4 qmul qconj qinv qlen rot_by_quat. *)
+(* Extraction "quat.ml" mk_quat mk_quat quat_of_t4 qmul qconj qinv. qlen rot_by_quat. *)

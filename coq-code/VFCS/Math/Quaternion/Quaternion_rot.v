@@ -302,7 +302,7 @@ Module qrot_spec_method2.
 
   (* 由两个单位向量构造四元数 : (<u,v>, u × v)
      几何意义，该四元数的w分量是u,v夹角的余弦，向量分量是由u,v确定的垂直轴 *)
-  Definition uv2q (u v : cvec 3) : quat := quat_of_s_v (<u,v>) (u × v).
+  Definition uv2q (u v : cvec 3) : quat := sv2quat (<u,v>) (u × v).
   
   (* 由两个单位向量的乘法构造四元数 : (0,v) ⊗ (0,u)∗ 
        代数意义，两个四元数的乘积代表了一个四元数 *)
@@ -462,14 +462,14 @@ Module qrot_spec_method2.
     Fact v12_v01_keep_cvdot : <v1,v2> = <v0,v1>.
     Proof.
       pose proof (v12_eq_q). rewrite <- v01_eq_q in H. unfold uv2q in H.
-      apply quat_of_s_v_inj in H; destruct H; auto.
+      apply sv2quat_inj in H; destruct H; auto.
     Qed.
     
     (** v1 × v2 = v0 × v1, 表明(v1,v2)和(v0,v1)所确定的垂直轴相同 *)
     Fact v12_v01_keep_cvcross : v1 × v2 == v0 × v1.
     Proof.
       pose proof (v12_eq_q). rewrite <- v01_eq_q in H. unfold uv2q in H.
-      apply quat_of_s_v_inj in H; destruct H; auto.
+      apply sv2quat_inj in H; destruct H; auto.
     Qed.
 
     (** v2 ⟂ n *)
@@ -521,14 +521,14 @@ Module qrot_spec_method2.
     Fact v23_v12_keep_cvdot : <v2,v3> = <v1,v2>.
     Proof.
       intros. pose proof (v23_eq_q). rewrite <- v12_eq_q in H.
-      apply quat_of_s_v_inj in H; destruct H; auto.
+      apply sv2quat_inj in H; destruct H; auto.
     Qed.
     
     (** v2 × v3 = v1 × v2, 表明(v2,v3)和(v1,v2)所确定的垂直轴相同 *)
     Fact v23_v12_keep_cvcross : v2 × v3 == v1 × v2.
     Proof.
       pose proof (v23_eq_q). rewrite <- v12_eq_q in H. unfold uv2q in H.
-      apply quat_of_s_v_inj in H; destruct H; auto.
+      apply sv2quat_inj in H; destruct H; auto.
     Qed.
 
     (** v3 ⟂ n *)
@@ -676,7 +676,7 @@ Section qlog.
   (*   let θ : R := aa_angle a in *)
   (*   let n : cvec 3 := aa_axis a in *)
   (*   let α : R := θ / 2 in *)
-  (*   quat_of_s_v 0 (α c* n)%CV. *)
+  (*   sv2quat 0 (α c* n)%CV. *)
   Parameter qlog : quat -> quat.
 
 End qlog.
@@ -862,7 +862,7 @@ Definition m2q (A : smat 3) : quat :=
   let x : R := sign1 * (1/2) * sqrt (1 + A.11 - A.22 - A.33) in
   let y : R := sign2 * (1/2) * sqrt (1 - A.11 + A.22 - A.33) in
   let z : R := sign3 * (1/2) * sqrt (1 - A.11 - A.22 + A.33) in
-  quat_of_wxyz w x y z)%R.
+  mk_quat w x y z)%R.
 
 Lemma m2q_qunit : forall (A : smat 3), morth A -> qunit (m2q A).
 Admitted.
@@ -883,5 +883,5 @@ Qed.
 (* Extract Constant Rabst => "__". *)
 (* Extract Constant Rrepr => "__". *)
 (* Extraction "quat.ml" mk_mat_3_1. (* Why so many warning? *) *)
-(* Recursive Extraction mk_quat quat_of_wxyz quat_of_t4 qmul qconj qinv qlen rot_by_quat. *)
-(* Extraction "quat.ml" mk_quat quat_of_wxyz quat_of_t4 qmul qconj qinv. qlen rot_by_quat. *)
+(* Recursive Extraction mk_quat mk_quat quat_of_t4 qmul qconj qinv qlen rot_by_quat. *)
+(* Extraction "quat.ml" mk_quat mk_quat quat_of_t4 qmul qconj qinv. qlen rot_by_quat. *)
