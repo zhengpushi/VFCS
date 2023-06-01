@@ -68,7 +68,7 @@ Module qrot_spec_method1.
   
   Lemma qrot_spec : forall (θ : R) (n : cvec 3) (H : cvunit n) (v : cvec 3),
       let q := aa2quat (θ, n) in
-      (qrotv q v) == rotAxisAngle θ n v.
+      (qrotv q v) == rotaa θ n v.
   Proof.
     intros.
     pose proof (cv3unit_eq1 n H).
@@ -358,11 +358,10 @@ Module qrot_spec_method2.
     (* 任给(0,2π)内的旋转角θ, 旋转轴n，
        在以n为法线的平面上给出夹角为θ/2的两个3D单位向量v0,v1 *)
     Variables (θ : R) (n v0 v1 : cvec 3).
-    Hypotheses Hbound_θ : 0 < θ < 2 * PI.
-    Hypotheses Hunit_v0 : cvunit v0.
-    Hypotheses Hunit_v1 : cvunit v1.
-    Hypotheses Hnorm_v01_n : cvnorm (v0 × v1) == n.
-    Hypotheses Hangle_v01_θ : cvangle v0 v1 = θ/2.
+    Hypotheses (Hbound_θ : 0 < θ < 2 * PI)
+      (Hunit_v0: cvunit v0) (Hunit_v1: cvunit v1)
+      (Hnorm_v01_n: cvnorm (v0 × v1) == n)
+      (Hangle_v01_θ: cvangle v0 v1 = θ/2).
     
     (* 并按照轴角方式构造一个四元数 *)
     Let q : quat := aa2quat (θ, n).
@@ -585,8 +584,7 @@ Module qrot_spec_method2.
          这里跳过了这部分理论的论证。即 v 的定义的合理性。
          假设用(v0,v1,n)和给定的一组系数(s0,s1,s2)表出了一个向量 *)
       Variable s0 s1 s2 : R.
-      Hypotheses Hs0_neq0 : s0 <> 0.
-      Hypotheses Hs1_neq0 : s1 <> 0.
+      Hypotheses (Hs0_neq0 : s0 <> 0) (Hs1_neq0 : s1 <> 0).
       Let v : cvec 3 := (s0 c* v0 + s1 c* v1 + s2 c* n)%CV.
       (* 假设 v 被 qrot 作用后成为了 v' *)
       Let v' : cvec 3 := qrotv q v.
@@ -601,13 +599,13 @@ Module qrot_spec_method2.
        *)
 
       (** v和v'的长度相等 *)
-      Fact cvlen_v'_eq_v : (||v'|| = ||v||)%CV.
+      Fact cvlen_vv' : (||v'|| = ||v||)%CV.
       Proof.
         unfold v',v. rewrite qrot_keep_cvlen; auto. apply q_qunit.
       Qed.
 
       (** v和v'在n的法平面上的投影的夹角是θ *)
-      Fact v'_v_proj_θ : cvperp v n ∠ cvperp v' n = θ.
+      Fact cvangle_vv' : cvperp v n ∠ cvperp v' n = θ.
       Proof.
         pose proof (cvunit_neq0 n Hunit_n).
         unfold v',v.
@@ -648,7 +646,7 @@ Module qrot_spec_method2.
       s0 <> 0 -> s1 <> 0 ->
       (||v'|| = ||v||)%CV /\ cvperp v n ∠ cvperp v' n = θ.
   Proof.
-    intros. split; [apply cvlen_v'_eq_v| apply v'_v_proj_θ]; auto.
+    intros. split; [apply cvlen_vv'|apply cvangle_vv']; auto.
   Qed.
 
 End qrot_spec_method2.

@@ -593,21 +593,21 @@ Section AxisAngle.
   (** Rotate one vector a in R^3 by an axis described with a unit vector n and 
         an angle θ according to right handle rule, we got the rotated vector as
         follows. This formula is known as Rodrigues formula. *)
-  Definition rotAxisAngle (θ : R) (n : cvec 3) (a : cvec 3) : cvec 3 :=
+  Definition rotaa (θ : R) (n : cvec 3) (a : cvec 3) : cvec 3 :=
     (cos θ) c* (a - <a,n> c* n) + (sin θ) c* (n × a) + <a,n> c* n.
 
   (** Proof its correctness *)
-  Theorem rotAxisAngle_spec : forall (θ : R) (n : cvec 3) (a : cvec 3),
+  Theorem rotaa_spec : forall (θ : R) (n : cvec 3) (a : cvec 3),
       let a_para : cvec 3 := cvproj a n in
       let a_perp : cvec 3 := cvperp a n in
       let b : cvec 3 := n × a_perp in
       let a_perp' : cvec 3 := (cos θ) c* a_perp + (sin θ) c* b in
       let a' : cvec 3 := a_perp' + a_para in
       cvunit n ->
-      a' == rotAxisAngle θ n a.
+      a' == rotaa θ n a.
   Proof.
     intros.
-    unfold rotAxisAngle.
+    unfold rotaa.
     assert (a_para == <a,n> c* n) as H1.
     { unfold a_para, cvproj. rewrite H. f_equiv. autounfold with T. field. }
     assert (a_perp == a - <a,n> c* n) as H2.
@@ -622,11 +622,11 @@ Section AxisAngle.
   Qed.
 
   (** Another form of the formula *)
-  Lemma rotAxisAngle_form1 : forall (θ : R) (n : cvec 3) (a : cvec 3),
-      rotAxisAngle θ n a ==
+  Lemma rotaa_form1 : forall (θ : R) (n : cvec 3) (a : cvec 3),
+      rotaa θ n a ==
         a *c (cos θ) + (n × a) *c (sin θ) + n *c (<a,n> * (1 - cos θ))%R.
   Proof.
-    intros. unfold rotAxisAngle.
+    intros. unfold rotaa.
     rewrite !cvmulc_eq_vcmul. rewrite cvcmul_vsub. rewrite cvsub_rw.
     rewrite !cvadd_assoc. f_equiv.
     rewrite <- cvadd_assoc. rewrite cvadd_perm. rewrite cvadd_comm. f_equiv.
@@ -637,16 +637,16 @@ Section AxisAngle.
 
   (** Matrix formula of roation with axis-angle *)
   (* https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula *)
-  Definition rotAxisAngleMat (θ : R) (n : cvec 3) : smat 3 :=
+  Definition rotaaM (θ : R) (n : cvec 3) : smat 3 :=
     let N := cv3skew n in
     (mat1 + (sin θ) c* N + (1 - cos θ)%R c* N * N)%M.
 
-  Lemma rotAxisAngleMat_spec : forall (θ : R) (n : cvec 3) (a : cvec 3),
-      cvunit n -> (rotAxisAngleMat θ n) * a == rotAxisAngle θ n a.
+  Lemma rotaaM_spec : forall (θ : R) (n : cvec 3) (a : cvec 3),
+      cvunit n -> (rotaaM θ n) * a == rotaa θ n a.
   Proof.
     intros.
-    (* unfold rotAxisAngleMat. *)
-    rewrite rotAxisAngle_form1.
+    (* unfold rotaaM. *)
+    rewrite rotaa_form1.
     (* a * cosθ + (n × a) * sinθ + n *c (<a,n> * (1-cosθ)) *)
     rewrite <- cvmulc_assoc.
     (* a * cosθ + (n × a) * sinθ + (k *c <a,n>) *c (1-cosθ) *)
@@ -669,7 +669,7 @@ Section AxisAngle.
     move2h ((1 - cos θ)%R c* a). rewrite <- !associative.
     assert ((1 - cos θ)%R c* a + cos θ c* a == a) by lma. rewrite H1.
     (* right side is ready *)
-    unfold rotAxisAngleMat.
+    unfold rotaaM.
     rewrite !mmul_madd_distr_r. rewrite <- HeqN. f_equiv. f_equiv. apply mmul_1_l.
   Qed.
 
@@ -677,7 +677,7 @@ Section AxisAngle.
   Section Rodrigues.
 
     (** The Matrix for rotate by any axis is known as Rodrigues formula. *)
-    Definition RrodM := rotAxisAngleMat.
+    Definition RrodM := rotaaM.
     
     (** The direct form of Rodrigues formula. *)
     Definition Rrod (θ : R) (k : cvec 3) : mat 3 3 :=
@@ -860,33 +860,33 @@ Section RotationMatrix3D.
   Proof. intros; rewrite R3z_neg_eq_trans, <- R3z_inv_eq_trans, mmul_minv_r; easy. Qed.
 
   (** v' = Rx(θ) * v *)
-  Lemma R3x_spec1 : forall (v : cvec 3) (θ : R), rotAxisAngle θ cv3i v == (R3x θ) * v.
+  Lemma R3x_spec1 : forall (v : cvec 3) (θ : R), rotaa θ cv3i v == (R3x θ) * v.
   Proof. lma. Qed.
   
-  Lemma R3y_spec1 : forall (v : cvec 3) (θ : R), rotAxisAngle θ cv3j v == (R3y θ) * v.
+  Lemma R3y_spec1 : forall (v : cvec 3) (θ : R), rotaa θ cv3j v == (R3y θ) * v.
   Proof. lma. Qed.
   
-  Lemma R3z_spec1 : forall (v : cvec 3) (θ : R), rotAxisAngle θ cv3k v == (R3z θ) * v.
+  Lemma R3z_spec1 : forall (v : cvec 3) (θ : R), rotaa θ cv3k v == (R3z θ) * v.
   Proof. lma. Qed.
 
   (** v = R(-θ) * v' *)
-  Lemma R3x_spec2 : forall (v : cvec 3) (θ : R), v == (R3x (-θ)) * (rotAxisAngle θ cv3i v).
+  Lemma R3x_spec2 : forall (v : cvec 3) (θ : R), v == (R3x (-θ)) * (rotaa θ cv3i v).
   Proof. intros. rewrite R3x_spec1,<- mmul_assoc,R3x_neg_R3x_inv,mmul_1_l; easy. Qed.
   
-  Lemma R3y_spec2 : forall (v : cvec 3) (θ : R), v == (R3y (-θ)) * (rotAxisAngle θ cv3j v).
+  Lemma R3y_spec2 : forall (v : cvec 3) (θ : R), v == (R3y (-θ)) * (rotaa θ cv3j v).
   Proof. intros. rewrite R3y_spec1,<- mmul_assoc,R3y_neg_R3y_inv,mmul_1_l; easy. Qed.
   
-  Lemma R3z_spec2 : forall (v : cvec 3) (θ : R), v == (R3z (-θ)) * (rotAxisAngle θ cv3k v).
+  Lemma R3z_spec2 : forall (v : cvec 3) (θ : R), v == (R3z (-θ)) * (rotaa θ cv3k v).
   Proof. intros. rewrite R3z_spec1,<- mmul_assoc,R3z_neg_R3z_inv,mmul_1_l; easy. Qed.
 
   (** v = R(θ)\T * v' *)
-  Lemma R3x_spec3 : forall (v : cvec 3) (θ : R), v == (R3x θ)\T * (rotAxisAngle θ cv3i v).
+  Lemma R3x_spec3 : forall (v : cvec 3) (θ : R), v == (R3x θ)\T * (rotaa θ cv3i v).
   Proof. intros. rewrite <- R3x_neg_eq_trans. apply R3x_spec2. Qed.
 
-  Lemma R3y_spec3 : forall (v : cvec 3) (θ : R), v == (R3y θ)\T * (rotAxisAngle θ cv3j v).
+  Lemma R3y_spec3 : forall (v : cvec 3) (θ : R), v == (R3y θ)\T * (rotaa θ cv3j v).
   Proof. intros. rewrite <- R3y_neg_eq_trans. apply R3y_spec2. Qed.
 
-  Lemma R3z_spec3 : forall (v : cvec 3) (θ : R), v == (R3z θ)\T * (rotAxisAngle θ cv3k v).
+  Lemma R3z_spec3 : forall (v : cvec 3) (θ : R), v == (R3z θ)\T * (rotaa θ cv3k v).
   Proof. intros. rewrite <- R3z_neg_eq_trans. apply R3z_spec2. Qed.
 
   (** 预乘和后乘旋转矩阵的关系，即: v ~ v' -> R(θ) * v ~ v' * R(θ) *)

@@ -47,8 +47,8 @@ Section def.
   Inductive mat {T} (r c : nat) : Type := mk_mat (f : nat -> nat -> T).
 
   (** Convert between function and matrix *)
-  Definition f2m {T} {r c} (f : nat -> nat -> T) : mat r c := @mk_mat T r c f.
-  Definition m2f {T} {r c} (m : mat r c) : nat -> nat -> T :=
+  Definition f2m {T r c} (f : nat -> nat -> T) : mat r c := @mk_mat T r c f.
+  Definition m2f {T r c} (m : mat r c) : nat -> nat -> T :=
     let '(mk_mat _ _ f) := m in f.
   
 End def.
