@@ -19,7 +19,7 @@
   一. 关于零向量的平行和垂直问题
   1. 来自《高等数学》的理论：
   (1) 零向量的起点和终点重合，它的方向可看做是任意的。
-  (2) 如果∠a,b = 0 or π，则称它们平行，记做 a∥b。
+  (2) 如果∠a,b = 0 or π，则称它们平行，记做 a//b。
       当两向量平行时，若将起点放在同一点，则终点和公共起点应在同一条直线，故
       两向量平行也称两向量共线。
   (3) 如果∠a,b = π/2，称它们垂直，记做 a⟂b。
@@ -167,14 +167,14 @@ Section cvpara.
   Definition cvpara {n} (v1 v2 : cvec n) : Prop :=
     exists k : R, k <> 0 /\ k c* v1 == v2.
 
-  Infix "∥" := cvpara (at level 50) : cvec_scope.
+  Infix "//" := cvpara (at level 50) : cvec_scope.
 
   (** vparallel is an equivalence relation *)
 
-  Lemma cvpara_refl : forall {n} (v : cvec n), v ∥ v.
+  Lemma cvpara_refl : forall {n} (v : cvec n), v // v.
   Proof. intros. exists 1. split; auto. apply cvcmul_1_l. Qed.
 
-  Lemma cvpara_sym : forall {n} (v0 v1 : cvec n), v0 ∥ v1 -> v1 ∥ v0.
+  Lemma cvpara_sym : forall {n} (v0 v1 : cvec n), v0 // v1 -> v1 // v0.
   Proof.
     intros. destruct H as [k [H1 H2]]. exists (1/k). split.
     (* ToDo: 提高R的自动化程度 *)
@@ -183,16 +183,16 @@ Section cvpara.
       unfold Rdiv. autorewrite with R. rewrite Rinv_l; auto. apply cvcmul_1_l.
   Qed.
 
-  Lemma cvpara_trans : forall {n} (v0 v1 v2 : cvec n), v0 ∥ v1 -> v1 ∥ v2 -> v0 ∥ v2.
+  Lemma cvpara_trans : forall {n} (v0 v1 v2 : cvec n), v0 // v1 -> v1 // v2 -> v0 // v2.
   Proof.
     intros. destruct H as [k1 [H1 H2]], H0 as [k2 [H3 H4]].
     exists (k2 * k1)%R. split; auto.
     rewrite <- cvcmul_assoc. rewrite H2. auto.
   Qed.
 
-  (** v1 ∥ v2 -> (a c* v1) ∥ v2 *)
+  (** v1 // v2 -> (a c* v1) // v2 *)
   Lemma cvcmul_cvpara_l : forall {n} (v1 v2 : cvec n) (a : R),
-      v1 ∥ v2 -> a <> 0 -> (a c* v1) ∥ v2.
+      v1 // v2 -> a <> 0 -> (a c* v1) // v2.
   Proof.
     intros. unfold cvpara in *. destruct H as [k [H1 H2]].
     exists (k/a). split.
@@ -203,16 +203,16 @@ Section cvpara.
       replace (k / a * a)%T with k; auto. cbv. field; auto.
   Qed.
 
-  (** v1 ∥ v2 -> v1 ∥ (a c* v2) *)
+  (** v1 // v2 -> v1 // (a c* v2) *)
   Lemma cvcmul_cvpara_r : forall {n} (v1 v2 : cvec n) (a : R),
-      v1 ∥ v2 -> a <> 0 -> v1 ∥ (a c* v2).
+      v1 // v2 -> a <> 0 -> v1 // (a c* v2).
   Proof.
     intros. apply cvpara_sym. apply cvcmul_cvpara_l; auto.
     apply cvpara_sym; auto.
   Qed.
 
   (** Zero vector is parallel to any other vectors. *)
-  Lemma cvpara_0_l : forall {n} (v1 v2 : cvec n), cvzero v1 -> v1 ∥ v2.
+  Lemma cvpara_0_l : forall {n} (v1 v2 : cvec n), cvzero v1 -> v1 // v2.
   Proof.
     intros. exists 0.
     (* Note, it is not true, because the definition of cvpara.  *)
@@ -223,7 +223,7 @@ Section cvpara.
  (*     they are k times relation *) *)
   (* Lemma cvpara_vnonezero_imply_unique_k : *)
   (*   forall {n} (v1 v2 : cvec n) (H1 : cvnonzero v1) (H2 : cvnonzero v2), *)
-  (*     v1 ∥ v2 -> (exists ! k, k c* v1 == v2). *)
+  (*     v1 // v2 -> (exists ! k, k c* v1 == v2). *)
   (* Proof. *)
   (*   intros. destruct H1 as [x [H1 H2]]. *)
   (*   exists x. split; auto. *)
@@ -234,7 +234,7 @@ Section cvpara.
 (** A non-zero vector v1 is parallel to any other vector v2,
         iff there is a unique k such that v2 is k times v1. *)
   (* Lemma cvpara_iff1 : forall {n} (v1 v2 : cvec n), *)
-  (*     (cvnonzero v1 /\ (v1 ∥ v2)) <-> (exists ! k, v2 == k c* v1). *)
+  (*     (cvnonzero v1 /\ (v1 // v2)) <-> (exists ! k, v2 == k c* v1). *)
   (* Proof. *)
   (*   intros. split; intros. *)
   (*   - destruct (v2 ==? cvec0). *)
@@ -248,7 +248,7 @@ Section cvpara.
 
 
 End cvpara.
-Infix "∥" := cvpara (at level 50) : cvec_scope.
+Infix "//" := cvpara (at level 50) : cvec_scope.
 
 
 (* ==================================== *)
@@ -422,7 +422,7 @@ Section vlen.
   
   (** 这个性质不成立，有一个例子：相反向量长度相等且平行，但不相等。*)
   Lemma cv_eq_iff_len_parallel : forall {n} (v1 v2 : cvec n),
-      (||v1|| = ||v2|| /\ v1 ∥ v2) <-> v1 == v2.
+      (||v1|| = ||v2|| /\ v1 // v2) <-> v1 == v2.
   Abort.
 
 End vlen.
@@ -539,7 +539,7 @@ Section vnormalize.
 
   (** Keep the same direction as the original vector *)
   Lemma cvnorm_direction : forall {n} (v : cvec n),
-      cvnonzero v -> (cvnorm v) ∥ v.
+      cvnonzero v -> (cvnorm v) // v.
   Proof.
     intros. unfold cvpara. unfold cvnorm. exists (||v||). split.
     - apply cvlen_neq0_iff_neq0; auto.
@@ -549,7 +549,7 @@ Section vnormalize.
   Qed.
 
   Lemma cvnorm_spec : forall {n} (v : cvec n),
-      cvnonzero v -> (||cvnorm v|| = 1 /\ (cvnorm v) ∥ v).
+      cvnonzero v -> (||cvnorm v|| = 1 /\ (cvnorm v) // v).
   Proof.
     intros. split. apply cvnorm_len1; auto.
     apply cvnorm_direction; auto.

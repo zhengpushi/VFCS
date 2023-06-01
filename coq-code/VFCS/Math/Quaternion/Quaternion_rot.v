@@ -44,8 +44,13 @@ Proof.
   intros. unfold qrot. rewrite qinv_qmul, !qmul_assoc; auto.
 Qed.
 
-(** Another proof, vector form *)
-Lemma qrot_twice' : forall (q1 q2 : quat) (v : cvec 3),
+(* compact writing *)
+Lemma qrot_twice' q1 q2 v (H1:q1<>qzero) (H2:q2<>qzero) :
+  qrot q2 (qrot q1 v) = qrot (q2 * q1) v.
+Proof. unfold qrot. rewrite qinv_qmul,!qmul_assoc;auto. Qed.
+
+(** vector form *)
+Lemma qrot_twice_vec : forall (q1 q2 : quat) (v : cvec 3),
     q1 <> qzero -> q2 <> qzero ->
     qrot q2 (qrot q1 (qpure v)) = qrot (q2 * q1) (qpure v).
 Proof.
@@ -66,7 +71,7 @@ Module qrot_spec_method1.
   
   Local Open Scope fun_scope.
   
-  Lemma qrot_spec : forall (θ : R) (n : cvec 3) (H : cvunit n) (v : cvec 3),
+  Lemma qrot_spec1 : forall (θ : R) (n : cvec 3) (H : cvunit n) (v : cvec 3),
       let q := aa2quat (θ, n) in
       (qrotv q v) == rotaa θ n v.
   Proof.
@@ -646,7 +651,7 @@ Module qrot_spec_method2.
       s0 <> 0 -> s1 <> 0 ->
       (||v'|| = ||v||)%CV /\ cvperp v n ∠ cvperp v' n = θ.
   Proof.
-    intros. split; [apply cvlen_vv'|apply cvangle_vv']; auto.
+    split; [apply cvlen_vv'|apply cvangle_vv']; auto.
   Qed.
 
 End qrot_spec_method2.

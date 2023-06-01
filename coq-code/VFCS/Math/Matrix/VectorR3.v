@@ -428,7 +428,7 @@ Section cv3para.
       That is: v1 ∥ v2 <-> v1 × v2 = 0 *)
   Definition cv3para (v1 v2 : cvec 3) : Prop := cvzero (v1 × v2).
   
-  Lemma cv3para_spec : forall (v1 v2 : cvec 3), v1 ∥ v2 <-> cv3para v1 v2.
+  Lemma cv3para_spec : forall (v1 v2 : cvec 3), v1 // v2 <-> cv3para v1 v2.
   Proof.
     intros. cvec2fun. unfold cvpara,cv3para. split; intros.
     - destruct H as [k [H1]].
@@ -637,15 +637,15 @@ Section AxisAngle.
 
   (** Matrix formula of roation with axis-angle *)
   (* https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula *)
-  Definition rotaaM (θ : R) (n : cvec 3) : smat 3 :=
+  Definition aa2mat (θ : R) (n : cvec 3) : smat 3 :=
     let N := cv3skew n in
     (mat1 + (sin θ) c* N + (1 - cos θ)%R c* N * N)%M.
 
-  Lemma rotaaM_spec : forall (θ : R) (n : cvec 3) (a : cvec 3),
-      cvunit n -> (rotaaM θ n) * a == rotaa θ n a.
+  Lemma aa2mat_spec : forall (θ : R) (n : cvec 3) (a : cvec 3),
+      cvunit n -> (aa2mat θ n) * a == rotaa θ n a.
   Proof.
     intros.
-    (* unfold rotaaM. *)
+    (* unfold aa2mat. *)
     rewrite rotaa_form1.
     (* a * cosθ + (n × a) * sinθ + n *c (<a,n> * (1-cosθ)) *)
     rewrite <- cvmulc_assoc.
@@ -669,44 +669,39 @@ Section AxisAngle.
     move2h ((1 - cos θ)%R c* a). rewrite <- !associative.
     assert ((1 - cos θ)%R c* a + cos θ c* a == a) by lma. rewrite H1.
     (* right side is ready *)
-    unfold rotaaM.
+    unfold aa2mat.
     rewrite !mmul_madd_distr_r. rewrite <- HeqN. f_equiv. f_equiv. apply mmul_1_l.
   Qed.
 
-  (** Rodrigues formula. *)
-  Section Rodrigues.
+  
+  (** The direct form aa2mat. *)
+  Definition aa2matM (θ : R) (k : cvec 3) : mat 3 3 :=
+    let x := k.x in
+    let y := k.y in
+    let z := k.z in
+    let C := cos θ in
+    let S := sin θ in
+    l2m
+      [[C + x * x * (1 - C); x * y * (1 - C) - z * S; x * z * (1 - C) + y * S];
+       [y * x * (1 - C) + z * S; C + y * y * (1 - C); y * z * (1 - C) - x * S];
+       [z * x * (1 - C) - y * S; z * y * (1 - C) + x * S; C + z * z * (1 - C)]]%R.
 
-    (** The Matrix for rotate by any axis is known as Rodrigues formula. *)
-    Definition RrodM := rotaaM.
-    
-    (** The direct form of Rodrigues formula. *)
-    Definition Rrod (θ : R) (k : cvec 3) : mat 3 3 :=
-      let x := k.x in
-      let y := k.y in
-      let z := k.z in
-      let C := cos θ in
-      let S := sin θ in
-      l2m
-        [[C + x * x * (1 - C); x * y * (1 - C) - z * S; x * z * (1 - C) + y * S];
-         [y * x * (1 - C) + z * S; C + y * y * (1 - C); y * z * (1 - C) - x * S];
-         [z * x * (1 - C) - y * S; z * y * (1 - C) + x * S; C + z * z * (1 - C)]]%R.
+  Theorem aa2matM_eq_aa2mat : forall (θ : R) (k : cvec 3),
+      cvunit k -> aa2matM θ k == aa2mat θ k.
+  Proof.
+    intros. lma;
+      pose proof (cv3unit_eq1 k H); autounfold with T in *;
+      ring_simplify; autorewrite with R; rewrite H0; field.
+  Qed.
 
-    Theorem Rrod_eq_RrodM : forall (θ : R) (k : cvec 3),
-        cvunit k -> Rrod θ k == RrodM θ k.
-    Proof.
-      intros. lma;
-        pose proof (cv3unit_eq1 k H); autounfold with T in *;
-        ring_simplify; autorewrite with R; rewrite H0; field.
-    Qed.
+  (** R(-θ) = R(θ)\T *)
+  Lemma aa2mat_neg_eq_trans : forall (θ : R) (n : cvec 3), aa2mat (-θ) n == (aa2mat θ n)\T.
+    (* Proof. lma; autounfold with T; autorewrite with R; ring. Qed. *)
+  Admitted. (* to speed up the compile process *)
 
-    (** R(-θ) = R(θ)\T *)
-    Lemma Rrod_neg_eq_trans : forall (θ : R) (n : cvec 3), Rrod (-θ) n == (Rrod θ n)\T.
-      (* Proof. lma; autounfold with T; autorewrite with R; ring. Qed. *)
-    Admitted. (* to speed up the compile process *)
-
-    (** R(θ) * R(θ)\T = I *)
-    Lemma Rrod_Rrod_neg_inv : forall (θ : R) (n : cvec 3),
-        cvunit n -> Rrod θ n * ((Rrod θ n)\T) == mat1.
+  (** R(θ) * R(θ)\T = I *)
+  Lemma aa2mat_aa2mat_neg_inv : forall (θ : R) (n : cvec 3),
+      cvunit n -> aa2mat θ n * ((aa2mat θ n)\T) == mat1.
     (* Proof. *)
     (*   intros. *)
     (*   pose proof (cv3unit_eq1 n H) as H1. *)
@@ -723,9 +718,7 @@ Section AxisAngle.
     (*   - rewrite H1. rewrite RealFunction.cos2_eq. cbv; ring. *)
     (*   - rewrite H3. rewrite RealFunction.cos2_eq. cbv; ring. *)
     (* Qed. *)
-    Admitted. (* to speed up the compile process *)
-
-  End Rodrigues.
+  Admitted. (* to speed up the compile process *)
 
 End AxisAngle.
 
@@ -765,14 +758,14 @@ Section RotationMatrix3D.
        [sin θ; cos θ; 0];
        [0; 0; 1]]%R.
   
-  (** R3x,R3y,R3z are the special case of Rrod. *)
-  Theorem Rrod_eq_Rx : forall θ : R, Rrod θ cv3i == R3x θ.
+  (** R3x,R3y,R3z are the special case of aa2mat. *)
+  Theorem aa2mat_eq_Rx : forall θ : R, aa2mat θ cv3i == R3x θ.
   Proof. lma. Qed.
 
-  Theorem Rrod_eq_Ry : forall θ : R, Rrod θ cv3j == R3y θ.
+  Theorem aa2mat_eq_Ry : forall θ : R, aa2mat θ cv3j == R3y θ.
   Proof. lma. Qed.
 
-  Theorem Rrod_eq_Rz : forall θ : R, Rrod θ cv3k == R3z θ.
+  Theorem aa2mat_eq_Rz : forall θ : R, aa2mat θ cv3k == R3z θ.
   Proof. lma. Qed.
   
   (** R3x,R3y,R3z are orthogonal matrix *)
