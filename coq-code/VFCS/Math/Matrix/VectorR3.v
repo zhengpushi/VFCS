@@ -581,6 +581,21 @@ Section cv3mixed.
     let AC := C - A in
     let AD := D - A in
     ((1/6) * (cv3mixed AB AC AD))%R.
+
+  (** v1,v2,v3 ∈ one-plane, v1 ∠ v3 = (v1 ∠ v2) + (v2 ∠ v3) *)
+  Lemma cv3angle_add : forall (v1 v2 v3 : cvec 3),
+      v1 ∠ v2 < PI ->
+      v2 ∠ v3 < PI ->
+      cv3coplanar v1 v2 v3 ->
+      v1 ∠ v3 = ((v1 ∠ v2) + (v2 ∠ v3))%R.
+  Proof.
+  (* 由于目前 cvangle 的值域是 [0,π]，暂不能表示 [0,2π)，所以该性质有点困难。
+     所以扩展了值域为 [0,2π) 的。在3D中，还需要共面的条件。*)
+    intros. unfold cvangle. unfold cvnorm. unfold cvlen.
+    unfold cvcmul. unfold cvdot. unfold Vector.cvdot.
+    cvec2fun. unfold Tmul,Tadd,T0,T.
+    autorewrite with R.
+    Abort.
   
 End cv3mixed.
 

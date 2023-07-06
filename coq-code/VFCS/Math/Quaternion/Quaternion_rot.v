@@ -417,7 +417,7 @@ Module qrot_spec_method2.
       apply cvorth_comm. apply cv3cross_orth_l.
     Qed.
 
-    (** v1 ⟂ v *)
+    (** v1 ⟂ n *)
     Fact v1_orth_n : v1 ⟂ n.
     Proof.
       rewrite <- Hnorm_v01_n. apply cvorth_cvnorm_r.

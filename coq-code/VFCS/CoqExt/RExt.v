@@ -328,6 +328,15 @@ Global Hint Resolve
 (** ** Rsqr, Rpow2, x*x *)
 
 (** There are several ways to represent square:
+
+    For example, write sqrt of x has multiple ways:
+    x * x
+    x²
+    Rsqr x
+    Rmult x x
+    x ^ 2
+    pow x 2
+
     x * x，it is a notation for "Rmult x x"
     x ^ 2, it is a notation for "pow x 2"
     x²   , it is a notation for "Rsqr x", which defined as x * x.
@@ -346,7 +355,7 @@ Global Hint Resolve
 
     In conclusion, there are two cases:
     1. when use "ring,field,lra", write: unfold Rsqr in *; ring.
-    2. other cases, write: autorewrit with R; auto with R.
+    2. other cases, write: autorewrite with R; auto with R.
  *)
 
 (** We always prefer x², an exception is when using ring or field tactic. *)

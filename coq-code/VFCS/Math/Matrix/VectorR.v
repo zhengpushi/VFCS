@@ -692,7 +692,8 @@ Section vangle.
       v1 ∠ v3 = ((v1 ∠ v2) + (v2 ∠ v3))%R.
   Proof.
   (** 由于目前 cvangle 的值域是 [0,π]，暂不能表示 [0,2π)，所以该性质有点困难。
-      有扩展了值域为 [0,2π) 的 cv2angle 可做参考，但3D中尚未实现。*)
+      有扩展了值域为 [0,2π) 的 cv2angle 可做参考。
+      在3D中，需要增加共面的条件。*)
   Admitted.
 
   Lemma Rdiv_1_neq_0_compat : forall r : R, r <> 0 -> 1 / r <> 0.
