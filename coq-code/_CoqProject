@@ -69,11 +69,6 @@ VFCS/Math/Quaternion/Quaternion_rot.v
 VFCS/Math/DifferenceEquation/DifferenceEquation.v
 VFCS/Math/LaplaceTransform/LaplaceTransform.v
 
-# ====== Automatic Control System ====================================
-VFCS/ACS/Diagram.v
-VFCS/ACS/DifferentialEquation.v
-VFCS/ACS/RationalExpression.v
-
 # ====== Flight Control System =======================================
 VFCS/FCS/Propulsion/RAux.v
 VFCS/FCS/Propulsion/PSModel.v

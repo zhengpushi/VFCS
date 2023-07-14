@@ -1,3 +1,27 @@
+# Remark for ISSRE2023
+
+***This branch is the source code for a paper in ISSRE2023.***
+
+```text
+paper title:
+Coq Formalization of Orientation Representation: Matrix, Euler Angle, Axis-Angle and Quaternion.
+
+main files:
+1. Section III. Mathmatical Preliminary
+coq-code/VFCS/Math/Matrix/Matrix.v
+coq-code/VFCS/Math/Matrix/MatrixR.v
+coq-code/VFCS/Math/Matrix/VectorR.v
+coq-code/VFCS/Math/Matrix/VectorR3.v
+coq-code/VFCS/Math/Quaternion/Quaternion_base.v
+
+2. Section IV. Orientation Representation
+coq-code/VFCS/Math/Quaternion/Quaternion_rot.v
+coq-code/VFCS/FCS/AttitudeRepr/eulerangle.v
+coq-code/VFCS/Math/Matrix/MatrixR.v
+coq-code/VFCS/Math/Matrix/VectorR3.v
+
+```
+
 # VFCS
 
 ***This is an on-going project***
@@ -24,17 +48,3 @@
   * [CoqExt](https://github.com/zhengpushi/CoqExt): Extension of Coq Standard Libray. [Homepage]
   * [CoqMatrix](https://github.com/zhengpushi/CoqMatrix): Formal matrix theory with multiple implementations in Coq.
 * Related projects:
-
-
-## 3. Reference Resources
-
-Note: most of them are Chinese version.
-
-* Text books
-  * 自动控制原理，清华大学出版社，卢京潮
-  * 复变函数与积分变换，华中科技大学，李红
-  * Control Systems Engineering, by Norman S. Nise
-  * 控制工程基础，高教出版社，王积伟、吴振顺
-* Resources from Internet
-  * Bilibili 自动控制原理
-  * Bilibili 复变函数与积分变换

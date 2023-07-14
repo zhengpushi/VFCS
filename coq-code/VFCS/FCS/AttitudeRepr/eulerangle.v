@@ -157,23 +157,23 @@ Section BasicRotationMatrics.
   Lemma Ry_spec : forall θ, Ry θ == R3y θ. Proof. lma. Qed.
   Lemma Rz_spec : forall θ, Rz θ == R3z θ. Proof. lma. Qed.
 
-  (* Fact Rx_inv : forall θ, minv (Rx θ) == (Rx θ)\T. *)
-  (* Proof. lma; autounfold with A; autorewrite with R; auto. Qed. *)
+  Fact Rx_inv : forall θ, minv (Rx θ) == (Rx θ)\T.
+  Proof. lma; autounfold with T; autorewrite with R; auto. Qed.
 
-  (* Fact Ry_inv : forall θ, minv (Ry θ) == (Ry θ)\T. *)
-  (* Proof. lma; autounfold with A; autorewrite with R; auto. Qed. *)
+  Fact Ry_inv : forall θ, minv (Ry θ) == (Ry θ)\T.
+  Proof. lma; autounfold with T; autorewrite with R; auto. Qed.
   
-  (* Fact Rz_inv : forall θ, minv (Rz θ) == (Rz θ)\T. *)
-  (* Proof. lma; autounfold with A; autorewrite with R; auto. Qed. *)
+  Fact Rz_inv : forall θ, minv (Rz θ) == (Rz θ)\T.
+  Proof. lma; autounfold with T; autorewrite with R; auto. Qed.
 
-  (* Theorem Rx_neg : forall θ, Rx (-θ) == (Rx θ)\T. *)
-  (* Proof. lma; autounfold with A; autorewrite with R; auto. Qed. *)
+  Theorem Rx_neg : forall θ, Rx (-θ) == (Rx θ)\T.
+  Proof. lma; autounfold with T; autorewrite with R; auto. Qed.
 
-  (* Theorem Ry_neg : forall θ, Ry (-θ) == (Ry θ)\T. *)
-  (* Proof. lma; autounfold with A; autorewrite with R; auto. Qed. *)
+  Theorem Ry_neg : forall θ, Ry (-θ) == (Ry θ)\T.
+  Proof. lma; autounfold with T; autorewrite with R; auto. Qed.
   
-  (* Theorem Rz_neg : forall θ, Rz (-θ) == (Rz θ)\T. *)
-  (* Proof. lma; autounfold with A; autorewrite with R; auto. Qed. *)
+  Theorem Rz_neg : forall θ, Rz (-θ) == (Rz θ)\T.
+  Proof. lma; autounfold with T; autorewrite with R; auto. Qed.
 
 End BasicRotationMatrics.
 
