@@ -3,12 +3,18 @@
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
-  purpose     : C code generation (version 2)
+  purpose     : C code generation (version 3)
   author      : ZhengPu Shi
   date        : 2022.09.16
 
   remark      :
+  v2.v
   1. 实数表达式的AST、求值、字符串生成。
+
+  v3.v
+  1. 新增对于实数的处理。
+     由于在Coq中写出实数后，难以直接转换为字符串，所以干脆直接用字符串作为媒介，
+     然后求值函数中用查表的方式来获取。
 *)
 
 Require Import List. Import ListNotations.
@@ -17,7 +23,28 @@ Require Import StrExt.
 Require Import RExt.
 Open Scope string_scope.
 
-(* 语法 *)
+(* ############################################################################# *)
+(** * 辅助功能 *)
+
+(** 根据key从关联表中查找某个值  *)
+Fixpoint alst_lookup {A} (l:list (string * A)) (key:string) : option A :=
+  match l with
+  | (k,v) :: tl => if String.eqb k key then Some v else alst_lookup tl key
+  | [] => None
+  end.
+
+(** 常用实数的关联表  *)
+Definition real_vals_db : list (string * R) :=
+  [("0",R0);("1",R1);("60",60)].
+Parameter real_vals_db_ERR : R.
+
+(** 根据字符串键值找出对应的实数值 *)
+Definition real_val (key:string) : R :=
+  match alst_lookup real_vals_db key with Some r => r | _ => real_vals_db_ERR end.
+
+
+(* ############################################################################# *)
+(** * 语法 *)
 
 (** 首先是实数表达式的AST *)
 
@@ -42,24 +69,50 @@ Definition op2_fun_db : list (string * (R->R->R)) :=
   [("plus", Rplus); ("minus", Rminus)].
 Definition op2_fun_def : string * (R->R->R) := ("def2", fun x y => R0).
 
-Fixpoint alst_lookup {A} (l:list (string * A)) (key:string) : option A :=
-  match l with
-  | (k,v) :: tl => if String.eqb k key then Some v else alst_lookup tl key
-  | [] => None
-  end.
-
 Inductive aexp :=
 | rvar : string -> aexp
-| rconst : R -> aexp
+(* | rconst : R -> aexp *)  (* 暂时不要直接使用 R 类型，使用 string 作为中间媒介 *)
+| rconst : string -> aexp       (* 使用 string 来接管实数常量 *)
 | rpow : aexp -> nat -> aexp
 | runary : op1 -> aexp -> aexp
 | rbinary : op2 -> aexp -> aexp -> aexp.
 
-(* 语义 *)
+(** 语法助记符 *)
+Declare Custom Entry aexp.
+
+Notation "<{ e }>" := e (e custom aexp at level 99).
+Notation "( x )" := x (in custom aexp, x at level 99).
+Notation "x" := x (in custom aexp at level 0, x constr at level 0).
+(* Notation "- x" := (runary op1_ropp x) (in custom aexp at level 1, left associativity). *)
+(* Notation "/ x" := (runary op1_rinv x) (in custom aexp at level 1, left associativity). *)
+Notation "'\F' op x" := (runary (op1_fun op) x) (in custom aexp at level 5, right associativity).
+Notation "x + y" := (rbinary op2_rplus x y) (in custom aexp at level 10, left associativity).
+Notation "x - y" := (rbinary op2_rminus x y) (in custom aexp at level 10, left associativity).
+Notation "x * y" := (rbinary op2_rmult x y) (in custom aexp at level 4, left associativity).
+Notation "x / y" := (rbinary op2_rdiv x y) (in custom aexp at level 4, left associativity).
+Notation "op x y" := (rbinary op2_fun op x y) (in custom aexp at level 1, left associativity).
+Notation "{ x }" := x (in custom aexp at level 1, x constr).
+Coercion rvar : string >-> aexp.
+(* Coercion rconst : R >-> aexp. *)
+
+(** 一些方便的操作 *)
+
+(* 构造一元操作 *)
+Definition OP1 (op:string) : aexp->aexp := runary (op1_fun op).
+(* 构造二元操作 *)
+Definition OP2 (op:string) : aexp->aexp->aexp := rbinary (op2_fun op).
+(* 构造实数常量 *)
+Definition Rval (key:string) : aexp := rconst key.
+
+Compute OP1 "sin".
+(* Compute Rconst "0". *)
+
+(* ############################################################################# *)
+(** * 语义 *)
 Fixpoint aeval (a : aexp) (ctx : string -> R) : R :=
   match a with
   | rvar x => ctx x
-  | rconst r => r
+  | rconst x => real_val x
   | rpow a1 n => pow (aeval a1 ctx) n
   | runary op1 a1 =>
       match op1 with
@@ -85,15 +138,14 @@ Fixpoint aeval (a : aexp) (ctx : string -> R) : R :=
       end
   end.
 
-(* C表达式 *)
+(* ############################################################################# *)
+(** * C代码的字符串生成 *)
 Section cgen.
   
-  Variable R2str : R -> string.
-
   Fixpoint a2str (a : aexp) : string :=
     match a with
     | rvar x => " " ++ x ++ " "
-    | rconst r => " " ++ R2str r ++ " "
+    | rconst x => " " ++ x ++ " "
     | rpow a1 n => "(" ++ a2str a1 ++ ")^" ++ (nat2str n)
     | runary op1 a1 =>
         match op1 with
@@ -122,30 +174,8 @@ Section cgen.
     end.
 End cgen.
 
-(** 语法助记符 *)
-Declare Custom Entry aexp.
-
-Notation "<{ e }>" := e (e custom aexp at level 99).
-Notation "( x )" := x (in custom aexp, x at level 99).
-Notation "x" := x (in custom aexp at level 0, x constr at level 0).
-(* Notation "- x" := (runary op1_ropp x) (in custom aexp at level 1, left associativity). *)
-(* Notation "/ x" := (runary op1_rinv x) (in custom aexp at level 1, left associativity). *)
-Notation "'\F' op x" := (runary (op1_fun op) x) (in custom aexp at level 5, right associativity).
-Notation "x + y" := (rbinary op2_rplus x y) (in custom aexp at level 10, left associativity).
-Notation "x - y" := (rbinary op2_rminus x y) (in custom aexp at level 10, left associativity).
-Notation "x * y" := (rbinary op2_rmult x y) (in custom aexp at level 4, left associativity).
-Notation "x / y" := (rbinary op2_rdiv x y) (in custom aexp at level 4, left associativity).
-Notation "op x y" := (rbinary op2_fun op x y) (in custom aexp at level 1, left associativity).
-Notation "{ x }" := x (in custom aexp at level 1, x constr).
-Coercion rvar : string >-> aexp.
-Coercion rconst : R >-> aexp.
-
-(** 一些方便的操作  *)
-Definition OP1 (op:string) : aexp->aexp := runary (op1_fun op).
-Definition OP2 (op:string) : aexp->aexp->aexp := rbinary (op2_fun op).
-
-Compute OP1 "sin".
-
+(* ############################################################################# *)
+(** * 示例 *)
 (* Definition x : string := "x". *)
 (* Definition y : string := "y". *)
 (* Definition z : string := "z". *)
@@ -154,13 +184,12 @@ Compute OP1 "sin".
 (* Hint Unfold y : core. *)
 (* Hint Unfold z : core. *)
 
-
 (* 示例1 *)
 Section test.
   (* 给出表达式的AST  *)
-  Let ex1 : aexp := <{"x" + R0 + "y"*"z"*R1 }>.
+  Let ex1 : aexp := <{"x" + {Rval "0"} + "y"*"z"*{Rval "1"} }>.
   Print ex1.
-
+  
   (* 验证数学性质 *)
   Let ex1_spec : forall ctx,
       let x := ctx "x" in
@@ -169,17 +198,8 @@ Section test.
       aeval ex1 ctx = (x + y * z)%R.
   Proof. intros. cbv. ring. Qed.
 
-  (* 实数到字符串的转换 *)
-  Let R2str (r:R) : string :=
-        if (r =? R0)%R then "R0"
-        else if (r =? R1)%R then "R1"
-             else "0000".
-  Let R2str' (r:R) : string := "0000".
-  
   (* 代码生成 *)
-  Open Scope string_scope.
-  Compute a2str R2str ex1.      (* 是否可以用Ltac或Coq插件将R常量表达式转换为字符串？ *)
-  Compute a2str R2str' ex1.     (* 遗留问题，要想办法处理掉实数的表示问题  *)
+  Compute a2str ex1.
 End test.
 
 (* 示例2 *)
@@ -202,7 +222,7 @@ Section test.
     (* 定义表达式的AST *)
     Let N : aexp :=
           let f1 := <{ T / (rho * {rpow D_p 4} * C_T) }> in
-          <{60 * {OP1 "sqrt" f1}}>.
+          <{{Rval "60"} * {OP1 "sqrt" f1}}>.
     Compute aeval N.            (* 这里展开了 sqrt，所以看起来复杂 *)
     Opaque sqrt. Eval cbv in aeval N. (* 当不展开 sqrt 时，表达式会简洁一些 *)
 
@@ -217,6 +237,6 @@ Section test.
     Proof. intros. cbv. ring. Qed.
 
     (* 生成C代码 *)
-    Compute a2str (fun _ => "0000") N. (* 同样是实数表示问题 *)
+    Compute a2str N.
   End formula1.
 End test.
