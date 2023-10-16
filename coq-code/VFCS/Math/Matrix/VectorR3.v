@@ -196,6 +196,20 @@ Section cv3cross.
           a.3 * b.1 - a.1 * b.3;
           a.1 * b.2 - a.2 * b.1]%R.
 
+  (* functional style, for C-code generation *)
+  Definition cv3crossFun (a b : cvec 3) : cvec 3 :=
+    f2cv (fun i =>
+            match i with
+            | 0 => a.2*b.3 - a.3*b.2
+            | 1 => a.3*b.1 - a.1*b.3
+            | 2 => a.1*b.2 - a.2*b.1
+            | _=> 0
+            end)%R.
+
+  (* These two definitions should equiv *)
+  Lemma cv3cross_cv3crossFun_equiv : forall a b : cvec 3, cv3cross a b == cv3crossFun a b.
+  Proof. intros. lma. Qed.
+
   Infix "×" := cv3cross : cvec_scope.
 
   #[export] Instance cv3corss_mor : Proper (meq ==> meq ==> meq) cv3cross.
