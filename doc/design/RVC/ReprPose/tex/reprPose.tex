@@ -17,7 +17,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%% 
 % 设置英文字体
-\usepackage{times}
+% \usepackage{times}
 % \usepackage{mathpazo}
 % \usepackage{fourier}
 % \usepackage{charter}
@@ -41,8 +41,25 @@
 \renewcommand{\algorithmicrequire}{ \textbf{Input:}}     % use Input in the format of Algorithm
 \renewcommand{\algorithmicensure}{ \textbf{Initialize:}} % use Initialize in the format of Algorithm
 \renewcommand{\algorithmicreturn}{ \textbf{Output:}}     % use Output in the format of Algorithm
-\usepackage{hyperref} %bookmarks
-\hypersetup{colorlinks, bookmarks, unicode} %unicode
+
+%%%%%%%%%%%%%%%%%%%%%%% 
+%% lstings for Source code
+\input{listings.setting}
+
+%%%%%%%%%%%%%%%%%%%%%%% 
+% 设置超链接，书签
+\usepackage[
+bookmarksnumbered=true,
+bookmarksopen=false,
+bookmarksopenlevel=1,
+colorlinks=true,  % it must be enabled to enable other color option
+citecolor=blue,
+filecolor=green,
+linkcolor=blue,
+urlcolor=red,
+pdfstartview=Fit
+]{hyperref}
+
 
 %%%%%%%%%%%%%%%%%%%%%%% 
 % 设置页眉、页脚
@@ -83,7 +100,7 @@
 \maketitle	
 
 \begin{abstract}
-本文以笔记的形式对位姿的相关概念和算法进行了梳理，以定理证明的形式进行了描述，为进一步的算法设计和软件实现提供了基础。
+  本文以笔记的形式对位姿的相关概念和算法进行了梳理，以定理证明的形式进行了描述，为进一步的算法设计和软件实现提供了基础。
 \end{abstract}
 
 \paragraph{Keyword:}位姿，Pose, Position, Orientation
@@ -121,18 +138,18 @@
   相对位姿是一个坐标系相对于另一个参考坐标系的位姿。
   坐标系的位姿用 $\xi$表示，相对位姿${}^A\xi_B$表示坐标系{B}相对于{A}的位姿。
   一个点的坐标向量可以用另一个不同的坐标系来表示，通过使用$\cdot$运算将相对位姿作用到该向量上。
-  多个三维坐标系与相对位姿的例子如图\ref{fig:multiple_frame_pose}。
-\begin{figure}[htbp]
-  \centerline{\includegraphics[width=0.9\textwidth]{multiple_frame_pose}}
-  \caption{多个三维坐标系与相对位姿的例子}
-  \label{fig:multiple_frame_pose}
-\end{figure}
-这些空间关系还可以用有向图来表示，如图\ref{fig:pose_directed_graph}。
-\begin{figure}[htbp]
-  \centerline{\includegraphics[width=0.9\textwidth]{pose_directed_graph}}
-  \caption{有向图表示的空间关系}
-  \label{fig:pose_directed_graph}
-\end{figure}
+  多个三维坐标系与相对位姿的例子如图\eqref{fig:multiple_frame_pose}。
+  \begin{figure}[htbp]
+    \centerline{\includegraphics[width=0.9\textwidth]{multiple_frame_pose}}
+    \caption{多个三维坐标系与相对位姿的例子}
+    \label{fig:multiple_frame_pose}
+  \end{figure}
+  这些空间关系还可以用有向图来表示，如图\ref{fig:pose_directed_graph}。
+  \begin{figure}[htbp]
+    \centerline{\includegraphics[width=0.9\textwidth]{pose_directed_graph}}
+    \caption{有向图表示的空间关系}
+    \label{fig:pose_directed_graph}
+  \end{figure}
   
 \item{\textbf{特殊欧式群}}
   特殊欧式群(special Euclidean group)，在二维和三维中分别记为SE(2)和SE(3)。
@@ -170,13 +187,290 @@
 % ##################################################################################################
 \section{二维情形}\label{sec:2D}
 
+对于二维世界（或称平面），我们非常熟悉。
+使用笛卡尔坐标系统，或带有两个正交轴（典型的记为$x$和$y$)的坐标系。
+平行于坐标轴的单位向量记为$\hat{\mathbf{x}}$和$\hat{\mathbf{y}}$。
+一个点用它的$x-$和$y-$坐标$(x,y)$来表示，或者作为一个约束向量
+$$\mathbf{p}=x\hat{\mathbf{x}}+y\hat{\mathbf{y}}$$
+
+如图\ref{fig:two_frame_2D}所示，给定了红色坐标系${B}$，我们要描述它关于蓝色坐标系${A}$的位姿。
+其中，${B}$的原点被移动了向量$t=(x,y)$，然后${B}$又逆时针旋转了$\theta$角。
+\begin{figure}[htbp]
+  \centerline{\includegraphics[width=0.6\textwidth]{two_frame_2D}}
+  \caption{平面上的任意两个坐标系}
+  \label{fig:two_frame_2D}
+\end{figure}
+一种方法是使用三维向量${}^A\xi_B\sim(x,y,\theta)$，其中符号$\sim$表示这两个表示等价。
+但是，这种表示不方便，因为两个位姿的复合$(x_1,y_1,\theta_1)\oplus(x_2,y_2,\theta_2)$是复杂的三角函数。
+我们将把问题分为两部分：旋转，然后平移。
+
+\subsection{二维中的朝向}
+\subsubsection{标准正交旋转矩阵(Orthonomal Rotation Matrix}
+
+如图\ref{fig:two_frame_2D}所示，任意点$P$可以相对于每个坐标系而表示。
+新建一个坐标系$\{V\}$，其坐标轴与$\{A\}$的平行，原点与$\{B\}$的相同，如图\ref{fig:two_frame_2D_V}所示。
+\begin{figure}[htbp]
+  \centerline{\includegraphics[width=0.6\textwidth]{two_frame_2D_V}}
+  \caption{辅助坐标系$\{V\}$}
+  \label{fig:two_frame_2D_V}
+\end{figure}
+
+点$P$相对于$\{V\}$和$\{B\}$可以用其分别的坐标轴单位向量来表示
+\begin{equation}\label{eq:pV}
+  {}^V\mathbf{p}={}^Vx\hat{\mathbf{x}}_V + {}^Vy\hat{\mathbf{y}}_V =
+  \begin{pmatrix}\hat{\mathbf{x}}_V&\hat{\mathbf{y}}_V\end{pmatrix}
+  \begin{pmatrix}{}^Vx\\{}^Vy\end{pmatrix}
+\end{equation}
+\begin{equation}\label{eq:pB}
+  {}^B\mathbf{p}={}^Bx\hat{\mathbf{x}}_B + {}^By\hat{\mathbf{y}}_B =
+  \begin{pmatrix}\hat{\mathbf{x}}_B&\hat{\mathbf{y}}_B\end{pmatrix}
+  \begin{pmatrix}{}^Bx\\{}^By\end{pmatrix}
+\end{equation}
+
+坐标系$\{B\}$可完全由它的两个正交轴所描述，而这两个轴的单位向量与坐标系$\{V\}$的坐标轴单位向量之间有如下关系
+\begin{align*}
+  \hat{\mathbf{x}}_B&=\cos\theta\hat{\mathbf{x}}_V + \sin\theta\hat{\mathbf{y}}_V\\
+  \hat{\mathbf{y}}_B&=-\sin\theta\hat{\mathbf{x}}_V + \cos\theta\hat{\mathbf{y}}_V
+\end{align*}
+其矩阵形式为
+\begin{equation}\label{eq:xyB_xyV}
+  \begin{pmatrix}\hat{\mathbf{x}}_B&\hat{\mathbf{y}}_B\end{pmatrix}=
+  \begin{pmatrix}\hat{\mathbf{x}}_V&\hat{\mathbf{y}}_V\end{pmatrix}
+  \begin{pmatrix}\cos\theta  & -\sin\theta\\\sin\theta & \cos\theta\end{pmatrix}
+\end{equation}
+将式\eqref{eq:xyB_xyV}带入\eqref{eq:pB}，得到如下形式
+\begin{equation}\label{eq:pB2}
+  {}^B\mathbf{p}={}^Bx\hat{\mathbf{x}}_B + {}^By\hat{\mathbf{y}}_B =
+  \begin{pmatrix}\hat{\mathbf{x}}_V&\hat{\mathbf{y}}_V\end{pmatrix}
+  \begin{pmatrix}\cos\theta  & -\sin\theta\\\sin\theta & \cos\theta\end{pmatrix}
+  \begin{pmatrix}{}^Bx\\{}^By\end{pmatrix}
+\end{equation}
+由于${}^V\mathbf{p}$和${}^B\mathbf{p}$实际上是同一个向量，所以\eqref{eq:pV}和\eqref{eq:pB2}的右侧是同一个向量，它们的系数相等。
+\begin{equation*}
+  \begin{pmatrix}{}^Vx\\{}^Vy\end{pmatrix}=
+  \begin{pmatrix}\cos\theta  & -\sin\theta\\\sin\theta & \cos\theta\end{pmatrix}
+  \begin{pmatrix}{}^Bx\\{}^By\end{pmatrix}
+\end{equation*}
+记作
+\begin{equation}\label{eq:pB2pV}
+  \begin{pmatrix}{}^Vx\\{}^Vy\end{pmatrix}=
+  {}^V\mathbf{R}_B\begin{pmatrix}{}^Bx\\{}^By\end{pmatrix},
+\end{equation}
+其中
+\begin{equation}\label{eq:RBV}
+  {}^V\mathbf{R}_B=
+  \begin{pmatrix}\cos\theta  & -\sin\theta\\\sin\theta & \cos\theta\end{pmatrix}
+\end{equation}
+
+式\eqref{eq:pB2pV}描述了如何将点从坐标系$\{B\}$转换到绕原点旋转后的坐标系$\{V\}$下。
+矩阵${}^V\mathbf{R}_B$称为一个旋转矩阵。
+
+矩阵${}^V\mathbf{R}_B$是一个二维旋转矩阵，具有一些特殊性质
+\begin{itemize}
+\item 它是正规的(orthonormal)，也称标准正交的，简称正交的(orthogonal)。
+  因为每一列是单位向量，并且列之间是正交的。
+\item 列向量定义了旋转后的坐标系$\{Y\}$在坐标系$\{X\}$下的轴向量。
+\item 它属于二维特殊正交群，即$\mathbf{R}\in\mathbf{SO}(2)\subset\mathbb{R}^2$。
+  这意味着，任意两个该群的矩阵相乘仍在群中，其逆也在群中。
+\item 它的行列式是$+1$，这表明向量在变换之后长度步改变。即，$\|{}^Y\mathbf{p}\|=\|{}^X\mathbf{p}\|, \forall\theta$
+\item 其逆矩阵等于其转置，即，$\mathbf{R}^{-1}=\mathbf{R}^{T}$。
+\end{itemize}
+
+对\eqref{eq:RBV}变换，得到
+\begin{equation*}
+  \begin{pmatrix}{}^Bx\\{}^By\end{pmatrix}=
+  \left({}^V\mathbf{R}_B\right)^{-1}\begin{pmatrix}{}^Vx\\{}^Vy\end{pmatrix}=
+  \left({}^V\mathbf{R}_B\right)^{T}\begin{pmatrix}{}^Vx\\{}^Vy\end{pmatrix}=
+  {}^B\mathbf{R}_V\begin{pmatrix}{}^Vx\\{}^Vy\end{pmatrix}
+\end{equation*}
+可知逆矩阵与交换矩阵上下标是一样的，即$\left({}^V\mathbf{R}_B\right)^{-1}={}^B\mathbf{R}_V$。
+另外，很容易验证$\mathbf{R}(-\theta)=\mathbf{R}(\theta)^T$。
+
+一个有趣的观察是，我们不使用一个标量的角度，而是使用由4个元素构成的$2\times2$矩阵。
+尽管这些元素并不独立。
+每列都具有单位大小提供了2个约束，列是正交的提供了另一个约束，于是4个元素在3个约束下必然是一个独立的值。
+旋转矩阵是非最小表示(nonminimum representation)的一个例子，其缺点是增加了存储空间，而优点是提供了可组合性。
+
+在MATLAB中做一些数值实验。
+\begin{matlab}
+  % 创建了一个旋转矩阵
+  R = rot2(0.2)
+  % 行列式是1
+  det(R)
+  % 相乘仍然是旋转矩阵
+  det (R*R)
+  % 还支持符号数学
+  syms theta
+  R = rot2(theta)
+  simplify(R*R)
+  simplify(det(R))
+\end{matlab}
+
+\subsubsection{矩阵指数}
+二维中的斜对称矩阵(skew-symmetric matrix)是指满足$-\mathbf{M}=\mathbf{M}^T$的矩阵，其一般形式为
+\begin{equation}
+  [\omega]_{\times}=
+  \begin{bmatrix}0&-\omega\\\omega&0\end{bmatrix},
+\end{equation}
+其中，$\omega\in\mathbb{R}$。
+
+在MATLAB中做一些数值实验。
+\begin{matlab}
+  % 数值 -> 斜对称阵
+  R=skew(2)
+  % 斜对称阵 -> 数值
+  x=vex(R)
+\end{matlab}
+
+考虑一个$0.3$弧度的纯旋转表示为旋转矩阵 \verb|R=rot2(0.3)|。
+使用矩阵对数(logarithm of the matrix)可以求得另一个矩阵 \verb|S=logm(R)|，
+该矩阵是一个斜对称矩阵，它对应于实数$0.3$。
+这种巧合来源于李群（Lie group）理论。
+
+矩阵指数的逆是矩阵对数（exponentiation），使用\verb|expm(S)|可得到与\verb|R|相同的结果。
+事实上，在RVC中\verb|rot2|被定义为\verb|rot2(x)=expm(skew(x))|。
+
+矩阵指数的计算公式为：
+$$
+\mathtt{expm}(A)=I+A+A^2/2!+A^3/3!+\ldots
+$$
+形式上，写作
+$$
+\mathbf{R}=e^{[\theta]_{\times}}\in\mathbf{SO}(2)
+$$
+因为指数函数在x=的幂级数公式为
+$$
+e^{x}=\sum_{n=0}^{\infty}\frac{x^n}{n!}=1+x+\frac{x^2}{2!}+\ldots
+$$
+
+提示，MATLAB默认实数显示4位小数，在预设/命令行窗口/文本显式/数值格式，可把short修改为long来显示15位小数。
+
+\subsection{二维中的位姿}
+
+\subsubsection{齐次变换矩阵}
+
+一个向量$\mathbf{p}=(x,y)$写成齐次形式为$\tilde{\mathbf{p}}\in\mathbb{P}^2,\tilde{\mathbf{p}}=(x_1,x_2,x_3)$，
+其中$x=x_1/x_3, y=x_2/x_3, x_3\neq0$。
+其维数增加了1，并且一个平面点表示为了一个三维向量。
+要将一个点转换为齐次形式，通常附加一个元素1得到$\tilde{\mathbf{p}}=(x,y,1)$。符号$\tilde{}$表明该向量是齐次的。
+齐次向量有一个重要性质，对于任意非零实数$\lambda$，$\tilde{\mathbf{p}}$等价于$\lambda\tilde{\mathbf{p}}$，
+记作$\tilde{\mathbf{p}}\simeq\lambda\tilde{\mathbf{p}}$。
+此处等价的含义是，$\tilde{\mathbf{p}}$表示了平面上相同的点，无需考虑整体的缩放因子。
+
+现在考虑坐标原点的平移。
+在图\ref{fig:two_frame_2D}中，由于$\{V\}$和$\{A\}$平行，所以使用向量加法就能得到$P$在$\{A\}$中的坐标。
+\begin{align*}
+  \begin{pmatrix}{}^Ax\\{}^Ay\end{pmatrix}
+  &=\begin{pmatrix}{}^Vx\\{}^Vy\end{pmatrix}+\begin{pmatrix}x\\y\end{pmatrix}=\\
+  &=\begin{pmatrix}\cos\theta  & -\sin\theta\\\sin\theta & \cos\theta\end{pmatrix}
+    \begin{pmatrix}{}^Bx\\{}^By\end{pmatrix}+\begin{pmatrix}x\\y\end{pmatrix}\\
+  &=\begin{pmatrix}\cos\theta  & -\sin\theta & x\\\sin\theta & \cos\theta & y\end{pmatrix}
+    \begin{pmatrix}{}^Bx\\{}^By\\1\end{pmatrix}
+\end{align*}
+更紧凑的形式如下
+\begin{equation}
+  \begin{pmatrix}{}^Ax\\{}^Ay\\1\end{pmatrix}=
+  \begin{pmatrix}{}^A\mathbf{R}_B & \mathbf{t}\\\mathbf{0}_{1\times2}&1\end{pmatrix}
+  \begin{pmatrix}{}^Bx\\{}^By\\1\end{pmatrix}
+\end{equation}
+其中，$\mathbf{t}=(x,y)$是坐标系的平移，${}^A\mathbf{R}_B$是朝向。
+注意，${}^A\mathbf{R}_B={}^V\mathbf{R}_B$，因为$\{A\}$和$\{V\}$是平行的。
+现在，$P$点的坐标向量成为了齐次形式，并记作
+\begin{equation}
+  {}^A\tilde{\mathbf{p}}=
+  \begin{pmatrix}{}^A\mathbf{R}_B & \mathbf{t}\\\mathbf{0}_{1\times2}&1\end{pmatrix}
+  {}^B\tilde{\mathbf{p}}={}^A\mathbf{T}_B{}^B\tilde{\mathbf{p}}
+\end{equation}
+其中，${}^A\mathbf{T}_B$表示一个齐次变换，称为齐次变换矩阵(Homogeneous Transformation Matrix)。
+该矩阵有一个特别的结构，属于二维特殊欧式群，即$\mathbf{T}\in\mathbf{SE}(2)\subset\mathbb{R}^{3\times3}$。
+${}^A\mathbf{T}_B$表示了平移和朝向，或说相对位姿。
+这通常称为刚体运动（rigid-body motion）。
+
+相对位姿$\xi$的抽象表示现在有了具体的表示。
+$\xi\sim\mathbf{T}\in\mathbf{SE}(2)$，其中
+$$
+\mathbf{T}=\begin{pmatrix}\cos\theta&-\sin\theta&x\\\sin\theta&\cos\theta&y\\0&0&1\end{pmatrix}
+$$
+即，
+位姿的复合运算映射为矩阵乘法，即$\mathbf{T}_1\oplus\mathbf{T}_2\mapsto\mathbf{T}_1\mathbf{T}_2$。
+$$
+\mathbf{T}_1\mathbf{T}_2
+=\begin{pmatrix}\mathbf{R}_1&\mathbf{t}_1\\\mathbf{0}_{1\times2}&1\end{pmatrix}
+\begin{pmatrix}\mathbf{R}_2&\mathbf{t}_2\\\mathbf{0}_{1\times2}&1\end{pmatrix}
+=\begin{pmatrix}\mathbf{R}_1\mathbf{R}_2&\mathbf{t}_1+\mathbf{R}_1\mathbf{t}_2\\\mathbf{0}_{1\times2}&1\end{pmatrix}
+$$
+位姿的零元对应于单位阵，即$0\mapsto\mathbf{I}$，逆元对应于逆矩阵，即$\ominus\mathbf{T}\mapsto\mathbf{T}^{-1}$
+$$
+\mathbf{T}^{-1}
+=\begin{pmatrix}\mathbf{R}&\mathbf{t}\\\mathbf{0}_{1\times2}&1\end{pmatrix}^{-1}
+=\begin{pmatrix}\mathbf{R}^T&-\mathbf{R}^T\mathbf{t}\\\mathbf{0}_{1\times2}&1\end{pmatrix}
+$$
+对于一个由$\tilde{\mathbf{p}}\in\mathbb{P}^2$描述点，坐标向量变换对应于矩阵左乘，
+即$\mathbf{T}\cdot\tilde{\mathbf{p}}\mapsto\mathbf{T}\tilde{\mathbf{p}}$。
+
+在MATLAB中做一些数值实验。
+\begin{matlab}
+  % 创建一个齐次变换，先平移，再旋转。
+  T1 = transl2(1,2) * trot2(30, 'deg')
+  plotvol([0 5 0 5]); trplot2(T1, 'frame', '1', 'color', 'b')
+  % 创建一个齐次变换，仅平移。
+  T2 = transl2(2,1)
+  trplot2(T2, 'frame', '2', 'color', 'r')
+  % 两个齐次变换的复合
+  T3 = T1*T2
+  trplot2(T3, 'frame', '3', 'color', 'g')
+  % 两个齐次变换的复合
+  T4 = T2*T1
+  trplot2(T4, 'frame', '4', 'color', 'c')
+  % 给定世界坐标系中的一个点
+  P = [3;2];
+  plot_point(P, 'label', 'P', 'solid', 'ko')
+  % 计算相对于 {1} 的坐标，详见后面的分析
+  P1 = inv(T1) * [P; 1]
+  % 齐次坐标(homo*) <-> 欧几里得点坐标(eul*)，使用 h2e() 或 e2h()
+  h2e(inv(T1) * e2h(P))
+\end{matlab}
+为什么\verb|P1 = inv(T1) * [P; 1]|？
+首先，已知 ${}^0\mathbf{p}={}^0\xi_1\cdot{}^1\mathbf{p}$，其中，T1 是将$\{0\}$中的点映射到$\{1\}$，即${}^0\xi_1$。
+所以，${}^1\mathbf{p}={}^1\xi_0\cdot{}^0\mathbf{p}=({}^0\xi_1)^{-1}\cdot{}^0\mathbf{p}=(T1)^{-1}\cdot{}^0\mathbf{p}$
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\appendix
+\section{RVC toolbox}
+安装Matlab toolbox。
+从地址 \href{https://petercorke.com/RVC}{RVC toolbox}下载到 rvctools.zip，然后在该目录使用 \verb|addpath rvctools|命令即可安装。
+然后使用\verb|startupp_rvc|即可启动。
+
+
+
 % \begin{table}[htbp]
 %   \caption{Verilog files of the RISC-V Kernel} \label{tab:files}
 %   \centering
 %   \addtolength{\tabcolsep}{-0mm} % 控制列间距
 %   \begin{tabular}{rrl}
-%     \toprule[0.75pt]
-%     File name & Lines & Description \\
+    %     \toprule[0.75pt]
+    %     File name & Lines & Description \\
 %     \midrule[0.5pt]	
 %     defines.v 		& 140 & global configurations and parameters\\
 %     S011HD1P\_X32Y2D128\_BW.v & 32 & RAM behavior module \\
