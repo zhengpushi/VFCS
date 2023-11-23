@@ -86,6 +86,10 @@ Proof. simp_proper. intros; subst; ring. Qed.
 Lemma Qcdiv_wd : Proper (eq ==> eq ==> eq) Qcdiv.
 Proof. simp_proper. intros; subst; ring. Qed.
 
+Hint Resolve
+  Qcplus_wd Qcopp_wd Qcminus_wd Qcmult_wd Qcinv_wd Qcdiv_wd
+  : wd.
+
 
 (* ######################################################################### *)
 (** ** Others *)

@@ -64,6 +64,7 @@
 Require Export Lia Lra Reals.
 Require Export ZExt.
 Require Export Basic.
+Require Import Hierarchy.
 
 Open Scope R_scope.
 
@@ -93,6 +94,10 @@ Proof. simp_proper. intros; subst; ring. Qed.
 
 Lemma Rdiv_wd : Proper (eq ==> eq ==> eq) Rdiv.
 Proof. simp_proper. intros; subst; ring. Qed.
+
+Hint Resolve
+  Rplus_wd Ropp_wd Rminus_wd Rmult_wd Rinv_wd Rdiv_wd
+  : wd.
 
 
 (* ######################################################################### *)
@@ -243,7 +248,7 @@ Ltac ra :=
 (* ######################################################################### *)
 (** * Reqb,Rleb,Rltb: Boolean comparison of R *)
 
-Definition Reqb (r1 r2 : R) : bool := Basic.Teqb r1 r2.
+Definition Reqb (r1 r2 : R) : bool := Teqb r1 r2.
 Definition Rleb (r1 r2 : R) : bool := if Rle_lt_dec r1 r2 then true else false.
 Definition Rltb (r1 r2 : R) : bool := if Rlt_le_dec r1 r2 then true else false.
 Infix "=?"  := Reqb : R_scope.

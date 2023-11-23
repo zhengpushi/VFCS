@@ -668,30 +668,29 @@ Section fun_op_props.
          unfold fzero,fone,fconst in *. field. intro. Abort.
 
   (** Monoid structure over (Rfun,+,0) *)
-  Global Instance AMonoid_RfunAdd : AMonoid fadd fzero eq.
+  Global Instance AMonoid_RfunAdd : AMonoid fadd fzero.
   Proof.
     split_intro; intros; subst; auto.
     apply fadd_assoc. apply fadd_0_l. apply fadd_0_r. apply fadd_comm.
   Qed.
 
   (** Monoid structure over (Rfun,*,1) *)
-  Global Instance AMonoid_RfunMul : AMonoid fmul fone eq.
+  Global Instance AMonoid_RfunMul : AMonoid fmul fone.
   Proof.
     split_intro; intros; subst; auto.
     apply fmul_assoc. apply fmul_1_l. apply fmul_1_r. apply fmul_comm.
   Qed.
 
   (** Group structure over (Rfun,+,0,-) *)
-  Global Instance Group_RfunAdd : Group fadd fzero fopp eq.
+  Global Instance Group_RfunAdd : Group fadd fzero fopp.
   Proof.
     constructor. apply AMonoid_RfunAdd.
     constructor. apply fadd_opp_l.
     constructor. apply fadd_opp_r.
-    apply fadd_eq_mor. apply fopp_eq_mor.
   Qed.
 
   (** Abelian group structure over (Rfun,+,0,-) *)
-  Global Instance AGroup_RfunAdd : AGroup fadd fzero fopp eq.
+  Global Instance AGroup_RfunAdd : AGroup fadd fzero fopp.
   Proof.
     constructor. apply Group_RfunAdd. apply AMonoid_RfunAdd.
     constructor; apply fadd_comm.
@@ -703,7 +702,7 @@ Section fun_op_props.
   (* all: apply fadd_comm. Qed. *)
 
   (** Ring structure *)
-  Global Instance Ring_Rfun : Ring fadd fzero fopp fmul fone eq.
+  Global Instance Ring_Rfun : Ring fadd fzero fopp fmul fone.
   Proof.
     constructor. apply AGroup_RfunAdd. apply AMonoid_RfunMul.
     constructor; apply fmul_add_distr_l. constructor; apply fmul_add_distr_r.
@@ -711,11 +710,12 @@ Section fun_op_props.
 
 End fun_op_props.
 
-Add Ring ring_inst : (make_ring_theory Ring_Rfun).
+Add Ring ring_inst : (@make_ring_theory _ _ _ _ _ _ Ring_Rfun).
 
 Section test.
   Goal forall u v w : tpRFun, u - v * (u - w) = w * v - u * v + u.
     intros. unfold fsub. ring. Qed.
+  
 End test.
 
 (** An example showed that "R->R" and "tpRfun" are different in Coq when using ring 
@@ -733,12 +733,12 @@ Section test.
 End test.
 
 (** add this declaration to enable ring support over "R->R" type *)
-Add Ring ring_inst : (make_ring_theory Ring_Rfun (T:=(R->R))).
-
+Add Ring ring_inst : (@make_ring_theory (R->R) _ _ _ _ _ Ring_Rfun).
 Section test.
+  (* Now, we can use "ring" tactic successfully  *)
   Goal let f : R -> R := fone in f = f.
-    simpl. Fail ring. (* Todo: why still fail?? *)
-    auto.
+    simpl. Fail ring.
+    unfold fone. unfold fconst. ring.
   Qed.
 End test.
 

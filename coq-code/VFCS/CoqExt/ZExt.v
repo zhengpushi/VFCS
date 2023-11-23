@@ -11,6 +11,14 @@
 Require Export ZArith.
 Open Scope Z.
 
+(* ######################################################################### *)
+(** * Mathematical Structure *)
+
+(** *** well-defined *)
+Hint Resolve
+  Z.add_wd Z.opp_wd Z.sub_wd Z.mul_wd (* Z *)
+  : wd.
+
 
 (* ######################################################################### *)
 (** * Conversion between Z and other types *)

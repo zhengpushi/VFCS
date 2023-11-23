@@ -9,7 +9,7 @@
  *)
 
 Require Export NatExt.
-Require Export Basic Hierarchy.
+Require Export Basic HierarchySetoid.
 Require RExt.
 
 Generalizable Variable T Teq Tadd Topp Tmul Tinv.
@@ -108,7 +108,7 @@ Section seqeq.
   Qed.
   
   (** seqeq is decidable  *)
-  Global Instance seqeq_dec {Dec_Teq : Dec Teq} : forall n, Dec (seqeq n).
+  Global Instance seqeq_dec {HDec : @Dec T} : forall n, @Dec (seqeq n).
   Proof.
     induction n; constructor; intros.
     - left. unfold seqeq. easy.

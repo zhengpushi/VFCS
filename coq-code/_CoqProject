@@ -15,6 +15,7 @@
 # ====== CoqExt ======================================================
 VFCS/CoqExt/Basic.v
 VFCS/CoqExt/FuncExt.v
+# VFCS/CoqExt/HierarchySetoid.v
 VFCS/CoqExt/Hierarchy.v
 VFCS/CoqExt/BoolExt.v
 VFCS/CoqExt/NatExt.v
@@ -24,8 +25,9 @@ VFCS/CoqExt/QcExt.v
 VFCS/CoqExt/RExt.v
 VFCS/CoqExt/StrExt.v
 VFCS/CoqExt/TupleExt.v
-VFCS/CoqExt/ListSetoidExt.v
-VFCS/CoqExt/SequenceSetoid.v
+# VFCS/CoqExt/ListSetoidExt.v
+VFCS/CoqExt/ListExt.v
+# VFCS/CoqExt/SequenceSetoid.v
 VFCS/CoqExt/MyExtrOCamlR.v
 
 # ====== Math ========================================================
@@ -38,28 +40,51 @@ VFCS/Math/Calculus/Calculus.v
 
 VFCS/Math/Ratan2.v
 
-VFCS/Math/Matrix/Matrix.v
-VFCS/Math/Matrix/ElementType.v
-VFCS/Math/Matrix/MatrixModule.v
-VFCS/Math/Matrix/MatrixNat.v
-VFCS/Math/Matrix/MatrixZ.v
-VFCS/Math/Matrix/MatrixQ.v
-VFCS/Math/Matrix/MatrixQc.v
-VFCS/Math/Matrix/MatrixR.v
-VFCS/Math/Matrix/MatrixRFun.v
-VFCS/Math/Matrix/MatrixC.v
-VFCS/Math/Matrix/Vector.v
-VFCS/Math/Matrix/VectorModule.v
-VFCS/Math/Matrix/VectorNat.v
-VFCS/Math/Matrix/VectorZ.v
-VFCS/Math/Matrix/VectorQ.v
-VFCS/Math/Matrix/VectorQc.v
-VFCS/Math/Matrix/VectorR.v
-VFCS/Math/Matrix/VectorRFun.v
-VFCS/Math/Matrix/VectorC.v
-VFCS/Math/Matrix/VectorR2.v
-VFCS/Math/Matrix/VectorR3.v
-VFCS/Math/Matrix/VectorR4.v
+# VFCS/Math/Matrix/Matrix.v
+# VFCS/Math/Matrix/ElementType.v
+# VFCS/Math/Matrix/MatrixModule.v
+# VFCS/Math/Matrix/MatrixNat.v
+# VFCS/Math/Matrix/MatrixZ.v
+# VFCS/Math/Matrix/MatrixQ.v
+# VFCS/Math/Matrix/MatrixQc.v
+# VFCS/Math/Matrix/MatrixR.v
+# VFCS/Math/Matrix/MatrixRFun.v
+# VFCS/Math/Matrix/MatrixC.v
+# VFCS/Math/Matrix/Vector.v
+# VFCS/Math/Matrix/VectorModule.v
+# VFCS/Math/Matrix/VectorNat.v
+# VFCS/Math/Matrix/VectorZ.v
+# VFCS/Math/Matrix/VectorQ.v
+# VFCS/Math/Matrix/VectorQc.v
+# VFCS/Math/Matrix/VectorR.v
+# VFCS/Math/Matrix/VectorRFun.v
+# VFCS/Math/Matrix/VectorC.v
+# VFCS/Math/Matrix/VectorR2.v
+# VFCS/Math/Matrix/VectorR3.v
+# VFCS/Math/Matrix/VectorR4.v
+
+VFCS/Math/MatrixList/Matrix.v
+# VFCS/Math/MatrixList/ElementType.v
+# VFCS/Math/MatrixList/MatrixModule.v
+# VFCS/Math/MatrixList/MatrixNat.v
+# VFCS/Math/MatrixList/MatrixZ.v
+# VFCS/Math/MatrixList/MatrixQ.v
+# VFCS/Math/MatrixList/MatrixQc.v
+# VFCS/Math/MatrixList/MatrixR.v
+# VFCS/Math/MatrixList/MatrixRFun.v
+# VFCS/Math/MatrixList/MatrixC.v
+# VFCS/Math/MatrixList/Vector.v
+# VFCS/Math/MatrixList/VectorModule.v
+# VFCS/Math/MatrixList/VectorNat.v
+# VFCS/Math/MatrixList/VectorZ.v
+# VFCS/Math/MatrixList/VectorQ.v
+# VFCS/Math/MatrixList/VectorQc.v
+# VFCS/Math/MatrixList/VectorR.v
+# VFCS/Math/MatrixList/VectorRFun.v
+# VFCS/Math/MatrixList/VectorC.v
+# VFCS/Math/MatrixList/VectorR2.v
+# VFCS/Math/MatrixList/VectorR3.v
+# VFCS/Math/MatrixList/VectorR4.v
 
 VFCS/Math/LinearAlgebra/PermutationExt.v
 

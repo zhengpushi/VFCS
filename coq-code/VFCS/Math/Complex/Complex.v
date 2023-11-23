@@ -29,13 +29,13 @@ Section general_useful_props.
   Qed.
 
   (** Inequality of two pairs, iff at least one of components are not equal. *)
-  Lemma prod_neq_iff : forall {A B} {ADec:Dec (@eq A)} {BDec:Dec (@eq B)}
+  Lemma prod_neq_iff : forall {A B} {ADec:@Dec A} {BDec:@Dec B}
                          (z1 z2 : A * B),
       z1 <> z2 <-> fst z1 <> fst z2 \/ snd z1 <> snd z2.
   Proof.
     intros A B HA HB (a1,b1) (a2,b2). split; intros H; simpl in *.
-    - destruct (a1 ==? a2), (b1 ==? b2); subst; auto.
-    - destruct (a1 ==? a2), (b1 ==? b2); subst; auto.
+    - destruct (dec a1 a2), (dec b1 b2); subst; auto.
+    - destruct (dec a1 a2), (dec b1 b2); subst; auto.
       all: intro H1; inv H1; destruct H; auto.
   Qed.
 
@@ -208,10 +208,10 @@ Section def.
   Qed.
 
   (** Equality on C is decidable *)
-  Global Instance Dec_Complex : Dec (@eq C).
+  Global Instance Dec_Complex : @Dec C.
   Proof.
     constructor. intros (a1,b1) (a2,b2).
-    destruct (a1 ==? a2), (b1 ==? b2); subst.
+    destruct (dec a1 a2), (dec b1 b2); subst.
     - left; auto.
     - right; intro; inv H; easy.
     - right; intro; inv H; easy.
@@ -229,8 +229,8 @@ Section def.
   Proof.
     intros (a1,b1) (a2,b2); simpl.
     split; intros.
-    - destruct (a1 ==? a2), (b1 ==? b2); subst; auto.
-    - destruct (a1 ==? a2), (b1 ==? b2); subst; auto.
+    - destruct (dec a1 a2), (dec b1 b2); subst; auto.
+    - destruct (dec a1 a2), (dec b1 b2); subst; auto.
       + intro H1; inv H1. destruct H; auto.
       + intro H1; inv H1. destruct H; auto.
       + intro H1; inv H1. destruct H; auto.
@@ -414,7 +414,7 @@ Section Cnorm.
   (** |z| > 0 -> z <> 0 *)
   Lemma Cnorm_gt_not_eq : forall z, C|z| > R0 -> z <> 0.
   Proof.
-    intros. destruct (z ==? 0); auto.
+    intros. destruct (dec z 0); auto.
     subst. rewrite Cnorm_C0 in H. lra.
   Qed.
 
@@ -447,7 +447,7 @@ Section Cnorm.
   Lemma Cre_le_Cnorm : forall z : C, R|z.a| <= C|z|.
   Proof.
     Csimpl. unfold Cnorm,Cnorm2; simpl.
-    destruct (b ==? R0).
+    destruct (dec b R0).
     - subst. autorewrite with R. lra.
     - apply Rle_trans with (sqrt (a * a)).
       autorewrite with R. lra.
@@ -458,7 +458,7 @@ Section Cnorm.
   Lemma Cim_le_Cnorm : forall z : C, R|z.b| <= C|z|.
   Proof.
     Csimpl. unfold Cnorm,Cnorm2; simpl.
-    destruct (a ==? R0).
+    destruct (dec a R0).
     - subst. autorewrite with R. lra.
     - apply Rle_trans with (sqrt (b * b)).
       autorewrite with R. lra.
@@ -714,7 +714,7 @@ Section Cpow.
   Lemma C0_pow : forall n, (0 < n)%nat -> 0 ^ n = 0.
   Proof.
     induction n; intros; auto. lia.
-    destruct (n ==? 0%nat).
+    destruct (dec n 0%nat).
     - rewrite e. Ceq.
     - simpl. rewrite IHn. Ceq. lia.
   Qed.
@@ -899,13 +899,13 @@ Proof.
   intro; intros. rewrite H; easy.
 Qed.
 
-Global Instance Ring_C : Ring Cadd 0 Copp Cmul 1 eq.
+Global Instance Ring_C : Ring Cadd 0 Copp Cmul 1.
 Proof. split_intro; intros; subst; try ring. Qed.
 
-Global Instance Field_C : Field Cadd 0 Copp Cmul 1 Cinv eq.
+Global Instance Field_C : Field Cadd 0 Copp Cmul 1 Cinv.
 Proof.
   constructor. apply Ring_C.
-  intros. field. auto. apply C1_neq_C0. apply Cinv_eq_proper.
+  intros. field. auto. apply C1_neq_C0.
 Qed.
 
 
@@ -1436,7 +1436,7 @@ Proof.
   unfold CmultTrigo, Ctrigo.
   rewrite cos_plus, sin_plus. unfold Ccmul.
   (* 是否为复数零来分类讨论 *)
-  destruct (z1 ==? 0), (z2 ==? 0); subst; Ceq;
+  destruct (dec z1 0), (dec z2 0); subst; Ceq;
     repeat rewrite Cnorm_C0_eq0; autorewrite with R; auto.
   (*   - autorewrite with R; auto. *)
 
@@ -1461,7 +1461,7 @@ Proof.
   intros. unfold CdivTrigo, Ctrigo.
   rewrite cos_minus, sin_minus. unfold Ccmul. simpl.
   (* 是否为复数零来分类讨论 *)
-  destruct (z1 ==? 0), (z2 ==? 0);
+  destruct (dec z1 0), (dec z2 0);
     subst; rewrite ?Cnorm_C0_eq0; unfold Cdiv.
   - destruct H. auto.
     (*   - rewrite Cmul_0_l. ring_simplify. unfold Rdiv, R_R_to_C.  *)

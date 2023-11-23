@@ -22,6 +22,12 @@ Open Scope Q.
 (* Global Instance Comm_QMul : Commutative Qmult Qeq. *)
 (* constructor. intros; ring. Qed. *)
 
+(** *** well-defined  *)
+Hint Resolve
+  Qplus_comp Qopp_comp Qminus_comp Qmult_comp Qinv_comp Qdiv_comp (* Q *)
+  : wd.
+
+
 (* ######################################################################### *)
 (** ** Convertion between Q and other types *)
 

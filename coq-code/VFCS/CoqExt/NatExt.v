@@ -15,6 +15,16 @@ Require Export PeanoNat.
 Require Export Lia.
 
 
+
+(* ######################################################################### *)
+(** * Mathematical Structure *)
+
+(** *** well-defined *)
+Hint Resolve
+  Nat.add_wd Nat.mul_wd  (* nat *)
+  : wd.
+
+
 (* ######################################################################### *)
 (** * More properties for nat *)
 

@@ -25,8 +25,8 @@
  *)
 
 
-Require Export Matrix.
-Require Export ElementType.
+Require Export Matrix.Matrix.
+Require Export Matrix.ElementType.
 
 
 (* ######################################################################### *)

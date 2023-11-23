@@ -8,7 +8,7 @@
   date      : 2023.04
  *)
 
-Require Export Matrix.
+Require Export Matrix.Matrix.
 
 
 (* ======================================================================= *)
