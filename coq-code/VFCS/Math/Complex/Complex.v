@@ -8,7 +8,7 @@
   date      : 2022.06
  *)
 
-Require Export AlgebraStructure.
+Require Export Hierarchy.
 Require Export RExt.
 Require Export Lra.
 

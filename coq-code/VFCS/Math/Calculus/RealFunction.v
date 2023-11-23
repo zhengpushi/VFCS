@@ -15,7 +15,7 @@
 
 (* Require Export FunctionalExtensionality. *)
 (* Require Export BasicConfig. *)
-Require Export AlgebraStructure.
+Require Export Hierarchy.
 Require Export RExt.
 
 Open Scope R_scope.

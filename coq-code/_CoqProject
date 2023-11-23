@@ -15,7 +15,7 @@
 # ====== CoqExt ======================================================
 VFCS/CoqExt/Basic.v
 VFCS/CoqExt/FuncExt.v
-VFCS/CoqExt/AlgebraStructure.v
+VFCS/CoqExt/Hierarchy.v
 VFCS/CoqExt/BoolExt.v
 VFCS/CoqExt/NatExt.v
 VFCS/CoqExt/ZExt.v
@@ -24,8 +24,8 @@ VFCS/CoqExt/QcExt.v
 VFCS/CoqExt/RExt.v
 VFCS/CoqExt/StrExt.v
 VFCS/CoqExt/TupleExt.v
-VFCS/CoqExt/ListExt.v
-VFCS/CoqExt/Sequence.v
+VFCS/CoqExt/ListSetoidExt.v
+VFCS/CoqExt/SequenceSetoid.v
 VFCS/CoqExt/MyExtrOCamlR.v
 
 # ====== Math ========================================================
@@ -87,3 +87,4 @@ VFCS/FCS/Propulsion/Q4.v
 VFCS/FCS/AttitudeRepr/rvctool.v
 VFCS/FCS/AttitudeRepr/eulerangle.v
 
+VFCS/FCS/AttitudeRepr/RVC/PoseInterface.v

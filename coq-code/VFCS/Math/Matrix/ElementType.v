@@ -19,7 +19,7 @@
 *)
 
 Require NatExt ZExt QExt QcExt RExt RealFunction Complex.
-Require Export AlgebraStructure.
+Require Export Hierarchy.
 
 
 (* ######################################################################### *)

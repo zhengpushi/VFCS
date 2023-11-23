@@ -25,7 +25,7 @@
      eq version, for simplicity
  *)
 
-Require Export AlgebraStructure.
+Require Export Hierarchy.
 Require Export NatExt.
 Require Export List SetoidList. Export ListNotations.
 

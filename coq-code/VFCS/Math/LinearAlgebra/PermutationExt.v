@@ -14,7 +14,6 @@ This file is part of CoqExt. It is distributed under the MIT
  *)
 
 Require Import NatExt.
-Require Import ListExt.
 Require Import Matrix.
 Require Import Vector.
 

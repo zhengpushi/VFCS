@@ -9,7 +9,7 @@
  *)
 
 Require Export NatExt.
-Require Export Basic AlgebraStructure.
+Require Export Basic Hierarchy.
 Require RExt.
 
 Generalizable Variable T Teq Tadd Topp Tmul Tinv.

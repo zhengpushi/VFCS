@@ -20,8 +20,8 @@
  *)
 
 
-Require Export TupleExt AlgebraStructure Sequence.
-Require Export ListExt.
+Require Export TupleExt Hierarchy SequenceSetoid.
+Require Export ListSetoidExt.
 
 
 Generalizable Variable T Teq Tadd Topp Tmul Tinv.
@@ -108,6 +108,19 @@ Section meq.
   Proof. intros. rewrite m2f_mor; auto. easy. Qed.
   
 End meq.
+
+(* ======================================================================= *)
+(** ** Convenient but a bit dangerous Axiom, for Leibniz Equality *)
+Section meq_axiom.
+
+  (* We consider two matrix is Leibniz equal, if and only if they are meq.
+     Note that, it shouldn't be used to get a conclusion that two sequences
+     are equal if their top N elements equal, it's dangerous.
+     This axiom is just for convenient to express the equality of two matrices.
+   *)
+  Axiom meq_axiom : forall {T r c} (m n : @mat T r c), m = n <-> meq (Teq:=eq) m n.
+  
+End meq_axiom.
 
 
 (* ======================================================================= *)
