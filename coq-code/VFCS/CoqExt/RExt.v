@@ -62,7 +62,7 @@
 
 
 Require Export Lia Lra Reals.
-Require Export ZExt.
+Require Import ZExt QExt QcExt.
 Require Export Basic.
 Require Import Hierarchy.
 
@@ -248,7 +248,7 @@ Ltac ra :=
 (* ######################################################################### *)
 (** * Reqb,Rleb,Rltb: Boolean comparison of R *)
 
-Definition Reqb (r1 r2 : R) : bool := Teqb r1 r2.
+Definition Reqb (r1 r2 : R) : bool := Aeqb r1 r2.
 Definition Rleb (r1 r2 : R) : bool := if Rle_lt_dec r1 r2 then true else false.
 Definition Rltb (r1 r2 : R) : bool := if Rlt_le_dec r1 r2 then true else false.
 Infix "=?"  := Reqb : R_scope.
@@ -260,14 +260,14 @@ Infix ">=?" := (fun x y => y <=? x) : R_scope.
 (** Reflection of (=) and (=?) *)
 Hint Resolve eq_refl : bdestruct.
 Lemma Reqb_true : forall x y, x =? y = true <-> x = y.
-Proof. apply Teqb_true. Qed.
+Proof. apply Aeqb_true. Qed.
 
 Lemma Reqb_false : forall x y, x =? y = false <-> x <> y.
-Proof. apply Teqb_false. Qed.
+Proof. apply Aeqb_false. Qed.
     
 Lemma Reqb_reflect : forall x y, reflect (x = y) (x =? y).
 Proof.
-  intros. unfold Reqb,Teqb. destruct dec; constructor; auto.
+  intros. unfold Reqb,Aeqb. destruct dec; constructor; auto.
 Qed.
 
 Lemma Reqb_refl : forall r, r =? r = true.
@@ -1595,6 +1595,10 @@ Qed.
 Definition nat2R (n : nat) : R := Z2R (nat2Z n).
 Definition R2nat_floor (r : R) : nat := Z2nat (R2Z_floor r).
 Definition R2nat_ceiling (r : R) : nat := Z2nat (R2Z_ceiling r).
+
+(** *** Conversion from Q or Qc to R *)
+Definition Q2R (x : Q) : R := Q2R x.
+Definition Qc2R (x : Qc) : R := Q2R (Qc2Q x).
 
 
 (* ######################################################################### *)

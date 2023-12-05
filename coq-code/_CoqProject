@@ -64,8 +64,9 @@ VFCS/Math/Ratan2.v
 # VFCS/Math/Matrix/VectorR4.v
 
 VFCS/Math/MatrixList/Matrix.v
-# VFCS/Math/MatrixList/ElementType.v
-# VFCS/Math/MatrixList/MatrixModule.v
+VFCS/Math/MatrixList/MatrixDet.v
+VFCS/Math/MatrixList/ElementType.v
+VFCS/Math/MatrixList/MatrixModule.v
 # VFCS/Math/MatrixList/MatrixNat.v
 # VFCS/Math/MatrixList/MatrixZ.v
 # VFCS/Math/MatrixList/MatrixQ.v
@@ -86,7 +87,7 @@ VFCS/Math/MatrixList/Matrix.v
 # VFCS/Math/MatrixList/VectorR3.v
 # VFCS/Math/MatrixList/VectorR4.v
 
-VFCS/Math/LinearAlgebra/PermutationExt.v
+# VFCS/Math/LinearAlgebra/PermutationExt.v
 
 VFCS/Math/Quaternion/Quaternion_base.v
 VFCS/Math/Quaternion/Quaternion_rot.v

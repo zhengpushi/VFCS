@@ -8,13 +8,14 @@
   date      : 2021.05
  *)
 
+Require Import Bool.
 Require Export Basic.
 Require Export Init.Nat.
 Require Export Arith.
 Require Export PeanoNat.
+Require Export Nat.
 Require Export Lia.
-
-
+  
 
 (* ######################################################################### *)
 (** * Mathematical Structure *)
@@ -145,6 +146,16 @@ Ltac is_nat_equality :=
 
 Notation  "a >=? b" := (Nat.leb b a) (at level 70) : nat_scope.
 Notation  "a >? b"  := (Nat.ltb b a) (at level 70) : nat_scope.
+
+(* 证明自然数不等式 *)
+Ltac solve_nat_ineq :=
+  match goal with
+  (* H: _ = true *)
+  | H:(?a <? ?b) = true |- ?a < ?b => apply Nat.ltb_lt; apply H
+  | H:(?a <? ?b) = true |- ?b > ?a => apply Nat.ltb_lt; apply H
+  | H:(?a <? ?b) = false |- ?a >= ?b => apply Nat.ltb_ge; apply H
+  | H:(?a <? ?b) = false |- ?b <= ?a => apply Nat.ltb_ge; apply H
+  end.
 
 (** Proposition and boolean are reflected. *)
 

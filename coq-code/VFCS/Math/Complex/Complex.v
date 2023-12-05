@@ -899,12 +899,12 @@ Proof.
   intro; intros. rewrite H; easy.
 Qed.
 
-Global Instance Ring_C : Ring Cadd 0 Copp Cmul 1.
+Global Instance ARing_C : ARing Cadd 0 Copp Cmul 1.
 Proof. split_intro; intros; subst; try ring. Qed.
 
 Global Instance Field_C : Field Cadd 0 Copp Cmul 1 Cinv.
 Proof.
-  constructor. apply Ring_C.
+  constructor. apply ARing_C.
   intros. field. auto. apply C1_neq_C0.
 Qed.
 

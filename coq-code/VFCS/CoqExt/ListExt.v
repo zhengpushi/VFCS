@@ -29,30 +29,33 @@ Require Export NatExt.
 Require Export Hierarchy.
 Require Export List. Export ListNotations.
 
+
 Open Scope nat_scope.
 Open Scope list.
 
-Generalizable Variables T U V Tadd Topp Tmul Tinv.
-(* Implicit Types T U V : Type. *)
+Generalizable Variables A B C Aadd Azero Aopp Amul Aone Ainv.
 
+Notation dlist A := (list (list A)).
 
-Notation dlist T := (list (list T)).
+Hint Resolve
+  repeat_length seq_length map_length
+  : mat.
+
 
 (* ======================================================================= *)
 (** ** Properties of cons *)
 Section cons.
-
-  Context {T : Type}.
+  Context {A : Type}.
   
   (** Equality of cons, iff both parts are equal *)
-  Lemma cons_eq_iff : forall (a1 a2 : T) (l1 l2 : list T),
+  Lemma cons_eq_iff : forall (a1 a2 : A) (l1 l2 : list A),
       a1 :: l1 = a2 :: l2 <-> a1 = a2 /\ l1 = l2.
   Proof.
     intros. split; intros H; inversion H; subst; auto.
   Qed.
 
   (** Inequality of cons, iff at least one parts are not equal *)
-  Lemma cons_neq_iff : forall (a1 a2 : T) (l1 l2 : list T),
+  Lemma cons_neq_iff : forall (a1 a2 : A) (l1 l2 : list A),
       a1 :: l1 <> a2 :: l2 <-> (a1 <> a2) \/ (l1 <> l2).
   Proof.
     intros. split; intro H.
@@ -68,10 +71,10 @@ End cons.
 (** ** Properties of hd and tl *)
 Section hd_tl.
   
-  Context {T : Type}.
+  Context {A : Type}.
   
   (** length of tl. (pred version) *)
-  Lemma tl_length : forall (l : list T), length (tl l) = pred (length l).
+  Lemma tl_length : forall (l : list A), length (tl l) = pred (length l).
   Proof.
     induction l; auto.
   Qed.
@@ -82,17 +85,17 @@ End hd_tl.
 (** ** Properties of nth *)
 Section nth.
   
-  Context {T : Type}.
+  Context {A : Type}.
 
   (** nth [] a = a *)
-  Lemma nth_nil : forall (a : T) (i : nat), nth i [] a = a.
+  Lemma nth_nil : forall (a : A) (i : nat), nth i [] a = a.
   Proof.
     intros. destruct i; simpl; easy.
   Qed.
 
   (** Two list equal iff all nth visit equal *)
-  Lemma list_eq_iff_nth (Azero : T) :
-    forall n (l1 l2 : list T) (H1 : length l1 = n) (H2 : length l2 = n),
+  Lemma list_eq_iff_nth (Azero : A) :
+    forall n (l1 l2 : list A) (H1 : length l1 = n) (H2 : length l2 = n),
       l1 = l2 <-> (forall (i : nat), i < n -> nth i l1 Azero = nth i l2 Azero).
   Proof.
     intros n l1. revert n. induction l1; intros; simpl in *; subst.
@@ -106,20 +109,108 @@ Section nth.
           specialize (H (S i)); simpl in H. apply H. lia.
   Qed.
 
-  (** Get from repeat x and default value x always return x *)
-  Lemma nth_repeat_same : forall (a : T) (n i : nat), nth i (repeat a n) a = a.
-  Proof.
-    intros a n. induction n; destruct i; simpl; easy.
-  Qed.
+  (* (repeat a n)[i] = a *)
+  Lemma nth_repeat_same : forall (n i : nat) (a def : A),
+      i < n -> nth i (repeat a n) def = a.
+  Proof. induction n; intros. lia. destruct i; simpl; auto. apply IHn. lia. Qed.
 
 End nth.
 
 
 (* ==================================== *)
+(** ** Properties of fold_left *)
+Section fold_left.
+
+  Context `{HAMonoid:AMonoid}.
+  Infix "+" := Aadd.
+  
+  Lemma fold_left_intVal_rebase_l : forall (l : list A) a b,
+      fold_left Aadd l (a + b) = (fold_left Aadd l a) + b.
+  Proof.
+    induction l; intros; simpl; auto.
+    replace (a0 + b + a) with (a0 + a + b). apply IHl.
+    rewrite ?associative. f_equal. apply commutative.
+  Qed.
+
+  Lemma fold_left_intVal_rebase_r : forall (l : list A) a b,
+      fold_left Aadd l (a + b) = (fold_left Aadd l b) + a.
+  Proof.
+    induction l; intros; simpl; auto. apply commutative.
+    replace (a0 + b + a) with (a0 + (b + a)). apply IHl.
+    rewrite ?associative. f_equal.
+  Qed.
+
+  (** (a+0+0+0+... = a *)
+  Lemma fold_left_lzero : forall n a,
+      fold_left Aadd (repeat Azero n) a = a.
+  Proof.
+    induction n; intros; simpl; auto.
+    rewrite fold_left_intVal_rebase_r. rewrite IHn. monoid_simpl.
+  Qed.
+
+  (** (a1+b1)+(a2+b2)+... = (a1+a2+...) + (b1+b2+...) *)
+  Lemma fold_left_add : forall (l l1 l2:list A) n,
+      length l = n -> length l1 = n -> length l2 = n ->
+      (forall i, i < n -> nth i l Azero = nth i l1 Azero + nth i l2 Azero) ->
+      fold_left Aadd l Azero = (fold_left Aadd l1 Azero) + (fold_left Aadd l2 Azero).
+  Proof.
+    induction l; destruct l1,l2; intros; simpl in *; try lia.
+    - monoid_simpl.
+    - destruct n. lia.
+      inversion H; clear H. inversion H0; clear H0. inversion H1; clear H1.
+      rewrite !fold_left_intVal_rebase_l.
+      rewrite (IHl l1 l2 n); auto.
+      + elim_auto.
+        specialize (H2 0). simpl in H2. rewrite H2; auto. lia.
+      + intros. specialize (H2 (S i)). simpl in H2. apply H2. lia.
+  Qed.
+
+  Context `{HGroup:Group A Aadd Azero Aopp}.
+  
+  (** (-a1)+(-a2)+... = -(a1+a2+...) *)
+  Lemma fold_left_opp : forall (l1 l2:list A) n,
+      length l1 = n -> length l2 = n ->
+      (forall i, i < n -> nth i l1 Azero = Aopp (nth i l2 Azero)) ->
+      fold_left Aadd l1 Azero = Aopp (fold_left Aadd l2 Azero).
+  Proof.
+    induction l1,l2; intros; simpl in *; try lia.
+    - rewrite group_inv_zero; auto.
+    - destruct n. lia.
+      inversion H; clear H. inversion H0; clear H0.
+      rewrite !fold_left_intVal_rebase_l.
+      rewrite (IHl1 l2 n); auto.
+      + rewrite group_inv_distr. elim_auto.
+        specialize (H1 0). simpl in H1. rewrite H1; auto. lia.
+      + intros. specialize (H1 (S i)). simpl in H1. apply H1. lia.
+  Qed.
+
+  Context `{HARing:ARing A Aadd Azero Aopp Amul Aone}.
+
+  (** k*a1+k*a2+... = k * (a1+a2+...) *)
+  Lemma fold_left_mul : forall (l1 l2:list A) n a,
+      length l1 = n -> length l2 = n ->
+      (forall i, i < n -> nth i l1 Azero = Amul a (nth i l2 Azero)) ->
+      fold_left Aadd l1 Azero = Amul a (fold_left Aadd l2 Azero).
+  Proof.
+    induction l1,l2; intros; simpl in *; try lia.
+    - rewrite ring_mul_0_r; auto.
+    - destruct n. lia.
+      inversion H; clear H. inversion H0; clear H0.
+      rewrite !fold_left_intVal_rebase_l.
+      rewrite (IHl1 l2 n a1); auto.
+      + rewrite distributiveLeft. elim_auto.
+        specialize (H1 0). simpl in H1. rewrite H1; auto. lia.
+      + intros. specialize (H1 (S i)). simpl in H1. apply H1. lia.
+  Qed.
+
+End fold_left.
+
+
+(* ==================================== *)
 (** ** Print a list *)
 Section lst_prt.
-  Context {T : Type}.
-  Definition lst_prt (l : list T) (p : T -> string) : string :=
+  Context {A : Type}.
+  Definition lst_prt (l : list A) (p : A -> string) : string :=
     fold_left (fun s x => append s (p x)) l "".
 End lst_prt.
 
@@ -131,20 +222,20 @@ End lst_prt.
 (** ** Set element of a list *)
 Section chg.
 
-  Context {T : Type}.
+  Context {A : Type}.
 
   (** *** Set element with a constant value *)
-  Fixpoint lst_chg (l : list T) (i : nat) (x : T) : list T :=
+  Fixpoint listSet (l : list A) (i : nat) (x : A) : list A :=
     match l, i with
     | [], _ => []
     | a :: l, 0 => x :: l
-    | a :: l, S i => a :: (lst_chg l i x)
+    | a :: l, S i => a :: (listSet l i x)
     end.
 
   (** Length property *)
-  Lemma lst_chg_length : forall (l : list T) ni n x, 
+  Lemma listSet_length : forall (l : list A) ni n x, 
       length l = n ->
-      length (lst_chg l ni x) = n.
+      length (listSet l ni x) = n.
   Proof.
     intros l; induction l; auto. induction ni; auto; simpl; intros.
     destruct n; auto. easy.
@@ -153,63 +244,63 @@ Section chg.
   (** *** Set element with a generation function *)
 
   (** Inner version. i0 is given position, i is changing every loop *)
-  Fixpoint lst_chgf_aux (l : list T) (i0 i : nat) (f : nat -> T) 
-    : list T :=
+  Fixpoint listSetf_aux (l : list A) (i0 i : nat) (f : nat -> A) 
+    : list A :=
     match l, i with
     | [], _ => []
     | a :: l, 0 => f i0 :: l
-    | a :: l, S i => a :: (lst_chgf_aux l i0 i f)
+    | a :: l, S i => a :: (listSetf_aux l i0 i f)
     end.
 
   (** User version that hide i0 parameter *)
-  Definition lst_chgf (l : list T) (i : nat) (f : nat -> T) : list T :=
-    lst_chgf_aux l i i f.
+  Definition listSetf (l : list A) (i : nat) (f : nat -> A) : list A :=
+    listSetf_aux l i i f.
   
   (** Length property *)
-  Lemma lst_chgf_aux_length : forall (l : list T) ni n ni0 f, 
+  Lemma listSetf_aux_length : forall (l : list A) ni n ni0 f, 
       length l = n ->
-      length (lst_chgf_aux l ni0 ni f) = n.
+      length (listSetf_aux l ni0 ni f) = n.
   Proof.
     intros l; induction l; auto. destruct ni; auto; simpl; intros.
     destruct n; auto. easy.
   Qed.
 
-  Lemma lst_chgf_length : forall (l : list T) n ni f, 
+  Lemma listSetf_length : forall (l : list A) n ni f, 
       length l = n ->
-      length (lst_chgf l ni f) = n.
+      length (listSetf l ni f) = n.
   Proof.
-    intros. apply lst_chgf_aux_length; auto.
+    intros. apply listSetf_aux_length; auto.
   Qed.
 
 End chg.
 
 (* Let f_gen := fun (i : nat) => (i + 5). *)
-(* Compute lst_chgf [1;2;3] 0 f_gen. *)
-(* Compute lst_chgf [1;2;3] 1 f_gen. *)
+(* Compute listSetf [1;2;3] 0 f_gen. *)
+(* Compute listSetf [1;2;3] 1 f_gen. *)
 
 
 (* ==================================== *)
 (** ** Properties of length *)
 Section length.
 
-  Context {T : Type}.
+  Context {A : Type}.
 
   (** Redefine 'length_zero_iff_nil', original is opaque, make it transparent t *)
-  Lemma length_zero_iff_nil : forall (l : list T), length l = 0 <-> l = [].
+  Lemma length_zero_iff_nil : forall (l : list A), length l = 0 <-> l = [].
   Proof.
     intros. destruct l; intros; split; intros; auto; try easy.
   Defined.
 
   (** decompose a list which length is 1 *)
-  Lemma list_length_1 : forall (l : list T),
+  Lemma list_length_1 : forall (l : list A),
       length l = 1 -> {x | l = [x]}.
   Proof. 
     destruct l; intros. inversion H. inversion H.
-    apply length_zero_iff_nil in H1. subst. exists t. easy.
+    apply length_zero_iff_nil in H1. subst. exists a. easy.
   Defined.
 
   (** a list has only one element equal to [hd _ l] *)
-  Lemma list_length1_eq_hd : forall (x : T) (l:list T), 
+  Lemma list_length1_eq_hd : forall (x : A) (l:list A), 
       length l = 1 -> [hd x l] = l.
   Proof.
     intros x l. destruct l.
@@ -219,23 +310,23 @@ Section length.
   Qed.
 
   (** decompose a list which length is S n *)
-  Lemma list_length_Sn : forall (l : list T) n,
+  Lemma list_length_Sn : forall (l : list A) n,
       length l = S n -> {x & { t | l = x :: t}}.
   Proof.
-    destruct l; intros. inversion H. exists t. exists l. easy.
+    destruct l; intros. inversion H. exists a. exists l. easy.
   Qed.
 
   (** decompose a list which length is S (S n) *)
-  Lemma list_length_SSn : forall (l : list T) n,
+  Lemma list_length_SSn : forall (l : list A) n,
       length l = S (S n) -> {x & { y & { t | l = x :: y :: t}}}.
   Proof.
     destruct l; intros. inversion H.
-    exists t. destruct l. inversion H.
-    exists t0. exists l. auto.
+    exists a. destruct l. inversion H.
+    exists a0. exists l. auto.
   Qed.
 
   (** Split list which length is 1 *)
-  Lemma list_length1_neq : forall (l : list T) (a b : T), 
+  Lemma list_length1_neq : forall (l : list A) (a b : A), 
       (length (a :: l) = 1 /\ (a :: l <> [b]) -> (a <> b) /\ l = []).
   Proof.
     intros; destruct l. destruct H.
@@ -246,7 +337,7 @@ Section length.
 End length.
 
 Section Test.
-  Variable (T : Type) (a : T).
+  Context {A} (a : A).
   Let l := [a].
   Definition h : length l = 1. auto. Defined.
   (* Compute proj1_sig (list_length_1 l h). *)
@@ -257,17 +348,17 @@ End Test.
 (** ** Customized list induction *)
 Section ind.
 
-  Context {T : Type}.
+  Context {A : Type}.
 
   (** Connect induction principle between nat and list *)
-  Lemma ind_nat_list : forall (P : list T -> Prop) ,
+  Lemma ind_nat_list : forall (P : list A -> Prop) ,
       (forall n l, length l = n -> P l) -> (forall l, P l).
   Proof.
     intros. apply (H (length l)). auto.
   Qed.
 
   (** Two step induction principle for list *)
-  Theorem list_ind2 : forall (P : list T -> Prop),
+  Theorem list_ind2 : forall (P : list A -> Prop),
       (P []) -> 
       (forall a, P [a]) -> 
       (forall l a b, P l -> P (a :: b :: l)) ->
@@ -286,10 +377,10 @@ End ind.
 (* ==================================== *)
 (** ** list repeat properties *)
 Section repeat.
-  Context {T : Type}.
+  Context {A : Type}.
 
   (** repeat S n times equal to another form *)
-  Lemma list_repeat_Sn (Azero : T) : forall n, repeat Azero (S n) = Azero :: repeat Azero n.
+  Lemma list_repeat_Sn (Azero : A) : forall n, repeat Azero (S n) = Azero :: repeat Azero n.
   Proof. intros. simpl. easy. Qed.
 
 End repeat.
@@ -298,31 +389,33 @@ End repeat.
 (* ==================================== *)
 (** ** Zero list *)
 Section lzero.
-  Context {T : Type}.
+  Context {A : Type}.
   
   (** A friendly name for zero list *)
-  Definition lzero (Azero : T) n := repeat Azero n.
+  Definition lzero (Azero : A) n := repeat Azero n.
 
   (** lzero's length law *)
-  Lemma lzero_length (Azero : T) : forall n, length (lzero Azero n) = n.
+  Lemma lzero_length (Azero : A) : forall n, length (lzero Azero n) = n.
   Proof. intros. apply repeat_length. Qed.
 
   (** append two zero list to a zero list satisfy length relation *)
-  Lemma lzero_app (Azero : T) : forall n1 n2,
+  Lemma lzero_app (Azero : A) : forall n1 n2,
       lzero Azero n1 ++ lzero Azero n2 = lzero Azero (n1 + n2).
   Proof. unfold lzero. intros. rewrite repeat_app. easy. Qed.
 
 End lzero.
 
+Hint Resolve lzero_length : mat.
+  
 (* ==================================== *)
 (** ** Properties of map *)
 
 (** map for two types *)
 Section map_A_B.
-  Context {T U : Type}.
+  Context {A B : Type}.
   
   (** map is equal, imply the list is equal *)
-  Lemma map_eq_imply_eq : forall (f : T -> U) (l1 l2 : list T),
+  Lemma map_eq_imply_eq : forall (f : A -> B) (l1 l2 : list A),
       map f l1 = map f l2 -> Bijective f -> l1 = l2.
   Proof.
     intros f l1. induction l1; intros; destruct l2; simpl in *; try easy.
@@ -331,7 +424,7 @@ Section map_A_B.
   Qed.
 
   (** map and repeat is communtative *)
-  Lemma map_repeat (f : T -> U) : forall (a : T) n, 
+  Lemma map_repeat (f : A -> B) : forall (a : A) n, 
       (map f (repeat a n)) = (repeat (f a) n).
   Proof.
     induction n; simpl; auto. f_equal; auto.
@@ -341,33 +434,42 @@ End map_A_B.
 
 (** map for one type *)
 Section map_A.
-  Context {T : Type}.
+  Context {A : Type}.
 
   (** Extented map_id lemma, which needn't the function is a exactly format of
      "forall x, x" *)
-  Lemma map_id : forall (l : list T) (f : T -> T) (H: forall a, f a = a), map f l = l.
+  Lemma map_id : forall (l : list A) (f : A -> A) (H: forall a, f a = a), map f l = l.
   Proof.
     induction l; intros; simpl. easy. f_equal; auto.
   Qed.
 
   (** f x = zero -> map f = lzero *)
-  Lemma map_eq_zero : forall l (Azero : T) (f : T -> T) n,
-      (forall x : T, (f x = Azero)) -> length l = n -> map f l = lzero Azero n.
+  Lemma map_eq_zero : forall l (Azero : A) (f : A -> A) n,
+      (forall x : A, (f x = Azero)) -> length l = n -> map f l = lzero Azero n.
   Proof.
     induction l; intros; simpl in *. subst. simpl. easy.
     destruct n. easy. inv H0. simpl. f_equal; auto.
   Qed.
   
   (** Mapping is fixpoint, iff f is id *)
-  Lemma map_fixpoint_imply_id (f : T -> T) : forall (l : list T), 
+  Lemma map_fixpoint_imply_id (f : A -> A) : forall (l : list A), 
       map f l = l -> (forall x, In x l -> (f x = x)).
   Proof.
     induction l; intros; simpl in *. easy. inversion H.
     destruct H0. subst; auto. apply IHl; auto.
   Qed.
+  
+  (** (map f l)[i] = f (l[i]) *)
+  Lemma nth_map : forall (l : list A) (f : A -> A) n i a,
+      length l = n -> i < n ->
+      nth i (map f l) a = f (nth i l a).
+  Proof.
+    induction l; intros; simpl in *. lia. destruct n. lia.
+    destruct i; auto. apply IHl with (n:=n); auto. lia.
+  Qed.
 
   (** Simplify of nth+map+seq *)
-  Lemma nth_map_seq : forall i f n m (t0 : T),
+  Lemma nth_map_seq : forall i f n m (t0 : A),
       i < m -> (nth i (map f (seq n m)) t0 = f (i + n)).
   Proof.
     intros. gd m. gd f. gd i. induction n.
@@ -382,7 +484,7 @@ Section map_A.
 
   (** Simplify of map+nth+seq *)
   (* Note: the lower index of seq is 0, it could extend to any nat number later *)
-  Lemma map_nth_seq  : forall n (l : list T) Azero,
+  Lemma map_nth_seq  : forall n (l : list A) Azero,
       length l = n -> map (fun i => nth i l Azero) (seq 0 n) = l.
   Proof.
     induction n.
@@ -396,7 +498,7 @@ Section map_A.
   Qed.
 
   (** Equality of map+seq, iff corresponding elements are equal *)
-  Lemma map_seq_eq : forall n (f g : nat -> T),
+  Lemma map_seq_eq : forall n (f g : nat -> A),
       map f (seq 0 n) = map g (seq 0 n) <-> (forall i, i < n -> (f i = g i)).
   Proof.
     intros; split; intros.
@@ -410,24 +512,23 @@ End map_A.
 (* ==================================== *)
 (** ** map two lists to a list *)
 Section map2.
-  Context {T U V : Type} (f : T -> U -> V).
-
+  Context {A B C} (f : A -> B -> C).
   (** map operation to two list *)
-  Fixpoint map2 (l1 : list T) (l2 : list U) : list V :=
+  Fixpoint map2 (l1 : list A) (l2 : list B) : list C :=
     match l1, l2 with
     | x1 :: t1, x2 :: t2 => (f x1 x2) :: (map2 t1 t2)
     | _, _ => []
     end.
   
   (** length of map2 *)
-  Lemma map2_length : forall (l1 : list T) (l2 : list U) n,
+  Lemma map2_length : forall (l1 : list A) (l2 : list B) n,
       length l1 = n -> length l2 = n -> length (map2 l1 l2) = n.
   Proof. 
     induction l1,l2; simpl; auto. intros. destruct n; simpl; auto. easy.
   Qed.
   
   (** map2 to two lists could be separated by two segments with same length *)
-  Lemma map2_app : forall (la1 la2 : list T) (lb1 lb2 : list U),
+  Lemma map2_app : forall (la1 la2 : list A) (lb1 lb2 : list B),
       length la1 = length lb1 -> length la2 = length lb2 ->
       map2 (la1 ++ la2) (lb1 ++ lb2) = (map2 la1 lb1) ++ (map2 la2 lb2).
   Proof.
@@ -445,14 +546,13 @@ Section map2.
   
 End map2.
 
-Arguments map2 {T U V}.
+Hint Resolve map2_length : mat.
 
 
 (* ==================================== *)
 (** ** map2 on dlist *)
 Section map2_dlist.
-  Context {T U V : Type}.
-  Variable f : T -> U -> V.
+  Context {A B C : Type} (f : A -> B -> C).
   
   (** tail of map2 to dlist, equal to map2 to tail part of original dlists *)
   Lemma tail_map2_dlist : forall dl1 dl2,
@@ -468,33 +568,22 @@ End map2_dlist.
 (* ==================================== *)
 (** ** map2 properties with same base type *)
 Section map2_sametype.
-  Context {T : Type} (Tadd : T -> T -> T) (Topp : T -> T).
-  Infix "+" := Tadd.
-  Notation "- a" := (Topp a).
+  Context {A : Type} (Aadd : A -> A -> A) (Aopp : A -> A).
+  Infix "+" := Aadd.
+  Notation "- a" := (Aopp a).
   Notation Asub := (fun a b => a + (-b)).
 
-  (** nth (map2 f l1 l2) i = f (nth l1 i) (nth l2 i) *)
-  Lemma map2_nth : forall (l1 l2 : list T) i (a : T),
-      i < length l1 -> i < length l2 ->
-      (nth i (map2 Tadd l1 l2) a = Tadd (nth i l1 a) (nth i l2 a)).
-  Proof.
-    induction l1; intros; simpl in *; try lia.
-    destruct l2; simpl in *; try lia.
-    destruct i; try easy.
-    apply IHl1; try lia.
-  Qed.
-
   (** l1 . l2 = l2 . l1 *)
-  Context `{Comm:Commutative T Tadd}.
-  Lemma map2_comm : forall (l1 l2 : list T), map2 Tadd l1 l2 = map2 Tadd l2 l1.
+  Context `{Comm:Commutative A Aadd}.
+  Lemma map2_comm : forall (l1 l2 : list A), map2 Aadd l1 l2 = map2 Aadd l2 l1.
   Proof.
     induction l1; destruct l2; simpl; try easy. f_equal; auto. apply commutative.
   Qed.
   
   (** (l1 . l2) . l3 = l1 . (l2 . l3) *)
-  Context {Assoc:Associative Tadd}.
-  Lemma map2_assoc : forall (l1 l2 l3 : list T),
-      map2 Tadd (map2 Tadd l1 l2) l3 = map2 Tadd l1 (map2 Tadd l2 l3).
+  Context {Assoc:Associative Aadd}.
+  Lemma map2_assoc : forall (l1 l2 l3 : list A),
+      map2 Aadd (map2 Aadd l1 l2) l3 = map2 Aadd l1 (map2 Aadd l2 l3).
   Proof.
     induction l1; destruct l2,l3; simpl; try easy. f_equal; auto.
     rewrite associative; auto.
@@ -503,41 +592,54 @@ Section map2_sametype.
   (** map2 over map is homorphism *)
   (* In fact, I don't know how to naming this property yet. *)
   Lemma map2_map_hom :
-    forall l1 l2 (H : forall a b : T, (Topp (Tadd a b) = Tadd (Topp a) (Topp b))),
-      map2 Tadd (map Topp l1) (map Topp l2) = map Topp (map2 Tadd l1 l2).
+    forall l1 l2 (H : forall a b : A, (Aopp (Aadd a b) = Aadd (Aopp a) (Aopp b))),
+      map2 Aadd (map Aopp l1) (map Aopp l2) = map Aopp (map2 Aadd l1 l2).
   Proof.
     intros. revert l2.
     induction l1; destruct l2; simpl; try easy.
     f_equal; auto.
   Qed.
 
+  (** nth (map2 f l1 l2) i = f (nth l1 i) (nth l2 i) *)
+  Lemma map2_nth : forall (l1 l2 : list A) n i a,
+      length l1 = n -> length l2 = n -> i < n ->
+      (nth i (map2 Aadd l1 l2) a = Aadd (nth i l1 a) (nth i l2 a)).
+  Proof.
+    induction l1,l2; intros; simpl in *; destruct i; try lia; auto.
+    destruct n. lia. apply IHl1 with (n:=n); lia.
+  Qed.
   
   (** *** The properties below, need a monoid structure *)
 
-  Context `{M:Monoid T Tadd T0}.
+  Context `{Monoid A Aadd}.
 
   (** map2 lzero l = l *)
-  Lemma map2_zero_l : forall l, map2 Tadd (lzero T0 (length l)) l = l.
+  Lemma map2_zero_l : forall l, map2 Aadd (lzero Azero (length l)) l = l.
   Proof.
     induction l; intros; simpl. easy. rewrite IHl. monoid_simpl.
   Qed.
 
   (** map2 l lzero = l *)
-  Lemma map2_zero_r : forall l, map2 Tadd l (lzero T0 (length l)) = l.
+  Lemma map2_zero_r : forall l, map2 Aadd l (lzero Azero (length l)) = l.
   Proof.
     induction l; intros; simpl. easy. rewrite IHl. monoid_simpl.
   Qed.
 
+  (* (** nth (map2 f l1 l2) i = f (nth l1 i) (nth l2 i) *) *)
+  (* Lemma map2_nth' : forall (l1 l2 : list A) i, *)
+  (*     length l1 = length l2 -> *)
+  (*     (nth i (map2 Aadd l1 l2) Azero = Aadd (nth i l1 Azero) (nth i l2 Azero)). *)
+  (* Proof. *)
+  (*   induction l1,l2; intros; simpl in *; destruct i; monoid_simpl; try lia. *)
+  (* Qed. *)
   
   (** *** The properties below, need a group structure *)
 
-  Context `{G:Group T Tadd T0 Topp}.
+  Context `{G:Group A Aadd Azero Aopp}.
 
   (* l1 - l2 = - (l2 - l1) *)
-  (* Context {Invo_Topp : Involution Topp Aeq}. *)
-  (* Context {ResBianry : RespectBinary Tadd Aeq Aeq Aeq}. *)
-  Lemma map2_sub_comm : forall (l1 l2 : list T),
-      map2 Asub l1 l2 = map Topp (map2 Asub l2 l1).
+  Lemma map2_sub_comm : forall (l1 l2 : list A),
+      map2 Asub l1 l2 = map Aopp (map2 Asub l2 l1).
   Proof.
     induction l1; destruct l2; intros; simpl in *; auto.
     f_equal; auto.
@@ -545,7 +647,7 @@ Section map2_sametype.
   Qed.
 
   (** (l1 - l2) - l3 = (l1 - l3) - l2 *)
-  Lemma map2_sub_perm : forall (l1 l2 l3 : list T),
+  Lemma map2_sub_perm : forall (l1 l2 l3 : list A),
       map2 Asub (map2 Asub l1 l2) l3 = map2 Asub (map2 Asub l1 l3) l2.
   Proof.
     induction l1,l2,l3; simpl; auto. f_equal; auto. group_simp.
@@ -553,8 +655,8 @@ Section map2_sametype.
   Qed.
   
   (** (l1 - l2) - l3 = l1 - (l2 + l3) *)
-  Lemma map2_sub_assoc : forall (l1 l2 l3 : list T),
-      map2 Asub (map2 Asub l1 l2) l3 = map2 Asub l1 (map2 Tadd l2 l3).
+  Lemma map2_sub_assoc : forall (l1 l2 l3 : list A),
+      map2 Asub (map2 Asub l1 l2) l3 = map2 Asub l1 (map2 Aadd l2 l3).
   Proof.
     induction l1,l2,l3; simpl; auto. f_equal; auto.
     rewrite associative. f_equal.
@@ -563,25 +665,23 @@ Section map2_sametype.
 
   (** 0 - l = - l *)
   Lemma map2_sub_zero_l : forall l n, 
-      length l = n -> map2 Asub (lzero T0 n) l = map Topp l.
+      length l = n -> map2 Asub (lzero Azero n) l = map Aopp l.
   Proof.
     induction l; simpl; intros. apply map2_nil_r.
-    induction n ; simpl. inversion H. f_equal; auto.
-    group_simp.
+    induction n ; simpl. lia. f_equal; auto. group_simp.
   Qed.
   
   (** l - 0 = l *)
   Lemma map2_sub_zero_r : forall l n, 
-      length l = n -> map2 Asub l (lzero T0 n) = l.
+      length l = n -> map2 Asub l (lzero Azero n) = l.
   Proof.
-    induction l; simpl; intros; auto. destruct n; simpl. inversion H.
-    f_equal; auto.
-    rewrite group_inv_id at 1. group_simp.
+    induction l; simpl; intros; auto. destruct n; simpl. lia.
+    f_equal; auto. rewrite group_inv_id at 1. group_simp.
   Qed.
   
   (** l - l = 0 *)
   Lemma map2_sub_self : forall l n, 
-      length l = n -> map2 Asub l l = (lzero T0 n).
+      length l = n -> map2 Asub l l = (lzero Azero n).
   Proof.
     induction l; simpl; intros; subst; try easy. simpl lzero.
     f_equal; auto. group_simp.
@@ -592,12 +692,12 @@ End map2_sametype.
 (** map2 with map of two components *)
 Section map2_map_map.
 
-  Context {T U : Type}.
+  Context {A B : Type}.
 
   Lemma map2_map_map :
-    forall (f1 f2 g : T -> U) (h : U -> U -> U)
+    forall (f1 f2 g : A -> B) (h : B -> B -> B)
       (H : forall x, (h (f1 x) (f2 x) = g x))
-      (l : list T),
+      (l : list A),
       map2 h (map f1 l) (map f2 l) = map g l.
   Proof.
     induction l; simpl; auto. f_equal; auto.
@@ -619,10 +719,10 @@ Section concat.
   Qed.
 
   (** Length of concat operation *)
-  Lemma concat_length : forall {T} (l : dlist T),
-      length (concat l) = fold_left add (map (@length T) l) 0.
+  Lemma concat_length : forall {A} (l : dlist A),
+      length (concat l) = fold_left add (map (@length A) l) 0.
   Proof.
-    intros T l.
+    intros A l.
     induction l; simpl; auto.
     rewrite app_length. rewrite IHl. rewrite (fold_left_nat_initial _ (length a)).
     lia.
@@ -634,18 +734,22 @@ End concat.
 (* ==================================== *)
 (** ** Convert between list and function *)
 Section f2l_l2f.
-  Context {T : Type} {T0 : T}.
+  Context {A} {Azero : A}.
 
-  Definition f2l {n : nat} (f : nat -> T) : list T :=
+  Definition f2l {n : nat} (f : nat -> A) : list A :=
     map f (seq 0 n).
 
-  Definition l2f {n : nat} (l : list T) : nat -> T :=
-    fun i => nth i l T0.
+  Definition l2f {n : nat} (l : list A) : nat -> A :=
+    fun i => nth i l Azero.
 
   Lemma f2l_length : forall n f, length (@f2l n f) = n.
   Proof.
     intros. unfold f2l. rewrite map_length. apply seq_length.
   Qed.
+
+  (** (f2l f)[i] = f i *)
+  Lemma nth_f2l : forall {n} f a i, i < n -> nth i (@f2l n f) a = f i.
+  Proof. intros. unfold f2l. rewrite nth_map_seq; auto. Qed.
 
 End f2l_l2f.
 
@@ -664,11 +768,11 @@ End test.
 (** ** Addition, Opposition and Subtraction of list *)
 Section ladd_opp_sub.
 
-  Context `{AG:AGroup T Tadd T0 Topp}.
-  Notation Asub := (fun a b => Tadd a (Topp b)).
+  Context `{AG:AGroup A Aadd Azero Aopp}.
+  Notation Asub := (fun a b => Aadd a (Aopp b)).
 
   (** l1 + l2 *)
-  Definition ladd (l1 l2 : list T) : list T := map2 Tadd l1 l2.
+  Definition ladd (l1 l2 : list A) : list A := map2 Aadd l1 l2.
   Infix "+" := ladd : list_scope.
 
   (** invariant for length of ladd *)
@@ -698,7 +802,7 @@ Section ladd_opp_sub.
   
   (** 0 + l = l *)
   Lemma ladd_zero_l : forall l n, 
-      length l = n -> ladd (lzero T0 n) l = l.
+      length l = n -> ladd (lzero Azero n) l = l.
   Proof.
     induction l; simpl; intros. apply map2_nil_r.
     induction n ; simpl. inversion H.
@@ -706,53 +810,53 @@ Section ladd_opp_sub.
   Qed.
   
   (** l + 0 = l *)
-  Lemma ladd_zero_r : forall l n, length l = n -> ladd l (lzero T0 n) = l.
+  Lemma ladd_zero_r : forall l n, length l = n -> ladd l (lzero Azero n) = l.
   Proof.
     intros. unfold ladd. rewrite map2_comm; auto.
     apply ladd_zero_l; auto. apply AG.
   Qed.
   
   (** - l *)
-  Definition lopp (l : list T) : list T := map Topp l.
+  Definition lopp (l : list A) : list A := map Aopp l.
   
   (** l1 - l2 *)
-  Definition lsub (l1 l2 : list T) : list T := map2 Asub l1 l2.
+  Definition lsub (l1 l2 : list A) : list A := map2 Asub l1 l2.
 
   (** l1 - l2 = - (l2 - l1) *)
-  Lemma lsub_comm : forall (l1 l2 : list T), lsub l1 l2 = lopp (lsub l2 l1).
+  Lemma lsub_comm : forall (l1 l2 : list A), lsub l1 l2 = lopp (lsub l2 l1).
   Proof.
     intros.
-    apply map2_sub_comm with (T0:=T0). apply AG.
+    apply map2_sub_comm with (Azero:=Azero). apply AG.
   Qed.
   
   (** (l1 - l2) - l3 = (l1 - l3) - l2 *)
-  Lemma lsub_perm : forall (l1 l2 l3 : list T),
+  Lemma lsub_perm : forall (l1 l2 l3 : list A),
       lsub (lsub l1 l2) l3 = lsub (lsub l1 l3) l2.
   Proof.
     apply map2_sub_perm; apply AG.
   Qed.
   
   (** (l1 - l2) - l3 = l1 - (l2 + l3) *)
-  Lemma lsub_assoc : forall (l1 l2 l3 : list T),
+  Lemma lsub_assoc : forall (l1 l2 l3 : list A),
       lsub (lsub l1 l2) l3 = lsub l1 (ladd l2 l3).
   Proof.
-    apply map2_sub_assoc with (T0:=T0); apply AG.
+    apply map2_sub_assoc with (Azero:=Azero); apply AG.
   Qed.
   
   (** 0 - l = - l *)
-  Lemma lsub_zero_l : forall l n, length l = n -> lsub (lzero T0 n) l = lopp l.
+  Lemma lsub_zero_l : forall l n, length l = n -> lsub (lzero Azero n) l = lopp l.
   Proof.
     apply map2_sub_zero_l; apply AG.
   Qed.
   
   (** l - 0 = l *)
-  Lemma lsub_zero_r : forall l n, length l = n -> lsub l (lzero T0 n) = l.
+  Lemma lsub_zero_r : forall l n, length l = n -> lsub l (lzero Azero n) = l.
   Proof.
     apply map2_sub_zero_r; apply AG.
   Qed.
   
   (** l - l = 0 *)
-  Lemma lsub_self : forall l n, length l = n -> lsub l l = (lzero T0 n).
+  Lemma lsub_self : forall l n, length l = n -> lsub l l = (lzero Azero n).
   Proof.
     apply map2_sub_self; apply AG.
   Qed.
@@ -764,62 +868,51 @@ End ladd_opp_sub.
 (** ** constant multiplication of list *)
 Section lcmul_lmulc.
   
-  Context `{R:Ring}.
+  Context `{R:ARing}.
   Add Ring ring_inst : make_ring_theory.
 
-  Infix "*" := Tmul.
-  Context `{HDec : Dec T}.
+  Infix "*" := Amul.
+  Context `{ADec: Dec A}.
   
   (** a * l *)
-  Definition lcmul (a : T) (l : list T) : list T := map (fun x => a * x) l.
+  Definition lcmul (a : A) (l : list A) : list A := map (fun x => a * x) l.
   
   (** l * a *)
-  Definition lmulc (l : list T) (a : T) : list T := map (fun x => x * a) l.
+  Definition lmulc (l : list A) (a : A) : list A := map (fun x => x * a) l.
   
   (** cmul keep its length *)
-  Lemma lcmul_length : forall a l n, length l = n -> 
-                                length (lcmul a l) = n.
-  Proof.
-    intros. unfold lcmul. rewrite map_length; auto.
-  Qed.
+  Lemma lcmul_length : forall a l n, length l = n -> length (lcmul a l) = n.
+  Proof. intros. unfold lcmul. rewrite map_length; auto. Qed.
   
   (** a * l = l * a *)
-  Lemma lmulc_lcmul : forall a l,
-      lmulc l a = lcmul a l.
-  Proof.
-    induction l; simpl; try easy. f_equal; auto.
-    apply commutative.
-  Qed.
+  Lemma lmulc_lcmul : forall a l, lmulc l a = lcmul a l.
+  Proof. induction l; simpl; try easy. f_equal; auto. apply commutative. Qed.
   
   (** a * [] = [] *)
   Lemma lcmul_nil : forall a, lcmul a [] = [].
-  Proof.
-    intros. easy.
-  Qed.
+  Proof. intros. easy. Qed.
   
   (** [] * a = [] *)
   Lemma lmulc_nil : forall a, lmulc [] a = [].
-  Proof.
-    intros. easy.
-  Qed.
+  Proof. intros. easy. Qed.
   
-  Context `{F:Field T Tadd T0 Topp Tmul T1 Tinv}.
+  Context `{F:Field A Aadd Azero Aopp Amul Aone Ainv}.
   Add Field field_inst : make_field_theory.
 
   (** mul k x = x -> k = 1 \/ x = 0 *)
   Lemma fcmul_fixpoint_imply_k1_or_zero :
-    forall (k x : T), (k * x = x) -> (k = T1) \/ (x = T0).
+    forall (k x : A), (k * x = x) -> (k = Aone) \/ (x = Azero).
   Proof.
-    intros. destruct (dec x T0); auto. left.
+    intros. destruct (dec x Azero); auto. left.
     apply symmetry in H.
-    rewrite <- (@identityLeft _ Tmul T1) in H at 1.
+    rewrite <- (@identityLeft _ Amul Aone) in H at 1.
     - apply field_mul_cancel_r in H; auto.
     - apply monoidIdL.
   Qed.
   
   (** mul x k = x -> k = 1 \/ x = 0 *)
   Lemma fmulc_fixpoint_imply_k1_or_zero :
-    forall (k x : T), (x * k = x) -> (k = T1) \/ (x = T0).
+    forall (k x : A), (x * k = x) -> (k = Aone) \/ (x = Azero).
   Proof.
     intros. rewrite commutative in H.
     apply fcmul_fixpoint_imply_k1_or_zero; auto.
@@ -827,13 +920,13 @@ Section lcmul_lmulc.
 
   (** k * l = l -> k = 1 \/ l = 0 *)
   Lemma lcmul_fixpoint_imply_k1_or_lzero : 
-    forall (l : list T) {n} (Hl : length l = n) (k : T),
-      lcmul k l = l -> ((k = T1) \/ l = lzero T0 n).
+    forall (l : list A) {n} (Hl : length l = n) (k : A),
+      lcmul k l = l -> ((k = Aone) \/ l = lzero Azero n).
   Proof.
     induction l; intros. subst; auto.
     destruct n. easy. simpl in *. inversion H. inversion Hl. subst.
     apply fcmul_fixpoint_imply_k1_or_zero in H1.
-    destruct (dec k T1); auto. destruct H1; auto.
+    destruct (dec k Aone); auto. destruct H1; auto.
     right. f_equal.
     - rewrite H0. ring.
     - rewrite H2.
@@ -842,8 +935,8 @@ Section lcmul_lmulc.
   
   (** lmulc is fixpoint, iff k1 or lzero *)
   Lemma lmulc_fixpoint_imply_k1_or_lzero : 
-    forall (l : list T) {n} (Hl : length l = n) (k : T),
-      lmulc l k = l -> ((k = T1) \/ l = lzero T0 n).
+    forall (l : list A) {n} (Hl : length l = n) (k : A),
+      lmulc l k = l -> ((k = Aone) \/ l = lzero Azero n).
   Proof.
     intros.
     apply lcmul_fixpoint_imply_k1_or_lzero; auto.
@@ -852,8 +945,8 @@ Section lcmul_lmulc.
 
   (** k * l = 0 -> k = 0 \/ l = 0 *)
   Lemma lcmul_eq0_imply_k0_or_lzero : 
-    forall (l : list T) {n} (Hl : length l = n) (k : T),
-      lcmul k l = lzero T0 n -> ((k = T0) \/ l = lzero T0 n).
+    forall (l : list A) {n} (Hl : length l = n) (k : A),
+      lcmul k l = lzero Azero n -> ((k = Azero) \/ l = lzero Azero n).
   Proof.
     induction l; intros. subst; auto.
     destruct n. easy. simpl in *.
@@ -874,60 +967,49 @@ End lcmul_lmulc.
 (** ** product of two lists *)
 Section ldot.
   
-  Context `{R:Ring}.
+  Context `{AR:ARing}.
   Add Ring ring_inst : make_ring_theory.
 
-  Infix "+" := Tadd.
-  Infix "*" := Tmul.
+  Infix "+" := Aadd.
+  Infix "*" := Amul.
   
   (** dot product, marked as l1 . l2 *)
-  Definition ldot (l1 l2 : list T) : T :=
-    fold_right Tadd T0 (map2 Tmul l1 l2).
+  Definition ldot (l1 l2 : list A) : A :=
+    fold_right Aadd Azero (map2 Amul l1 l2).
 
   (** l1 . l2 = l2 . l1 *)
-  Lemma ldot_comm : forall (l1 l2 : list T),
-      (ldot l1 l2 = ldot l2 l1).
-  Proof.
-    intros. unfold ldot. rewrite map2_comm; auto. apply R.
-  Qed.
+  Lemma ldot_comm : forall (l1 l2 : list A), ldot l1 l2 = ldot l2 l1.
+  Proof. intros. unfold ldot. rewrite map2_comm; auto. apply AR. Qed.
   
   (** [] . l = 0 *)
-  Lemma ldot_nil_l : forall (l : list T), (ldot nil l = T0).
-  Proof.
-    intros. destruct l; simpl; try easy.
-  Qed.
+  Lemma ldot_nil_l : forall (l : list A), ldot nil l = Azero.
+  Proof. intros. destruct l; simpl; try easy. Qed.
   
   (** l . [] = 0 *)
-  Lemma ldot_nil_r : forall (l : list T), (ldot l nil = T0).
-  Proof.
-    intros. destruct l; simpl; try easy.
-  Qed.
+  Lemma ldot_nil_r : forall (l : list A), ldot l nil = Azero.
+  Proof. intros. destruct l; simpl; try easy. Qed.
 
   (** ldot cons *)
   Lemma ldot_cons : forall l1 l2 x1 x2,
-      (ldot (x1 :: l1) (x2 :: l2) = (x1 * x2) + (ldot l1 l2)).
-  Proof.
-    induction l1,l2; simpl; intros; try easy.
-  Qed.
+      ldot (x1 :: l1) (x2 :: l2) = (x1 * x2) + (ldot l1 l2).
+  Proof. induction l1,l2; simpl; intros; try easy. Qed.
   
   (** lzero . l = 0 *)
-  Lemma ldot_zero_l : forall l n, (ldot (lzero T0 n) l = T0).
+  Lemma ldot_zero_l : forall l n, ldot (lzero Azero n) l = Azero.
   Proof.
     induction l,n; simpl; intros; try easy. rewrite ldot_cons.
     rewrite IHl. ring.
   Qed.
   
   (** l . lzero = 0 *)
-  Lemma ldot_zero_r : forall l n, (ldot l (lzero T0 n) = T0).
-  Proof.
-    intros. rewrite ldot_comm. apply ldot_zero_l.
-  Qed.
+  Lemma ldot_zero_r : forall l n, ldot l (lzero Azero n) = Azero.
+  Proof. intros. rewrite ldot_comm. apply ldot_zero_l. Qed.
   
   (** ldot left distributive over ladd.
     l1 . (l2 + l3) = l1.l2 + l1.l3 *)
   Lemma ldot_ladd_distr_l : forall l1 l2 l3 r,
       length l1 = r -> length l2 = r -> length l3 = r ->
-      (ldot l1 (@ladd _ Tadd l2 l3) = (ldot l1 l2) + (ldot l1 l3)).
+      ldot l1 (@ladd _ Aadd l2 l3) = (ldot l1 l2) + (ldot l1 l3).
   Proof.
     induction l1,l2,l3; simpl; intros; subst; try (cbv;ring); try discriminate.
     rewrite ?ldot_cons. inversion H1. inversion H0.
@@ -938,7 +1020,7 @@ Section ldot.
     (l1 + l2) . l3 = l1.l3 + l2.l3 *)
   Lemma ldot_ladd_distr_r : forall l1 l2 l3 r,
       length l1 = r -> length l2 = r -> length l3 = r ->
-      (ldot (@ladd _ Tadd l1 l2) l3 = (ldot l1 l3) + (ldot l2 l3)).
+      ldot (@ladd _ Aadd l1 l2) l3 = (ldot l1 l3) + (ldot l2 l3).
   Proof.
     induction l1,l2,l3; simpl; intros; subst; try (cbv;ring); try discriminate.
     rewrite ?ldot_cons. inversion H1. inversion H0.
@@ -948,7 +1030,7 @@ Section ldot.
   (** ldot left distributive over lcmul and mul.
       (x * l1) . l2 = x * (l1 . l2) *)
   Lemma ldot_lcmul_distr_l : forall l1 l2 x,
-      (ldot (@lcmul _ Tmul x l1) l2 = x * (ldot l1 l2)).
+      ldot (@lcmul _ Amul x l1) l2 = x * (ldot l1 l2).
   Proof.
     induction l1,l2; simpl; intros; try (cbv; ring).
     rewrite ?ldot_cons. rewrite IHl1. ring.
@@ -957,32 +1039,69 @@ Section ldot.
   (** ldot right distributive over lcmul and mul.
       l1 . (x * l2) = x * (l1 . l2) *)
   Lemma ldot_lcmul_distr_r : forall l1 l2 x,
-      (ldot l1 (@lcmul _ Tmul x l2) = x * (ldot l1 l2)).
+      ldot l1 (@lcmul _ Amul x l2) = x * (ldot l1 l2).
   Proof.
     induction l1,l2; simpl; intros; try (cbv; ring).
     rewrite ?ldot_cons. rewrite IHl1. ring.
   Qed.
 
+  (** ldot left distributve over map.
+      dot (map f l1) l2 = f (dot l1 l2) *)
+  Lemma ldot_map_distr_l :
+    forall l1 l2 r (f:A->A)
+      (f_zero:f Azero=Azero)
+      (f_add:forall a b, f (a+b) = f a + f b)
+      (f_mul_l:forall a b, f a * b = f (a*b)),
+      length l1 = r -> length l2 = r ->
+      ldot (map f l1) l2 = f (ldot l1 l2).
+  Proof.
+    induction l1,l2; simpl in *; intros; subst.
+    - cbv; auto.
+    - cbv; auto.
+    - cbv; auto.
+    - rewrite ?ldot_cons.
+      rewrite IHl1 with (r:=length l1); auto.
+      rewrite f_add, f_mul_l. auto.
+  Qed.
+
+  (** ldot right distributve over map.
+      dot l1 (map f l2) = f (dot l1 l2) *)
+  Lemma ldot_map_distr_r :
+    forall l1 l2 r (f:A->A)
+      (f_zero:f Azero=Azero)
+      (f_add:forall a b, f (a+b) = f a + f b)
+      (f_mul_r:forall a b, a * f b = f (a*b)),
+      length l1 = r -> length l2 = r ->
+      ldot l1 (map f l2) = f (ldot l1 l2).
+  Proof.
+    induction l1,l2; simpl in *; intros; subst.
+    - cbv; auto.
+    - cbv; auto.
+    - cbv; auto.
+    - rewrite ?ldot_cons. rewrite IHl1 with (r:=length l1); auto.
+      rewrite f_add, f_mul_r. auto.
+  Qed.
+
   (** ldot left distributve over map2.
-    dot (map l1 l2) l3 = dot l1 l3 + dot l2 l3 *)
+      dot l1 (map2 l2 l3) = dot l1 l2 + dot l1 l3 *)
   Lemma ldot_map2_distr_l : forall l1 l2 l3 r,
       length l1 = r -> length l2 = r -> length l3 = r ->
-      (ldot (map2 Tadd l1 l2) l3 = (ldot l1 l3) + (ldot l2 l3)).
-  Proof.
-    induction l1,l2,l3; simpl in *; intros; subst; try (cbv; ring); try easy.
-    rewrite ?ldot_cons.
-    rewrite (IHl1 l2 l3 (length l1)); auto. ring.
-  Qed.
-  
-  (** ldot right distributve over map2.
-    dot l1 (map l2 l3) = dot l1 l2 + dot l1 l3 *)
-  Lemma ldot_map2_distr_r : forall l1 l2 l3 r,
-      length l1 = r -> length l2 = r -> length l3 = r ->
-      (ldot l1 (map2 Tadd l2 l3) = (ldot l1 l2) + (ldot l1 l3)).
+      ldot l1 (map2 Aadd l2 l3) = (ldot l1 l2) + (ldot l1 l3).
   Proof.
     induction l1,l2,l3; simpl in *; intros; subst;
       try (cbv; ring); try discriminate.
     rewrite ?ldot_cons. rewrite IHl1 with l2 l3 (length l1); auto; ring.
+  Qed.
+  
+  (** ldot right distributve over map2.
+      dot (map2 l1 l2) l3 = dot l1 l3 + dot l2 l3 *)
+  Lemma ldot_map2_distr_r : forall l1 l2 l3 r,
+      length l1 = r -> length l2 = r -> length l3 = r ->
+      ldot (map2 Aadd l1 l2) l3 = (ldot l1 l3) + (ldot l2 l3).
+  Proof.
+    induction l1,l2,l3; simpl in *; intros; subst; try (cbv; ring); try easy.
+    rewrite ?ldot_cons.
+    rewrite (IHl1 l2 l3 (length l1)); auto. ring.
   Qed.
 
 End ldot.
@@ -992,33 +1111,32 @@ End ldot.
 (** ** Generate special list for MatrixUnit *)
 Section GenerateSpecialList.
 
-  Context `{R:Ring}.
-  Infix "+" := Tadd.
-  Infix "*" := Tmul.
+  Context `{AR:ARing}.
+  Infix "+" := Aadd.
+  Infix "*" := Amul.
   
   (** create a list for matrix unit, which length is n and almost all elements 
-    are T0 excepts i-th is T1. *)
-  Fixpoint list_unit (n i : nat) : list T :=
+    are Azero excepts i-th is Aone. *)
+  Fixpoint lunit (n i : nat) : list A :=
     match n, i with
     | 0, _ => []
-    | S n, 0 => T1 :: (repeat T0 n)
-    | S n, S i => T0 :: (list_unit n i)
+    | S n, 0 => Aone :: (repeat Azero n)
+    | S n, S i => Azero :: (lunit n i)
     end.
 
-  (* Compute list_unit 0 2. (* [] *) *)
-  (* Compute list_unit 3 0. (* [1;0;0] *) *)
-  (* Compute list_unit 3 1. (* [0;1;0] *) *)
-  (* Compute list_unit 3 2. (* [0;0;1] *) *)
-  (* Compute list_unit 3 3. (* [0;0;0] *) *)
+  (* Compute lunit 0 2. (* [] *) *)
+  (* Compute lunit 3 0. (* [1;0;0] *) *)
+  (* Compute lunit 3 1. (* [0;1;0] *) *)
+  (* Compute lunit 3 2. (* [0;0;1] *) *)
+  (* Compute lunit 3 3. (* [0;0;0] *) *)
 
-  Lemma list_unit_length : forall n i, length (list_unit n i) = n.
+  Lemma lunit_length : forall n i, length (lunit n i) = n.
   Proof.
     induction n; auto. destruct i; simpl; auto. rewrite repeat_length. auto.
   Qed.
   
-  (** list_unit(n,i) [i] = T1, when i < n *)
-  Lemma list_unit_T1 : forall n i,
-      i < n -> (nth i (list_unit n i) T0 = T1).
+  (** lunit(n,i) [i] = Aone, when i < n *)
+  Lemma lunit_Aone : forall n i, i < n -> nth i (lunit n i) Azero = Aone.
   Proof.
     induction n; try easy. destruct i; simpl; try easy.
     intros; apply IHn.
@@ -1027,74 +1145,61 @@ Section GenerateSpecialList.
     apply Nat.succ_lt_mono. auto.
   Qed.
   
-  (** list_unit(n,i) [j] = T0, when i < n /\ j <> i *)
-  Fact list_unit_spec1 : forall n i j,
-      i < n -> j <> i -> (nth j (list_unit n i) T0 = T0).
+  (** lunit(n,i) [j] = Azero, when i < n /\ j <> i *)
+  Fact lunit_spec1 : forall n i j,
+      i < n -> j <> i -> nth j (lunit n i) Azero = Azero.
   Proof.
     induction n; try easy. intros. destruct i,j; simpl; try easy.
-    - apply nth_repeat_same.
+    - apply nth_repeat.
     - apply IHn; lia.
   Qed.
   
-  (** list_unit(n,i) [j] = T0, j <> i *)
-  Lemma list_unit_T0 : forall n i j,
-      j <> i -> (nth j (list_unit n i) T0 = T0).
+  (** lunit(n,i) [j] = Azero, j <> i *)
+  Lemma lunit_Azero : forall n i j, j <> i -> nth j (lunit n i) Azero = Azero.
   Proof.
     induction n; try easy; simpl; intros.
     - destruct j; easy.
-    - destruct i,j; simpl; try easy.
-      apply nth_repeat_same. apply IHn. auto.
+    - destruct i,j; simpl; try easy. apply nth_repeat. apply IHn. auto.
   Qed.
   
 End GenerateSpecialList.
 
-(* Arguments list_unit. *)
+Hint Resolve lunit_length : mat.
 
 
 (* ==================================== *)
 (** ** Convert list to fixed-length list *)
-Section List2FixedlengthList.
+Section listN.
 
   Context `{M:Monoid}.
   
-  Fixpoint list_to_listN (l : list T) (n : nat) : list T :=
+  Fixpoint listN (l : list A) (n : nat) : list A :=
     match n with
     | 0 => []
-    | S n' => (hd T0 l) :: (list_to_listN (tl l) n')
+    | S n' => (hd Azero l) :: (listN (tl l) n')
     end.
   
-  Lemma list_to_listN_length : forall (l : list T) (n : nat),
-      length (list_to_listN l n) = n.
-  Proof.
-    intros l n. gd l. induction n; intros; simpl; auto.
-  Qed.
+  Lemma listN_length : forall (l : list A) (n : nat), length (listN l n) = n.
+  Proof. intros l n. gd l. induction n; intros; simpl; auto. Qed.
   
-  Lemma list_to_listN_eq : forall (l : list T) (n : nat) 
-                             (H1 : length l = n), (list_to_listN l n = l).
-  Proof.
-    intros l n. gd l. induction n; intros; simpl.
-    - apply (length_zero_iff_nil) in H1; easy.
-    - rewrite IHn; destruct l; try easy. simpl. inversion H1. auto.
-  Qed.
+  Lemma listN_eq : forall (l : list A), listN l (length l) = l.
+  Proof. induction l; simpl; auto. f_equal; auto. Qed.
 
-End List2FixedlengthList.
-
-(* Arguments list_to_listN. *)
-Arguments list_to_listN_length {T T0 l n}.
+End listN.
 
 
 (* ==================================== *)
-(** ** width of a dlist (dlist T) *)
+(** ** width of a dlist (dlist A) *)
 Section dlist_width.
   
-  Context {T : Type}.
+  Context {A : Type}.
 
-  (** A proposition that every list of a list list has same length *)
-  Definition width {T : Type} (dl : dlist T) (n : nat) : Prop :=
+  (** A proposition that every list of a dlist has same length *)
+  Definition width {A : Type} (dl : dlist A) (n : nat) : Prop :=
     Forall (fun l => length l = n) dl.
 
   (** width property should be kept by its child structure *)
-  Lemma cons_width_iff : forall (l : list T) dl n,
+  Lemma cons_width_iff : forall (l : list A) dl n,
       width (l :: dl) n <-> length l = n /\ width dl n.
   Proof.
     intros. split; intros; inversion H; auto.
@@ -1102,7 +1207,7 @@ Section dlist_width.
   Qed.
 
   (** width property should be kept by every child element *)
-  Lemma width_imply_in_length : forall (l : list T) dl n, 
+  Lemma width_imply_in_length : forall (l : list A) dl n, 
       width dl n -> In l dl -> length l = n.
   Proof.
     intros. induction dl. inv H0.
@@ -1112,7 +1217,7 @@ Section dlist_width.
   Qed.
 
   (** app operation won't change width property *)
-  Lemma app_width : forall (dl1 : dlist T) dl2 n, 
+  Lemma app_width : forall (dl1 : dlist A) dl2 n, 
       width (dl1 ++ dl2) n <-> width dl1 n /\ width dl2 n.
   Proof.
     unfold width in *.
@@ -1122,31 +1227,41 @@ Section dlist_width.
   Qed.
 
   (** rev operation won't change width property *)
-  Lemma rev_width : forall (dl : dlist T) n, width (rev dl) n -> width dl n.
+  Lemma rev_width : forall (dl : dlist A) n, width (rev dl) n -> width dl n.
   Proof.
     unfold width in *.
     induction dl; simpl; intros; auto.
     apply app_width in H. destruct H. inv H0. constructor; auto.
   Qed.
 
-  (** repeat generated list list will keep width property same as seed element *)
-  Lemma repeat_width : forall (l : list T) n k,
+  (** repeat generated dlist will keep width property same as seed element *)
+  Lemma repeat_width : forall (l : list A) n k,
       length l = k -> width (repeat l n) k.
   Proof.
     unfold width. induction n; intros; simpl; auto.
   Qed.
 
-  (** width promise i-th row has same length *)
-  Lemma width_imply_nth_length : forall i c (dl : dlist T), 
-      i < length dl -> width dl c -> length (nth i dl []) = c.
+  (** i-th row has same length *)
+  Lemma dlist_nth_length : forall i c (dl : dlist A) l,
+      i < length dl -> width dl c -> length (nth i dl l) = c.
   Proof.
     unfold width. intros i c dl. revert i c.
     induction dl; intros; simpl in *. lia.
     inv H0. destruct i; auto. apply IHdl; auto. lia.
   Qed.
 
+  (** i-th row has zero length if index overflow *)
+  Lemma dlist_nth_length_overflow : forall i (dl : dlist A) l,
+      i >= length dl -> length (nth i dl l) = length l.
+  Proof.
+    intros i dl. revert i.
+    induction dl; intros; simpl in *.
+    - destruct i; auto.
+    - destruct i. lia. assert (i >= length dl). lia. apply IHdl; auto.
+  Qed.
+  
   (** map width law *)
-  Lemma width_map : forall (f: nat -> list T) (rowIdxs:list nat) c,
+  Lemma width_map : forall (f: nat -> list A) (rowIdxs:list nat) c,
       (forall i, length (f i) = c) -> width (map f rowIdxs) c.
   Proof.
     unfold width. intros f idxs. induction idxs; simpl; auto.
@@ -1160,40 +1275,40 @@ End dlist_width.
 Section SetByConstant.
   
   (* --------------------------------------------------------------------- *)
-  (** *** Modify a list list *)
+  (** *** Modify a dlist *)
   
-  (** Definition *)
-  Fixpoint dlst_chg {T} (dl : dlist T) (i j : nat) (x : T) 
-    : dlist T :=
+  (** dl[i,j] = x *)
+  Fixpoint dlistSet {A} (dl : dlist A) (i j : nat) (x : A) 
+    : dlist A :=
     match dl, i with
     | [], _ => []
-    | l :: dl, 0 => (lst_chg l j x) :: dl
-    | l :: dl, S i' => l :: (dlst_chg dl i' j x)
+    | l :: dl, 0 => (listSet l j x) :: dl
+    | l :: dl, S i' => l :: (dlistSet dl i' j x)
     end. 
   
-  (* Compute dlst_chg [] 0 1 9. *)
-  (* Compute dlst_chg [[1;2];[3;4;5]] 0 1 9. *)
-  (* Compute dlst_chg [[1;2];[3;4;5]] 1 1 9. *)
-  (* Compute dlst_chg [[1;2];[3;4;5]] 2 1 9. *)
-  (* Compute dlst_chg [[1;2];[3;4;5]] 1 5 9. *)
+  (* Compute dlistSet [] 0 1 9. *)
+  (* Compute dlistSet [[1;2];[3;4;5]] 0 1 9. *)
+  (* Compute dlistSet [[1;2];[3;4;5]] 1 1 9. *)
+  (* Compute dlistSet [[1;2];[3;4;5]] 2 1 9. *)
+  (* Compute dlistSet [[1;2];[3;4;5]] 1 5 9. *)
   
   (** Length property *)
-  Lemma dlst_chg_length : forall {A} dl i r j x, 
+  Lemma dlistSet_length : forall {A} dl i r j x, 
       length dl = r ->
-      length (@dlst_chg A dl i j x) = r.
+      length (@dlistSet A dl i j x) = r.
   Proof.
     intros A dl; induction dl; auto. destruct i; intros; auto; simpl in *.
     destruct r; auto. easy.
   Qed.
   
   (** Width property *)
-  Lemma dlst_chg_width : forall {A} dl i c j x, 
+  Lemma dlistSet_width : forall {A} dl i c j x, 
       width dl c ->
-      width (@dlst_chg A dl i j x) c.
+      width (@dlistSet A dl i j x) c.
   Proof.
     unfold width. intros A dl; induction dl; auto.
     destruct i; intros; simpl in *; auto; inv H; constructor; auto.
-    apply lst_chg_length; auto.
+    apply listSet_length; auto.
   Qed.
 
 End SetByConstant.
@@ -1204,65 +1319,65 @@ End SetByConstant.
 Section SetByFunction.
 
   (** Inner version, i0 is given position, i is changed in every loop *)
-  Fixpoint dlst_chgf_aux {T} (dl : dlist T) (i0 i j : nat) 
-    (f : nat -> nat -> T) 
-    : dlist T :=
+  Fixpoint dlistSetf_aux {A} (dl : dlist A) (i0 i j : nat) 
+    (f : nat -> nat -> A) 
+    : dlist A :=
     match dl, i with
     | [], _ => []
-    | l :: dl, 0 => (lst_chgf l j (f i0)) :: dl
-    | l :: dl, S i' => l :: (dlst_chgf_aux dl i0 i' j f)
+    | l :: dl, 0 => (listSetf l j (f i0)) :: dl
+    | l :: dl, S i' => l :: (dlistSetf_aux dl i0 i' j f)
     end. 
   
   (** User version that hide i0 parameter *)
-  Definition dlst_chgf {T} (dl : dlist T) (i j : nat) 
-    (f : nat -> nat -> T) 
-    : dlist T :=
-    dlst_chgf_aux dl i i j f.
+  Definition dlistSetf {A} (dl : dlist A) (i j : nat) 
+    (f : nat -> nat -> A) 
+    : dlist A :=
+    dlistSetf_aux dl i i j f.
   
   (* Let f_gen := fun (i j : nat) => (i + j + 10).
-  Compute dlst_chgf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 0 0 f_gen.
-  Compute dlst_chgf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 0 1 f_gen.
-  Compute dlst_chgf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 0 2 f_gen.
-  Compute dlst_chgf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 0 3 f_gen.
-  Compute dlst_chgf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 0 4 f_gen.
-  Compute dlst_chgf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 1 0 f_gen.
-  Compute dlst_chgf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 1 1 f_gen.
-  Compute dlst_chgf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 1 2 f_gen.
-  Compute dlst_chgf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 1 3 f_gen.
-  Compute dlst_chgf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 1 4 f_gen.
+  Compute dlistSetf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 0 0 f_gen.
+  Compute dlistSetf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 0 1 f_gen.
+  Compute dlistSetf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 0 2 f_gen.
+  Compute dlistSetf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 0 3 f_gen.
+  Compute dlistSetf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 0 4 f_gen.
+  Compute dlistSetf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 1 0 f_gen.
+  Compute dlistSetf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 1 1 f_gen.
+  Compute dlistSetf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 1 2 f_gen.
+  Compute dlistSetf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 1 3 f_gen.
+  Compute dlistSetf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 1 4 f_gen.
    *)
   
   (** Length property *)
-  Lemma dlst_chgf_aux_length : forall {T} dl i r i0 j f, 
+  Lemma dlistSetf_aux_length : forall {A} dl i r i0 j f, 
       length dl = r ->
-      length (@dlst_chgf_aux T dl i0 i j f) = r.
+      length (@dlistSetf_aux A dl i0 i j f) = r.
   Proof.
     intros A dl; induction dl; auto. destruct i; auto; simpl; intros.
     destruct r; auto. easy.
   Qed.
   
-  Lemma dlst_chgf_length : forall {T} dl r i j f, 
+  Lemma dlistSetf_length : forall {A} dl r i j f, 
       length dl = r ->
-      length (@dlst_chgf T dl i j f) = r.
+      length (@dlistSetf A dl i j f) = r.
   Proof.
-    intros. apply dlst_chgf_aux_length. auto.
+    intros. apply dlistSetf_aux_length. auto.
   Qed.
   
   (** Width property *)
-  Lemma dlst_chgf_aux_width : forall {T} dl i c i0 j f, 
+  Lemma dlistSetf_aux_width : forall {A} dl i c i0 j f, 
       width dl c ->
-      width (@dlst_chgf_aux T dl i0 i j f) c.
+      width (@dlistSetf_aux A dl i0 i j f) c.
   Proof.
-    unfold width. intros T dl; induction dl; auto. 
+    unfold width. intros A dl; induction dl; auto. 
     induction i; intros; simpl in *; auto; inv H; constructor; auto.
-    apply lst_chgf_length; auto.
+    apply listSetf_length; auto.
   Qed.
   
-  Lemma dlst_chgf_width : forall {T} dl i c j f, 
+  Lemma dlistSetf_width : forall {A} dl i c j f, 
       width dl c ->
-      width (@dlst_chgf T dl i j f) c.
+      width (@dlistSetf A dl i j f) c.
   Proof.
-    intros. apply dlst_chgf_aux_width; auto.
+    intros. apply dlistSetf_aux_width; auto.
   Qed.
 
 End SetByFunction.
@@ -1273,36 +1388,48 @@ End SetByFunction.
 Section SetRowByConstant.
   
   (** Definition *)
-  Fixpoint dlst_chgrow {T} (dl : dlist T) (i : nat) (x : list T) 
-    : dlist T :=
+  Fixpoint dlistSetRow {A} (dl : dlist A) (i : nat) (x : list A) 
+    : dlist A :=
     match dl, i with
     | [], _ => []
     | l :: dl, 0 => x :: dl
-    | l :: dl, S i' => l :: (dlst_chgrow dl i' x)
+    | l :: dl, S i' => l :: (dlistSetRow dl i' x)
     end. 
   
-  (*   Compute dlst_chgrow [] 0 [8;9].
-  Compute dlst_chgrow [[1;2];[3;4;5]] 0 [8;9].
-  Compute dlst_chgrow [[1;2];[3;4;5]] 1 [8;9].
-  Compute dlst_chgrow [[1;2];[3;4;5]] 2 [8;9].
+  (*   Compute dlistSetRow [] 0 [8;9].
+  Compute dlistSetRow [[1;2];[3;4;5]] 0 [8;9].
+  Compute dlistSetRow [[1;2];[3;4;5]] 1 [8;9].
+  Compute dlistSetRow [[1;2];[3;4;5]] 2 [8;9].
    *)  
   (** Length property *)
-  Lemma dlst_chgrow_length : forall {T} dl i r x, 
+  Lemma dlistSetRow_length : forall {A} dl i r x, 
       length dl = r ->
-      length (@dlst_chgrow T dl i x) = r.
+      length (@dlistSetRow A dl i x) = r.
   Proof.
     intros A dl; induction dl; auto. destruct i; auto; intros; simpl in *.
     destruct r; auto. easy.
   Qed.
   
   (** Width property *)
-  Lemma dlst_chgrow_width : forall {T} dl i c x,
+  Lemma dlistSetRow_width : forall {A} dl i c x,
       length x = c ->
       width dl c ->
-      width (@dlst_chgrow T dl i x) c.
+      width (@dlistSetRow A dl i x) c.
   Proof.
     unfold width; intros A dl; induction dl; auto. 
     induction i; intros; simpl in *; inv H0; constructor; auto.
+  Qed.
+
+  (** Index out-of-bound *)
+  Lemma dlistSetRow_idxOutOfBound : forall {A} dl i r c l,
+      length dl = r -> width dl c -> i >= r -> @dlistSetRow A dl i l = dl.
+  Proof.
+    intros A dl i. revert dl. induction i; intros; simpl.
+    - assert (r = 0). lia. rewrite H2 in *. apply length_zero_iff_nil in H.
+      rewrite H in *. simpl. auto.
+    - destruct dl; auto. simpl in *. destruct r; try lia.
+      f_equal.
+      apply IHi with r c; auto. inv H0; auto. lia.
   Qed.
 
 End SetRowByConstant.
@@ -1313,102 +1440,254 @@ End SetRowByConstant.
 Section SetRowByFunction.
   
   (** Inner version, i0 is given position, i is changed in every loop *)
-  Fixpoint dlst_chgrowf_aux {T} (dl : dlist T) (i0 i : nat) 
-    (f : nat -> list T) 
-    : dlist T :=
+  Fixpoint dlistSetRowf_aux {A} (dl : dlist A) (i0 i : nat) 
+    (f : nat -> list A) 
+    : dlist A :=
     match dl, i with
     | [], _ => []
     | l :: dl, 0 => (f i0) :: dl
-    | l :: dl, S i' => l :: (dlst_chgrowf_aux dl i0 i' f)
+    | l :: dl, S i' => l :: (dlistSetRowf_aux dl i0 i' f)
     end. 
   
   (** User version that hide i0 parameter *)
-  Definition dlst_chgrowf {T} (dl : dlist T) (i : nat) 
-    (f : nat -> list T) 
-    : dlist T :=
-    dlst_chgrowf_aux dl i i f.
+  Definition dlistSetRowf {A} (dl : dlist A) (i : nat) 
+    (f : nat -> list A) 
+    : dlist A :=
+    dlistSetRowf_aux dl i i f.
   
   (*   Let f_gen := fun (i : nat) => [i+10;i+11;i+12].
-  Compute dlst_chgrowf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 0 f_gen.
-  Compute dlst_chgrowf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 1 f_gen.
-  Compute dlst_chgrowf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 2 f_gen.
-  Compute dlst_chgrowf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 3 f_gen.
+  Compute dlistSetRowf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 0 f_gen.
+  Compute dlistSetRowf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 1 f_gen.
+  Compute dlistSetRowf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 2 f_gen.
+  Compute dlistSetRowf [[1;2;3;4];[4;5;6;7];[8;9;10;11]] 3 f_gen.
    *) 
   
   (** Length property *)
-  Lemma dlst_chgrowf_aux_length : forall {T} dl i r i0 f, 
+  Lemma dlistSetRowf_aux_length : forall {A} dl i r i0 f, 
       length dl = r ->
-      length (@dlst_chgrowf_aux T dl i0 i f) = r.
+      length (@dlistSetRowf_aux A dl i0 i f) = r.
   Proof.
     intros A dl; induction dl; auto. induction i; auto.
     intros. simpl. destruct r; auto. easy.
   Qed.
   
-  Lemma dlst_chgrowf_length : forall {T} dl r i f, 
+  Lemma dlistSetRowf_length : forall {A} dl r i f, 
       length dl = r ->
-      length (@dlst_chgrowf T dl i f) = r.
+      length (@dlistSetRowf A dl i f) = r.
   Proof.
-    intros. apply dlst_chgrowf_aux_length. auto.
+    intros. apply dlistSetRowf_aux_length. auto.
   Qed.
   
   (** Width property *)
-  Lemma dlst_chgrowf_aux_width : forall {T} dl i c i0 f, 
+  Lemma dlistSetRowf_aux_width : forall {A} dl i c i0 f, 
       length (f i0) = c ->
       width dl c ->
-      width (@dlst_chgrowf_aux T dl i0 i f) c.
+      width (@dlistSetRowf_aux A dl i0 i f) c.
   Proof.
     unfold width; intros A dl; induction dl; auto. 
     induction i; intros; simpl in *; auto; inv H0; constructor; auto.
   Qed.
   
-  Lemma dlst_chgrowf_width : forall {T} dl i c f, 
+  Lemma dlistSetRowf_width : forall {A} dl i c f, 
       length (f i) = c ->
       width dl c ->
-      width (@dlst_chgrowf T dl i f) c.
+      width (@dlistSetRowf A dl i f) c.
   Proof.
-    intros. apply dlst_chgrowf_aux_width; auto.
+    intros. apply dlistSetRowf_aux_width; auto.
   Qed.
 
 End SetRowByFunction.
 
 
 (* ==================================== *)
-(** ** Properties of dlist *)
-Section props_dlist.
-  Context {T : Type} {T0 : T}.
-  Open Scope nat.
+(** ** Row Transform *)
+Section RowTransform.
 
-  (** ** Length of a empty dlist *)
-  Lemma dlist_h0_iff : forall (dl : dlist T), 
-      length dl = 0 -> dl = nil.
+  Context `{HARing : ARing}.
+  
+  (** *** Swap two rows *)
+
+  (** Swap row i1 and row i2 *)
+  Definition dlistRowSwap (dl : dlist A) (i1 i2 : nat) : dlist A :=
+    let r := length dl in
+    if (i1 <? r) && (i2 <? r)
+    then 
+      let row_i1 := nth i1 dl [] in
+      let row_i2 := nth i2 dl [] in
+      dlistSetRow (dlistSetRow dl i1 row_i2) i2 row_i1
+    else dl.
+  
+  (** Index out-of-bound *)
+  Lemma dlistRowSwap_idxOutOfBound_i1 : forall dl r c i1 i2,
+      length dl = r -> width dl c -> i1 >= r -> dlistRowSwap dl i1 i2 = dl.
   Proof.
-    destruct dl; simpl; auto. intros H; easy.
+    intros. unfold dlistRowSwap.
+    rewrite H in *. apply Nat.ltb_ge in H1. rewrite H1; simpl. auto.
+  Qed.
+
+  (** Index out-of-bound *)
+  Lemma dlistRowSwap_idxOutOfBound_i2 : forall dl r c i1 i2,
+      length dl = r -> width dl c -> i2 >= r -> dlistRowSwap dl i1 i2 = dl.
+  Proof.
+    intros. unfold dlistRowSwap.
+    rewrite H in *. apply Nat.ltb_ge in H1. rewrite H1; simpl.
+    rewrite andb_false_r. auto.
+  Qed.
+
+  (** Length property *)
+  Lemma dlistRowSwap_length : forall dl r c i1 i2, 
+      length dl = r -> width dl c -> length (dlistRowSwap dl i1 i2) = r.
+  Proof.
+    intros. unfold dlistRowSwap.
+    rewrite H in *. destruct (i1 <? r) eqn:E1, (i2 <? r) eqn:E2; simpl; auto.
+    repeat rewrite dlistSetRow_length with (r:=r); auto.
+  Qed.
+
+  (** Width property *)
+  Lemma dlistRowSwap_width : forall dl r c i1 i2,
+      length dl = r -> width dl c -> width (dlistRowSwap dl i1 i2) c.
+  Proof.
+    intros. unfold dlistRowSwap.
+    rewrite H in *. destruct (i1 <? r) eqn:E1, (i2 <? r) eqn:E2; simpl; auto.
+    repeat apply dlistSetRow_width; auto; apply dlist_nth_length; auto; try lia;
+      rewrite H in *; solve_nat_ineq.
+  Qed.
+
+  
+  (** *** K times of one row *)
+
+  (** k times of row i  *)
+  Definition dlistRowK (dl : dlist A) (i : nat) (k : A) : dlist A :=
+    let r := length dl in
+    if (i <? r)
+    then 
+      let row_i := nth i dl [] in
+      let row_i_K := lcmul (Amul:=Amul) k row_i in
+      dlistSetRow dl i row_i_K
+    else dl.
+
+  (** Index out-of-bound *)
+  Lemma dlistRowK_idxOutOfBound : forall dl r c i k,
+      length dl = r -> width dl c -> i >= r -> dlistRowK dl i k = dl.
+  Proof.
+    intros. unfold dlistRowK.
+    rewrite H in *. apply Nat.ltb_ge in H1. rewrite H1; simpl. auto.
+  Qed.
+
+  (** Length property *)
+  Lemma dlistRowK_length : forall dl r c i k,
+      length dl = r -> width dl c -> length (dlistRowK dl i k) = r.
+  Proof.
+    intros. unfold dlistRowK.
+    rewrite H in *. destruct (i <? r) eqn:Ei; simpl; auto.
+    repeat rewrite dlistSetRow_length with (r:=r); auto.
+  Qed.
+
+  (** Width property *)
+  Lemma dlistRowK_width : forall dl r c i k,
+      length dl = r -> width dl c -> width (dlistRowK dl i k) c.
+  Proof.
+    intros. unfold dlistRowK.
+    rewrite H in *. destruct (i <? r) eqn:Ei; simpl; auto.
+    repeat apply dlistSetRow_width; auto.
+    rewrite lcmul_length with (n:=c); auto.
+    apply dlist_nth_length; auto; try lia; rewrite H in *; solve_nat_ineq.
+  Qed.
+
+  
+  (** *** Add K times of one row to another row *)
+
+  (* add k times of row i1 to row i2, that is: row(i2) = row(i2) + k * row(i1) *)
+  Definition dlistRowKAdd (dl : dlist A) (i1 i2 : nat) (k : A) : dlist A :=
+    let r := length dl in
+    if (i1 <? r) && (i2 <? r)
+    then 
+      let row_i1 := nth i1 dl [] in
+      let row_i2 := nth i2 dl [] in
+      let row_i2' := ladd (Aadd:=Aadd) (lcmul (Amul:=Amul) k row_i1) row_i2 in
+      dlistSetRow dl i2 row_i2'
+    else dl.
+
+  (** Index out-of-bound *)
+  Lemma dlistRowKAdd_idxOutOfBound_i1 : forall dl r c i1 i2 k,
+      length dl = r -> width dl c -> i1 >= r -> dlistRowKAdd dl i1 i2 k = dl.
+  Proof.
+    intros. unfold dlistRowKAdd.
+    rewrite H in *. apply Nat.ltb_ge in H1. rewrite H1; simpl. auto.
+  Qed.
+
+  (** Index out-of-bound *)
+  Lemma dlistRowKAdd_idxOutOfBound_i2 : forall dl r c i1 i2 k,
+      length dl = r -> width dl c -> i2 >= r -> dlistRowKAdd dl i1 i2 k = dl.
+  Proof.
+    intros. unfold dlistRowKAdd.
+    rewrite H in *. apply Nat.ltb_ge in H1. rewrite H1; simpl.
+    rewrite andb_false_r. auto.
+  Qed.
+
+  (** Length property *)
+  Lemma dlistRowKAdd_length : forall dl r c i1 i2 k,
+      length dl = r -> width dl c -> length (dlistRowKAdd dl i1 i2 k) = r.
+  Proof.
+    intros. unfold dlistRowKAdd.
+    rewrite H in *. destruct (i1 <? r) eqn:E1, (i2 <? r) eqn:E2; simpl; auto.
+    repeat rewrite dlistSetRow_length with (r:=r); auto.
+  Qed.
+
+  (** Width property *)
+  Lemma dlistRowKAdd_width : forall dl r c i1 i2 k,
+      length dl = r -> width dl c -> width (dlistRowKAdd dl i1 i2 k) c.
+  Proof.
+    intros. unfold dlistRowKAdd.
+    rewrite H in *. destruct (i1 <? r) eqn:E1, (i2 <? r) eqn:E2; simpl; auto.
+    repeat apply dlistSetRow_width; auto.
+    rewrite ladd_length with (n:=c); auto.
+    rewrite lcmul_length with (n:=c); auto.
+    apply dlist_nth_length; auto; try lia; rewrite H in *; solve_nat_ineq.
+    apply dlist_nth_length; auto; try lia; rewrite H in *; solve_nat_ineq.
   Qed.
   
-  (** Two list list equal iff all nth nth visit equal *)
+End RowTransform.
+
+Section test.
+  Let dlistRowK := dlistRowK (Amul:=Nat.mul).
+  Let dlistRowKAdd := dlistRowKAdd (Aadd:=Nat.add) (Amul:=Nat.mul).
+  Let dl := [[1;2];[3;4];[5;6]].
+  (* Compute dlistRowSwap dl 0 1. *)
+  (* Compute dlistRowK dl 0 2. *)
+  (* Compute dlistRowKAdd dl 0 1 2. *)
+End test.
+
+
+
+(* ==================================== *)
+(** ** Properties of dlist *)
+Section props_dlist.
+  Context {A : Type} {Azero : A}.
+  (* Open Scope nat. *)
+
+  (** Two dlist equal iff all nth nth visit equal *)
   Lemma dlist_eq_iff_nth_nth :
-    forall r c (dl1 dl2 : dlist T)
+    forall r c (dl1 dl2 : dlist A)
       (H1 : length dl1 = r) (H2 : length dl2 = r)
       (H3 : width dl1 c) (H4 : width dl2 c),
       dl1 = dl2 <->
         (forall (i j : nat), i < r -> j < c -> 
-                      (nth j (nth i dl1 []) T0 =
-                         nth j (nth i dl2 []) T0)).
+                      (nth j (nth i dl1 []) Azero =
+                         nth j (nth i dl2 []) Azero)).
   Proof.
     intros; split; intros.
     - rewrite H. easy.
     - apply (list_eq_iff_nth [] _ dl1 dl2 H1 H2). intros. subst.
-      rewrite (list_eq_iff_nth) with (n:=c); auto;
-        apply width_imply_nth_length; auto. lia.
+      rewrite (list_eq_iff_nth) with (n:=c); auto.
+      apply dlist_nth_length; auto.
+      apply dlist_nth_length; auto. lia.
   Qed.
 
   (** dlist_eq is decidable *)
-  Context `{HDec : Dec T}.
-  Lemma dlist_eq_dec : forall (dl1 dl2 : dlist T), {dl1 = dl2} + {~(dl1 = dl2)}.
-  Proof.
-    apply list_eq_dec.
-    apply list_eq_dec. apply dec.
-  Qed.
+  Context `{ADec : Dec A}.
+  Lemma dlist_eq_dec : forall (dl1 dl2 : dlist A), {dl1 = dl2} + {dl1 <> dl2}.
+  Proof. apply list_eq_dec. apply list_eq_dec. apply dec. Qed.
 
 End props_dlist.
 
@@ -1416,9 +1695,9 @@ End props_dlist.
 (* ==================================== *)
 (** ** Print a dlist *)
 Section dlprt.
-  Context {T : Type}.
+  Context {A : Type}.
 
-  Definition dlst_prt (dl : dlist T) (p : T -> string) : string :=
+  Definition dlst_prt (dl : dlist A) (p : A -> string) : string :=
     let f := (fun s l => String.append s (String.append (lst_prt l p) strNewline)) in
     fold_left f dl "".
 End dlprt.
@@ -1434,8 +1713,8 @@ Section dnil.
   Context `{M:Monoid}.
   Open Scope nat.
   
-  (** a list list that every list is nil, named as dnil *)
-  Fixpoint dnil n : dlist T :=
+  (** a dlist that every list is nil, named as dnil *)
+  Fixpoint dnil n : dlist A :=
     match n with
     | O => nil
     | S n' => nil :: (dnil n')
@@ -1463,7 +1742,7 @@ Section dnil.
   Qed.
 
   (** width dl is zero imply it is a dnil *)
-  Lemma dlist_w0_eq_dnil : forall (dl : dlist T), 
+  Lemma dlist_w0_eq_dnil : forall (dl : dlist A), 
       width dl 0 -> dl = dnil (length dl).
   Proof.
     unfold width; induction dl; simpl; auto.
@@ -1482,15 +1761,14 @@ End dnil.
 
 
 (* ==================================== *)
-(** ** map2 *)
-Section map2.
-  Context {T U V : Type}.
-  Variable f : T -> U -> V.
+(** ** map2 for dlist *)
+Section dlist_map2.
   
-  Open Scope nat.
+  Context {A B C : Type}.
+  (* Open Scope nat. *)
 
   (** map2 dnil dl = dnil *)
-  Lemma map2_dnil_l : forall dl n, 
+  Lemma map2_dnil_l : forall (dl : @dlist B) (f : A -> B -> C) n, 
       length dl = n -> map2 (map2 f) (dnil n) dl = dnil n.
   Proof.
     intros. gd dl. induction n; intros; simpl; try easy.
@@ -1498,7 +1776,7 @@ Section map2.
   Qed.
 
   (** map2 dl dnil = dnil *)
-  Lemma map2_dnil_r : forall dl n, 
+  Lemma map2_dnil_r : forall (dl:dlist A) (f : A -> B -> C) n, 
       length dl = n -> map2 (map2 f) dl (dnil n) = dnil n.
   Proof.
     intros. gd dl. induction n; intros; simpl; try easy.
@@ -1506,19 +1784,47 @@ Section map2.
     - destruct dl. easy. simpl. rewrite IHn; auto. rewrite map2_nil_r. easy.
   Qed.
 
-End map2.
+  (** (map2 (map2 f) d1 d2)[i,j] = f (d1[i,j]) (d2[i,j]) *)
+  Lemma nth_nth_map2_map2_rw : forall (f : A -> A -> A) (d1 d2 : dlist A) r c i j l a,
+      length d1 = r -> width d1 c -> length d2 = r -> width d2 c ->
+      i < r -> j < c ->
+      nth j (nth i (map2 (map2 f) d1 d2) l) a =
+        f (nth j (nth i d1 l) a) (nth j (nth i d2 l) a).
+  Proof.
+    clear. intros.
+    rewrite map2_nth with (n:=r); auto.
+    rewrite map2_nth with (n:=c); auto.
+    apply dlist_nth_length; auto; lia.
+    apply dlist_nth_length; auto; lia.
+  Qed.
+
+  (** (map (map f) d)[i,j] = f (d[i,j]) *)
+  Lemma nth_nth_map_map : forall (d : dlist A) (f : A -> A) r c i j l a,
+      length d = r -> width d c ->
+      i < r -> j < c ->
+      nth j (nth i (map (map f) d) l) a = f (nth j (nth i d l) a).
+  Proof.
+    intros d f r. revert d f. induction r.
+    - intros. lia.
+    - intros. destruct d as [|dh dt]; simpl in *. lia.
+      inversion H. inversion H0. destruct i.
+      + apply nth_map with (n:=c); auto.
+      + apply IHr with (c:=c); auto. inv H0; auto. lia.
+  Qed.
+  
+End dlist_map2.
 
 
 (* ==================================== *)
 (** ** Convert between dlist and function *)
 Section f2dl_dl2f.
-  Context {T : Type} {T0 : T}.
+  Context {A : Type} {Azero : A}.
 
-  Definition f2dl {r c : nat} (f : nat -> nat -> T) : dlist T :=
+  Definition f2dl {r c : nat} (f : nat -> nat -> A) : dlist A :=
     map (fun i => f2l (n:=c) (f i)) (seq 0 r).
 
-  Definition dl2f {r c : nat} (dl : dlist T) : nat -> nat -> T :=
-    fun i j => nth j (nth i dl []) T0.
+  Definition dl2f {r c : nat} (dl : dlist A) : nat -> nat -> A :=
+    fun i j => nth j (nth i dl []) Azero.
 
   Lemma f2dl_length : forall r c f, length (@f2dl r c f) = r.
   Proof.
@@ -1532,6 +1838,13 @@ Section f2dl_dl2f.
     - apply f2l_length.
     - rewrite <- seq_shift. rewrite List.map_map.
       apply IHr.
+  Qed.
+
+  (** (f2dl f)[i,j] = f i j *)
+  Lemma nth_f2dl : forall {r c} f l a i j,
+      i < r -> j < c -> nth j (nth i (@f2dl r c f) l) a = f i j.
+  Proof.
+    intros. unfold f2dl. rewrite nth_map_seq; auto. rewrite nth_f2l; auto.
   Qed.
 
 End f2dl_dl2f.
@@ -1554,7 +1867,7 @@ Section convert_row_and_col.
   Context `{M:Monoid}.
   
   (** Convert a list to a dlist, it looks like converting a row to a column. *)
-  Fixpoint row2col (l : list T) : dlist T :=
+  Fixpoint row2col (l : list A) : dlist A :=
     match l with
     | [] => []
     | x :: tl => [x] :: (row2col tl)
@@ -1562,19 +1875,15 @@ Section convert_row_and_col.
   
   (** row2col length law *)
   Lemma row2col_length : forall l, length (row2col l) = length l.
-  Proof.
-    induction l; simpl; intros; auto.
-  Qed.
+  Proof. induction l; simpl; intros; auto. Qed.
   
   (** row2col width law *)
   Lemma row2col_width : forall l, width (row2col l) 1.
-  Proof.
-    unfold width; induction l; simpl; intros; auto.
-  Qed.
+  Proof. unfold width; induction l; simpl; intros; auto. Qed.
 
   Lemma nth_row2col : forall l i,
       i < length l ->
-      (nth i (row2col l) [] = [nth i l T0]).
+      nth i (row2col l) [] = [nth i l Azero].
   Proof.
     induction l.
     - intros. simpl in *. lia.
@@ -1584,14 +1893,14 @@ Section convert_row_and_col.
   
   (** Convert a dlist to a list which contain head element, it looks like 
     converting a column to a row. *)
-  Fixpoint col2row (dl : dlist T) : list T :=
+  Fixpoint col2row (dl : dlist A) : list A :=
     match dl with
     | [] => []
-    | l :: tl => (hd T0 l) :: (col2row tl)
+    | l :: tl => (hd Azero l) :: (col2row tl)
     end.
   
   (** Convert a dlist to list then convert it to a dlist, equal to original dlist. *)
-  Lemma row2col_col2row : forall (dl : dlist T),
+  Lemma row2col_col2row : forall (dl : dlist A),
       width dl 1 -> row2col (col2row dl) = dl.
   Proof.
     unfold width; induction dl; simpl; auto; intros. inv H.
@@ -1602,8 +1911,8 @@ Section convert_row_and_col.
   
   (** Convert a list to dlist then convert it to a list, equal to original 
     list. *)
-  Lemma col2row_row2col : forall (l : list T), 
-      (col2row (row2col l) = l).
+  Lemma col2row_row2col : forall (l : list A), 
+      col2row (row2col l) = l.
   Proof.
     induction l; simpl; auto; intros. rewrite IHl. easy.
   Qed.
@@ -1614,34 +1923,30 @@ End convert_row_and_col.
 (* ==================================== *)
 (** ** head column of a dlist *)
 Section hdc.
-  Context {T : Type} {T0 : T}.
+  Context {A : Type} (Azero : A).
   
   (** Get head column of a dlist *)
-  Fixpoint hdc (dl : dlist T) : list T :=
+  Fixpoint hdc (dl : dlist A) : list A :=
     match dl with
     | [] => []
-    | l :: tl => (hd T0 l) :: (hdc tl)
+    | l :: tl => (hd Azero l) :: (hdc tl)
     end.
   
   (** hdc length law *)
   Lemma hdc_length : forall dl, length (hdc dl) = length dl.
-  Proof.
-    induction dl; simpl; auto.
-  Qed.
+  Proof. induction dl; simpl; auto. Qed.
   
 End hdc.
-
-Arguments hdc {T}.
 
 
 (* ==================================== *)
 (** ** tail columns of a dlist *)
 Section tlc.
   
-  Context {T : Type}.
+  Context {A : Type}.
   
   (** Get tail columns of a dlist *)
-  Fixpoint tlc (dl : dlist T) : dlist T :=
+  Fixpoint tlc (dl : dlist A) : dlist A :=
     match dl with
     | [] => []
     | l :: tl => (tail l) :: (tlc tl)
@@ -1649,21 +1954,17 @@ Section tlc.
   
   (** tlc length law *)
   Lemma tlc_length : forall dl, length (tlc dl) = length dl.
-  Proof.
-    induction dl; simpl; auto.
-  Qed.
+  Proof. induction dl; simpl; auto. Qed.
   
   (** tlc width law when width equal to 0 *)
-  Lemma tlc_width0 : forall dl, 
-      width dl 0 -> width (tlc dl) 0.
+  Lemma tlc_width0 : forall dl, width dl 0 -> width (tlc dl) 0.
   Proof.
     unfold width; induction dl; simpl; auto. intros. inv H; constructor; auto.
     apply length_zero_iff_nil in H2. subst. auto.
   Qed.
   
   (** tlc width law when width not equal to 0 *)
-  Lemma tlc_widthS : forall dl c, 
-      width dl (S c) -> width (tlc dl) c.
+  Lemma tlc_widthS : forall dl c, width dl (S c) -> width (tlc dl) c.
   Proof.
     unfold width; induction dl; simpl; auto.
     intros. inv H; constructor; auto.
@@ -1676,28 +1977,26 @@ End tlc.
 (* ==================================== *)
 (** ** construct a dlist with a list and a dlist by column *)
 Section consc.
-  Context {T : Type} {T0 : T}.
+  Context {A : Type} {Azero : A}.
   
   (** Construct a dlist by column with a list and a dlist *)
-  Fixpoint consc (l : list T) (dl : dlist T) : dlist T :=
+  Fixpoint consc (l : list A) (dl : dlist A) : dlist A :=
     match l, dl with
     | xl :: tl, xdl :: tdl => (xl :: xdl) :: (consc tl tdl)
     | _, _ => []
     end.
   
-  (** consc_eq, seems like f_equal *)
-  Lemma consc_eq_iff : forall (l1 l2 : list T) (dl1 dl2 : dlist T) n
-                         (H1:length l1 = n) (H2:length l2 = n)
-                         (H3:length dl1 = n) (H4:length dl2 = n),
-      consc l1 dl1 = consc l2 dl2 <-> (l1 = l2) /\ dl1 = dl2.
+  (** consc is injective *)
+  Lemma consc_inj : forall (l1 l2 : list A) (dl1 dl2 : dlist A) n,
+      length l1 = n -> length l2 = n -> length dl1 = n -> length dl2 = n ->
+      consc l1 dl1 = consc l2 dl2 -> (l1 = l2) /\ dl1 = dl2.
   Proof.
     induction l1.
-    - intros. simpl in *. subst. apply length_zero_iff_nil in H4,H3,H2.
+    - intros. simpl in *. subst. apply length_zero_iff_nil in H0,H1,H2.
       subst. easy.
     - intros. destruct l2,dl1,dl2; simpl in *; subst; try easy.
-      inv H2. inv H3. inv H4. split; intros.
-      + inv H. rewrite IHl1 in H6; auto. inv H6. auto.
-      + inv H. inv H3. inv H4. auto.
+      inv H0. inv H1. inv H2.
+      inv H3. eapply IHl1 in H6; auto. inv H6. auto.
   Qed.
   
   (** consc length law *)
@@ -1717,11 +2016,22 @@ Section consc.
     unfold width; induction l,dl; simpl; intros; auto.
     inv H. inv H0. constructor; auto.
   Qed.
+
+  (** width dl c -> length ((l @@ dl)[i]) = c + 1 *)
+  Lemma nth_consc_length : forall (l : list A) dl l0 i r c,
+      length l = r -> length dl = r -> width dl c -> i < r ->
+      length (nth i (consc l dl) l0) = S c.
+  Proof.
+    intros l dl l0 i r. revert l dl l0 i. induction r; intros. lia.
+    destruct l, dl; simpl in *; try lia. inversion H1. destruct i. 
+    - simpl; auto.
+    - apply IHr; auto. lia.
+  Qed.
   
   (** consc with hdc and tlc of a dnil generate lzero *)
   Lemma consc_hdc_tlc_width0 : forall dl r, 
       length dl = r -> width dl 0 -> 
-      consc (hdc T0 dl) (tlc dl) = row2col (repeat T0 r).
+      consc (hdc Azero dl) (tlc dl) = row2col (repeat Azero r).
   Proof.
     unfold width; induction dl; simpl; intros; subst; try easy.
     inv H0. apply length_zero_iff_nil in H2. subst. simpl. f_equal.
@@ -1731,7 +2041,7 @@ Section consc.
   (** consc with hdc and tlc of a dlist generate itself *)
   Lemma consc_hdc_tlc_widthS : forall dl c, 
       width dl (S c) ->
-      consc (hdc T0 dl) (tlc dl) = dl.
+      consc (hdc Azero dl) (tlc dl) = dl.
   Proof.
     unfold width; induction dl; simpl; intros; auto. inv H.
     f_equal; auto.
@@ -1748,10 +2058,39 @@ Section consc.
   Qed.
   
   (** repeat (x :: l) decomposition *)
-  Lemma repeat_consr : forall l x n,
+  Lemma repeat_consc : forall l x n,
       repeat (x :: l) n = consc (repeat x n) (repeat l n).
   Proof.
     induction n; simpl; auto. rewrite IHn. easy.
+  Qed.
+
+  (** Simplify consc and nthj0 *)
+  Lemma consc_nthj0 : forall l dl l0 a r i,
+      length l = r -> length dl = r -> i < r ->
+      nth 0 (nth i (consc l dl) l0) a = nth i l a.
+  Proof.
+    induction l,dl; intros; simpl in *; try lia.
+    destruct i; simpl; auto. eapply IHl; auto; try lia.
+  Qed.
+  
+  (** Simplify consc and nthSj *)
+  Lemma consc_nthSj : forall l dl l0 a r c i j,
+      length l = r -> length dl = r -> i < r -> j < c ->
+      nth (S j) (nth i (consc l dl) l0) a = nth j (nth i dl l0) a.
+  Proof.
+    induction l,dl; intros; simpl in *; try lia.
+    destruct i; simpl; auto. eapply IHl; auto; try lia.
+  Qed.
+
+  (** If width dl is 0, then consc l dl = row2col l *)
+  Lemma consc_dl_w0 : forall (l:list A) (dl:dlist A),
+      length l = length dl ->
+      width dl 0 -> consc l dl = row2col l.
+  Proof.
+    induction l; intros; simpl in *. auto.
+    destruct dl; simpl in *. lia. inversion H. inversion H0.
+    rewrite IHl; auto. f_equal.
+    apply length_zero_iff_nil in H4. subst. auto.
   Qed.
 
 End consc.
@@ -1760,13 +2099,13 @@ End consc.
 (* ==================================== *)
 (** ** nth column of a dlist *)
 Section nthc.
-  Context {T : Type} {T0 : T}.
+  Context {A : Type} {Azero : A}.
   
   (** Get nth column of a dlist. *)
-  Fixpoint nthc (dl : dlist T) (j : nat) : list T :=
+  Fixpoint nthc (dl : dlist A) (j : nat) : list A :=
     match dl with
     | [] => []
-    | l :: tl => (nth j l T0) :: (nthc tl j)
+    | l :: tl => (nth j l Azero) :: (nthc tl j)
     end.
   
   (** nthc length law *)
@@ -1777,24 +2116,44 @@ Section nthc.
   
 End nthc.
 
-Arguments nthc {T}.
+Arguments nthc {A}.
 
 
 (* ==================================== *)
 (** ** Append two objects of dlist type to one object of dlist *)
 Section dlist_app.
   
-  Context {T : Type}.
+  Context {A : Type}.
   
   (** dlist append by row *)
   Definition dlappr := app.
   
   (** dlist apend by column *)
-  Fixpoint dlappc (dl1 dl2 : dlist T) : dlist T :=
+  Fixpoint dlappc (dl1 dl2 : dlist A) : dlist A :=
     match dl1, dl2 with
     | l1 :: tl1, l2 :: tl2 => (app l1 l2) :: (dlappc tl1 tl2)
     | _, _ => []
     end.
+
+  (** Length of dlappc is same as input *)
+  Lemma dlappc_length : forall (dl1 dl2 : dlist A) r,
+      length dl1 = r -> length dl2 = r -> length (dlappc dl1 dl2) = r.
+  Proof.
+    induction dl1, dl2; intros; simpl in *; auto.
+    destruct r. lia. f_equal. apply IHdl1. lia. lia.
+  Qed.
+
+  (** Width of dlappc is the sum of each columns *)
+  Lemma dlappc_width : forall (dl1 dl2 : dlist A) c1 c2,
+      width dl1 c1 -> width dl2 c2 -> width (dlappc dl1 dl2) (c1 + c2).
+  Proof.
+    induction dl1, dl2; intros; simpl in *; auto.
+    constructor. constructor. constructor.
+    unfold width in *.
+    constructor.
+    - inv H. inv H0. apply app_length.
+    - apply IHdl1. inv H; auto. inv H0; auto.
+  Qed.
 
 End dlist_app.
 
@@ -1804,19 +2163,19 @@ Notation "l @@ r" := (dlappc l r) (at level 40) : dlist_scope.
 (* ==================================== *)
 (** ** Zero dlist *)
 Section dlzero.
-  Context {T : Type} {T0 : T}.
+  Context {A : Type} {Azero : A}.
   
   (** dlist constructed by repeated lzero, named as dlzero *)
-  Definition dlzero r c := repeat (lzero T0 c) r.
+  Definition dlzero r c := repeat (lzero Azero c) r.
 
   (** dlzero rewrite *)
-  Lemma dlzero_rw : forall r c, repeat (lzero T0 c) r = dlzero r c.
+  Lemma dlzero_rw : forall r c, repeat (lzero Azero c) r = dlzero r c.
   Proof.
     easy.
   Qed.
   
   (** dlzero with S r rows could be splited to two parts *)
-  Lemma dlzero_Sr : forall {r c}, dlzero (S r) c = (lzero T0 c) :: (dlzero r c).
+  Lemma dlzero_Sr : forall {r c}, dlzero (S r) c = (lzero Azero c) :: (dlzero r c).
   Proof.
     intros. simpl. cbn. easy.
   Qed.
@@ -1839,6 +2198,11 @@ Section dlzero.
     unfold width, dlzero; induction r; intros; simpl; auto. constructor; auto.
     apply lzero_length.
   Qed.
+
+  (** dlzero[i] = lzero *)
+  Lemma nth_dlzero : forall r c i,
+      i < r -> nth i (dlzero r c) [] = lzero Azero c.
+  Proof. intros. unfold dlzero. rewrite nth_repeat_same; auto. Qed.
   
   (** dlzero with 0 rows equal to dnil *)
   Lemma dlzero_w0_eq_dnil : forall r, (dlzero r 0) = dnil r.
@@ -1863,13 +2227,13 @@ Section dlzero.
 
 End dlzero.
 
-Arguments dlzero {T}.
+Arguments dlzero {A}.
 
 
 (* ==================================== *)
 (** ** transpose a dlist *)
 Section dltrans.
-  Context {T : Type} {T0 : T}.
+  Context {A : Type} {Azero : A}.
   
   (** Transposition of a dlist *)
   (* Idea: fetch row as column one bye one, generate a dlist with c rows if 
@@ -1880,9 +2244,9 @@ Section dltrans.
       [] 3 => [[];[];[]]
       [[];[];[]] 0 => []
    *)
-  Fixpoint dltrans (dl : dlist T) (c : nat) : dlist T :=
+  Fixpoint dltrans (dl : dlist A) (c : nat) : dlist A :=
     match dl with
-    | [] => @dnil T c
+    | [] => @dnil A c
     | l :: tl => consc l (dltrans tl c)
     end.
 
@@ -1935,7 +2299,7 @@ Section dltrans.
   Qed.
   
   (** dltrans twice return back *)
-  Lemma dltrans_trans : forall dl r c,
+  Lemma dltrans_dltrans : forall dl r c,
       length dl = r -> width dl c ->
       dltrans (dltrans dl c) r = dl.
   Proof.
@@ -1950,11 +2314,48 @@ Section dltrans.
   
   (** dltrans dlzero<r,c> = dlzero<c,r> *)
   Lemma dltrans_zero : forall r c,
-      dltrans (dlzero T0 r c ) c = dlzero T0 c r.
+      dltrans (dlzero Azero r c ) c = dlzero Azero c r.
   Proof.
     induction r; intros; simpl; auto. rewrite dlzero_dnil; easy.
     unfold dlzero in *; simpl in *. rewrite IHr.
-    rewrite repeat_consr. easy.
+    rewrite repeat_consc. easy.
+  Qed.
+
+  (** (dltrans dl)[i,j] = dl[j,i] *)
+  Lemma dltrans_ij : forall (dl:dlist A) r c a i j,
+      length dl = r -> width dl c ->
+      i < r -> j < c ->
+      nth i (nth j (dltrans dl c) []) a = nth j (nth i dl []) a.
+  Proof.
+    induction dl; intros; simpl in *.
+    - subst. lia.
+    - destruct r. lia. inversion H. inversion H0.
+      destruct i.
+      + erewrite consc_nthj0; auto. rewrite dltrans_length; auto. lia.
+      + erewrite consc_nthSj; auto. eapply IHdl; auto. lia.
+        rewrite dltrans_length; auto. lia.
+  Qed.
+  
+  (** (dltrans dl)[i,i] = dl[i,i] *)
+  Lemma dltrans_ii : forall (dl:dlist A) n a i,
+      length dl = n -> width dl n ->
+      nth i (nth i (dltrans dl n) []) a = nth i (nth i dl []) a.
+  Proof.
+    intros.
+    destruct (i <? n) eqn:i_lt_n.
+    - apply Nat.ltb_lt in i_lt_n. erewrite dltrans_ij; auto. lia.
+    - apply Nat.ltb_ge in i_lt_n.
+      repeat rewrite !nth_overflow; auto; simpl; try lia.
+      rewrite dltrans_length; auto.
+  Qed.
+  
+  (** (fun i => (dltrans dl)[i,i]) = (fun i => dl[i,i]) *)
+  Lemma dltrans_ii_fun : forall (dl:dlist A) n a,
+      length dl = n -> width dl n ->
+      (fun i : nat => nth i (nth i (dltrans dl n) []) a) = (fun i => nth i (nth i dl []) a).
+  Proof.
+    intros. apply functional_extensionality.
+    intros. apply dltrans_ii; auto.
   Qed.
   
 End dltrans.
@@ -1967,18 +2368,18 @@ Global Hint Resolve
 (* ==================================== *)
 (** ** dlist unit, like a identity matrix *)
 Section dlunit.
-  Context {T : Type} {T0 T1 : T}.
+  Context {A : Type} {Azero Aone : A}.
   
-  (** Build a identity matrix with list list. *)
+  (** Build a identity matrix with dlist. *)
   (* there are 4 parts of a dlunit [n x n]: 
       left top element [1 x 1], 
       right top list [1 x (n-1)], 
       left bottom list [(n-1) x 1],
       right bottom square is another small dlunit [(n-1) x (n-1)] *)
-  Fixpoint dlunit (n : nat) : dlist T :=
+  Fixpoint dlunit (n : nat) : dlist A :=
     match n with
     | O => []
-    | S n0 => (T1 :: (repeat T0 n0)) :: (consc (repeat T0 n0) (dlunit n0))
+    | S n0 => (Aone :: (repeat Azero n0)) :: (consc (repeat Azero n0) (dlunit n0))
     end.
   
   (** dlunit length law *)
@@ -1995,6 +2396,37 @@ Section dlunit.
     - simpl. f_equal. apply repeat_length.
     - apply consc_width; auto. rewrite repeat_length, dlunit_length; auto.
   Qed.
+
+  Hint Resolve dlunit_length dlunit_width : mat.
+  
+  (** length(dlunit[i]) = n  *)
+  Lemma nth_dlunit_length : forall n i l,
+      i < n -> length (nth i (dlunit n) l) = n.
+  Proof.
+    induction n; intros. lia. simpl. destruct i.
+    - simpl. rewrite repeat_length. auto.
+    - rewrite nth_consc_length with (r:=n)(c:=n); auto with mat. lia.
+  Qed.
+
+  (** (dlunit)[i,i] = 1 *)
+  Lemma dlunit_ii : forall n i l a, i < n -> nth i (nth i (dlunit n) l) a = Aone.
+  Proof.
+    induction n; intros. lia. destruct i; simpl. auto.
+    rewrite consc_nthSj with (r:=n) (c:=n); try lia; auto with mat.
+    apply IHn. lia.
+  Qed.
+    
+  (** i<>j -> (dlunit)[i,j] = 0 *)
+  Lemma dlunit_ij : forall n i j l a,
+      i < n -> j < n -> i <> j -> nth j (nth i (dlunit n) l) a = Azero.
+  Proof.
+    induction n; intros. lia. destruct i,j; simpl; auto; try lia.
+    - apply nth_repeat_same. lia.
+    - rewrite consc_nthj0 with (r:=n); auto with mat; try lia.
+      apply nth_repeat_same; lia.
+    - rewrite consc_nthSj with (r:=n)(c:=n); auto with mat; try lia.
+      apply IHn; lia.
+  Qed.
   
   (** transpose dlunit keep unchanged *)
   Lemma dltrans_dlunit : forall {n}, 
@@ -2002,24 +2434,28 @@ Section dlunit.
       dltrans u n = u.
   Proof.
     simpl. induction n; simpl; try easy.
-    assert ((dltrans (consc (repeat T0 n) (dlunit n)) (S n)) =
-              (repeat T0 n) :: (dltrans (dlunit n) n)).
+    assert ((dltrans (consc (repeat Azero n) (dlunit n)) (S n)) =
+              (repeat Azero n) :: (dltrans (dlunit n) n)).
     { apply dltrans_consc with (r:=n).
       apply repeat_length. apply dlunit_length. apply dlunit_width. }
-    destruct (dltrans (consc (repeat T0 n) (dlunit n)) (S n)). easy.
+    destruct (dltrans (consc (repeat Azero n) (dlunit n)) (S n)). easy.
     inv H. f_equal. f_equal. auto.
   Qed.
 
 End dlunit.
 
-Arguments dlunit {T}.
+Arguments dlunit {A}.
+
+Hint Resolve
+  dlunit_length dlunit_width
+  : mat.
+
 
 
 (* ==================================== *)
-(** ** map of dlist with f : T -> U *)
+(** ** map of dlist with f : A -> B *)
 Section dmap_A_B.
-  Context {T U : Type}.
-  Variable f : T -> U.
+  Context {A B : Type} (f : A -> B).
   
   (** map operation to dlist *)
   Definition dmap dl := map (map f) dl.
@@ -2059,36 +2495,61 @@ Section dmap_A_B.
   Proof.
     induction n; simpl; try easy. rewrite IHn. easy.
   Qed.
+
+  (** (map f l) @@ (dmap f dl) = dmap f (l @@ dl)  *)
+  Lemma consc_map_dmap : forall l dl,
+      consc (map f l) (dmap dl) = dmap (consc l dl).
+  Proof.
+    induction l; intros; simpl. auto.
+    destruct dl; simpl. auto.
+    rewrite IHl. auto.
+  Qed.
+  
+  (** dltrans and dmap *)
+  Lemma dltrans_dmap : forall dl c,
+      width dl c ->
+      dltrans (dmap dl) c = dmap (dltrans dl c).
+  Proof.
+    induction dl; intros; simpl in *. rewrite dmap_dnil; auto. inversion H.
+    rewrite IHdl; auto. apply consc_map_dmap.
+  Qed.
   
 End dmap_A_B.
 
+Hint Unfold dmap : mat.
+
 
 (* ==================================== *)
-(** ** map of dlist with f : T -> U *)
-Section dmap_A_B.
-  Context {T U : Type}.
+(** ** Extra properties of dmap *)
+Section dmap_A_B_C.
+  Context {A B C: Type}.
 
   (** dmap extensional law  *)
-  Lemma dmap_ext : forall dl (f g : T -> U) (H : forall a, f a = g a),
+  Lemma dmap_ext : forall dl (f g : A -> B) (H : forall a, f a = g a),
       (dmap f dl = dmap g dl)%dlist.
   Proof.
     intros. unfold dmap.
     apply map_ext. intros. induction a; simpl; auto. f_equal; auto.
   Qed.
+
+  (** dmap f (dmap g dl) = dmap (f . g) dl  *)
+  Lemma dmap_dmap : forall dl (f : A -> B) (g : B -> C),
+      dmap g (dmap f dl) = dmap (fun x => g (f x)) dl.
+  Proof. induction dl; intros; simpl. auto. f_equal; auto. apply map_map. Qed.
   
-End dmap_A_B.
+End dmap_A_B_C.
 
 
 (* ==================================== *)
-(** ** map of dlist with f : T -> T *)
+(** ** map of dlist with f : A -> A *)
 Section dmap_A_A.
-  Context {T : Type} {T0 : T}.
+  Context {A : Type} {Azero : A}.
 
-  (** dmap (fun x => T0) dl = dlzero T0 r c *)
+  (** dmap (fun x => Azero) dl = dlzero Azero r c *)
 
   Lemma dmap_eq_zero : forall {r c} dl,
       length dl = r -> width dl c ->
-      dmap (fun (x : T) => T0) dl = dlzero T0 r c.
+      dmap (fun (x : A) => Azero) dl = dlzero Azero r c.
   Proof.
     intros. unfold dmap,dlzero.
     
@@ -2110,8 +2571,7 @@ End dmap_A_A.
 (* ==================================== *)
 (** ** map2 of dlist *)
 Section dmap2.
-  Context {T U V : Type}.
-  Variable f : T -> U -> V.
+  Context {A B C : Type} (f : A -> B -> C).
   
   (** map operation to two dlists *)
   Definition dmap2 dl1 dl2 := map2 (map2 f) dl1 dl2.
@@ -2188,7 +2648,7 @@ Section dmap2.
     intros. unfold dmap2. apply tail_map2_dlist.
   Qed.
 
-  (** Relationship between dltrans and dmap2 *)
+  (** dltrans and dmap2 *)
   Lemma dltrans_dmap2 : forall dl1 dl2 c,
       length dl1 = length dl2 ->
       width dl1 c -> width dl2 c ->
@@ -2211,30 +2671,30 @@ End dmap2.
 (* ==================================== *)
 (** ** dmap2 with same base type *)
 Section dmap2_sametype.
-  Context {T : Type} {Tadd : T -> T -> T}.
-  Infix "+" := Tadd.
+  Context {A : Type} {Aadd : A -> A -> A}.
+  Infix "+" := Aadd.
   
-  Context {Comm : Commutative Tadd}.
+  Context {Comm : Commutative Aadd}.
   (** dl1 . dl2 = dl2 . dl1 *)
-  Lemma dmap2_comm : forall (dl1 dl2 : dlist T),
-      dmap2 Tadd dl1 dl2 = dmap2 Tadd dl2 dl1.
+  Lemma dmap2_comm : forall (dl1 dl2 : dlist A),
+      dmap2 Aadd dl1 dl2 = dmap2 Aadd dl2 dl1.
   Proof.
     induction dl1,dl2; simpl; auto. f_equal; auto.
     apply map2_comm. auto.
   Qed.
 
   (** (dl1 . dl2) . dl3 = dl1 . (dl2 . dl3) *)
-  Context {Assoc : Associative Tadd}.
-  Lemma dmap2_assoc : forall (dl1 dl2 dl3 : dlist T),
-      dmap2 Tadd (dmap2 Tadd dl1 dl2) dl3 =
-        dmap2 Tadd dl1 (dmap2 Tadd dl2 dl3).
+  Context {Assoc : Associative Aadd}.
+  Lemma dmap2_assoc : forall (dl1 dl2 dl3 : dlist A),
+      dmap2 Aadd (dmap2 Aadd dl1 dl2) dl3 =
+        dmap2 Aadd dl1 (dmap2 Aadd dl2 dl3).
   Proof.
     induction dl1,dl2,dl3; simpl; auto. f_equal; auto.
     apply map2_assoc. auto.
   Qed.
   
   (** dmap2 with dmap of two components *)
-  Lemma dmap2_dmap_dmap : forall (f1 f2 g : T -> T) (h : T -> T -> T) 
+  Lemma dmap2_dmap_dmap : forall (f1 f2 g : A -> A) (h : A -> A -> A) 
                             (H : forall x, g x = h (f1 x) (f2 x)) l,
       dmap2 h (dmap f1 l) (dmap f2 l) = dmap g l.
   Proof.
@@ -2243,10 +2703,10 @@ Section dmap2_sametype.
   Qed.
 
   (** dmap2 over dmap is homorphism *)
-  Lemma dmap2_dmap_hom : forall (Topp : T -> T)
-                           (H : forall a b : T, (Topp (a + b) = (Topp a) + (Topp b)))
+  Lemma dmap2_dmap_hom : forall (Aopp : A -> A)
+                           (H : forall a b : A, (Aopp (a + b) = (Aopp a) + (Aopp b)))
                            d1 d2,
-      dmap2 Tadd (dmap Topp d1) (dmap Topp d2) = dmap Topp (dmap2 Tadd d1 d2).
+      dmap2 Aadd (dmap Aopp d1) (dmap Aopp d2) = dmap Aopp (dmap2 Aadd d1 d2).
   Proof.
     intros. revert d2.
     induction d1,d2; simpl; try easy. rewrite IHd1. rewrite map2_map_hom. easy.
@@ -2259,21 +2719,21 @@ End dmap2_sametype.
 (* ==================================== *)
 (** ** Square Zero dlist *)
 Section sdlzero.
-  Context {T : Type} (T0 : T).
+  Context {A : Type} (Azero : A).
 
   (** Square dlist with element zero *)
-  Definition sdlzero n := repeat (repeat T0 n) n.
+  Definition sdlzero n := repeat (repeat Azero n) n.
   
   (** dim(sdl0) = rows(dl0) = cols(dl0) -> sdl0 = dl0 *)
   Lemma sdlzero_eq_dlzero_r : forall r c,
-      r = c -> sdlzero r = dlzero T0 r c.
+      r = c -> sdlzero r = dlzero Azero r c.
   Proof.
     intros. subst. unfold sdlzero, dlzero. easy.
   Qed.
   
   (** dim(sdl0) = rows(dl0) = cols(dl0) -> sdl0 = dl0 *)
   Lemma sdlzero_eq_dlzero_c : forall r c,
-      r = c -> sdlzero c = dlzero T0 r c.
+      r = c -> sdlzero c = dlzero Azero r c.
   Proof.
     intros. subst. unfold sdlzero, dlzero. easy.
   Qed.
@@ -2299,12 +2759,12 @@ End sdlzero.
 Section dladd.
 
   Context `{AG:AGroup}.
-  Infix "+" := Tadd.
+  Infix "+" := Aadd.
   
   (** dl + 0 = dl *)
   Lemma dladd_zero_l : forall dl r c, 
       length dl = r -> width dl c ->
-      dmap2 Tadd (dlzero T0 r c) dl = dl.
+      dmap2 Aadd (dlzero Azero r c) dl = dl.
   Proof.
     unfold width, dlzero in *.
     induction dl; simpl; intros.
@@ -2317,7 +2777,7 @@ Section dladd.
   (** 0 + dl = dl *)
   Lemma dladd_zero_r : forall dl r c, 
       length dl = r -> width dl c ->
-      dmap2 Tadd dl (dlzero T0 r c) = dl.
+      dmap2 Aadd dl (dlzero Azero r c) = dl.
   Proof.
     intros. rewrite dmap2_comm; auto. apply dladd_zero_l; auto.
   Qed.
@@ -2330,8 +2790,8 @@ End dladd.
 Section dlsub.
 
   Context `{AG:AGroup}.
-  Infix "+" := Tadd.
-  Notation "- a" := (Topp a).
+  Infix "+" := Aadd.
+  Notation "- a" := (Aopp a).
   Infix "-" := (fun a b => a + (-b)).
   
   (** dl1 - dl2 = - (dl2 - dl1) *)
@@ -2339,10 +2799,10 @@ Section dlsub.
       let Asub := fun a b => a + (-b) in
       length dl1 = length dl2 ->
       width dl1 c -> width dl2 c ->
-      dmap2 Asub dl1 dl2 = dmap Topp (dmap2 Asub dl2 dl1).
+      dmap2 Asub dl1 dl2 = dmap Aopp (dmap2 Asub dl2 dl1).
   Proof.
     induction dl1,dl2; simpl; intros; auto. f_equal.
-    - rewrite map2_sub_comm with (T0:=T0). easy. apply AG.
+    - rewrite map2_sub_comm with (Azero:=Azero). easy. apply AG.
     - inv H. inv H0. inv H1.
       apply IHdl1 with (c:=length a); auto.
   Qed.
@@ -2353,10 +2813,10 @@ Section dlsub.
       length dl1 = length dl2 -> length dl2 = length dl3 ->
       width dl1 c -> width dl2 c ->
       dmap2 Asub (dmap2 Asub dl1 dl2) dl3 =
-        dmap2 Asub dl1 (dmap2 Tadd dl2 dl3).
+        dmap2 Asub dl1 (dmap2 Aadd dl2 dl3).
   Proof.
     induction dl1,dl2,dl3; simpl; intros; auto. f_equal.
-    - apply map2_sub_assoc with (T0:=T0); apply AG.
+    - apply map2_sub_assoc with (Azero:=Azero); apply AG.
     - inv H. inv H0. unfold width in *. inv H1. inv H2.
       apply IHdl1 with (c:=length a); auto.
   Qed.
@@ -2365,8 +2825,8 @@ Section dlsub.
   Lemma dlsub_zero_l : forall dl r c, 
       let Asub := fun a b => a + (-b) in
       length dl = r -> width dl c ->
-      dmap2 Asub (dlzero T0 r c) dl =
-        dmap Topp dl.
+      dmap2 Asub (dlzero Azero r c) dl =
+        dmap Aopp dl.
   Proof.
     induction dl; simpl; intros.
     - unfold dmap2. apply map2_nil_r.
@@ -2379,7 +2839,7 @@ Section dlsub.
   Lemma dlsub_zero_r : forall dl r c, 
       let Asub := fun a b => a + (-b) in
       length dl = r -> width dl c ->
-      dmap2 Asub dl (dlzero T0 r c) = dl.
+      dmap2 Asub dl (dlzero Azero r c) = dl.
   Proof.
     induction dl; simpl; intros; auto. destruct r; simpl. easy.
     inv H. inv H0. f_equal; auto.
@@ -2391,7 +2851,7 @@ Section dlsub.
   Lemma dlsub_self : forall dl r c, 
       let Asub := fun a b => a + (-b) in
       length dl = r -> width dl c ->
-      dmap2 Asub dl dl = (dlzero T0 r c).
+      dmap2 Asub dl dl = (dlzero Azero r c).
   Proof.
     induction dl; simpl; intros; subst; try easy. inv H0.
     rewrite (IHdl (length dl) (length a)); auto.
@@ -2405,19 +2865,19 @@ End dlsub.
 (* ==================================== *)
 (** ** list dot dlist, and dlist dot dlist *)
 Section ldotdl_dldotdl.
-  Context `{R:Ring}.
+  Context `{AR:ARing}.
   Add Ring ring_inst : make_ring_theory.
-  Infix "+" := Tadd.
-  Infix "*" := Tmul.
-  Notation "- b" := (Topp b).
+  Infix "+" := Aadd.
+  Infix "*" := Amul.
+  Notation "- b" := (Aopp b).
   Notation Asub := (fun a b => a + (-b)).
   Infix "-" := Asub.
   
   (* a convenient notation in this section *)
-  Notation ldot := (ldot (Tadd:=Tadd) (T0:=T0) (Tmul:=Tmul)).
+  Notation ldot := (ldot (Aadd:=Aadd) (Azero:=Azero) (Amul:=Amul)).
   
   (** list dot product to dlist *)
-  Fixpoint ldotdl (l : list T) (dl : dlist T) : list T :=
+  Fixpoint ldotdl (l : list A) (dl : dlist A) : list A :=
     match dl with
     | h :: t => (ldot l h) :: (ldotdl l t)
     | [] => []
@@ -2425,14 +2885,14 @@ Section ldotdl_dldotdl.
   
   (** ldotdl left with nil *)
   Lemma ldotdl_nil_l : forall dl r,
-      length dl = r -> (ldotdl [] dl = lzero T0 r).
+      length dl = r -> (ldotdl [] dl = lzero Azero r).
   Proof.
     induction dl; simpl; intros; subst; try easy.
     rewrite ldot_nil_l. rewrite IHdl with (r:=length dl); simpl; auto.
   Qed.
   
   (** ldotdl right with nil *)
-  Lemma ldotdl_nil_r : forall r l, (ldotdl l (dnil r) = lzero T0 r).
+  Lemma ldotdl_nil_r : forall r l, (ldotdl l (dnil r) = lzero Azero r).
   Proof.
     induction r; simpl; intros; auto. rewrite IHr. rewrite ldot_nil_r. easy.
   Qed.
@@ -2446,35 +2906,63 @@ Section ldotdl_dldotdl.
     destruct r. easy. rewrite IHdl with (r:=r); auto.
   Qed.
   
-  (** ldotdl left distributve over map2 *)
-  Lemma ldotdl_map2_distr_l : forall dl l1 l2 {c},
-      length l1 = length l2 ->
-      length dl = c -> width dl (length l1) ->
-      (ldotdl (map2 Tadd l1 l2) dl = 
-         map2 Tadd (ldotdl l1 dl) (ldotdl l2 dl)).
+  (** ldotdl left distributve over map *)
+  Lemma ldotdl_map_distr_l :
+    forall l dl {c} (f:A->A)
+      (f_zero:f Azero=Azero)
+      (f_add:forall a b, f (a+b) = f a + f b)
+      (f_mul_l:forall a b, f a * b = f (a*b)),
+      length l = c -> width dl c -> 
+      ldotdl (map f l) dl = map f (ldotdl l dl).
   Proof.
-    induction dl; intros; simpl; auto. inv H1. f_equal.
-    - apply ldot_map2_distr_l with (r:=length l1); auto.
-    - apply IHdl with (c:=length dl); auto.
+    induction dl; simpl; intros; auto. inv H. inv H0. f_equal.
+    - rewrite ldot_map_distr_l with (r:=length l); auto.
+    - apply IHdl with (c:=length l); auto.
   Qed.
-
-  (** ldotdl right distributve over dmap2 *)
-  Lemma ldotdl_dmap2_distr_r : forall l dl1 dl2 {c},
+  
+  (** ldotdl right distributve over map *)
+  Lemma ldotdl_dmap_distr_r :
+    forall l dl {c} (f:A->A)
+      (f_zero:f Azero=Azero)
+      (f_add:forall a b, f (a+b) = f a + f b)
+      (f_mul_r:forall a b, a * f b = f (a*b)),
+      length l = c -> width dl c -> 
+      ldotdl l (dmap f dl) = map f (ldotdl l dl).
+  Proof.
+    induction dl; simpl; intros; auto. inv H0. f_equal.
+    - rewrite ldot_map_distr_r with (r:=length l); auto.
+    - apply IHdl with (c:=length l); auto.
+  Qed.
+  
+  (** ldotdl left distributve over map2 *)
+  Lemma ldotdl_dmap2_distr_l : forall l dl1 dl2 {c},
       length l = c ->
       width dl1 c -> width dl2 c ->
-      (ldotdl l (dmap2 Tadd dl1 dl2) = 
-         map2 Tadd (ldotdl l dl1) (ldotdl l dl2)).
+      (ldotdl l (dmap2 Aadd dl1 dl2) = 
+         map2 Aadd (ldotdl l dl1) (ldotdl l dl2)).
   Proof.
     induction dl1,dl2; simpl; intros; auto. inv H0. inv H1.
     f_equal.
-    - apply ldot_map2_distr_r with (r:=length a); auto. lia.
+    - apply ldot_map2_distr_l with (r:=length a); auto. lia.
     - apply IHdl1 with (c:=length l); auto.
+  Qed.
+
+  (** ldotdl right distributve over dmap2 *)
+  Lemma ldotdl_map2_distr_r : forall dl l1 l2 {c},
+      length l1 = length l2 ->
+      length dl = c -> width dl (length l1) ->
+      (ldotdl (map2 Aadd l1 l2) dl = 
+         map2 Aadd (ldotdl l1 dl) (ldotdl l2 dl)).
+  Proof.
+    induction dl; intros; simpl; auto. inv H1. f_equal.
+    - apply ldot_map2_distr_r with (r:=length l1); auto.
+    - apply IHdl with (c:=length dl); auto.
   Qed.
   
   (** ldotdl left with zero *)
   Lemma ldotdl_zero_l : forall dl r c,
       length dl = r -> width dl c ->
-      (ldotdl (lzero T0 c) dl = lzero T0 r).
+      (ldotdl (lzero Azero c) dl = lzero Azero r).
   Proof.
     induction dl; simpl; intros; auto.
     - subst; easy.
@@ -2485,7 +2973,7 @@ Section ldotdl_dldotdl.
   (** ldotdl right with zero *)
   Lemma ldotdl_zero_r : forall l r c,
       length l = c ->
-      (ldotdl l (dlzero T0 r c) = lzero T0 r).
+      (ldotdl l (dlzero Azero r c) = lzero Azero r).
   Proof.
     induction r; simpl; intros; auto. unfold dlzero in *. rewrite IHr; auto.
     rewrite ldot_zero_r. easy.
@@ -2495,7 +2983,7 @@ Section ldotdl_dldotdl.
   Lemma ldotdl_consr_consc : forall l2 dl2 l1 x1 r c,
       length l2 = c -> length dl2 = c -> width dl2 r ->
       (ldotdl (x1 :: l1) (consc l2 dl2) =
-         ladd (Tadd:=Tadd) (lcmul (Tmul:=Tmul) x1 l2) (ldotdl l1 dl2)).
+         ladd (Aadd:=Aadd) (lcmul (Amul:=Amul) x1 l2) (ldotdl l1 dl2)).
   Proof.
     induction l2, dl2; simpl; intros; auto. inv H1.
     rewrite ldot_cons. f_equal.
@@ -2536,8 +3024,8 @@ Section ldotdl_dldotdl.
     (l1 + l2) . dl = l1 . dl + l2.dl *)
   Lemma ldotdl_ladd_distr_r : forall l1 l2 dl r c,
       length l1 = r -> length l2 = r -> length dl = c -> width dl r ->
-      (ldotdl (ladd (Tadd:=Tadd) l1 l2) dl = 
-         ladd (Tadd:=Tadd) (ldotdl l1 dl) (ldotdl l2 dl)).
+      (ldotdl (ladd (Aadd:=Aadd) l1 l2) dl = 
+         ladd (Aadd:=Aadd) (ldotdl l1 dl) (ldotdl l2 dl)).
   Proof.
     induction dl; simpl; intros; auto. inv H2.
     rewrite <- IHdl with (r:=length l1) (c:=length dl); auto.
@@ -2548,7 +3036,7 @@ Section ldotdl_dldotdl.
     cmul a (dot l dl) = dot (cmul a l) dl *)
   Lemma ldotdl_lcmul_assoc : forall dl a l r c,
       length l = r -> length dl = c -> width dl r ->
-      (lcmul (Tmul:=Tmul) a (ldotdl l dl) = ldotdl (lcmul (Tmul:=Tmul) a l) dl).
+      (lcmul (Amul:=Amul) a (ldotdl l dl) = ldotdl (lcmul (Amul:=Amul) a l) dl).
   Proof.
     induction dl; simpl; intros; auto. inv H1.
     rewrite IHdl with (r:=length l) (c:=length dl); auto.
@@ -2557,21 +3045,21 @@ Section ldotdl_dldotdl.
   
   (** a * (x :: l) = (a * x) :: (a * l) *)
   Lemma lcmul_cons : forall a x l,
-      (lcmul (Tmul:=Tmul) a (x :: l) = (Tmul a x) :: (lcmul (Tmul:=Tmul) a l)).
+      (lcmul (Amul:=Amul) a (x :: l) = (Amul a x) :: (lcmul (Amul:=Amul) a l)).
   Proof.
     intros. easy.
   Qed.
   
   (** a * 0 = 0 *)
   Lemma lcmul_zero_r : forall a n,
-      lcmul (Tmul:=Tmul) a (lzero T0 n) = lzero T0 n.
+      lcmul (Amul:=Amul) a (lzero Azero n) = lzero Azero n.
   Proof.
     intros. unfold lcmul. rewrite map_repeat. unfold lzero. f_equal. ring.
   Qed.
   
   (** l dotdl E = l *)
   Lemma ldotdl_dlunit : forall l {n},
-      length l = n -> (ldotdl l (dlunit T0 T1 n) = l).
+      length l = n -> (ldotdl l (dlunit Azero Aone n) = l).
   Proof.
     induction l; simpl; intros; auto.
     - subst. simpl. easy.
@@ -2584,7 +3072,7 @@ Section ldotdl_dldotdl.
   Qed.
   
   (** dlist dot product *)
-  Fixpoint dldotdl (dl1 dl2 : dlist T) : dlist T :=
+  Fixpoint dldotdl (dl1 dl2 : dlist A) : dlist A :=
     match dl1 with
     | h1 :: t1 => (ldotdl h1 dl2) :: (dldotdl t1 dl2)
     | [] => []
@@ -2627,36 +3115,61 @@ Section ldotdl_dldotdl.
     rewrite ldot_comm.
     rewrite IHdl1 with (c:=length l2); auto.
   Qed.
+
+  (** dldotdl left distributve over dmap *)
+  Lemma dldotdl_dmap_distr_l :
+    forall dl1 dl2 {c} (f:A->A)
+      (f_zero:f Azero=Azero)
+      (f_add:forall a b, f (a+b) = f a + f b)
+      (f_mul_l:forall a b, f a * b = f (a*b)),
+      width dl1 c -> width dl2 c ->
+      dldotdl (dmap f dl1) dl2 = dmap f (dldotdl dl1 dl2).
+  Proof.
+    induction dl1; simpl; intros; auto. inv H. f_equal.
+    - apply ldotdl_map_distr_l with (c:=length a); auto.
+    - apply IHdl1 with (c:=length a); auto.
+  Qed.
+
+  (** dldotdl right distributve over dmap *)
+  Lemma dldotdl_dmap_distr_r :
+    forall dl1 dl2 {c} (f:A->A)
+      (f_zero:f Azero=Azero)
+      (f_add:forall a b, f (a+b) = f a + f b)
+      (f_mul_r:forall a b, a * f b = f (a*b)),
+      width dl1 c -> width dl2 c ->
+      dldotdl dl1 (dmap f dl2) = dmap f (dldotdl dl1 dl2).
+  Proof.
+    induction dl1; simpl; intros; auto. inv H. f_equal.
+    - apply ldotdl_dmap_distr_r with (c:=length a); auto.
+    - apply IHdl1 with (c:=length a); auto.
+  Qed.
   
   (** dldotdl left distributve over dmap2 *)
   Lemma dldotdl_dmap2_distr_l : forall dl1 dl2 dl3 {c},
       width dl1 c -> width dl2 c -> width dl3 c -> 
-      dldotdl (dmap2 Tadd dl1 dl2) dl3 = 
-        dmap2 Tadd (dldotdl dl1 dl3) (dldotdl dl2 dl3).
+      dldotdl dl1 (dmap2 Aadd dl2 dl3) =
+        dmap2 Aadd (dldotdl dl1 dl2) (dldotdl dl1 dl3).
   Proof.
-    induction dl1; destruct dl2; intros; simpl in *; try easy.
-    inv H. inv H0. f_equal.
-    - apply ldotdl_map2_distr_l with (c:=length dl3); auto.
-    - apply IHdl1 with (c:=length a); auto. 
+    induction dl1; simpl; intros; auto. inv H. f_equal.
+    - apply ldotdl_dmap2_distr_l with (c:=length a); auto.
+    - apply IHdl1 with (c:=length a); auto.
   Qed.
   
   (** dldotdl right distributve over dmap2 *)
   Lemma dldotdl_dmap2_distr_r : forall dl1 dl2 dl3 {c},
       width dl1 c -> width dl2 c -> width dl3 c -> 
-      dldotdl dl1 (dmap2 Tadd dl2 dl3) =
-        dmap2 Tadd (dldotdl dl1 dl2) (dldotdl dl1 dl3).
+      dldotdl (dmap2 Aadd dl1 dl2) dl3 = 
+        dmap2 Aadd (dldotdl dl1 dl3) (dldotdl dl2 dl3).
   Proof.
-    induction dl1; simpl; intros; auto. inv H. f_equal.
-    - apply ldotdl_dmap2_distr_r with (c:=length a); auto.
-    - apply IHdl1 with (c:=length a); auto.
+    induction dl1; destruct dl2; intros; simpl in *; try easy.
+    inv H. inv H0. f_equal.
+    - apply ldotdl_map2_distr_r with (c:=length dl3); auto.
+    - apply IHdl1 with (c:=length a); auto. 
   Qed.
 
-  (** dldotdl [] dl = dnil *)
-  Lemma dldotdl_nil_l : forall dl, dldotdl dl [] = dnil (length dl).
-  Proof.
-    induction dl; simpl; intros; subst; simpl; subst; try easy.
-    f_equal; auto.
-  Qed.
+  (** dldotdl [] dl = [] *)
+  Lemma dldotdl_nil_l : forall dl, dldotdl [] dl = [].
+  Proof. intros. simpl. auto. Qed.
   
   (** dldotdl dl [] = dnil *)
   Lemma dldotdl_nil_r : forall dl, dldotdl dl [] = dnil (length dl).
@@ -2665,10 +3178,47 @@ Section ldotdl_dldotdl.
     f_equal; auto.
   Qed.
 
+  Section test.
+    Variable a11 a12 a21 a22 : A.
+    Let d1 := [[a11;a12]].
+    Let d2 := [[a11;a12];[a21;a22]].
+    (* Compute dldotdl (dnil 2) d1. *)
+    (* Compute dldotdl (dnil 2) d2. *)
+    (* Compute dldotdl (dnil 3) d2. *)
+    (* Compute dldotdl d1 (dnil 2). *)
+    (* Compute dldotdl d2 (dnil 2). *)
+    (* Compute dldotdl d2 (dnil 3). *)
+    (* Compute ldotdl [] d2.  *)
+  End test.
+
+  (** dldotdl dnil dl = dlzero *)
+  Lemma dldotdl_dnil_l : forall dl n r c,
+      length dl = r -> width dl c ->
+      dldotdl (dnil n) dl = dlzero Azero n r.
+  Proof.
+    intros dl n. revert dl. induction n; intros; simpl.
+    - unfold dlzero. simpl. auto.
+    - rewrite dlzero_Sr. f_equal.
+      + rewrite ldotdl_nil_l with (r:=r); auto.
+      + apply IHn with (c:=c); auto.
+  Qed.
+  
+  (** dldotdl dl dnil = dnil *)
+  Lemma dldotdl_dnil_r : forall dl n r c,
+      length dl = r -> width dl c ->
+      dldotdl dl (dnil n) = dlzero Azero r n.
+  Proof.
+    intros dl n r. revert dl n. induction r; intros; simpl.
+    - apply length_zero_iff_nil in H. subst. reflexivity.
+    - destruct dl; simpl in *. lia. inversion H. inversion H0.
+      rewrite IHr with (c:=c); auto. rewrite H2.
+      rewrite dlzero_Sr. f_equal. rewrite ldotdl_nil_r. auto.
+  Qed.
+
   (** dldotdl zero dl = zero *)
   Lemma dldotdl_zero_l : forall r dl c,
       width dl c ->
-      dldotdl (dlzero T0 r c) dl = dlzero T0 r (length dl).
+      dldotdl (dlzero Azero r c) dl = dlzero Azero r (length dl).
   Proof.
     induction r; simpl; intros; simpl; unfold dlzero in *; simpl; try easy.
     rewrite (IHr _ c); auto.
@@ -2678,7 +3228,7 @@ Section ldotdl_dldotdl.
   (** dldotdl dl zero = zero *)
   Lemma dldotdl_zero_r : forall dl c t,
       width dl c ->
-      dldotdl dl (dlzero T0 t c) = dlzero T0 (length dl) t.
+      dldotdl dl (dlzero Azero t c) = dlzero Azero (length dl) t.
   Proof.
     induction dl; simpl; intros; auto. inv H.
     unfold dlzero; simpl. f_equal.
@@ -2756,9 +3306,9 @@ Section ldotdl_dldotdl.
   Qed.
   
   (** dldotdl left with dlunit *)
-  Lemma dldotdl_dlunit_l : forall (dl : dlist T) {c},
+  Lemma dldotdl_dlunit_l : forall (dl : dlist A) {c},
       width dl c -> 
-      dldotdl (dlunit T0 T1 c) dl = dltrans dl c.
+      dldotdl (dlunit Azero Aone c) dl = dltrans dl c.
   Proof.
     induction dl; simpl; intros; try easy.
     - rewrite dldotdl_nil_r. rewrite dlunit_length. easy.
@@ -2769,9 +3319,9 @@ Section ldotdl_dldotdl.
   Qed.
   
   (** dldotdl right with dlunit *)
-  Lemma dldotdl_dlunit_r : forall (dl : dlist T) {c},
+  Lemma dldotdl_dlunit_r : forall (dl : dlist A) {c},
       width dl c -> 
-      dldotdl dl (dlunit T0 T1 c) = dl.
+      dldotdl dl (dlunit Azero Aone c) = dl.
   Proof.
     induction dl; simpl; intros; auto. inversion H.
     rewrite IHdl; auto. rewrite ldotdl_dlunit; easy.
@@ -2784,13 +3334,13 @@ End ldotdl_dldotdl.
 (** ** Properties of dlcmul *)
 Section dlcmul_properties.
   Context `{F:Field}.
-  Context `{HDec:Dec T}.
+  Context `{ADec:Dec A}.
   
   (** Mapping cmul to dlist keep unchanged imply k = 1 or dlist is zero *)
   Lemma dlcmul_fixpoint_imply_k1_or_dlzero : 
-    forall {r c} k (dl : dlist T) (H1 : length dl = r) (H2 : width dl c),
-      map (map (fun x => Tmul k x)) dl = dl ->
-      ((k = T1) \/ dl = dlzero T0 r c).
+    forall {r c} k (dl : dlist A) (H1 : length dl = r) (H2 : width dl c),
+      map (map (fun x => Amul k x)) dl = dl ->
+      ((k = Aone) \/ dl = dlzero Azero r c).
   Proof.
     unfold width,dlzero; induction r; intros.
     - rewrite length_zero_iff_nil in H1. subst. right. cbv. easy.
@@ -2805,9 +3355,9 @@ Section dlcmul_properties.
   
   (** Mapping mulc to dlist keep unchanged imply k = 1 or dlist is zero *)
   Lemma dlmulc_fixpoint_imply_k1_or_dlzero : 
-    forall {r c} k (dl : dlist T) (H1 : length dl = r) (H2 : width dl c),
-      map (map (fun x => Tmul x k)) dl = dl ->
-      ((k = T1) \/ dl = dlzero T0 r c).
+    forall {r c} k (dl : dlist A) (H1 : length dl = r) (H2 : width dl c),
+      map (map (fun x => Amul x k)) dl = dl ->
+      ((k = Aone) \/ dl = dlzero Azero r c).
   Proof.
     intros. apply dlcmul_fixpoint_imply_k1_or_dlzero; auto.
     rewrite <- H at 2.
@@ -2817,9 +3367,9 @@ Section dlcmul_properties.
 
   (** Mapping cmul to dlist got zero imply k = 0 or dlist is zero *)
   Lemma dlcmul_zero_imply_k0_or_dlzero : 
-    forall {r c} k (dl : dlist T) (H1 : length dl = r) (H2 : width dl c),
-      map (map (fun x => Tmul k x)) dl = (dlzero T0 r c) ->
-      ((k = T0) \/ dl = dlzero T0 r c).
+    forall {r c} k (dl : dlist A) (H1 : length dl = r) (H2 : width dl c),
+      map (map (fun x => Amul k x)) dl = (dlzero Azero r c) ->
+      ((k = Azero) \/ dl = dlzero Azero r c).
   Proof.
     unfold width, dlzero; induction r; intros.
     - rewrite length_zero_iff_nil in H1. subst. cbv. right. easy.
@@ -2827,12 +3377,12 @@ Section dlcmul_properties.
       inversion H1. inversion H2. inversion H. clear H1 H2 H.
       specialize (IHr c k dl H3 H6).
       rewrite H3, <- H9, H8. subst.
-      assert (map (map (fun x : T => Tmul k x)) dl =
-                repeat (lzero T0 (length l)) (length dl)).
+      assert (map (map (fun x : A => Amul k x)) dl =
+                repeat (lzero Azero (length l)) (length dl)).
       { rewrite H9. rewrite H8. auto. }
       apply IHr in H.
       (*  {k = 0} + {k <> 0} *)
-      destruct (dec k T0); auto.
+      destruct (dec k Azero); auto.
       destruct H; auto. right. f_equal.
       + apply lcmul_eq0_imply_k0_or_lzero in H8; auto.
         destruct H8; auto. easy.

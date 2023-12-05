@@ -47,8 +47,7 @@ Open Scope nat_scope.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-(* Meanwhile, like T0,T1,... also be availble *)
-Generalizable Variables T Tadd Topp Tmul Tinv Tdiv.
+Generalizable Variables A Aadd Azero Aopp Amul Aone Ainv Adiv.
 
 
 (* ######################################################################### *)
@@ -110,8 +109,8 @@ Section Instances.
 
   Global Instance Dec_R : @Dec R.
   Proof. constructor. apply Req_EM_T. Defined.
-
-  Global Instance Dec_list `{@Dec T} : @Dec (list T).
+  
+  Global Instance Dec_list `{@Dec A} : @Dec (list A).
   Proof. constructor. intros. apply list_eq_dec. apply dec. Defined.
 
 End Instances.
@@ -119,28 +118,28 @@ End Instances.
 (** ** Extra Theories *)
 Section Dec_theory.
 
-  Context `{@Dec T}.
+  Context `{@Dec A}.
 
   (** Tips: these theories are useful for R type *)
   
   (** Calculate equality to boolean, with the help of equality decidability *)
-  Definition Teqb (a b : T) : bool := if dec a b then true else false.
+  Definition Aeqb (a b : A) : bool := if dec a b then true else false.
 
-  (** Teqb is true iff equal. *)
-  Lemma Teqb_true : forall a b, Teqb a b = true <-> a = b.
+  (** Aeqb is true iff equal. *)
+  Lemma Aeqb_true : forall a b, Aeqb a b = true <-> a = b.
   Proof.
-    intros. unfold Teqb. destruct dec; split; intros; auto;  easy.
+    intros. unfold Aeqb. destruct dec; split; intros; auto;  easy.
   Qed.
 
-  (** Teqb is false iff not equal *)
-  Lemma Teqb_false : forall a b, Teqb a b = false <-> a <> b.
+  (** Aeqb is false iff not equal *)
+  Lemma Aeqb_false : forall a b, Aeqb a b = false <-> a <> b.
   Proof.
-    intros. unfold Teqb. destruct dec; split; intros; auto; try easy.
+    intros. unfold Aeqb. destruct dec; split; intros; auto; try easy.
   Qed.
 
-  Lemma Teq_reflect : forall a b : T, reflect (a = b) (Teqb a b).
+  Lemma Aeq_reflect : forall a b : A, reflect (a = b) (Aeqb a b).
   Proof.
-    intros. unfold Teqb. destruct (dec a b); constructor; auto.
+    intros. unfold Aeqb. destruct (dec a b); constructor; auto.
   Qed.
 
 End Dec_theory.
@@ -192,8 +191,8 @@ Hint Resolve
 (** * Associative *)
 
 (** ** Class *)
-Class Associative {T : Type} (Top : T -> T -> T) := {
-    associative : forall a b c, Top (Top a b) c = Top a (Top b c);
+Class Associative {A} (Aop : A -> A -> A) := {
+    associative : forall a b c, Aop (Aop a b) c = Aop a (Aop b c);
   }.
 
 (** ** Instances *)
@@ -214,8 +213,8 @@ Goal forall a b c : nat, ((a + b) + c = a + (b + c)).
 (** * Commutative *)
 
 (** ** Class *)
-Class Commutative {T : Type} (Top : T -> T -> T) := {
-    commutative : forall a b, Top a b = Top b a
+Class Commutative {A} (Aop : A -> A -> A) := {
+    commutative : forall a b, Aop a b = Aop b a
   }.
 
 (** ** Instances *)
@@ -239,12 +238,12 @@ Goal forall a b : nat, (a * b = b * a)%nat.
 (** * Identity Left/Right *)
 
 (** ** Class *)
-Class IdentityLeft {T : Type} (Top : T -> T -> T) (Te : T) := {
-    identityLeft : forall a, Top Te a = a
+Class IdentityLeft {A} (Aop : A -> A -> A) (Ae : A) := {
+    identityLeft : forall a, Aop Ae a = a
   }.
 
-Class IdentityRight {T : Type} (Top : T -> T -> T) (Te : T) := {
-    identityRight : forall a, Top a Te = a
+Class IdentityRight {A} (Aop : A -> A -> A) (Ae : A) := {
+    identityRight : forall a, Aop a Ae = a
   }.
 
 (** ** Instances *)
@@ -258,14 +257,14 @@ Class IdentityRight {T : Type} (Top : T -> T -> T) (Te : T) := {
 (** * Inverse Left/Right *)
 
 (** ** Class *)
-Class InverseLeft {T : Type} (Top : T -> T -> T) (Te : T) (Topinv : T -> T)
+Class InverseLeft {A} (Aop : A -> A -> A) (Ae : A) (Aopinv : A -> A)
   := {
-    inverseLeft : forall a, Top (Topinv a) a = Te
+    inverseLeft : forall a, Aop (Aopinv a) a = Ae
   }.
 
-Class InverseRight {T : Type} (Top : T -> T -> T) (Te : T) (Topinv : T -> T)
+Class InverseRight {A} (Aop : A -> A -> A) (Ae : A) (Aopinv : A -> A)
   := {
-    inverseRight : forall a, Top a (Topinv a) = Te
+    inverseRight : forall a, Aop a (Aopinv a) = Ae
   }.
 
 (** ** Instances *)
@@ -280,19 +279,19 @@ Class InverseRight {T : Type} (Top : T -> T -> T) (Te : T) (Topinv : T -> T)
 
 (** ** Class *)
 
-(* Class DistributiveUnary {T : Type} (Tadd:T -> T -> T) (Topp : T -> T) := { *)
+(* Class DistributiveUnary {A} (Tadd:A -> A -> A) (Aopp : A -> A) := { *)
 (*     distributiveUnary : forall a b, *)
-(*       Topp (Tadd a b) = Tadd (Topp a) (Topp b) *)
+(*       Aopp (Tadd a b) = Tadd (Aopp a) (Aopp b) *)
 (*   }. *)
 
-Class DistributiveLeft {T : Type} (Tadd Tmul : T -> T -> T) := {
+Class DistributiveLeft {A} (Aadd Amul : A -> A -> A) := {
     distributiveLeft : forall a b c,
-      Tmul a (Tadd b c) = Tadd (Tmul a b) (Tmul a c)
+      Amul a (Aadd b c) = Aadd (Amul a b) (Amul a c)
   }.
 
-Class DistributiveRight {T : Type} (Tadd Tmul : T -> T -> T) := {
+Class DistributiveRight {A} (Aadd Amul : A -> A -> A) := {
     distributiveRight : forall a b c,
-      Tmul (Tadd a b) c = Tadd (Tmul a c) (Tmul b c)
+      Amul (Aadd a b) c = Aadd (Amul a c) (Amul b c)
   }.
 
 (** ** Instances *)
@@ -308,8 +307,8 @@ Class DistributiveRight {T : Type} (Tadd Tmul : T -> T -> T) := {
 
 (** ** Class *)
 
-(* Class Involution {A : Type} (Topp : A -> A) := { *)
-(*     involution : forall a, Topp (Topp a) = a *)
+(* Class Involution {A : Type} (Aopp : A -> A) := { *)
+(*     involution : forall a, Aopp (Aopp a) = a *)
 (*   }. *)
 
 (** ** Instances *)
@@ -325,23 +324,22 @@ Class DistributiveRight {T : Type} (Tadd Tmul : T -> T -> T) := {
 
 (** ** Class *)
 
-Class Injective {T U : Type} (phi: T -> U) := {
-    injective : forall a1 a2 : T, a1 <> a2 -> phi a1 <> phi a2
+Class Injective {A B} (phi: A -> B) := {
+    injective : forall a1 a2 : A, a1 <> a2 -> phi a1 <> phi a2
   }.
   
 (** ** Instances *)
 
 (** ** Extra Theories *)
 Section theory.
-
-  Context {T U : Type}.
+  Context {A B : Type}.
   
   (** Second form of injective *)
-  Definition injective_form2 (phi: T -> U) :=
-    forall (a1 a2 : T), phi a1 = phi a2 -> a1 = a2.
+  Definition injective_form2 (phi: A -> B) :=
+    forall a1 a2, phi a1 = phi a2 -> a1 = a2.
 
   (** These two forms are equal *)
-  Lemma injective_eq_injective_form2 (phi: T -> U) :
+  Lemma injective_eq_injective_form2 (phi: A -> B) :
     Injective phi <-> injective_form2 phi.
   Proof.
     split; intros.
@@ -353,8 +351,8 @@ Section theory.
   Qed.
 
   (** Injective function preserve equal relation *)
-  Lemma injective_preserve_eq : forall (f : T -> U),
-      Injective f -> (forall a1 a2 : T, f a1 = f a2 -> a1 = a2).
+  Lemma injective_preserve_eq : forall (f : A -> B),
+      Injective f -> (forall a1 a2, f a1 = f a2 -> a1 = a2).
   Proof.
     intros. apply injective_eq_injective_form2 in H. apply H. auto.
   Qed.
@@ -370,8 +368,8 @@ End theory.
 
 (** ** Class *)
 
-Class Surjective {T U : Type} (phi: T -> U) := {
-    surjective : forall (b : U), (exists (a : T), phi a = b)
+Class Surjective {A B} (phi: A -> B) := {
+    surjective : forall b, (exists a, phi a = b)
   }.
 
 (** ** Instances *)
@@ -387,7 +385,7 @@ Class Surjective {T U : Type} (phi: T -> U) := {
 
 (** ** Class *)
 
-Class Bijective {T U : Type} (phi: T -> U) := {
+Class Bijective {A B} (phi: A -> B) := {
     bijInjective :> Injective phi;
     bijSurjective :> Surjective phi
   }.
@@ -396,7 +394,7 @@ Class Bijective {T U : Type} (phi: T -> U) := {
 
 (** ** Extra Theories *)
 Section theory.
-  Context {T U: Type}.
+  Context {A B : Type}.
   
   (** There exist inverse function from a bijective function.
 
@@ -407,11 +405,11 @@ Section theory.
       ex makes a Prop, sig makes a Type. 
       Here, we proof the ex version. the sig version could be derived by an axiom:
       [constructive_definite_description : 
-      forall (T : Type) (P : T -> Prop), (exists ! x : T, P x) -> {x : T | P x} ]
+      forall (A : Type) (P : A -> Prop), (exists ! x : A, P x) -> {x : A | P x} ]
    *)
 
-  Lemma bij_inverse_exist : forall (phi : T -> U) (Hbij: Bijective phi),
-    {psi : U -> T | (forall a : T, psi (phi a) = a) /\  (forall b : U, phi (psi b) = b)}.
+  Lemma bij_inverse_exist : forall (phi : A -> B) (Hbij: Bijective phi),
+    {psi : B -> A | (forall a : A, psi (phi a) = a) /\  (forall b : B, phi (psi b) = b)}.
   Proof.
     intros. destruct Hbij as [Hinj [Hsurj]].
     apply injective_eq_injective_form2 in Hinj. hnf in *.
@@ -430,8 +428,8 @@ Section theory.
   Defined.
 
   (** A bijective function preserve equal relation *)
-  Lemma bijective_preserve_eq : forall (f : T -> U),
-      Bijective f -> (forall (a1 a2 : T), f a1 = f a2 -> a1 = a2).
+  Lemma bijective_preserve_eq : forall (f : A -> B),
+      Bijective f -> (forall (a1 a2 : A), f a1 = f a2 -> a1 = a2).
   Proof.
     intros. destruct H as [Hinj Hsurj].
     apply injective_preserve_eq in H0; auto.
@@ -448,20 +446,20 @@ End theory.
 
 (** ** Class *)
 
-Class Homomorphic {T U : Type}
-  (fa : T -> T -> T) (fb : U -> U -> U) (phi: T -> U) := {
-    homomorphic : forall (a1 a2 : T), phi (fa a1 a2) = fb (phi a1) (phi a2)
+Class Homomorphic {A B}
+  (fa : A -> A -> A) (fb : B -> B -> B) (phi: A -> B) := {
+    homomorphic : forall (a1 a2 : A), phi (fa a1 a2) = fb (phi a1) (phi a2)
   }.
 
 (** ** Instances *)
 
 (** ** Extra Theories *)
 
-(* Definition homo_inj (phi : T -> U) : Prop := *)
+(* Definition homo_inj (phi : A -> B) : Prop := *)
 (*   homomorphic phi /\ injective phi. *)
 
 (* (** phi is a homomorphic and surjective mapping *) *)
-(* Definition homo_surj (phi : T -> U) : Prop := *)
+(* Definition homo_surj (phi : A -> B) : Prop := *)
 (*   homomorphic phi /\ surjective phi. *)
 
 (** ** Examples *)
@@ -473,23 +471,17 @@ Class Homomorphic {T U : Type}
 
 (** ** Class *)
 
-(** If there exist a homomorphic and surjective mapping from <T,+> to <U,⊕>,
-    then we said <T,+> and <U,⊕> is homomorphism *)
-Class Homomorphism {T U : Type}
-  (fa : T -> T -> T) (fb : U -> U -> U) := {
-    homomorphism : exists (phi: T -> U),
-      Homomorphic fa fb phi
-      /\ Surjective phi
+(** If there exist a homomorphic and surjective mapping from <A,+> to <B,⊕>,
+    then we said <A,+> and <B,⊕> is homomorphism *)
+Class Homomorphism {A B} (fa : A -> A -> A) (fb : B -> B -> B) := {
+    homomorphism : exists (phi: A -> B), Homomorphic fa fb phi /\ Surjective phi
   }.
 
-(** If there exist two homomorphic and surjective mapping from <T,+> to <U,⊕>
-    and from <T,*> to <U,⊗>, then we said <T,+,*> and <U,⊕,⊗> is homomorphism *)
-Class Homomorphism2 {T U : Type}
-  (fa ga : T -> T -> T) (fb gb : U -> U -> U) := {
-    homomorphism2 : exists (phi: T -> U),
-      Homomorphic fa fb phi
-      /\ Homomorphic ga gb phi
-      /\ Surjective phi
+(** If there exist two homomorphic and surjective mapping from <A,+> to <B,⊕>
+    and from <A,*> to <B,⊗>, then we said <A,+,*> and <B,⊕,⊗> is homomorphism *)
+Class Homomorphism2 {A B} (fa ga : A -> A -> A) (fb gb : B -> B -> B) := {
+    homomorphism2 : exists (phi: A -> B),
+      Homomorphic fa fb phi /\ Homomorphic ga gb phi /\ Surjective phi
   }.
 
 (** ** Instances *)
@@ -505,23 +497,17 @@ Class Homomorphism2 {T U : Type}
 
 (** ** Class *)
 
-(** If there exist a homomorphic and bijective mapping from <T,+> to <U,⊕>,
-    then we said <T,+> and <U,⊕> is isomorphism *)
-Class Isomorphism {T U : Type}
-  (fa : T -> T -> T) (fb : U -> U -> U) := {
-    isomorphism : exists (phi: T -> U),
-      Homomorphic fa fb phi
-      /\ Bijective phi
+(** If there exist a homomorphic and bijective mapping from <A,+> to <B,⊕>,
+    then we said <A,+> and <B,⊕> is isomorphism *)
+Class Isomorphism {A B} (fa : A -> A -> A) (fb : B -> B -> B) := {
+    isomorphism : exists (phi: A -> B), Homomorphic fa fb phi /\ Bijective phi
   }.
 
-(** If there exist two homomorphic and bijective mapping from <T,+> to <U,⊕>
-    and from <T,*> to <U,⊗>, then we said <T,+,*> and <U,⊕,⊗> is isomorphism *)
-Class Isomorphism2 {T U : Type}
-  (fa ga : T -> T -> T) (fb gb : U -> U -> U) := {
-    isomorphism2 : exists (phi: T -> U),
-      Homomorphic fa fb phi
-      /\ Homomorphic ga gb phi
-      /\ Bijective phi
+(** If there exist two homomorphic and bijective mapping from <A,+> to <B,⊕>
+    and from <A,*> to <B,⊗>, then we said <A,+,*> and <B,⊕,⊗> is isomorphism *)
+Class Isomorphism2 {A B} (fa ga : A -> A -> A) (fb gb : B -> B -> B) := {
+    isomorphism2 : exists (phi: A -> B),
+      Homomorphic fa fb phi /\ Homomorphic ga gb phi /\ Bijective phi
   }.
 
 (** ** Instances *)
@@ -536,12 +522,12 @@ Class Isomorphism2 {T U : Type}
 (** * Semigroup 半群 *)
 
 (** ** Class *)
-Class SGroup {T : Type} (Tadd : T -> T -> T) := {
-    sgroupAssoc :> Associative Tadd;
+Class SGroup {A} (Aadd : A -> A -> A) := {
+    sgroupAssoc :> Associative Aadd;
   }.
 
 (** Get parameter of this structure *)
-Definition sgroupTadd `{SG:SGroup} : T -> T -> T := Tadd.
+Definition sgroupAadd `{SG:SGroup} : A -> A -> A := Aadd.
 
 (** ** Instances *)
 Section Instances.
@@ -563,13 +549,13 @@ End Instances.
 (** * Abelian semigroup 交换半群 *)
 
 (** ** Class *)
-Class ASGroup {T : Type} (Tadd : T -> T -> T) := {
-    asgroup_sgroup :> SGroup Tadd;
-    asgroupComm :> Commutative Tadd
+Class ASGroup {A} (Aadd : A -> A -> A) := {
+    asgroup_sgroup :> SGroup Aadd;
+    asgroupComm :> Commutative Aadd
   }.
 
 (** Get parameter of this structure *)
-Definition asgroupTadd `{ASG : ASGroup} : T -> T -> T := Tadd.
+Definition asgroupAadd `{ASG : ASGroup} : A -> A -> A := Aadd.
 
 (** ** Instances *)
 Section Instances.
@@ -660,8 +646,8 @@ Ltac elim_auto :=
   elimh; elimt. (* 消去右式的头部和尾部 *)
 
 Section test.
-  Context `{ASG : ASGroup}. Infix "+" := Tadd.
-  Variable a0 a1 a2 a3 a4 a5 a6 : T.
+  Context `{ASG : ASGroup}. Infix "+" := Aadd.
+  Variable a0 a1 a2 a3 a4 a5 a6 : A.
 
   (** 第一种情形，等式两侧完全相同 *)
   Let eq1 : Prop := a0 + (a1 + a2) + a3 = a3 + (a0 + a2) + a1.
@@ -738,15 +724,15 @@ End test.
 (** * Monoid 幺半群、独异点 *)
 
 (** ** Class *)
-Class Monoid {T : Type} (Tadd : T -> T -> T) (T0 : T) := {
-    monoidAssoc :> Associative Tadd;
-    monoidIdL :> IdentityLeft Tadd T0;
-    monoidIdR :> IdentityRight Tadd T0;
+Class Monoid {A} (Aadd : A -> A -> A) (Azero : A) := {
+    monoidAssoc :> Associative Aadd;
+    monoidIdL :> IdentityLeft Aadd Azero;
+    monoidIdR :> IdentityRight Aadd Azero;
   }.
 
 (** Get parameter of a monoid *)
-Definition monoidTadd `{M:Monoid} : T -> T -> T := Tadd.
-Definition monoidT0 `{M:Monoid} : T := T0.
+Definition monoidAadd `{M:Monoid} : A -> A -> A := Aadd.
+Definition monoidAzero `{M:Monoid} : A := Azero.
 
 (** ** Instances *)
 Section Instances.
@@ -801,11 +787,11 @@ Ltac monoid_simpl_old M := intros; repeat monoid_rw_old M; auto.
 
 (* One problem, identityLeft will fail! *)
 Section problem.
-  Context `{M : Monoid T Tadd T0}.
-  Infix "+" := Tadd.
-  Notation "0" := T0.
+  Context `{M : Monoid A Aadd Azero}.
+  Infix "+" := Aadd.
+  Notation "0" := Azero.
 
-  Goal forall x : T, x + (0 + x) = x + x.
+  Goal forall x : A, x + (0 + x) = x + x.
     intros.
     Fail rewrite identityLeft.  (* Why this fail? *)
     rewrite identityLeft at 1.  (* We need explicit "position" annotation *)
@@ -826,7 +812,7 @@ Ltac monoid_simpl := intros; repeat monoid_rw; try reflexivity; auto.
 
 Section Theory.
   Context `{M:Monoid}.
-  Infix "+" := Tadd : A_scope.
+  Infix "+" := Aadd : A_scope.
 
 End Theory.
 
@@ -848,9 +834,9 @@ End Examples.
 (** * Abelian monoid *)
 
 (** ** Class *)
-Class AMonoid {T} Tadd T0 := {
-    amonoidMonoid :> @Monoid T Tadd T0;
-    amonoidComm :> Commutative Tadd;
+Class AMonoid {A} Aadd Azero := {
+    amonoidMonoid :> @Monoid A Aadd Azero;
+    amonoidComm :> Commutative Aadd;
   }.
 
 (** ** Instances *)
@@ -910,10 +896,10 @@ End Examples.
 (** * Group *)
 
 (** ** Class *)
-Class Group {T} Tadd T0 (Topp : T -> T) := {
-    groupMonoid :> @Monoid T Tadd T0;
-    groupInvL :> InverseLeft Tadd T0 Topp;
-    groupInvR :> InverseRight Tadd T0 Topp;
+Class Group {A} Aadd Azero (Aopp : A -> A) := {
+    groupMonoid :> Monoid Aadd Azero;
+    groupInvL :> InverseLeft Aadd Azero Aopp;
+    groupInvR :> InverseRight Aadd Azero Aopp;
   }.
 
 (** ** Instances *)
@@ -953,7 +939,7 @@ Ltac group_simp :=
 (*
   Group Theory
 
-  1.  Arkansas Tech University / Dr. Marcel B. Finan /
+  1.  Arkansas Aech University / Dr. Marcel B. Finan /
       MATH 4033: Elementary Modern Algebra
   
   (a) 5 Definition and Examples of Groups
@@ -964,9 +950,9 @@ Ltac group_simp :=
 Section GroupTheory.
   
   Context `{G:Group}.
-  Infix "+" := Tadd.
-  Notation "0" := T0.
-  Notation "- a" := (Topp a).
+  Infix "+" := Aadd.
+  Notation "0" := Azero.
+  Notation "- a" := (Aopp a).
   Notation Asub := (fun x y => x + (-y)).
   Infix "-" := Asub.
 
@@ -974,7 +960,7 @@ Section GroupTheory.
   Section additional_props.
 
     (** - 0 = 0 *)
-    Theorem group_opp_zero_eq_zero : - 0 = 0.
+    Theorem group_inv_zero : - 0 = 0.
     Proof.
       pose proof (inverseLeft 0). rewrite identityRight in H. auto.
     Qed.
@@ -1098,20 +1084,20 @@ Section GroupTheory.
   Qed.
 
   (** Definition 14.1 (multiple operations) *)
-  (* batch : list T -> T
+  (* batch : list A -> A
     [] = e
     [a1] = a1
     [a1;a2] = a1 * a2
     [a1;a2;a3] = (a1*a2)*a3
     [a1;a2;...;a_n-1;an] = ((...(a1*a2)* ... )*a_n-1)*an *)
-  Definition group_batch (l:list T) :=
+  Definition group_batch (l:list A) :=
     match l with
     | [] => 0
-    | x :: l' => fold_left Tadd l' x
+    | x :: l' => fold_left Aadd l' x
     end.
   
   Section test.
-    Variable (a1 a2 a3 a4 : T).
+    Variable (a1 a2 a3 a4 : A).
     
     (* Compute group_batch []. *)
     (* Compute group_batch [a1]. *)
@@ -1124,15 +1110,15 @@ Section GroupTheory.
   (** Theorem 14.3 (Generalized Associative Law) *)
   Section th14_3.
 
-    Notation "'Σ' a '&' l " := (fold_left Tadd l a) (at level 10).
+    Notation "'Σ' a '&' l " := (fold_left Aadd l a) (at level 10).
     
-    Theorem group_assoc_general (l1 l2 : list T) :
+    Theorem group_assoc_general (l1 l2 : list A) :
       (group_batch l1) + (group_batch l2) =  group_batch (l1 ++ l2).
     Proof.
       (* reduct to fold_left *)
       destruct l1,l2; simpl; group_simp.
       - rewrite app_nil_r. group_simp.
-      - rename t into t1, t0 into t2.
+      - rename a into a1, a0 into a2.
         (* H1. forall a l1 l2, Σ a & (l1 ++ l2) = Σ (Σ a & l1) & l2
            H2. forall a b l, a + Σ b & l = Σ (a + b) & l
            H3. forall a b l, Σ a & (b :: l) = Σ (a + b) & l
@@ -1168,16 +1154,16 @@ Section GroupTheory.
       a ^ n      = a ^ (n-1) * a, for n >= 1
       a ^ (-n)   = (-a) ^ n,  for n >= 1
      *)
-    Definition group_power (a : T) (n : Z) : T :=
+    Definition group_power (a : A) (n : Z) : A :=
       match n with
       | Z0 => 0
-      | Zpos m => iterate (fun x => Tadd x a) (Pos.to_nat m) 0
-      | Z.neg m => iterate (fun x => Tadd x (Topp a)) (Pos.to_nat m) 0
+      | Zpos m => iterate (fun x => Aadd x a) (Pos.to_nat m) 0
+      | Z.neg m => iterate (fun x => Aadd x (Aopp a)) (Pos.to_nat m) 0
       end.
     Infix "^" := group_power.
     
     Section test.
-      Variable (a1 a2 a3 a4 : T).
+      Variable (a1 a2 a3 a4 : A).
       (* Compute group_power a1 3. *)
       (* Compute group_power a1 (-3). *)
 
@@ -1240,17 +1226,17 @@ End Examples.
 (* ======================================================================= *)
 (** ** Definition and theory *)
 
-Class AGroup {T} Tadd T0 Topp := {
-    agroupGroup :> @Group T Tadd T0 Topp;
-    agroupAM :> @AMonoid T Tadd T0;
-    agroupComm :> @Commutative T Tadd;
+Class AGroup {A} Aadd (Azero:A) Aopp := {
+    agroupGroup :> Group Aadd Azero Aopp;
+    agroupAM :> AMonoid Aadd Azero;
+    agroupComm :> Commutative Aadd;
   }.
 
 Section Theory.
   
   Context `{AG : AGroup}.
-  Infix "+" := Tadd.
-  Notation "- a" := (Topp a).
+  Infix "+" := Aadd.
+  Notation "- a" := (Aopp a).
   Notation "a - b" := (a + (-b)).
 
   Lemma agroup_sub_comm : forall a b, a - b = - (b - a).
@@ -1297,17 +1283,68 @@ End Instances.
 
 
 (* ######################################################################### *)
+(** * SemiRing *)
+(* 区分半环与环：半环加法不需要逆元。比如<nat,+,*>是半环，但不是环 *)
+
+(** ** Class *)
+
+Class SemiRing {A} Aadd (Azero:A) Amul Aone := {
+    sringAddAM :> AMonoid Aadd Azero; (* 不确定交换性是否必要，姑且先留下 *)
+    sringMulAM :> AMonoid Amul Aone; (* 不确定交换性是否必要，姑且先留下 *)
+    sringDistrL :> DistributiveLeft Aadd Amul;
+    sringDistrR :> DistributiveRight Aadd Amul;
+  }.
+
+(** ** Instances *)
+Section Instances.
+
+  Import Nat ZArith Qcanon Reals.
+
+  Global Instance SRing_nat : SemiRing Nat.add 0%nat Nat.mul 1%nat.
+  repeat constructor; intros; ring. Qed.
+  
+  Global Instance SRing_Z : SemiRing Z.add 0%Z Z.mul 1%Z.
+  repeat constructor; intros; ring. Qed.
+  
+  Global Instance SRing_Qc : SemiRing Qcplus 0 Qcmult 1.
+  repeat constructor; intros; ring. Qed.
+
+  Global Instance SRing_R : SemiRing Rplus R0 Rmult R1.
+  split_intro; subst; ring. Defined.
+
+End Instances.
+
+(** ** Extra Theories *)
+Section Theory.
+
+  Context `{SR:SemiRing}.
+
+  Infix "+" := Aadd.
+  Infix "*" := Amul.
+
+End Theory.
+
+(** ** Examples *)
+
+Section Examples.
+
+End Examples.
+
+
+(* ######################################################################### *)
 (** * Ring *)
 
 (** ** Class *)
 
-(* Note that, in mathematics, mul needn't commutative, but ring_theory in Coq 
-  need it. Because we want use ring tactic, so add this properties. *)
-Class Ring {T} Tadd T0 Topp Tmul T1 := {
-    ringAddAG :> @AGroup T Tadd T0 Topp;
-    ringMulAM :> @AMonoid T Tmul T1;
-    ringDistrL :> DistributiveLeft Tadd Tmul;
-    ringDistrR :> DistributiveRight Tadd Tmul;
+(* Note that, the ring theory in mathematics needn't commutative of `mul` operation,
+   but ring theory in Coq need it.
+   We will distinguish ring and abelian ring with class name Ring and ARing.  *)
+
+Class Ring {A} Aadd (Azero:A) Aopp Amul Aone := {
+    ringAddAG :> AGroup Aadd Azero Aopp;
+    ringMulM :> Monoid Amul Aone;
+    ringDistrL :> DistributiveLeft Aadd Amul;
+    ringDistrR :> DistributiveRight Aadd Amul;
   }.
 
 (** ** Instances *)
@@ -1316,13 +1353,13 @@ Section Instances.
   Import ZArith Qcanon Reals.
 
   Global Instance Ring_Z : Ring Z.add 0%Z Z.opp Z.mul 1%Z.
-  repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
+  repeat constructor; intros; ring. Qed.
   
   Global Instance Ring_Qc : Ring Qcplus 0 Qcopp Qcmult 1.
-  split_intro; subst; ring. Defined.
+  repeat constructor; intros; ring. Qed.
 
   Global Instance Ring_R : Ring Rplus R0 Ropp Rmult R1.
-  split_intro; subst; ring. Defined.
+  repeat constructor; intros; ring. Qed.
 
 End Instances.
 
@@ -1331,30 +1368,10 @@ Section Theory.
 
   Context `{R:Ring}.
 
-  Infix "+" := Tadd.
-  Notation "- a" := (Topp a).
-  Notation Tsub := (fun a b => a + -b).
-  Infix "*" := Tmul.
-
-  Lemma make_ring_theory : ring_theory T0 T1 Tadd Tmul Tsub Topp eq.
-  Proof.
-    constructor; intros;
-      try (rewrite ?identityLeft,?associative; reflexivity);
-      try (rewrite commutative; reflexivity).
-    rewrite distributiveRight; reflexivity.
-    rewrite inverseRight; reflexivity.
-  Qed.
-
-  Add Ring ring_inst : make_ring_theory.
-    
-  (** 0 * a = 0 *)
-  (* 证明思路：a*0 + 0 = a*0 = a*(0+0) = a*0 + a*0，然后消去律 *)
-  Lemma ring_mul_0_r : forall a : T, a * T0 = T0.
-  Proof. intros. ring. Qed.
-
-  (** a * 0 = 0 *)
-  Lemma ring_mul_0_l : forall a : T, T0 * a = T0.
-  Proof. intros. ring. Qed.
+  Infix "+" := Aadd.
+  Notation "- a" := (Aopp a).
+  Notation Asub := (fun a b => a + -b).
+  Infix "*" := Amul.
 
 End Theory.
 
@@ -1368,24 +1385,85 @@ Section Examples.
     apply distributiveLeft. Qed.
 
 End Examples.
+  
+
+(* ######################################################################### *)
+(** * ARing *)
+
+(** ** Class *)
+
+Class ARing {A} Aadd Azero Aopp Amul Aone := {
+    aringRing :> @Ring A Aadd Azero Aopp Amul Aone;
+    aringMulComm :> @Commutative A Amul;
+  }.
+
+(** ** Instances *)
+Section Instances.
+
+  Import ZArith Qcanon Reals.
+
+  Global Instance ARing_Z : ARing Z.add 0%Z Z.opp Z.mul 1%Z.
+  repeat constructor; intros; ring. Qed.
+  
+  Global Instance ARing_Qc : ARing Qcplus 0 Qcopp Qcmult 1.
+  repeat constructor; intros; ring. Qed.
+
+  Global Instance ARing_R : ARing Rplus R0 Ropp Rmult R1.
+  repeat constructor; intros; ring. Qed.
+
+End Instances.
+
+(** ** Extra Theories *)
+Section Theory.
+  Context `{ARing}.
+
+  Infix "+" := Aadd.
+  Notation "- a" := (Aopp a).
+  Notation Asub := (fun a b => a + -b).
+  Infix "*" := Amul.
+
+  Lemma make_ring_theory : ring_theory Azero Aone Aadd Amul Asub Aopp eq.
+  Proof.
+    constructor; intros;
+      try (rewrite ?identityLeft,?associative; reflexivity);
+      try (rewrite commutative; reflexivity).
+    rewrite distributiveRight; reflexivity.
+    rewrite inverseRight; reflexivity.
+  Qed.
+
+  Add Ring ring_inst : make_ring_theory.
+    
+  (** 0 * a = 0 *)
+  (* 证明思路：a*0 + 0 = a*0 = a*(0+0) = a*0 + a*0，然后消去律 *)
+  Lemma ring_mul_0_r : forall a : A, a * Azero = Azero.
+  Proof. intros. ring. Qed.
+
+  (** a * 0 = 0 *)
+  Lemma ring_mul_0_l : forall a : A, Azero * a = Azero.
+  Proof. intros. ring. Qed.
+
+End Theory.
+
+(** ** Examples *)
+
+Section Examples.
+
+End Examples.
 
 
-(** This example declares an abstract ring structure, and shows how to use fewer code 
-    to enable "ring" tactic. *)
-Module Demo_AbsRing.
-  Context `{R:Ring}.
-  Infix "+" := Tadd. Infix "*" := Tmul.
-  Notation "0" := T0. Notation "1" := T1.
+(** This example declares an abstract abelian-ring structure, and shows how to use
+    fewer code to enable "ring" tactic. *)
+Module Demo_AbsARing.
+  Context `{AR:ARing}.
+  Infix "+" := Aadd. Infix "*" := Amul.
+  Notation "0" := Azero. Notation "1" := Aone.
 
-  Let ring_thy : ring_theory T0 T1 Tadd Tmul (fun x y => Tadd x (Topp y)) Topp eq
-      := make_ring_theory.
+  Add Ring ring_inst : (@make_ring_theory _ Aadd Azero Aopp Amul Aone AR).
 
-  Add Ring ring_thy_inst : ring_thy.
-
-  Goal forall a b c : T, (a + b) * c = 0 + b * c * 1 + 0 + 1 * c * a.
+  Goal forall a b c : A, (a + b) * c = 0 + b * c * 1 + 0 + 1 * c * a.
   Proof. intros. ring. Qed.
   
-End Demo_AbsRing.
+End Demo_AbsARing.
 
 (** This is a concrete ring structure *)
 Module Demo_ConcrateRing.
@@ -1402,8 +1480,8 @@ A={a b e}.
 2 0 2 0 2
 3 0 3 2 1
    *)
-  Inductive A := A0 | A1 | A2 | A3.
-  Notation "0" := A0. Notation "1" := A1.
+  Inductive A := Azero | A1 | A2 | A3.
+  Notation "0" := Azero. Notation "1" := A1.
   Notation "2" := A2. Notation "3" := A3.
 
   Definition add  (a b : A) :=
@@ -1433,15 +1511,24 @@ A={a b e}.
 
   Lemma add_comm : forall a b, a + b = b + a.
   Proof. destruct a,b; auto. Qed.
-  
+
+  (* 声明 Coq 中的  Ring 结构，需要一个 ring_theory 类型的证明，有两种方式 *)
+
+  (* 方式1：直接构造一个证明 *)
   Lemma ring_thy : ring_theory 0 1 add mul (fun x y => add x (opp y)) opp eq.
   Proof.
-    constructor; auto;
-      try (destruct x,y; auto); try destruct z; auto.
-    intros. destruct x; auto.
+    constructor; auto; intros;
+      destruct x; auto; destruct y; auto; destruct z; auto.
   Qed.
-
-  Add Ring ring_thy_inst : ring_thy.
+  Add Ring ring_thy_inst1 : ring_thy.
+  
+  (* 方式二，先构造 ARing 结构 *)
+  Local Instance ARing_inst : ARing add 0 opp mul 1.
+  Proof.
+    repeat constructor; intros;
+      destruct a; auto; destruct b; auto; destruct c; auto.
+  Qed.
+  Add Ring ring_thy_inst2 : make_ring_theory.
 
   Goal forall a b c : A, a + b + c - b = a + c.
   Proof.
@@ -1456,11 +1543,11 @@ End Demo_ConcrateRing.
 (** * Field *)
 
 (** ** Class *)
-Class Field {T} Tadd T0 Topp Tmul T1 Tinv := {
-    (** Field: Ring + mult inversion + (1≠0) *)
-    fieldRing :> @Ring T Tadd T0 Topp Tmul T1;
-    field_mulInvL : forall a, a <> T0 -> Tmul (Tinv a) a = T1;
-    field_1_neq_0 : T1 <> T0;
+Class Field {A} Aadd (Azero:A) Aopp Amul Aone Ainv := {
+    (** Field: ARing + mult inversion + (1≠0) *)
+    fieldRing :> ARing Aadd Azero Aopp Amul Aone;
+    field_mulInvL : forall a, a <> Azero -> Amul (Ainv a) a = Aone;
+    field_1_neq_0 : Aone <> Azero;
   }.
 
 (** ** Instances *)
@@ -1485,18 +1572,18 @@ End Instances.
 Section Theory.
 
   Context `{F:Field}.
-  Infix "+" := Tadd.
-  Notation "- a" := (Topp a).
+  Infix "+" := Aadd.
+  Notation "- a" := (Aopp a).
   Notation Asub := (fun a b => a + -b).
-  Notation "0" := T0.
-  Notation "1" := T1.
-  Infix "*" := Tmul.
-  Notation "/ a" := (Tinv a).
-  Notation Tdiv := (fun a b => a * (/b)).
-  Infix "/" := Tdiv.
+  Notation "0" := Azero.
+  Notation "1" := Aone.
+  Infix "*" := Amul.
+  Notation "/ a" := (Ainv a).
+  Notation Adiv := (fun a b => a * (/b)).
+  Infix "/" := Adiv.
 
   Lemma make_field_theory :
-    field_theory T0 T1 Tadd Tmul Asub Topp Tdiv Tinv eq.
+    field_theory Azero Aone Aadd Amul Asub Aopp Adiv Ainv eq.
   Proof.
     constructor; intros;
       try (rewrite ?identityLeft,?associative; reflexivity);
@@ -1509,23 +1596,23 @@ Section Theory.
   Add Field field_inst : make_field_theory.
 
   (** a <> 0 -> /a * a = 1 *)
-  Lemma field_mul_inv_l : forall a : T, a <> 0 -> /a * a = 1.
+  Lemma field_mul_inv_l : forall a : A, a <> 0 -> /a * a = 1.
   Proof. intros. rewrite field_mulInvL; easy. Qed.
 
   (** a <> 0 -> a * /a = 1 *)
-  Lemma field_mul_inv_r : forall a : T, a <> 0 -> a * /a = 1.
+  Lemma field_mul_inv_r : forall a : A, a <> 0 -> a * /a = 1.
   Proof. intros. rewrite commutative. rewrite field_mulInvL; easy. Qed.
 
   (** a <> 0 -> (1/a) * a = 1 *)
-  Lemma field_mul_inv1_l : forall a : T, a <> 0 -> (1/a) * a = 1.
+  Lemma field_mul_inv1_l : forall a : A, a <> 0 -> (1/a) * a = 1.
   Proof. intros. simpl. group_simp. apply field_mul_inv_l. auto. Qed.
   
   (** a <> 0 -> a * (1/a) = 1 *)
-  Lemma field_mul_inv1_r : forall a : T, a <> 0 -> a * (1/a) = 1.
+  Lemma field_mul_inv1_r : forall a : A, a <> 0 -> a * (1/a) = 1.
   Proof. intros. simpl. group_simp. apply field_mul_inv_r. auto. Qed.
   
   (** a <> 0 -> a * b = a * c -> b = c *)
-  Lemma field_mul_cancel_l : forall a b c : T,
+  Lemma field_mul_cancel_l : forall a b c : A,
       a <> 0 -> a * b = a * c -> b = c.
   Proof.
     intros.
@@ -1537,7 +1624,7 @@ Section Theory.
   Qed.
 
   (** c <> 0 -> a * c = b * c -> a = b *)
-  Lemma field_mul_cancel_r : forall a b c : T,
+  Lemma field_mul_cancel_r : forall a b c : A,
       c <> 0 -> a * c = b * c -> a = b.
   Proof.
     intros.
@@ -1549,7 +1636,7 @@ Section Theory.
   Qed.
 
   (** a * b = 0 -> a = 0 \/ b = 0 *)
-  Lemma field_mul_eq0_imply_a0_or_b0 : forall (a b : T) (HDec:@Dec T),
+  Lemma field_mul_eq0_imply_a0_or_b0 : forall (a b : A) (HDec:@Dec A),
       a * b = 0 -> a = 0 \/ b = 0.
   Proof.
     intros.
@@ -1562,7 +1649,7 @@ Section Theory.
   Qed.
 
   (** a * b = b -> a = 1 \/ b = 0 *)
-  Lemma field_mul_eq_imply_a1_or_b0 : forall (a b : T) (HDec : @Dec T),
+  Lemma field_mul_eq_imply_a1_or_b0 : forall (a b : A) (HDec : @Dec A),
       a * b = b -> (a = 1) \/ (b = 0).
   Proof.
     intros. destruct (dec a 1), (dec b 0); auto.
@@ -1590,15 +1677,15 @@ End Examples.
 
 (** ** Class *)
 Class LinearSpace `{F : Field} {V : Type}
-  (Vadd : V -> V -> V) (Vzero : V) (Vopp : V -> V) (Vcmul : T -> V -> V) := {
+  (Vadd : V -> V -> V) (Vzero : V) (Vopp : V -> V) (Vcmul : A -> V -> V) := {
     ls_addC : Commutative Vadd;
     ls_addA : Associative Vadd;
     ls_add_0_r : IdentityRight Vadd Vzero;
     ls_add_inv_r : InverseRight Vadd Vzero Vopp;
-    ls_cmul_1_l : forall u : V, Vcmul T1 u = u;
-    lc_cmul_assoc : forall a b u, Vcmul (Tmul a b) u = Vcmul a (Vcmul b u);
+    ls_cmul_1_l : forall u : V, Vcmul Aone u = u;
+    lc_cmul_assoc : forall a b u, Vcmul (Amul a b) u = Vcmul a (Vcmul b u);
     lc_cmul_aadd_distr : forall a b u,
-      Vcmul (Tadd a b) u = Vadd (Vcmul a u) (Vcmul b u);
+      Vcmul (Aadd a b) u = Vadd (Vcmul a u) (Vcmul b u);
     lc_cmul_vadd_distr : forall a u v,
       Vcmul a (Vadd u v) = Vadd (Vcmul a u) (Vcmul a v);
   }.
@@ -1611,7 +1698,7 @@ Section Instances.
     Context `{F : Field}.
     Add Field field_inst : make_field_theory.
     
-    Global Instance LinearSpace_Field : LinearSpace Tadd T0 Topp Tmul.
+    Global Instance LinearSpace_Field : LinearSpace Aadd Azero Aopp Amul.
     split_intro; try field. Qed.
     
   End field_is_linearspace.
@@ -1622,18 +1709,17 @@ End Instances.
 (** ** Extra Theories *)
 
 Section Theory.
-
-  Open Scope T_scope.
+  (* Open Scope A_scope. *)
   
   Context `{LS : LinearSpace}.
-  Infix "+" := Tadd : T_scope.
-  Notation "- a" := (Topp a) : T_scope.
-  Notation Tsub := (fun a b => a + -b).
-  Infix "-" := Tsub : T_scope.
-  Infix "*" := Tmul : T_scope.
-  Notation "/ a" := (Tinv a) : T_scope.
-  Notation Tdiv := (fun a b => a * (/b)).
-  Infix "/" := Tdiv : T_scope.
+  Infix "+" := Aadd : A_scope.
+  Notation "- a" := (Aopp a) : A_scope.
+  Notation Asub := (fun a b => a + -b).
+  Infix "-" := Asub : A_scope.
+  Infix "*" := Amul : A_scope.
+  Notation "/ a" := (Ainv a) : A_scope.
+  Notation Adiv := (fun a b => a * (/b)).
+  Infix "/" := Adiv : A_scope.
 
   Infix "+" := Vadd : LinearSpace_scope.
   Notation "- a" := (Vopp a) : LinearSpace_scope.
@@ -1648,7 +1734,7 @@ Section Theory.
   (* ToDo: good exercise for linear algebra *)
   
   (** 0 * v = 0 *)
-  Theorem LS_cmul_0_l : forall v : V, T0 c* v = Vzero.
+  Theorem LS_cmul_0_l : forall v : V, Azero c* v = Vzero.
   Proof. Abort.
   
 End Theory.

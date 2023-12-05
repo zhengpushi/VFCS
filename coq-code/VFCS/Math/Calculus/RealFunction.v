@@ -696,21 +696,17 @@ Section fun_op_props.
     constructor; apply fadd_comm.
   Qed.
 
-  (* (** Abelian group structure over (Rfun,*,1,/) *) *)
-  (* Global Instance AGroup_RfunMul : AGroup fmul fone finv. *)
-  (* repeat constructor; intros; monoid_simp. apply fadd_opp_l. apply fadd_opp_r. *)
-  (* all: apply fadd_comm. Qed. *)
-
   (** Ring structure *)
-  Global Instance Ring_Rfun : Ring fadd fzero fopp fmul fone.
+  Global Instance ARing_Rfun : ARing fadd fzero fopp fmul fone.
   Proof.
-    constructor. apply AGroup_RfunAdd. apply AMonoid_RfunMul.
-    constructor; apply fmul_add_distr_l. constructor; apply fmul_add_distr_r.
+    repeat constructor; try apply AGroup_RfunAdd; try apply AMonoid_RfunMul.
+    apply fmul_add_distr_l.
+    apply fmul_add_distr_r.
   Qed.
 
 End fun_op_props.
 
-Add Ring ring_inst : (@make_ring_theory _ _ _ _ _ _ Ring_Rfun).
+Add Ring ring_inst : (@make_ring_theory _ _ _ _ _ _ ARing_Rfun).
 
 Section test.
   Goal forall u v w : tpRFun, u - v * (u - w) = w * v - u * v + u.
@@ -733,7 +729,7 @@ Section test.
 End test.
 
 (** add this declaration to enable ring support over "R->R" type *)
-Add Ring ring_inst : (@make_ring_theory (R->R) _ _ _ _ _ Ring_Rfun).
+Add Ring ring_inst : (@make_ring_theory (R->R) _ _ _ _ _ ARing_Rfun).
 Section test.
   (* Now, we can use "ring" tactic successfully  *)
   Goal let f : R -> R := fone in f = f.
