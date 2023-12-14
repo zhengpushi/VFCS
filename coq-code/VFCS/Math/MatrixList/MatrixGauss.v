@@ -77,9 +77,10 @@ Section GaussElim.
     | RowOp_KAdd i j k => mrowKAdd mat1 i j k
     end.
   
-  (* 行变换操作的列表转为单个矩阵 *)
-  Definition rowOpList2mat (ros : list (@RowOp A)) (n : nat) : @smat A n :=
-    fold_left (fun M op => mmul (rowOp2mat op n) M) ros mat1.
+  (* 行变换操作的列表转为单个矩阵。
+     eg: [op1;op2;op3] => m(op1)*m(op2)*m(op3)*mat1  *)
+  Definition rowOpList2mat (ops : list (@RowOp A)) (n : nat) : @smat A n :=
+    fold_right (fun op M => mmul (rowOp2mat op n) M) mat1 ops.
 
   (* 第j列的第i行以下元素都是0 *)
   Let belowElemsAllZero {r c} (m : @mat A r c) (i j : nat) : bool :=

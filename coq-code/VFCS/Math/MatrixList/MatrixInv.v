@@ -100,6 +100,7 @@ Section minvGE.
   Notation rowEchelon := (@rowEchelon _ Aadd Azero Aopp Amul Ainv HDec).
   Notation minRowEchelon := (@minRowEchelon _ Aadd Azero Aopp Amul Aone Ainv HDec).
   Notation listFirstNonZero := (@listFirstNonZero _ Azero Aeqb).
+  Notation rowOpList2mat := (@rowOpList2mat _ Aadd Azero Amul Aone).
 
   (* 计算矩阵的行秩。利用阶梯形矩阵可很容易判定 *)
   Definition mrowRank {r c} (M : @mat A r c) : nat :=
@@ -108,19 +109,31 @@ Section minvGE.
     let d3 := map (fun o => match o with Some _ => 1 | _ => O end) d2 in
     fold_left Nat.add d3 0.
 
-  (* 计算逆矩阵。
+  (* 计算逆矩阵(option版本)。
      1. 先计算阶梯形矩阵
      2. 如果秩不是n，则该矩阵不可逆，否则再计算行最简阶梯形
    *)
-  Definition minvGE {n} (M : @smat A n) : option (@smat A n) :=
+  Definition minvGEo {n} (M : @smat A n) : option (@smat A n) :=
     let p1 := rowEchelon M in
     let r := mrowRank (snd p1) in
     match Nat.eqb r n with
     | false => None
     | _ =>
         let p2 := minRowEchelon (snd p1) in
-        Some (snd p2)
+        Some (rowOpList2mat (fst p2 ++ fst p1) n)
     end.
+
+  (* 计算逆矩阵(带有默认值的版本) *)
+  Definition minvGE {n} (M : @smat A n) : @smat A n :=
+    match minvGEo M with
+    | Some M' => M'
+    | _ => (@mat1 _ Azero Aone n)
+    end.
+
+  (* (* 要证明 Some M1 = Some M2 时，不知为何 f_equal 会卡住，所以设计了这个引理 *) *)
+  (* Lemma Some_mat_eq_if_dlist_eq : forall {A n} (M1 M2 : @smat A n), *)
+  (*     mdata M1 = mdata M2 -> Some M1 = Some M2. *)
+  (* Proof. intros. f_equal. apply meq_if_mdata. auto. Qed. *)
   
 End minvGE.
 
@@ -391,6 +404,36 @@ Section test.
   Notation minv3AM := (@minv3AM _ Qcplus 0 Qcopp Qcmult Qcinv).
   Notation minvGE := (@minvGE _ Qcplus 0 Qcopp Qcmult 1 Qcinv).
 
+  Notation rowEchelon := (@rowEchelon _ Qcplus 0 Qcopp Qcmult Qcinv).
+  Notation minRowEchelon := (@minRowEchelon _ Qcplus 0 Qcopp Qcmult 1 Qcinv).
+  Notation rowOp2mat := (@rowOp2mat _ Qcplus 0 Qcmult 1).
+  Notation rowOpList2mat := (@rowOpList2mat _ Qcplus 0 Qcmult 1).
+  Notation mmul := (@mmul _ Qcplus 0 Qcmult).
+  Notation l2m := (@l2m _ 0 _ _).
+  Notation mrowRank := (@mrowRank _ 0).
+  Infix "*" := mmul.
+
+  (* 简单的 2x2 矩阵 *)
+  Section ex0.
+    (* 
+          [2 4]    [2  4]    [1 2]    [1 0]
+        A=[6 3] => [0 -9] => [0 1] => [0 1]
+       ----------------------------------
+          [1  0]     [1    0]     [1/2 0]     [1 -2]
+       P1=[-3 1]  P2=[0 -1/9]  P3=[0   1]  P4=[0  1]
+
+                            [-1/6; 2/9]
+       So, A'=P4*P3*P2*P1 = [1/3; -1/9]
+     *)
+
+    Let m1 : @smat Qc 2 := l2m (Q2Qc_dlist [[2;4];[6;3]]).
+    Let m2 : @smat Qc 2 := l2m (Q2Qc_dlist [[-1/6;2/9];[1/3;-1/9]]%Q).
+    (* Compute m2l (minvGE m1). *)
+
+    Goal m2l (minvGE m1 * m1) = m2l (r:=2)(c:=2) mat1.
+    Proof. cbv. lma; f_equal; apply UIP. Qed.
+  End ex0.
+
   (* 利用伴随矩阵求逆矩阵(数值矩阵) *)
   Section ex1.
     (*
@@ -405,23 +448,30 @@ Section test.
      *)
     Let r : nat := 3. Let c : nat := 3.
     Let m1 : mat r c :=
-        l2m 0 _ _
-          (Q2Qc_dlist
-             [[  0; -2;  1];
-              [  3;  0; -2];
-              [ -2;  3;  0]]%Q).
+        l2m (Q2Qc_dlist
+               [[  0; -2;  1];
+                [  3;  0; -2];
+                [ -2;  3;  0]]%Q).
     Let m2 : mat r c :=
-        l2m 0 _ _
-          (Q2Qc_dlist
-             [[  6;  3;  4];
-              [  4;  2;  3];
-              [  9;  4;  6]]%Q).
-    Goal m2l (minvAM m1) = m2l (m2).
+        l2m (Q2Qc_dlist
+               [[  6;  3;  4];
+                [  4;  2;  3];
+                [  9;  4;  6]]%Q).
+
+    Goal m1 * m2 = mat1.
+    Proof. lma. Qed.
+    
+    Goal m2l (minvAM m1) = m2l m2.
     Proof. cbv. auto. Qed.
     
-    Goal m2l (minvAM m2) = m2l (m1).
+    Goal m2l (minvAM m2) = m2l m1.
     Proof. cbv. auto. Qed.
 
+    Goal m2l (minvGE m1) = m2l m2.
+    Proof. cbv. lma; f_equal; apply UIP. Qed.
+    
+    Goal m2l (minvAM m2) = m2l m1.
+    Proof. cbv. lma. Qed.
   End ex1.
 
   (* 在 matlab 中的一些测试 *)
@@ -438,7 +488,7 @@ Section test.
     0.7734   -0.5560   -0.0659    0.0881    0.0316    0.0041
    -0.3853    0.5112   -0.1290   -0.0269   -0.0102    0.0097       
      *)
-    Let m1 := @l2m _ 0%Qc 6 6
+    Let m1 : @mat Qc 6 6 := l2m
                 (Q2Qc_dlist
                    [[ 1; 2; 3; 4; 5; 6];
                     [ 7; 9;10;12;11;14];
@@ -448,15 +498,15 @@ Section test.
                     [70;90;99;78;82;93]]%Q).
     (* 0.1s *)
     (* Time Compute (m2l (minvAM m1)). *)
-    Let d2 := Eval vm_compute in (m2l (minvAM m1)).
-    (* Print d2. *)
-    (* 由于Qc类型用分式来表示精确的值，而matlab给出的是浮点数，难以验证相等性，
-       已手工检验了多组数据，都是正确的。 *)
 
-    (* 0.008s *)
-    (* Time Compute (m2l (option_get (minvGE m1) mat1)). *)
-    Let d3 := Eval vm_compute in (m2l (option_get (minvGE m1) mat1)).
-    (* Print d3. *)
+    Goal m2l ((minvAM m1) * m1) = m2l (c:=6) mat1.
+    Proof. cbv. lma; f_equal; apply UIP. Qed.
+
+    (* 0.05s *)
+    (* Time Compute (m2l (minvGE m1)). *)
+    Goal m2l ((minvGE m1) * m1) = m2l (c:=6) mat1.
+    Proof. cbv. lma; f_equal; try apply UIP.
+           Abort.               (* 第一行有问题 *)
   End ex2.
 
   (* 性能测试，看可以解多大规模的矩阵 *)
@@ -481,7 +531,7 @@ Section test.
        100    0.918
        200    8.666
      *)
-    (* Time Compute m2l (option_get (minvGE (@mat1 20)) mat1). *)
+    (* Time Compute m2l (minvGE (@mat1 50)). *)
   End ex3.
   
 End test.
