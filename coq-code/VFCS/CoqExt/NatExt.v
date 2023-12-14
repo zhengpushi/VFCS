@@ -155,7 +155,9 @@ Ltac solve_nat_ineq :=
   | H:(?a <? ?b) = true |- ?b > ?a => apply Nat.ltb_lt; apply H
   | H:(?a <? ?b) = false |- ?a >= ?b => apply Nat.ltb_ge; apply H
   | H:(?a <? ?b) = false |- ?b <= ?a => apply Nat.ltb_ge; apply H
+  | H:(?a <=? ?b) = false |- ?b < ?a => apply Nat.leb_gt; apply H
   end.
+
 
 (** Proposition and boolean are reflected. *)
 

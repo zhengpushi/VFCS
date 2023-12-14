@@ -12,7 +12,7 @@
 
 *)
 
-Require Import Extraction.
+Require Export Extraction.
 Require Import Reals.
 
 (* constant - Real number and operations *)
@@ -36,5 +36,12 @@ Extract Constant cos => "Float.cos".
 Extract Constant sqrt => "Float.sqrt".
 Extract Constant atan => "Float.atan".
 Extract Constant acos => "Float.acos".
+
 (* Extract Constant pow => 
   "fun r0 n -> if n=0 then 1.0 else (r0 *. (pow r0 (n-1)))". *)
+
+(* Example ex_r1 : R := 1.25. *)
+(* Example ex_r2 (r1 r2 : R) : R := sin r1 + r2. *)
+
+(* Recursive Extraction ex_r1 ex_r2. *)
+(* Extraction "test1.ml" ex_r1 ex_r2. *)

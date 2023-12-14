@@ -74,6 +74,10 @@ Proof.
   - inversion H. auto.
 Qed.
 
+Corollary meq_if_mdata : forall {A r c} (M1 M2 : @mat A r c),
+    mdata M1 = mdata M2 -> M1 = M2.
+Proof. intros. apply meq_iff. auto. Qed.
+
 
 (* ======================================================================= *)
 (** ** Get element of a matrix *)
@@ -199,6 +203,18 @@ End f2m_m2f.
 (*       try (compute; easy)); *)
 (*   simpl. *)
 
+(* 矩阵相等的自动化简 (linear matrix algebra) *)
+Ltac lma :=
+  (* 需要重复执行多个动作，也不要报错，所以 repeat 正合适 *)
+  repeat match goal with
+    (* 凡是 M1 = M2，转换为 (mdata M1) = (mdata M2) *)
+    | |- @eq (Matrix.mat _ _) _ _ => apply meq_if_mdata; simpl
+    | |- @eq (Matrix.smat _) _ _ => apply meq_if_mdata; simpl
+    (* 列表相等，转换为头尾各自相等 *)
+    | |- cons _ _ = cons _ _ => f_equal
+    end.
+
+
 
 
 (** ** matrix with specific size *)
@@ -207,7 +223,8 @@ Section mat_specific.
   Context {A : Type}.
   Variable r c : nat.
   Variable a11 a12 a13 a14 a21 a22 a23 a24 a31 a32 a33 a34 a41 a42 a43 a44 : A.
-  
+
+  (** *** Create matrix *)
   Definition mk_mat_0_c : @mat A 0 c.
     refine (mk_mat [] _ _); auto. constructor; auto. Defined.
 
@@ -254,6 +271,16 @@ Section mat_specific.
     refine (mk_mat [[a11;a12;a13;a14];[a21;a22;a23;a24];
                     [a31;a32;a33;a34];[a41;a42;a43;a44]] _ _); auto.
     constructor; auto. Defined.
+
+
+  (** *** Decompose matrix *)
+
+  (* Lemma mat2elems_2_2 : forall (M : @mat A 2 2), *)
+  (*     mdata M = [[d!0!0; d!0!1]; [d!1!0; d!1!1]]. *)
+  (* Proof. *)
+  (*   intros. repeat (destruct d; simpl in *; repeat (solve_dlist2elems); *)
+  (*                   try apply list2elems_2; auto). *)
+  (* Qed. *)
   
 End mat_specific.
 
@@ -420,6 +447,26 @@ Section RowTrans.
   Defined.
 
 End RowTrans.
+
+Require QcExt.
+Section test.
+  Import QcExt.
+  Let m1 : smat 2 := l2m 0 2 2 (Q2Qc_dlist [[1;2];[3;4]]%Q).
+  
+  Notation mrowK := (mrowK (Amul:=Qcmult)).
+  Notation mrowKAdd := (mrowKAdd (Aadd:=Qcplus) (Amul:=Qcmult)).
+  
+  (* Compute mrowK m1 0 (Q2Qc 2). *)
+  (* Compute mrowK m1 1 (Q2Qc 2). *)
+  (* Compute mrowK m1 2 (Q2Qc 2). *)
+  
+  (* Compute mrowSwap m1 0 0. *)
+  (* Compute mrowSwap m1 0 1. *)
+  (* Compute mrowSwap m1 0 2. *)
+
+  (* Compute mrowKAdd m1 0 1 (Q2Qc 2). *)
+  (* Compute mrowKAdd m1 1 0 (Q2Qc 2). *)
+End test.
           
 
 
@@ -1271,34 +1318,34 @@ Section malg.
 
   Section Extra.
     
-    Notation "M $ i $ j " := (mnth Azero M i j) : mat_scope.
-    Notation "M .11" := (M $ 0 $ 0) : mat_scope.
-    Notation "M .12" := (M $ 0 $ 1) : mat_scope.
-    Notation "M .13" := (M $ 0 $ 2) : mat_scope.
-    Notation "M .14" := (M $ 0 $ 3) : mat_scope.
-    Notation "M .21" := (M $ 1 $ 0) : mat_scope.
-    Notation "M .22" := (M $ 1 $ 1) : mat_scope.
-    Notation "M .23" := (M $ 1 $ 2) : mat_scope.
-    Notation "M .24" := (M $ 1 $ 3) : mat_scope.
-    Notation "M .31" := (M $ 2 $ 0) : mat_scope.
-    Notation "M .32" := (M $ 2 $ 1) : mat_scope.
-    Notation "M .33" := (M $ 2 $ 2) : mat_scope.
-    Notation "M .34" := (M $ 2 $ 3) : mat_scope.
-    Notation "M .41" := (M $ 3 $ 0) : mat_scope.
-    Notation "M .42" := (M $ 3 $ 1) : mat_scope.
-    Notation "M .43" := (M $ 3 $ 2) : mat_scope.
-    Notation "M .44" := (M $ 3 $ 3) : mat_scope.
+    (* Notation "M $ i $ j " := (mnth Azero M i j) : mat_scope. *)
+    (* Notation "M .11" := (M $ 0 $ 0) : mat_scope. *)
+    (* Notation "M .12" := (M $ 0 $ 1) : mat_scope. *)
+    (* Notation "M .13" := (M $ 0 $ 2) : mat_scope. *)
+    (* Notation "M .14" := (M $ 0 $ 3) : mat_scope. *)
+    (* Notation "M .21" := (M $ 1 $ 0) : mat_scope. *)
+    (* Notation "M .22" := (M $ 1 $ 1) : mat_scope. *)
+    (* Notation "M .23" := (M $ 1 $ 2) : mat_scope. *)
+    (* Notation "M .24" := (M $ 1 $ 3) : mat_scope. *)
+    (* Notation "M .31" := (M $ 2 $ 0) : mat_scope. *)
+    (* Notation "M .32" := (M $ 2 $ 1) : mat_scope. *)
+    (* Notation "M .33" := (M $ 2 $ 2) : mat_scope. *)
+    (* Notation "M .34" := (M $ 2 $ 3) : mat_scope. *)
+    (* Notation "M .41" := (M $ 3 $ 0) : mat_scope. *)
+    (* Notation "M .42" := (M $ 3 $ 1) : mat_scope. *)
+    (* Notation "M .43" := (M $ 3 $ 2) : mat_scope. *)
+    (* Notation "M .44" := (M $ 3 $ 3) : mat_scope. *)
     
-    Definition det_of_mat_3_3 (M : @mat A 3 3) : A :=
-      let b1 := (M.11 * M.22 * M.33)%A in
-      let b2 := (M.12 * M.23 * M.31)%A in
-      let b3 := (M.13 * M.21 * M.32)%A in
-      let c1 := (M.11 * M.23 * M.32)%A in
-      let c2 := (M.12 * M.21 * M.33)%A in
-      let c3 := (M.13 * M.22 * M.31)%A in
-      let b := (b1 + b2 + b3)%A in
-      let c := (c1 + c2 + c3)%A in
-      (b - c)%A.
+    (* Definition det_of_mat_3_3 (M : @mat A 3 3) : A := *)
+    (*   let b1 := (M.11 * M.22 * M.33)%A in *)
+    (*   let b2 := (M.12 * M.23 * M.31)%A in *)
+    (*   let b3 := (M.13 * M.21 * M.32)%A in *)
+    (*   let c1 := (M.11 * M.23 * M.32)%A in *)
+    (*   let c2 := (M.12 * M.21 * M.33)%A in *)
+    (*   let c3 := (M.13 * M.22 * M.31)%A in *)
+    (*   let b := (b1 + b2 + b3)%A in *)
+    (*   let c := (c1 + c2 + c3)%A in *)
+    (*   (b - c)%A. *)
 
     (* Definition skew_sym_mat_of_v3 (V : @cvec A 3) : @mat A 3 3. *)
     (* Proof. *)
@@ -1336,6 +1383,46 @@ End mat2scalar.
 
 
 (* ======================================================================= *)
+(** ** Get row and column of a matrix *)
+Section mrow_mcol.
+
+  Context {A} {Azero : A} {r c : nat}.
+  
+  Definition mrow_error (m : @mat A r c) (i : nat) : option (list A) :=
+    nth_error (mdata m) i.
+  
+  Definition mrow (m : @mat A r c) (i : nat) : list A :=
+    nth i (mdata m) (repeat Azero c).
+
+  Definition mcol_error (m : @mat A r c) (j : nat) : option (list A) :=
+    nthc_error (mdata m) j.
+  
+  Definition mcol (m : @mat A r c) (j : nat) : list A :=
+    nthc Azero (mdata m) j.
+
+  (*   Lemma mrow_length : forall {r c} i (m : mat r c), length (mrow i m) = c. *)
+  (*   Proof. intros. unfold mrow. rewrite map_length. apply seq_length. Qed. *)
+
+  (*   (** (mrow m i)[j] = m[i][j] *) *)
+  (*   Lemma nth_mrow : forall {r c} i j (m : mat r c) a, *)
+  (*       i < r -> j < c -> (nth j (mrow i m) a == m ! i ! j)%T. *)
+  (*   Proof. *)
+  (*     intros. unfold mrow. rewrite nth_map_seq; auto. *)
+  (*     rewrite Nat.add_0_r. rewrite mnth_eq_mnth_raw; auto. easy. *)
+  (*   Qed. *)
+
+End mrow_mcol.
+
+Section test.
+  Let m1 := @l2m _ 0 3 3 [[1;2;3];[4;5;6];[7;8;9]].
+  (* Compute mrow m1 0. *)
+  (* Compute mrow m1 1. *)
+  (* Compute mcol m1 0. *)
+  (* Compute mcol m1 1. *)
+End test.
+
+
+(* ======================================================================= *)
 (** ** Construct matrix from vector and matrix *)
 
 Section mcons.
@@ -1362,7 +1449,7 @@ Section mcons.
   Lemma mconsr_mr0 : forall {n} (V : rvec n) (M : @mat A 0 n), mconsr V M = V.
   Proof.
     intros. destruct V as [d1 pH1 pW1], M as [d2 pH2 pW2]. apply meq_iff. simpl.
-    apply length_zero_iff_nil in pH2. subst. apply list_length1_eq_hd; auto.
+    apply length_zero_iff_nil in pH2. subst. rewrite <- list_length1_eq_hd; auto.
   Qed.
 
   (** Construct a matrix by columns with the matrix which column number is 0 *)
@@ -1373,90 +1460,11 @@ Section mcons.
     - clear d2 pH2 pW2.
       revert n pH1 pW1. induction d1; intros; simpl in *. auto.
       destruct n. lia. inversion pH1. inversion pW1.
-      f_equal; auto. rewrite list_length1_eq_hd; auto. apply (IHd1 n); auto.
+      f_equal; auto. rewrite <- list_length1_eq_hd; auto. apply (IHd1 n); auto.
     - rewrite hdc_length. lia.
   Qed.
   
 End mcons.
-
-
-
-(* ======================================================================= *)
-(** ** Matrix Inversion with gauss elimination, by ShenNan. *)
-Section MatInv.
-
-  (** fold a sequence to a value *)
-  Fixpoint reduce {A} (n: nat) (f: A -> nat -> A) (zero: A) : A :=
-    match n with
-    | O => zero
-    | S n' => f (reduce n' f zero) n'
-    end.
-  
-  (* The process of "reduce 5 f 0" *)
-  (* f (reduce 4 f 0) 4 *)
-  (* f (f (reduce 3 f 0) 3) 4 *)
-  (* f (f (f (reduce 2 f 0) 2) 3) 4 *)
-  (* f (f (f (f (reduce 1 f 0) 1) 2) 3) 4 *)
-  (* f (f (f (f (f (reduce 0 f 0) 1) 2) 3) 4 *)
-  (* f (f (f (f (f 0 1) 2) 3) 4 *)
-  (* Compute reduce 5 Nat.add 0. *)
-
-  (* Understand the "reduce" function *)
-  Section test.
-    (*   R a f 3 *)
-    (* = f (R a f 2) 2 *)
-    (* = f (f (R a f 1) 1) 2 *)
-    (* = f (f (f (R a f 0) 0) 1) 2 *)
-    (* = f (f (f a 0) 1) 2 *)
-    (* that is: (a0 + f0) + f1 + ... *)
-    Let Fixpoint reduce' {A} (a0:A) (f: A -> nat -> A) (n:nat) : A :=
-      match n with
-      | O => a0
-      | S n' => f (reduce' a0 f n') n'
-      end.
-
-    Import Reals.
-    Let f1 : nat -> R := fun i => INR i.
-    (* Compute reduce' R0 (fun r0 i => Rplus r0 (f1 i)) 5. *)
-    (* Compute reduce' 0 Nat.add 5. *)
-
-  End test.
-
-
-  (** 任给两个序列f g，个数n，以及关系R，生成所有这些点对点对上的关系 *)
-  Definition pointwise_n {A} (n: nat) (R: relation A) : relation (nat -> A) :=
-    fun (f g : nat -> A) => forall (i: nat), i < n -> R (f i) (g i).
-
-  (** 对于序列M1 M2, 若前 S n 个点对上都有关系R，则前 n 个点对上也有关系R。*)
-  Lemma pointwise_n_decr {A}:
-    forall (n : nat) (M1 M2 : nat -> A) (R : relation A),
-      pointwise_n (S n) R M1 M2 -> pointwise_n n R M1 M2.
-  Proof. unfold pointwise_n. intuition. Qed.
-
-  
-  Context `{F : Field}.
-  Infix "+" := Aadd.
-  Infix "*" := Amul.
-  Infix "*" := (mmul (Azero:=Azero)(Aadd:=Aadd)(Amul:=Amul)) : mat_scope.
-
-  (* sum f(0) f(1) ... f(k-1) *)
-  Notation sum k f := (reduce k (fun acc x => (acc + f x)%A) Azero).
-
-  (** (M1 * M2)[i,j] = m1.row[i] dot M2.col[j] *)
-  Parameter Mtimes_help : forall {m n p} (M1: @mat A m n) (M2: @mat A n p),
-    forall i j,
-      i < m -> j < p ->
-      mnth Azero (M1 * M2)%M i j =
-        sum n (fun k => ((mnth Azero M1 i k) * (mnth Azero M2 k j))%A).
-
-  (** (f M1 M2)[i,j] = f M1[i,j] M2[i,j] *)
-  Parameter Melement_op_help :
-    forall {m n} (M1: @mat A m n) (M2: @mat A m n) (op: A -> A -> A),
-    forall i j,
-      i < m -> j < n ->
-      mnth Azero (mmap2 op M1 M2) i j = op (mnth Azero M1 i j) (mnth Azero M2 i j).
-
-End MatInv.
 
 
 Module coordinate_transform_test.

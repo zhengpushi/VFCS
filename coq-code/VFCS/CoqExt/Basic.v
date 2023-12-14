@@ -68,7 +68,8 @@ Reserved Infix    "∘"       (at level 40, left associativity).    (* compose *
 Reserved Notation "- a"     (at level 35, right associativity).   (* opp *)
 Reserved Notation "/ a"     (at level 35, right associativity).   (* inv *)
 Reserved Notation "M \T"    (at level 32, left associativity).    (* transpose *)
-Reserved Notation "M ⁻¹"    (at level 20, format "M ⁻¹").         (* minv *)
+(* Reserved Notation "M ⁻¹"    (at level 20, format "M ⁻¹").         (* minv *) *)
+Reserved Notation "M \-1"    (at level 20, format "M \-1").         (* minv *)
 Reserved Notation "M1 @ M2" (at level 30, no associativity).      (* cons by col *)
 Reserved Notation "'tr' M"  (at level 33, no associativity).
 
@@ -79,9 +80,13 @@ Reserved Notation "| r |"   (at level 30, r at level 25, format "| r |").  (* Ra
 
 (* this level is consistent with Mathcomp.ssreflect.ssrnotations.v *)
 
-(* get element of vector *)
-Reserved Notation "M $ i $ j"  (at level 20, i at next level).    (* nth of mat, raw *)
-Reserved Notation "V $ i"      (at level 20, i at next level).    (* nth of vec, raw *)
+(* get element of list or dlist *)
+Reserved Notation "l ! i"      (at level 20, i at next level, format "l ! i" ).
+Reserved Notation "dl ! i ! j" (at level 20, i, j at next level, format "dl ! i ! j").
+
+(* get element of vector or matrix *)
+Reserved Notation "V $ i"      (at level 20, i at next level, format "V $ i" ).
+Reserved Notation "M $ i $ j"  (at level 20, i, j at next level, format "M $ i $ j").
 
 (* index-of-matrix or index-of-nat-nat-function.
  Note, there are two style of start number to count index, 0 or 1.
@@ -203,6 +208,17 @@ Proof.
   gd m. induction n; intros [|m]; simpl; try constructor; auto.
   destruct IHn with m; subst; constructor; auto.
 Qed.
+
+
+(* ######################################################################### *)
+(** * Extension for option type *)
+
+(** Convert option type to base type  *)
+Definition option_get {A} (o : option A) (def : A) : A :=
+  match o with
+  | Some a => a
+  | _ => def
+  end.
 
 
 (* ######################################################################### *)

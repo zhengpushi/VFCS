@@ -16,6 +16,7 @@
 VFCS/CoqExt/Basic.v
 VFCS/CoqExt/FuncExt.v
 # VFCS/CoqExt/HierarchySetoid.v
+VFCS/CoqExt/LogicExt.v
 VFCS/CoqExt/Hierarchy.v
 VFCS/CoqExt/BoolExt.v
 VFCS/CoqExt/NatExt.v
@@ -29,6 +30,7 @@ VFCS/CoqExt/TupleExt.v
 VFCS/CoqExt/ListExt.v
 # VFCS/CoqExt/SequenceSetoid.v
 VFCS/CoqExt/MyExtrOCamlR.v
+VFCS/CoqExt/Utils.v
 
 # ====== Math ========================================================
 VFCS/Math/Complex/Complex.v
@@ -65,6 +67,8 @@ VFCS/Math/Ratan2.v
 
 VFCS/Math/MatrixList/Matrix.v
 VFCS/Math/MatrixList/MatrixDet.v
+VFCS/Math/MatrixList/MatrixGauss.v
+VFCS/Math/MatrixList/MatrixInv.v
 VFCS/Math/MatrixList/ElementType.v
 VFCS/Math/MatrixList/MatrixModule.v
 # VFCS/Math/MatrixList/MatrixNat.v

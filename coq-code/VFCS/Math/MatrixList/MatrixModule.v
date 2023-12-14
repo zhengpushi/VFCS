@@ -25,6 +25,7 @@
 
 Require Export MatrixList.Matrix.
 Require Export MatrixList.MatrixDet.
+Require Export MatrixList.MatrixInv.
 Require Export MatrixList.ElementType.
 
 
@@ -632,64 +633,64 @@ Module RingMatrixTheory (E : RingElementType).
   (** ** Determinant of a matrix *)
 
   (** Determinant of a square matrix *)
-  Definition mdet {n} (M : smat n) : A := @det _ Aadd Azero Aopp Amul Aone _ M.
+  Definition mdet {n} (M : smat n) : A := @mdet _ Aadd Azero Aopp Amul Aone _ M.
 
-  (** *** Properties of determinant *)
-  Lemma mdet_1 : forall {n}, (@mdet n mat1 = Aone)%A.
-  Proof. intros. apply mdet_1. Qed.
-
-  Lemma mdet_mtrans : forall {n} (M : smat n), (mdet (m\T) = mdet M)%A.
+  (* |M\T| = |M| *)
+  Lemma mdet_mtrans : forall {n} (M : smat n), (mdet (M\T) = mdet M)%A.
   Proof. intros. apply mdet_mtrans. Qed.
 
-  Lemma mdet_mmul : forall {n} (m p : smat n), (mdet (m * p)%M = mdet m * mdet p)%A.
+  (* |M1*M2| = |M1| * |M2| *)
+  Lemma mdet_mmul : forall {n} (M1 M2 : smat n),
+      (mdet (M1 * M2)%M = mdet M1 * mdet M2)%A.
   Proof. intros. apply mdet_mmul. Qed.
 
+  (* |mat1| = 1 *)
+  Lemma mdet_mat1 : forall {n}, (@mdet n mat1 = Aone)%A.
+  Proof. intros. apply mdet_mat1. Qed.
+
+  
   (* ==================================== *)
   (** ** Determinant on matrix of 1-,2-, or 3-dim*)
 
-  (** Determinant of a matrix of dimension-1 *)
-  Definition mdet1 (M : smat 1) := mdet1 m.
+  (** Determinant of a matrix of given dimension *)
+  Definition mdet1 (M : smat 1) := @mdet1 _ Azero M.
+  Definition mdet2 (M : smat 2) := @mdet2 _ Aadd Azero Aopp Amul M.
+  Definition mdet3 (M : smat 3) := @mdet3 _ Aadd Azero Aopp Amul M.
 
-  (** mdet1 m = mdet m *)
-  Lemma mdet1_eq_mdet : forall m, (mdet1 m = mdet M)%A.
-  Proof. intros. apply mdet1_eq_mdet. Qed.
+  (** |M_1x1| = mdet1 M *)
+  Lemma mdet_eq_mdet1 : forall M, mdet M = mdet1 M.
+  Proof. intros. apply mdet_eq_mdet1. Qed.
   
-  (** mdet m <> 0 <-> mdet_exp <> 0 *)
-  Lemma mdet1_neq0_iff : forall (M : smat 1), (mdet m != Azero <-> m.11 != Azero)%A.
+  (** |M| <> 0 <-> mdet_exp <> 0 *)
+  Lemma mdet1_neq0_iff : forall (M : smat 1), mdet M <> Azero <-> M.11 <> Azero.
   Proof. intros. apply mdet1_neq0_iff. Qed.
 
-  (** Determinant of a matrix of dimension-2 *)
-  Definition mdet2 (M : smat 2) := @mdet2 _ Aadd Aopp Amul m.
+  (** mdet2 M = |M| *)
+  Lemma mdet_eq_mdet2 : forall M, mdet M = mdet2 M.
+  Proof. intros. apply mdet_eq_mdet2. Qed.
 
-  (** mdet2 m = mdet m *)
-  Lemma mdet2_eq_mdet : forall m, (mdet2 m = mdet M)%A.
-  Proof. intros. apply mdet2_eq_mdet. Qed.
-
-  (** mdet m <> 0 <-> mdet_exp <> 0 *)
+  (** |M| <> 0 <-> mdet_exp <> 0 *)
   Lemma mdet2_neq0_iff : forall (M : smat 2),
-      (mdet m != Azero <-> m.11*m.22 - m.12*m.21 != Azero)%A.
+      (mdet M <> Azero <-> M.11*M.22 - M.12*M.21 <> Azero)%A.
   Proof. intros. apply mdet2_neq0_iff. Qed.
 
-  (** Determinant of a matrix of dimension-3 *)
-  Definition mdet3 (M : smat 3) := @mdet3 _ Aadd Aopp Amul m.
-
-  (** mdet3 m = mdet m *)
-  Lemma mdet3_eq_mdet : forall m, (mdet3 m = mdet M)%A.
-  Proof. intros. apply mdet3_eq_mdet. Qed.
+  (** mdet3 M = |M| *)
+  Lemma mdet_eq_mdet3 : forall M, mdet M = mdet3 M.
+  Proof. intros. apply mdet_eq_mdet3. Qed.
   
-  (** mdet m <> 0 <-> mdet_exp <> 0 *)
+  (** |M| <> 0 <-> mdet_exp <> 0 *)
   Lemma mdet3_neq0_iff : forall (M : smat 3),
-      (mdet m != Azero <->
-         m.11 * m.22 * m.33 - m.11 * m.23 * m.32 - 
-           m.12 * m.21 * m.33 + m.12 * m.23 * m.31 + 
-           m.13 * m.21 * m.32 - m.13 * m.22 * m.31 != Azero)%A.
+      (mdet M <> Azero <->
+         M.11 * M.22 * M.33 - M.11 * M.23 * M.32 - 
+           M.12 * M.21 * M.33 + M.12 * M.23 * M.31 + 
+           M.13 * M.21 * M.32 - M.13 * M.22 * M.31 <> Azero)%A.
   Proof. intros. apply mdet3_neq0_iff. Qed.
   
   
   (* ==================================== *)
   (** ** Adjoint matrix (Adjugate matrix, adj(A), A* ) *)
   
-  (** Adjoint matrix: adj(A)[i,j] = algebraic remainder of A[j,i]. *)
+  (** Adjoint matrix: adj(A)[i,j] = algebraic remainder of A[i,j]. *)
   Definition madj {n} (M : smat n) : smat n := @madj _ Aadd Azero Aopp Amul Aone _ m.
 
   Global Instance madj_mor (n:nat) : Proper (meq ==> meq) (@madj n).
@@ -731,6 +732,23 @@ End RingMatrixTheory.
 Module FieldMatrixTheory (E : FieldElementType).
   
   Include (RingMatrixTheory E).
+
+  (* ==================================== *)
+  (** ** Gauss Elimination *)
+  
+
+  
+
+(* Check l2m 0 3 3 [[1;2;3];[4;5;6];[7;8;10]]. *)
+(* Print Matrix.mat. *)
+
+Check rowEchelonForm.
+
+Example m1 : mat 3 3 := l2m 0 3 3 [[1;2;3];[4;5;6];[7;8;10]].
+Extraction GaussElimR. rowEchelonForm.
+Import GaussElim.
+
+
   
   (* ==================================== *)
   (** ** Cramer rule *)
@@ -793,7 +811,7 @@ Module FieldMatrixTheory (E : FieldElementType).
   Lemma minv_mtrans : forall n (M : smat n), minvertible m -> (m\T) ⁻¹ = (m ⁻¹)\T.
   Proof. intros. apply minv_mtrans; auto. Qed.
   
-  (** mdet (m⁻¹) = 1 / (mdet M) *)
+  (** mdet (m⁻¹) = 1 / (|M|) *)
   Lemma mdet_minv : forall {n} (M : smat n), (mdet (m⁻¹) = Aone / (mdet M))%A.
   Proof. intros. apply mdet_minv; auto. Qed.
   
@@ -804,62 +822,62 @@ Module FieldMatrixTheory (E : FieldElementType).
   (** Inversion matrix of dimension-1 *)
   Definition minv1 (M : smat 1) : smat 1 := @minv1 _ Azero Amul Aone Tinv m.
 
-  (** mdet m <> 0 -> minv1 m = inv m *)
-  Lemma minv1_eq_inv : forall m, (mdet m != Azero)%A -> minv1 m = minv m.
+  (** |M| <> 0 -> minv1 m = inv m *)
+  Lemma minv1_eq_inv : forall m, (mdet m <> Azero)%A -> minv1 m = minv m.
   Proof. intros. apply minv1_eq_inv; auto. Qed.
 
   (** minv1 m * m = mat1 *)
-  Lemma minv1_correct_l : forall (M : smat 1), (mdet m != Azero)%A -> (minv1 M) * m = mat1.
+  Lemma minv1_correct_l : forall (M : smat 1), (mdet m <> Azero)%A -> (minv1 M) * m = mat1.
   Proof. intros. apply minv1_correct_l; auto. Qed.
 
   (** m * minv1 m = mat1 *)
-  Lemma minv1_correct_r : forall (M : smat 1), (mdet m != Azero)%A -> m * (minv1 M) = mat1.
+  Lemma minv1_correct_r : forall (M : smat 1), (mdet m <> Azero)%A -> m * (minv1 M) = mat1.
   Proof. intros. apply minv1_correct_r; auto. Qed.
 
   
   (** Inversion matrix of dimension-2 *)
   Definition minv2 (M : smat 2) : smat 2 := @minv2 _ Aadd Azero Aopp Amul Tinv m.
 
-  (** mdet m <> 0 -> minv2 m = inv m *)
-  Lemma minv2_eq_inv : forall m, (mdet m != Azero)%A -> minv2 m = minv m.
+  (** |M| <> 0 -> minv2 m = inv m *)
+  Lemma minv2_eq_inv : forall m, (mdet m <> Azero)%A -> minv2 m = minv m.
   Proof. intros. apply minv2_eq_inv; auto. Qed.
   
   (** minv2 m * m = mat1 *)
-  Lemma minv2_correct_l : forall (M : smat 2), (mdet m != Azero)%A -> (minv2 M) * m = mat1.
+  Lemma minv2_correct_l : forall (M : smat 2), (mdet m <> Azero)%A -> (minv2 M) * m = mat1.
   Proof. intros. apply minv2_correct_l; auto. Qed.
   
   (** m * minv2 m = mat1 *)
-  Lemma minv2_correct_r : forall (M : smat 2), (mdet m != Azero)%A -> m * (minv2 M) = mat1.
+  Lemma minv2_correct_r : forall (M : smat 2), (mdet m <> Azero)%A -> m * (minv2 M) = mat1.
   Proof. intros. apply minv2_correct_r; auto. Qed.
   
   (** Inversion matrix of dimension-3 *)
   Definition minv3 (M : smat 3) : smat 3 := @minv3 _ Aadd Azero Aopp Amul Tinv m.
   
-  (** mdet m <> 0 -> minv3 m = inv m *)
-  Lemma minv3_eq_inv : forall m, (mdet m != Azero)%A -> minv3 m = minv m.
+  (** |M| <> 0 -> minv3 m = inv m *)
+  Lemma minv3_eq_inv : forall m, (mdet m <> Azero)%A -> minv3 m = minv m.
   Proof. intros. apply minv3_eq_inv; auto. Qed.
   
   (** minv3 m * m = mat1 *)
-  Lemma minv3_correct_l : forall (M : smat 3), (mdet m != Azero)%A -> (minv3 M) * m = mat1.
+  Lemma minv3_correct_l : forall (M : smat 3), (mdet m <> Azero)%A -> (minv3 M) * m = mat1.
   Proof. intros. apply minv3_correct_l; auto. Qed.
   
   (** m * minv3 m = mat1 *)
-  Lemma minv3_correct_r : forall (M : smat 3), (mdet m != Azero)%A -> m * (minv3 M) = mat1.
+  Lemma minv3_correct_r : forall (M : smat 3), (mdet m <> Azero)%A -> m * (minv3 M) = mat1.
   Proof. intros. apply minv3_correct_r; auto. Qed.
 
   (** Inversion matrix of dimension-4 *)
   Definition minv4 (M : smat 4) : smat 4 := @minv4 _ Aadd Azero Aopp Amul Tinv m.
   
-  (** mdet m <> 0 -> minv4 m = inv m *)
-  Lemma minv4_eq_inv : forall m, (mdet m != Azero)%A -> minv4 m = minv m.
+  (** |M| <> 0 -> minv4 m = inv m *)
+  Lemma minv4_eq_inv : forall m, (mdet m <> Azero)%A -> minv4 m = minv m.
   Proof. intros. apply minv4_eq_inv; auto. Qed.
   
   (** minv4 m * m = mat1 *)
-  Lemma minv4_correct_l : forall (M : smat 4), (mdet m != Azero)%A -> (minv4 M) * m = mat1.
+  Lemma minv4_correct_l : forall (M : smat 4), (mdet m <> Azero)%A -> (minv4 M) * m = mat1.
   Proof. intros. apply minv4_correct_l; auto. Qed.
   
   (** m * minv4 m = mat1 *)
-  Lemma minv4_correct_r : forall (M : smat 4), (mdet m != Azero)%A -> m * (minv4 M) = mat1.
+  Lemma minv4_correct_r : forall (M : smat 4), (mdet m <> Azero)%A -> m * (minv4 M) = mat1.
   Proof. intros. apply minv4_correct_r; auto. Qed.
 
 
@@ -914,7 +932,7 @@ Module FieldMatrixTheory (E : FieldElementType).
 
   (* (** orthogonal m -> |m| = ± 1 *) *)
   (* Lemma morth_mdet : forall {n} (M : smat n) (HDec : Dec Teq), *)
-  (*     morth m -> (mdet m = Aone \/ mdet m = - (Aone))%A. *)
+  (*     morth m -> (|M| = Aone \/ |M| = - (Aone))%A. *)
   (* Proof. intros. apply morth_mdet; auto. Qed. *)
 
   

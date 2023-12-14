@@ -3,20 +3,35 @@
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
-  purpose   : Matrix implemented with function (Safe version)
+  purpose   : Inverse Matrix
   author    : ZhengPu Shi
-  date      : 2021.12
+  date      : 2023.12
 
   remark    :
-  1. This is the safe version of NatFun implementation, that means,
-     we modified the definition of matrix type to improve the type safety.
-  2. The old definition of matrix type is:
-  
-        Definition mat {T} (r c : nat) := nat -> nat -> A.
-
-     while new definition of matrix type is:
-
-        Record mat {T} (r c : nat) := mk_mat { matf : nat -> nat -> T }.
+  1. 有两种逆矩阵计算方法
+     (1) minvGE
+         基于高斯消元(Gauss Elimination)的逆矩阵。
+         适合于数值计算，不可符号计算。
+         适用于 r*c 的任意形状的矩阵，所以可以计算左逆和右逆。
+     (2) minvAM
+         基于伴随矩阵(Adjoint)的逆矩阵。
+         适合于符号计算，也可数值计算(但可能效率较低)。
+         仅适用于 n*n 的方阵。
+  2. 命名风格
+     (1) minvGE, minvAM, 这是两种求逆矩阵的运算
+     (2) AM_xx, GE_xx，这是有关的引理。
+  3. 在Coq中计算的不同方式及其速度比较
+     (1) 直接查看结果，不保存
+         Eval cbn/cbv/compute in exp. 速度慢
+         Eval vm_compute/native_compute in exp. 速度快
+         Compute exp.  速度快
+     (2) 不查看结果，而是保存到一个标识符。
+         Let a := Eval cbn/cbv/compute in exp. 速度慢
+         Let a := Eval vm_compute/native_compute in exp. 速度快
+     (3) 原因：
+         Compute xx 是 Eval vm_compute in xx 的缩写。
+         vm_compute 是基于字节码的虚拟机执行
+         native_compute 默认是 vm_compute，还可以进一步定制
  *)
 
 
@@ -24,756 +39,454 @@ Require Import NatExt.
 Require Import MatrixList.ElementType.
 Require Import MatrixList.Matrix.
 Require Import MatrixList.MatrixDet.
+Require Import MatrixList.MatrixGauss.
+Require Import CoqExt.Basic.
+Require Import CoqExt.MyExtrOCamlR.
 
 Generalizable Variable A Aadd Azero Aopp Amul Aone Ainv.
 
 
 (* ======================================================================= *)
-(** ** Matrix Inversion with gauss elimination. *)
-Module GaussElim (E : RingElementType).
-  Import E.
-  Definition mat r c := @mat A r c.
-  Definition mnth {r c} (m : mat r c) := mnth Azero m.
-  Notation "M $ i $ j " := (mnth M i j) : mat_scope.
-  
-  
-  (* 对线性方程组的增广矩阵作初等变换，对应于矩阵的初等行变换 *)
-  Inductive MatElemRowOpers :=
-  | MERO_add (i j : nat) (k : A)  (* 把第 i 行的 k 倍加到第 j 行，记作 j + k * i *)
-  | MERO_swap (i j : nat)         (* 交换 i, j 两行，记作 <i,j> *)
-  | MERO_mul (i : nat) (k : A)    (* 用非零数 k 乘以第 i 行，记作 k * i *)
-  .
-
-  (* 行阶梯形矩阵 *)
-
-  (* 简化行阶梯形矩阵 *)
-
-  (* Gauss Jordan 算法：
-     1. 将矩阵A化简为行阶梯形
-     (1). 从第i行j列开始向下查找(初始时，i=0,j=0)，看是否全为0：
-          若是，则进入第i行(j+1)列；若不是，则找到第一个不为0的i'行
-     (2). 交换 i' 和 i 行，<i,i'>
-     (3). 对第i行做行变换：(1/A[i,j]) * i，使得A[i,j]变为1
-     (4). 将第i行以下的每一行 i'' 做行变换：i'' + (- A[i'',j]) * i，
-          使得第j列的第i行以下全为0。
-     (5). i++, j++，进入 (1)
-     2. 化简为h简化行阶梯性
-     (1). 倒序进行
-   *)
-  (* Variable r c : nat. *)
-  (* Variable m : mat r c. *)
-  (* Variable i j : nat. *)
-
-  (* 第j列的第i行以下元素都是0 *)
-  Let belowElemsAllZero {r c} (m : mat r c) (i j : nat) : bool :=
-        forallb (fun k => Aeqb (m $ k $ j) Azero) (seq (S i) (r - (S i))).
-
-  (* 第j列的第i行开始往下，第1个不为0的行号 *)
-  Definition firstNonZeroRowIdx {r c} (m : mat r c) (i j : nat) : option nat :=
-    let fix F (fuel:nat) (i0 : nat) : option nat :=
-      match fuel with
-      | O => None
-      | S fuel' =>
-          if Aeqb (m$i0$j) Azero then Some i0 else F fuel' (S i0)
-      end in
-    F r i.
-
-  Definition rowEchelonForm {r c} (m : mat r c) : (list MatElemRowOpers * mat r c) :=
-    
-
-End GaussElim.
-
-Section MatInv.
-
-  (** fold a sequence to a value *)
-  Fixpoint reduce {T} (n: nat) (f: T -> nat -> T) (zero: T) : T :=
-    match n with
-    | O => zero
-    | S n' => f (reduce n' f zero) n'
-    end.
-  
-  (* The process of "reduce 5 f 0" *)
-  (* f (reduce 4 f 0) 4 *)
-  (* f (f (reduce 3 f 0) 3) 4 *)
-  (* f (f (f (reduce 2 f 0) 2) 3) 4 *)
-  (* f (f (f (f (reduce 1 f 0) 1) 2) 3) 4 *)
-  (* f (f (f (f (f (reduce 0 f 0) 1) 2) 3) 4 *)
-  (* f (f (f (f (f 0 1) 2) 3) 4 *)
-  (* Compute reduce 5 Nat.add 0. *)
-
-  (* Understand the "reduce" function *)
-  Section test.
-    (*   R a f 3 *)
-    (* = f (R a f 2) 2 *)
-    (* = f (f (R a f 1) 1) 2 *)
-    (* = f (f (f (R a f 0) 0) 1) 2 *)
-    (* = f (f (f a 0) 1) 2 *)
-    (* that is: (a0 + f0) + f1 + ... *)
-    Let Fixpoint reduce' {T} (a0:T) (f: T -> nat -> T) (n:nat) : T :=
-      match n with
-      | O => a0
-      | S n' => f (reduce' a0 f n') n'
-      end.
-
-    Import Reals.
-    Let f1 : nat -> R := fun i => INR i.
-    (* Compute reduce' R0 (fun r0 i => Rplus r0 (f1 i)) 5. *)
-    (* Compute reduce' 0 Nat.add 5. *)
-
-  End test.
-
-
-  (** 任给两个序列f g，个数n，以及关系R，生成所有这些点对点对上的关系 *)
-  Definition pointwise_n {T} (n: nat) (R: relation T) : relation (nat -> T) :=
-    fun (f g : nat -> T) => forall (i: nat), i < n -> R (f i) (g i).
-
-  (** 对于序列m1 m2, 若前 S n 个点对上都有关系R，则前 n 个点对上也有关系R。*)
-  Lemma pointwise_n_decr {A}:
-    forall (n : nat) (m1 m2 : nat -> A) (R : relation A),
-      pointwise_n (S n) R m1 m2 -> pointwise_n n R m1 m2.
-  Proof. unfold pointwise_n. intuition. Qed.
-
-  
-  Context `{F : Field}.
-  Infix "+" := Tadd.
-  Infix "*" := Tmul.
-  Infix "*" := (mmul (T0:=T0)(Tadd:=Tadd)(Tmul:=Tmul)) : mat_scope.
-
-  (* sum f(0) f(1) ... f(k-1) *)
-  Notation sum k f := (reduce k (fun acc x => (acc + f x)%T) T0).
-
-  (** (m1 * m2)[i,j] = m1.row[i] dot m2.col[j] *)
-  Parameter Mtimes_help : forall {m n p} (m1: @mat T m n) (m2: @mat T n p),
-    forall i j,
-      i < m -> j < p ->
-      mnth T0 (m1 * m2)%M i j =
-        sum n (fun k => ((mnth T0 m1 i k) * (mnth T0 m2 k j))%T).
-
-  (** (f m1 m2)[i,j] = f m1[i,j] m2[i,j] *)
-  Parameter Melement_op_help :
-    forall {m n} (m1: @mat T m n) (m2: @mat T m n) (op: T -> T -> T),
-    forall i j,
-      i < m -> j < n ->
-      mnth T0 (mmap2 op m1 m2) i j = op (mnth T0 m1 i j) (mnth T0 m2 i j).
-
-End MatInv.
-
-
-Module coordinate_transform_test.
-
-  Import Reals.
-  Open Scope R.
-  
-  (* ref:
-  https://en.wikipedia.org/wiki/Matrix_(mathematics)#Basic_operations
-   *)
-
-  Infix "*" := Rmult.
-  Infix "+" := Rplus.
-  Infix "+" := (madd (Tadd:=Rplus)) : mat_scope.
-  Infix "*" := (mmul (Tadd:=Rplus) (Tmul:=Rmult) (T0:=R0)) : mat_scope.
-  Infix "c*" := (mcmul (Tmul:=Rmult)) : mat_scope.
-  Notation "m \T" := (mtrans m) : mat_scope.
-
-  Open Scope mat_scope.
-
-  Definition m1 := l2m 0 2 3 [[1;3;1];[1;0;0]].
-  Definition m2 := l2m 0 2 3 [[0;0;5];[7;5;0]].
-  Definition m3 := l2m 0 2 3 [[1;3;6];[8;5;0]].
-  Example madd_m1_m2_eq_m3 : m1 + m2 = m3.
-  Proof. apply meq_iff. cbn. repeat f_equal; ring. Qed.
-
-  Definition m4 := l2m 0 2 3 [[1; 8;-3];[4;-2; 5]].
-  Definition m5 := l2m 0 2 3 [[2;16;-6];[8;-4;10]].
-  Example mscale_2_m4_eq_m5 : 2 c* m4 = m5.
-  Proof. apply meq_iff. cbn. repeat f_equal; ring. Qed.
-  
-  Definition m6 := l2m 0 2 3 [[1;2;3];[0;-6;7]].
-  Definition m7 := l2m 0 3 2 [[1;0];[2;-6];[3;7]].
-  Example mtrans_m6_eq_m7 : m6\T = m7.
-  Proof. apply meq_iff. cbn. auto. Qed.
-  
-  Variable θ ψ φ : R.
-  Definition Rx (α : R) : mat 3 3 :=
-    mk_mat_3_3
-      1         0           0
-      0         (cos α)     (sin α)
-      0         (-sin α)%R    (cos α).
-
-  Definition Ry (β : R) : mat 3 3 :=
-    mk_mat_3_3
-      (cos β)   0           (-sin β)%R
-      0         1           0
-      (sin β)   0           (cos β).
-
-  Definition Rz (γ : R) : mat 3 3 :=
-    mk_mat_3_3 
-      (cos γ)   (sin γ)   0
-      (-sin γ)  (cos γ)   0
-      0         0         1.
-
-  Definition R_b_e_direct : mat 3 3 :=
-    (mk_mat_3_3
-       (cos θ * cos ψ)
-       (cos ψ * sin θ * sin φ - sin ψ * cos φ)
-       (cos ψ * sin θ * cos φ + sin φ * sin ψ)
-       
-       (cos θ * sin ψ)
-       (sin ψ * sin θ * sin φ + cos ψ * cos φ)
-       (sin ψ * sin θ * cos φ - cos ψ * sin φ)
-       
-       (-sin θ)
-       (sin φ * cos θ)
-       (cos φ * cos θ))%R.
-  
-  Opaque cos sin.
-
-  Lemma Rx_Ry_Rz_eq_Rbe : (Rz ψ)\T * (Ry θ)\T * (Rx φ)\T = R_b_e_direct.
-  Proof. apply meq_iff. cbn. repeat (f_equal; try ring). Qed.
-  
-End coordinate_transform_test.
-
-
-(* ==================================== *)
-(** ** Determinant of a matrix *)
-
-Section mdet.
-  Context `{R : Ring}.
-  (* Add Ring ring_inst : make_ring_theory. *)
-  
-  Infix "+" := Tadd : T_scope.
-  Notation "- a" := (Topp a) : T_scope.
-  Notation Asub := (fun x y => Tadd x (Topp y)).
-  Infix "-" := Asub : T_scope.
-  Infix "*" := Tmul : T_scope.
-
-  Infix "*" := (mmul (Tadd:=Tadd)(T0:=T0)(Tmul:=Tmul)) : mat_scope.
-
-  (** *** Determinant of a square matrix (original definition) *)
-  Section def.
-
-  (* 行列式的定义：它是一个单项式的求和，每个单项式是矩阵中不同行不同列元素的乘积，并
-     冠以逆序数。
-
-     二级矩阵
-        A = [[a11;a12]; [a21;a22]]
-        det(A) = a11*a22 + -(a12*a21)
-               = a11*det[[a22]] + (-a12)*det[[a21]]  按第1行展开
-               = (-a21)*det[[a12]] + a22*det[[a11]]  按第2行展开
-               = a11*det[[a22]] + (-a21)*det[[a12]]  按第1列展开
-               = (-a12)*det[[a21]] + a22*det[[a11]]  按第2列展开
-     三级矩阵
-        A = [[a11;a12;a13]; [a21;a22;a23]; [a31;a32;a33]]，
-        det(A) = a11*a22*a33 + -a11*a23*a32 + ...
-               = a11*det[[a22;a23];[a32;a33]])
-                 + (-a12)*det[[a21;a23];[a31;a33]]
-                 + a13*det[[a21;a22];[a31;a32]]    按第1行展开
-               = 其他含开方式类似
-
-     这里展示了两种方法：原始的凑下标的方式，递归的按某行某列展开的方法。
-     数学上已经证明这两种方法的等价性。在Coq中也可以验证一次。
-                 
-     上述分析发现，我们需要如下的算法：
-     1. 逆序数：给定一个自然数列表，
-     2. 行列式原始算法：如何取出不同行不同列下标的所有组合。
-     3. 子矩阵：去掉一行一列后剩下的矩阵。这是构造按某行某列展开算法的基础。
-   *)
-
-    ？
-    (* ? *)
-    Variable a b c : T.
-    Compute perm 0 (seq 0 3).
-    (* Let dl := perm 0 (seq 0 3). *)
-    (* Let l := [1;2;3]. *)
-    (* Compute nth 1 l 0. *)
-    (* Compute map (fun i => (i, nth i l 0)) (seq 0 3). *)
-    (* Compute map (fun l => map (fun i => (i, nth i l 0)) (seq 0 3)) dl. *)
-
-  End def.
-  (* Let dl1 := map (fun l => map (fun i => (i, nth i l 0)) (seq 0 3)) dl. *)
-  (* Variable a00 a01 a02 a10 a11 a12 a20 a21 a22 : T. *)
-  (* Definition m : smat 3 := mat_3_3 a00 a01 a02 a10 a11 a12 a20 a21 a22. *)
-  (* Compute map (fun l => map (fun (ij:nat * nat) => let (i,j) := ij in m!i!j) l) dl1. *)
-
-  (* (** all items in a determinant *) *)
-  (* Let dl2 := map (fun l => map (fun (ij:nat * nat) => let (i,j) := ij in m!i!j) l) dl1. *)
-  (* Compute dl2. *)
-
-  (* Definition n := 3. *)
-  (* Compute perm 0 (seq 0 n). (* *)
-   (*  = [[0; 1; 2]; [0; 2; 1]; [1; 0; 2]; [1; 2; 0]; [2; 0; 1]; [2; 1; 0]] *)
-   (*  : list (list nat) *) *)
-
-  (* Definition item_of_det {n : nat} (m : smat n) (l : list nat) : T := *)
-  (*   fold_left Tmul (map (fun i => m!i!(nth i l 0)) l) T1. *)
-
-  (* (** Definition of determinant *) *)
-  (* Definition det_def {n : nat} (m : smat n) : T := *)
-  (*   fold_left Tadd (map (fun l => item_of_det m l) (perm 0 (seq 0 n))) T0. *)
-
-  (* Compute det_orig m. *)
-  
-  (* Compute fold_left Tmul [a00;a01;a02]. *)
-  (* Compute fold_left Tadd. *)
-  
-
-  (** Get the sub square matrix which remove r-th row and c-th column
-        from a square matrix. *)
-  Definition msubmat {n} (m : smat (S n)) (r c : nat) : smat n :=
-    f2m
-      (fun i j =>
-         let i' := (if i <? r then i else S i) in
-         let j' := (if j <? c then j else S j) in
-         m $ i' $ j').
-
-  Global Instance submat_mor (n : nat) :
-    Proper (meq (Teq:=Teq) => eq => eq => meq (Teq:=Teq)) (@msubmat n).
-  Proof. simp_proper. lma. all: apply H; auto; lia. Qed.
-  
-
-  (** Try to prove a proposition such as:
-      "~(exp1 = 0) -> ~(exp2 = 0)" *)
-  Ltac reverse_neq0_neq0 :=
-    match goal with
-    | H: ~(?e1 = T0)%T |- ~(?e2 = T0)%T =>
-        let H1 := fresh "H1" in
-        intro H1; destruct H; ring_simplify; ring_simplify in H1;
-        try rewrite H1; try easy
-    end.
-
-  (** Determinant of a square matrix, by expanding the first row *)
-  Fixpoint mdet {n} : smat n -> T :=
-    match n with
-    | 0 => fun _ => T1
-    | S n' =>
-        fun m =>
-          fold_left Tadd
-            (map (fun i =>
-                    let a := if Nat.even i then (m$0$i) else (-(m$0$i))%T in
-                    let d := mdet (msubmat m 0 i) in
-                    (a * d)%T) (seq 0 n)) T0
-    end.
-
-  Global Instance mdet_mor (n : nat) : Proper (meq (Teq:=Teq) => Teq) (@mdet n).
-  Proof.
-    simp_proper. induction n; intros; try easy. simpl.
-    apply fold_left_aeq_mor.
-    - apply map_seq_eq. intros. f_equiv.
-      + destruct (Nat.even i). apply H; lia. f_equiv. apply H; lia.
-      + apply IHn. rewrite H. easy.
-    - f_equiv. f_equiv.
-      + apply m2f_mor; auto; lia.
-      + apply IHn. rewrite H. easy.
-  Qed.
-
-  (** *** Properties of determinant *)
-  Section props.
-
-    Lemma mdet_1 : forall {n}, (@mdet n (mat1 T0 T1) = T1)%T.
-    Proof.
-    Admitted.
-
-    Lemma mdet_mtrans : forall {n} (m : smat n), (mdet (m\T) = mdet m)%T.
-    Proof.
-    Admitted.
-
-    Lemma mdet_mmul : forall {n} (m p : smat n), (mdet (m * p)%M = mdet m * mdet p)%T.
-    Proof.
-    Admitted.
-
-  End props.
-
-  
-  (** *** Determinant on concrete dimensions *)
-  Section mdet_concrete.
-
-    (** Determinant of a matrix of dimension-1 *)
-    Definition mdet1 (m : smat 1) := m.11.
-
-    (** mdet1 m = mdet m *)
-    Lemma mdet1_eq_mdet : forall m, (mdet1 m = mdet m)%T.
-    Proof. intros. mat2fun. ring. Qed.
-    
-    (** mdet m <> 0 <-> mdet_exp <> 0 *)
-    Lemma mdet1_neq0_iff : forall (m : smat 1),
-        (mdet m != T0) <-> (m.11 != T0).
-    Proof. intros. split; intros; mat2fun; reverse_neq0_neq0. Qed.
-
-    (** Determinant of a matrix of dimension-2 *)
-    Definition mdet2 (m : smat 2) := (m.11*m.22 - m.12*m.21)%T.
-
-    (** mdet2 m = mdet m *)
-    Lemma mdet2_eq_mdet : forall m, (mdet2 m = mdet m)%T.
-    Proof. intros. mat2fun. cbv. ring. Qed.
-
-    (** mdet m <> 0 <-> mdet_exp <> 0 *)
-    Lemma mdet2_neq0_iff : forall (m : smat 2),
-        mdet m != T0 <->  (m.11*m.22 - m.12*m.21 != T0)%T.
-    Proof. intros. split; intros; mat2fun; reverse_neq0_neq0. Qed.
-
-    (** Determinant of a matrix of dimension-3 *)
-    Definition mdet3 (m : smat 3) :=
-      (m.11 * m.22 * m.33 - m.11 * m.23 * m.32 - 
-         m.12 * m.21 * m.33 + m.12 * m.23 * m.31 + 
-         m.13 * m.21 * m.32 - m.13 * m.22 * m.31)%T.
-
-    (** mdet3 m = mdet m *)
-    Lemma mdet3_eq_mdet : forall m, (mdet3 m = mdet m)%T.
-    Proof. intros. mat2fun. cbv. ring. Qed.
-    
-    (** mdet m <> 0 <-> mdet_exp <> 0 *)
-    Lemma mdet3_neq0_iff : forall (m : smat 3),
-        mdet m != T0 <->
-          (m.11 * m.22 * m.33 - m.11 * m.23 * m.32 - 
-             m.12 * m.21 * m.33 + m.12 * m.23 * m.31 + 
-             m.13 * m.21 * m.32 - m.13 * m.22 * m.31 != T0)%T.
-    Proof. intros. split; intros; mat2fun; reverse_neq0_neq0. Qed.
-
-    (** Determinant of a matrix of dimension-4 *)
-    Definition mdet4 (m : smat 4) :=
-      (m.11*m.22*m.33*m.44 - m.11*m.22*m.34*m.43 - m.11*m.23*m.32*m.44 + m.11*m.23*m.34*m.42 +
-         m.11*m.24*m.32*m.43 - m.11*m.24*m.33*m.42 - m.12*m.21*m.33*m.44 + m.12*m.21*m.34*m.43 +
-         m.12*m.23*m.31*m.44 - m.12*m.23*m.34*m.41 - m.12*m.24*m.31*m.43 + m.12*m.24*m.33*m.41 +
-         m.13*m.21*m.32*m.44 - m.13*m.21*m.34*m.42 - m.13*m.22*m.31*m.44 + m.13*m.22*m.34*m.41 +
-         m.13*m.24*m.31*m.42 - m.13*m.24*m.32*m.41 - m.14*m.21*m.32*m.43 + m.14*m.21*m.33*m.42 +
-         m.14*m.22*m.31*m.43 - m.14*m.22*m.33*m.41 - m.14*m.23*m.31*m.42 + m.14*m.23*m.32*m.41)%T.
-
-    (** mdet4 m = mdet m *)
-    Lemma mdet4_eq_mdet : forall m, (mdet4 m = mdet m)%T.
-    Proof. intros. mat2fun. cbv. ring. Qed.
-    
-  End mdet_concrete.
-
-End mdet.
-  
-
-(* ==================================== *)
-(** ** Inverse matrix with the help of determinant and adjoint matrix. *)
-Section matrix_inversion.
+(** ** Matrix is invertible  *)
+Section minvitible.
   Context `{R:Ring}.
-  Add Ring ring_thy_inst : (make_ring_theory R).
+  Add Ring ring_thy_inst : make_ring_theory.
 
-  Infix "=" := Teq : T_scope.
-  Infix "!=" := (fun a b => ~(a = b)) : T_scope.
-  Infix "+" := Tadd : T_scope.
-  Notation "- a" := (Topp a) : T_scope.
-  Notation Asub := (fun x y => Tadd x (Topp y)).
-  Infix "-" := Asub : T_scope.
-  Infix "*" := Tmul : T_scope.
+  Infix "*" := (@mmul A Aadd Azero Amul _ _ _) : mat_scope.
+  Notation mat1 := (@mat1 _ Azero Aone).
+  Notation mdet := (@mdet _ Aadd Azero Aopp Amul Aone).
 
-  Infix "*" := (@mmul T Tadd T0 Tmul _ _ _) : mat_scope.
-  Infix "c*" := (@mcmul T Tmul _ _) : mat_scope.
-  Infix "=" := (meq (Teq:=Teq)) : mat_scope.
-  (* Notation "m ! i ! j " := (mnth T0 m i j) : mat_scope. *)
-  Notation mat1 := (mat1 T0 T1).
-  Notation l2m := (@l2m T T0 _ _).
-  Notation smat n := (smat T n).
-  Notation mdet := (mdet (Tadd:=Tadd)(T0:=T0)(Topp:=Topp)(Tmul:=Tmul)(T1:=T1)).
-  Notation mdet2 := (mdet2 (Tadd:=Tadd)(Topp:=Topp)(Tmul:=Tmul)).
-  Notation mdet3 := (mdet3 (Tadd:=Tadd)(Topp:=Topp)(Tmul:=Tmul)).
-  Notation mdet4 := (mdet4 (Tadd:=Tadd)(Topp:=Topp)(Tmul:=Tmul)).
-
-  (** Try to prove a proposition such as:
-      "~(exp1 = 0) -> ~(exp2 = 0)" *)
-  Ltac reverse_neq0_neq0 :=
-    match goal with
-    | H: ~(?e1 = T0)%T |- ~(?e2 = T0)%T =>
-        let H1 := fresh "H1" in
-        intro H1; destruct H; ring_simplify; ring_simplify in H1;
-        try rewrite H1; try easy
-    end.
-
-  (** T square matrix is invertible, if its determinant is nonzero *)
-  Definition minvertible {n} (m : smat n) : Prop :=
-    exists m' : smat n, (m * m' = mat1) \/ (m' * m = mat1).
+  (* Infix "+" := Aadd : A_scope. *)
+  (* Notation "- a" := (Aopp a) : A_scope. *)
+  (* Infix "-" := (fun x y => Aadd x (Aopp y)). *)
+  (* Infix "*" := Amul : A_scope. *)
+  (* Infix "c*" := (@mcmul A Amul _ _) : mat_scope. *)
+  
+  (** A square matrix is invertible *)
+  Definition minvertible {n} (M : smat n) : Prop :=
+    exists M' : smat n, (M * M' = mat1) \/ (M' * M = mat1).
 
   (** invertible mat1 *)
-  Lemma minvertible_1 : forall n : nat, @minvertible n mat1.
+  Lemma minvertible_mat1 : forall n : nat, @minvertible n mat1.
   Proof.
   Admitted.
 
-  (** T square matrix is invertible, if its determinant is nonzero *)
-  Lemma minvertible_iff_mdet_n0 : forall {n} (m : smat n),
-      minvertible m <-> mdet m <> T0.
+  (** A square matrix is invertible, if its determinant is nonzero *)
+  Lemma minvertible_iff_mdet_nonZero : forall {n} (M : smat n),
+      minvertible M <-> mdet M <> Azero.
   Proof.
   Admitted.
 
-  (** invertible m -> invertible (m\T) *)
-  Lemma minvertible_trans : forall n (m : smat n),
-      minvertible m -> minvertible (m\T).
+  (** invertible M -> invertible (M\T) *)
+  Lemma minvertible_trans : forall n (M : smat n),
+      minvertible M -> minvertible (M\T).
   Proof.
   Admitted.
 
-  (** invertible m -> invertible p -> invertible (m * p) *)
-  Lemma minvertible_mul : forall n (m p : smat n),
-      minvertible m -> minvertible p -> minvertible (m * p).
+  (** invertible M1 -> invertible M2 -> invertible (M1 * M2) *)
+  Lemma minvertible_mul : forall n (M1 M2 : smat n),
+      minvertible M1 -> minvertible M2 -> minvertible (M1 * M2).
   Proof.
   Admitted.
+
+End minvitible.
+
+
+(* ======================================================================= *)
+(** ** Inverse Matrix by Gauss Elimination *)
+Section minvGE.
+  Context `{HField : Field} `{HDec : @Dec A}.
+
+  Notation rowEchelon := (@rowEchelon _ Aadd Azero Aopp Amul Ainv HDec).
+  Notation minRowEchelon := (@minRowEchelon _ Aadd Azero Aopp Amul Aone Ainv HDec).
+  Notation listFirstNonZero := (@listFirstNonZero _ Azero Aeqb).
+
+  (* 计算矩阵的行秩。利用阶梯形矩阵可很容易判定 *)
+  Definition mrowRank {r c} (M : @mat A r c) : nat :=
+    let d1 := mdata M in
+    let d2 := map listFirstNonZero d1 in
+    let d3 := map (fun o => match o with Some _ => 1 | _ => O end) d2 in
+    fold_left Nat.add d3 0.
+
+  (* 计算逆矩阵。
+     1. 先计算阶梯形矩阵
+     2. 如果秩不是n，则该矩阵不可逆，否则再计算行最简阶梯形
+   *)
+  Definition minvGE {n} (M : @smat A n) : option (@smat A n) :=
+    let p1 := rowEchelon M in
+    let r := mrowRank (snd p1) in
+    match Nat.eqb r n with
+    | false => None
+    | _ =>
+        let p2 := minRowEchelon (snd p1) in
+        Some (snd p2)
+    end.
+  
+End minvGE.
+
+
+(* ==================================== *)
+(** ** Inverse Matrix by Adjoint Matrix *)
+Section minvAM.
+  Context `{HField:Field}.
+  Add Field field_thy_inst : make_field_theory.
+
+  Infix "+" := Aadd : A_scope.
+  Notation "- a" := (Aopp a) : A_scope.
+  Infix "-" := (fun x y => Aadd x (Aopp y)).
+  Infix "*" := Amul : A_scope.
+  Notation "/ a" := (Ainv a) : A_scope.
+  Infix "/" := (fun x y => x * (/ y)) : A_scope.
+
+  Infix "*" := (@mmul A Aadd Azero Amul _ _ _) : mat_scope.
+  Infix "c*" := (@mcmul A Amul _ _) : mat_scope.
+  Notation "dl ! i ! j" := (nth j (nth i dl []) Azero).
+  Notation "M $ i $ j " := (mnth Azero M i j) : mat_scope.
+  Notation "M .11" := (M $ 0 $ 0) : mat_scope.
+  Notation "M .12" := (M $ 0 $ 1) : mat_scope.
+  Notation "M .13" := (M $ 0 $ 2) : mat_scope.
+  Notation "M .14" := (M $ 0 $ 3) : mat_scope.
+  Notation "M .21" := (M $ 1 $ 0) : mat_scope.
+  Notation "M .22" := (M $ 1 $ 1) : mat_scope.
+  Notation "M .23" := (M $ 1 $ 2) : mat_scope.
+  Notation "M .24" := (M $ 1 $ 3) : mat_scope.
+  Notation "M .31" := (M $ 2 $ 0) : mat_scope.
+  Notation "M .32" := (M $ 2 $ 1) : mat_scope.
+  Notation "M .33" := (M $ 2 $ 2) : mat_scope.
+  Notation "M .34" := (M $ 2 $ 3) : mat_scope.
+  Notation "M .41" := (M $ 3 $ 0) : mat_scope.
+  Notation "M .42" := (M $ 3 $ 1) : mat_scope.
+  Notation "M .43" := (M $ 3 $ 2) : mat_scope.
+  Notation "M .44" := (M $ 3 $ 3) : mat_scope.
+  
+  Notation mat1 := (@mat1 _ Azero Aone).
+  Notation l2m := (@l2m A Azero _ _).
+  Notation smat n := (@smat A n).
+  Notation msubmat := (@msubmat _ Azero).
+  Notation mdet := (@mdet _ Aadd Azero Aopp Amul Aone).
+  (* Check mdet2. *)
+  (* Check @mdet2 _ Aadd Azero. *)
+  Notation mdet2 := (@mdet2 _ Aadd Azero Aopp Amul).
+  Notation mdet3 := (@mdet3 _ Aadd Azero Aopp Amul).
+  Notation mdet4 := (@mdet4 _ Aadd Azero Aopp Amul).
+  Notation minvertible := (@minvertible _ Aadd Azero Amul Aone).
+
+
+  (** *** Adjoint matrix (Adjugate matrix, adj(A), A* ) *)
+  
+  (* adj(A)[i,j] = algebraic remainder of A[j,i]. *)
+  Definition madj {n} : smat n -> smat n := 
+    match n with
+    | O => fun M => M 
+    | S n' =>
+        fun M =>
+          f2m (fun i j =>
+                 let s := if Nat.even (i + j) then Aone else (-Aone)%A in
+                 let d := mdet (msubmat M j i) in 
+                 (s * d)%A)
+    end.
 
   
-  (** *** Adjoint matrix (Adjugate matrix, adj(A), A* ) *)
-  (** That is: adj(A)[i,j] = algebraic remainder of A[j,i]. *)
-  Section adj.
-
-    Definition madj {n} : smat n -> smat n := 
-      match n with
-      | O => fun m => m 
-      | S n' =>
-          fun m =>
-            f2m (fun i j =>
-                   let s := if Nat.even (i + j) then T1 else (-T1)%T in
-                   let d := mdet (msubmat m j i) in 
-                   (s * d)%T)
-      end.
-
-    Global Instance madj_mor (n:nat) :
-      Proper (meq (Teq:=Teq) => meq (Teq:=Teq)) (@madj n).
-    Proof.
-      simp_proper. intros. destruct n; auto. simpl.
-      unfold meq; intros; simpl. f_equiv. rewrite H. easy.
-    Qed.
-
-  End adj.
-
-  (** *** We need a field structure *)
-  Context `{F:Field T Tadd T0 Topp Tmul T1 Tinv Teq}.
-  Add Field field_thy_inst : (make_field_theory F).
-
-  Notation "/ a" := (Tinv a) : T_scope.
-  Notation Tdiv := (fun x y => Tmul x (Tinv y)).
-  Infix "/" := Tdiv : T_scope.
-
   (** *** Cramer rule *)
-  Section cramer_rule.
-    
-    (** Exchange one column of a square matrix *)
-    Definition mchgcol {n} (m : smat n) (k : nat) (v : mat n 1) : smat n :=
-      f2m (fun i j => if (Nat.eqb j k) then (v$i$0)%nat else m$i$j).
-    
-    (** Cramer rule, which can slving the equation with form of A*x=b.
-      Note, the result is valid only when D is not zero *)
-    Definition cramerRule {n} (A : smat n) (b : mat n 1) : mat n 1 :=
-      let D := mdet T in
-      f2m (fun i j => let Di := mdet (mchgcol T i b) in (Di / D)).
-    
-  End cramer_rule.
+
+  (** Set one column of a square matrix *)
+  Definition msetcol {n} (M : smat n) (k : nat) (V : mat n 1) : smat n :=
+    f2m (fun i j => if (Nat.eqb j k) then (V$i$0)%nat else M$i$j).
+  
+  (** Cramer rule, which can solving the equation with the form of A*x=b.
+      Note, the result is valid only when |A| is not zero *)
+  Definition cramerRule {n} (A : smat n) (b : mat n 1) : mat n 1 :=
+    let D := mdet A in
+    f2m (fun i j => let Di := mdet (msetcol A i b) in (Di / D)).
 
   
   (** *** Matrix Inversion *)
-  Section inv.
 
-    Definition minv {n} (m : smat n) := (T1 / mdet m) c* (madj m).
-    Notation "m ⁻¹" := (minv m) : mat_scope.
+  (** Inverse matrix by adjoint matrix method *)
+  Definition minvAM {n} (M : smat n) := (Aone / mdet M) c* (madj M).
+  Notation "M \-1" := (minvAM M) : mat_scope.
 
-    Global Instance minv_mor (n : nat) :
-      Proper (meq (Teq:=Teq) => meq (Teq:=Teq)) (@minv n).
-    Proof. simp_proper. intros. unfold minv. rewrite H. easy. Qed.
-    
-    (** m * p = mat1 -> m ⁻¹ = p *)
-    Lemma mmul_eq1_iff_minv_l : forall {n} (m p : smat n),
-        m * p = mat1 <-> minv m = p.
-    Proof.
-    Admitted.
 
-    (** m * p = mat1 <-> p ⁻¹ = m *)
-    Lemma mmul_eq1_iff_minv_r : forall {n} (m p : smat n),
-        m * p = mat1 <-> minv p = m.
-    Proof.
-    Admitted.
+  (** M1 * M2 = mat1 -> M1 \-1 = M2 *)
+  Lemma AM_mmul_eq1_iff_minv_l : forall {n} (M1 M2 : smat n),
+      M1 * M2 = mat1 <-> minvAM M1 = M2.
+  Proof.
+  Admitted.
 
-    (** invertible m -> invertible (m⁻¹) *)
-    Lemma minvertible_inv : forall {n} (m : smat n), minvertible m -> minvertible (m⁻¹).
-    Proof.
-    Admitted.
+  (** M1 * M2 = mat1 <-> M2 \-1 = M1 *)
+  Lemma AM_mmul_eq1_iff_minv_r : forall {n} (M1 M2 : smat n),
+      M1 * M2 = mat1 <-> minvAM M2 = M1.
+  Proof.
+  Admitted.
 
-    (** m * m⁻¹ = mat1 *)
-    Lemma mmul_minv_r : forall {n} (m : smat n), m * m⁻¹ = mat1.
-    Proof.
-    Admitted.
+  (** invertible (M\-1) *)
+  Lemma AM_minv_invertible : forall {n} (M : smat n),
+      minvertible M -> minvertible (M\-1).
+  Proof.
+  Admitted.
 
-    (** m⁻¹ * m = mat1 *)
-    Lemma mmul_minv_l : forall {n} (m : smat n), (minv m) * m = mat1.
-    Proof.
-    Admitted.
+  (** M * M\-1 = mat1 *)
+  Lemma AM_mmul_minv_r : forall {n} (M : smat n), M * M\-1 = mat1.
+  Proof.
+  Admitted.
 
-    (** mat1 ⁻¹ = mat1 *)
-    Lemma minv_1 : forall {n}, @minv n mat1 = mat1.
-    Proof.
-    Admitted.
+  (** M\-1 * M = mat1 *)
+  Lemma AM_mmul_minv_l : forall {n} (M : smat n), (minvAM M) * M = mat1.
+  Proof.
+  Admitted.
 
-    (** m ⁻¹ ⁻¹ = m *)
-    Lemma minv_minv : forall {n} (m : smat n), minvertible m -> m ⁻¹ ⁻¹ = m.
-    Proof.
-    Admitted.
+  (** mat1 \-1 = mat1 *)
+  Lemma AM_minv_mat1 : forall {n}, @minvAM n mat1 = mat1.
+  Proof.
+  Admitted.
 
-    (** (m * m') ⁻¹ = m' ⁻¹ * m ⁻¹ *)
-    Lemma minv_mmul : forall {n} (m m' : smat n),
-        minvertible m -> minvertible m' -> (m * m')⁻¹ = m' ⁻¹ * m ⁻¹.
-    Proof.
-    Admitted.
+  (** M \-1 \-1 = M *)
+  Lemma AM_minv_minv : forall {n} (M : smat n), minvertible M -> M \-1 \-1 = M.
+  Proof.
+  Admitted.
 
-    (** (m\T) ⁻¹ = (m ⁻¹)\T *)
-    Lemma minv_mtrans : forall {n} (m : smat n), minvertible m -> (m\T) ⁻¹ = (m ⁻¹)\T.
-    Proof.
-    Admitted.
+  (** (M1 * M2) \-1 = M2\-1 * M1\-1 *)
+  Lemma AM_minv_mmul : forall {n} (M1 M2 : smat n),
+      minvertible M1 -> minvertible M2 -> (M1 * M2)\-1 = M2 \-1 * M1 \-1.
+  Proof.
+  Admitted.
 
-    (** mdet (m⁻¹) = 1 / (mdet m) *)
-    Lemma mdet_minv : forall {n} (m : smat n), (mdet (m ⁻¹) = T1 / (mdet m))%T.
-    Admitted.
-    
-  End inv.
+  (** (M \T) \-1 = (M \-1) \T *)
+  Lemma AM_minv_mtrans : forall {n} (M : smat n), minvertible M -> (M\T)\-1 = (M\-1)\T.
+  Proof.
+  Admitted.
 
-  
-  (** *** Direct compute inversion of a symbol matrix of 1/2/3rd order. *)
-  Section FindFormula.
-    Variable a11 a12 a13 a14 a21 a22 a23 a24 a31 a32 a33 a34 a41 a42 a43 a44 : T.
-    Let m1 := mk_mat_1_1 (T0:=T0) a11.
-    Let m2 := mk_mat_2_2 (T0:=T0) a11 a12 a21 a22.
-    Let m3 := mk_mat_3_3 (T0:=T0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
-    Let m4 := mk_mat_4_4 (T0:=T0)
-                a11 a12 a13 a14 a21 a22 a23 a24 a31 a32 a33 a34 a41 a42 a43 a44.
+  (** mdet (M\-1) = 1 / (mdet M) *)
+  Lemma AM_mdet_minv : forall {n} (M : smat n), mdet (M \-1) = Aone / (mdet M).
+  Admitted.
 
-    (* Compute (m2l (minv m1)). *)
-    (* Compute (m2l (minv m2)). *)
-    (* Compute (m2l (minv m3)). *)
-    (* Compute (m2l (minv m4)). *)
+  (** Direct compute inversion of a symbol matrix of 1~4 order. *)
+  Section CheckInvMatFormula.
+    Variable a11 a12 a13 a14 a21 a22 a23 a24 a31 a32 a33 a34 a41 a42 a43 a44 : A.
+    Let m1 := mk_mat_1_1 a11.
+    Let m2 := mk_mat_2_2 a11 a12 a21 a22.
+    Let m3 := mk_mat_3_3 a11 a12 a13 a21 a22 a23 a31 a32 a33.
+    Let m4 := mk_mat_4_4 a11 a12 a13 a14 a21 a22 a23 a24
+                a31 a32 a33 a34 a41 a42 a43 a44.
+
+    (* Compute (m2l (minvAM m1)). *)
+    (* Compute (m2l (minvAM m2)). *)
+    (* Compute (m2l (minvAM m3)). *)
+    (* Compute (m2l (minvAM m4)). *)
     (* Although this is correct, but the expression is too long. *)
     (* We want to simplify it with RAST *)
-    
-  End FindFormula.
+  End CheckInvMatFormula.
+
+  (* 将 a <> 0 |- b <> 0 转换为 b = 0 |- a = 0，并尝试自动证明 *)
+  Ltac solve_neq0_neq0 :=
+    match goal with
+    | H: ?e1 <> Azero |- ?e2 <> Azero =>
+        let H1 := fresh "H1" in
+        intros H1; destruct H;
+        (* 尝试自动证明 *)
+        cbn; ring_simplify; auto
+    end.
+
+  (* 将 a = 0 |- b = 0 转换为 a = b，并尝试证明 *)
+  Ltac solve_eq0_eq0 :=
+    match goal with
+    | H: ?a = Azero |- ?b = Azero =>
+        symmetry; rewrite <- H at 1;
+        (* 尝试自动证明 *)
+        try ring
+    end.
 
   
-  (** *** Inversion matrix of common finite dimension *)
+  (** *** Inverse matrix of of concrete dimension *)
   Section concrete.
-    Definition minv1 (m : smat 1) : smat 1 := l2m [[T1/m.11]].
-
-    (** mdet m <> 0 -> minv1 m = inv m *)
-    Lemma minv1_eq_inv : forall m, mdet m != T0 -> minv1 m = minv m.
-    Proof. lma. reverse_neq0_neq0. Qed.
-
-    (** minv1 m * m = mat1 *)
-    Lemma minv1_correct_l : forall (m : smat 1),
-        mdet m != T0 -> (minv1 m) * m = mat1.
-    Proof. lma. reverse_neq0_neq0. Qed.
-
-    (** m * minv1 m = mat1 *)
-    Lemma minv1_correct_r : forall (m : smat 1),
-        mdet m != T0 -> m * (minv1 m) = mat1.
-    Proof. lma. reverse_neq0_neq0. Qed.
-
-    (* ==================================== *)
-    (** ** Inversion matrix of dimension-2 *)
-    Definition minv2 (m : smat 2) : smat 2 :=
-      let d := mdet2 m in
-      (l2m [[m.22/d; -m.12/d]; [-m.21/d; m.11/d]])%T.
-
-    (** mdet m <> 0 -> minv2 m = inv m *)
-    Lemma minv2_eq_inv : forall m, mdet m != T0 -> minv2 m = minv m.
-    Proof. lma; reverse_neq0_neq0. Qed.
     
-    (** minv2 m * m = mat1 *)
-    Lemma minv2_correct_l : forall (m : smat 2),
-        mdet m != T0 -> (minv2 m) * m = mat1.
-    Proof. lma; reverse_neq0_neq0. Qed.
+    Definition minv1AM (m : smat 1) : smat 1 := l2m [[Aone/m.11]].
+
+    (** |M| <> 0 -> minv1 M = inv M *)
+    Lemma AM_minv1_eq_inv : forall m, mdet m <> Azero -> minv1AM m = minvAM m.
+    Proof.
+      intros. destruct m. lma. cbn; field. solve_neq0_neq0.
+    Qed.
+
+    Definition minv2AM (M : smat 2) : smat 2 :=
+      let d := mdet2 M in
+      l2m [[M.22/d; -M.12/d]; [-M.21/d; M.11/d]].
+
+    (** |M| <> 0 -> minv2 M = inv M *)
+    Lemma AM_minv2_eq_inv : forall M, mdet M <> Azero -> minv2AM M = minvAM M.
+    Proof.
+      intros. destruct M as [m pH pW].
+      pose proof (dl2elems_2_2 (Azero:=Azero) m pH pW) as H1.
+      rewrite mdet_eq_mdetList in H; simpl in H; rewrite H1 in H; cbn in H.
+      lma; unfold mdet,mdet2,mnth; simpl;
+        rewrite H1; simpl; field_simplify_eq; auto;
+        solve_neq0_neq0.
+    Qed.
     
-    (** m * minv2 m = mat1 *)
-    Lemma minv2_correct_r : forall (m : smat 2),
-        mdet m != T0 -> m * (minv2 m) = mat1.
-    Proof. lma; reverse_neq0_neq0. Qed.
-    
-    (* ==================================== *)
-    (** ** Inversion matrix of dimension-3 *)
-    (* Note, this formula could be provided from matlab, thus avoiding manual work *)
-    Definition minv3 (m : smat 3) : smat 3 :=
-      let d := mdet3 m in
+    (* Note, this formula come from matlab, needn't manual work *)
+    Definition minv3AM (M : smat 3) : smat 3 :=
+      let d := mdet3 M in
       (l2m
-         [[(m.22*m.33-m.23*m.32)/d; -(m.12*m.33-m.13*m.32)/d; (m.12*m.23-m.13*m.22)/d];
-          [-(m.21*m.33-m.23*m.31)/d; (m.11*m.33-m.13*m.31)/d; -(m.11*m.23-m.13*m.21)/d];
-          [(m.21*m.32-m.22*m.31)/d; -(m.11*m.32-m.12*m.31)/d; (m.11*m.22-m.12*m.21)/d]])%T.
+         [[(M.22*M.33-M.23*M.32)/d; -(M.12*M.33-M.13*M.32)/d; (M.12*M.23-M.13*M.22)/d];
+          [-(M.21*M.33-M.23*M.31)/d; (M.11*M.33-M.13*M.31)/d; -(M.11*M.23-M.13*M.21)/d];
+          [(M.21*M.32-M.22*M.31)/d; -(M.11*M.32-M.12*M.31)/d; (M.11*M.22-M.12*M.21)/d]])%A.
     
-    (** mdet m <> 0 -> minv3 m = inv m *)
-    Lemma minv3_eq_inv : forall m, mdet m != T0 -> minv3 m = minv m.
+    (** |M| <> 0 -> minv3 M = inv M *)
+    Lemma AM_minv3_eq_inv : forall M, mdet M <> Azero -> minv3AM M = minvAM M.
     Proof.
-      (* lma; reverse_neq0_neq0. *)
-      Opaque Matrix.mdet Matrix.mdet3.
-      lma;  rewrite mdet3_eq_mdet; field_simplify; f_equiv; auto.
-      Transparent Matrix.mdet Matrix.mdet3.
-      all: cbv; field; auto.
+      intros. destruct M as [m pH pW].
+      pose proof (dl2elems_3_3 (Azero:=Azero) m pH pW) as H1.
+      rewrite mdet_eq_mdetList in H; simpl in H; rewrite H1 in H; cbn in H.
+      lma; unfold mdet,mdet3,mnth; simpl;
+        rewrite H1; simpl; field_simplify_eq; auto;
+        solve_neq0_neq0; solve_eq0_eq0.
     Qed.
-    
-    (** minv3 m * m = mat1 *)
-    Lemma minv3_correct_l : forall (m : smat 3),
-        mdet m != T0 -> (minv3 m) * m = mat1.
-    Proof.
-      lma; reverse_neq0_neq0.
-    Qed.
-    
-    (** m * minv3 m = mat1 *)
-    Lemma minv3_correct_r : forall (m : smat 3),
-        mdet m != T0 -> m * (minv3 m) = mat1.
-    Proof. lma; reverse_neq0_neq0. Qed.
 
-    (* ==================================== *)
-    (** ** Inversion matrix of dimension-3 *)
-    (* Note, this formula could be provided from matlab, thus avoiding manual work *)
-    Definition minv4 (m : smat 4) : smat 4 :=
-      let d := mdet4 m in
+    Definition minv4AM (M : smat 4) : smat 4 :=
+      let d := mdet4 M in
       l2m
-        [[(m.22*m.33*m.44 - m.22*m.34*m.43 - m.23*m.32*m.44 + m.23*m.34*m.42 + m.24*m.32*m.43 - m.24*m.33*m.42)/d;
-          -(m.12*m.33*m.44 - m.12*m.34*m.43 - m.13*m.32*m.44 + m.13*m.34*m.42 + m.14*m.32*m.43 - m.14*m.33*m.42)/d;
-          (m.12*m.23*m.44 - m.12*m.24*m.43 - m.13*m.22*m.44 + m.13*m.24*m.42 + m.14*m.22*m.43 - m.14*m.23*m.42)/d;
-          -(m.12*m.23*m.34 - m.12*m.24*m.33 - m.13*m.22*m.34 + m.13*m.24*m.32 + m.14*m.22*m.33 - m.14*m.23*m.32)/d];
-         [-(m.21*m.33*m.44 - m.21*m.34*m.43 - m.23*m.31*m.44 + m.23*m.34*m.41 + m.24*m.31*m.43 - m.24*m.33*m.41)/d;
-          (m.11*m.33*m.44 - m.11*m.34*m.43 - m.13*m.31*m.44 + m.13*m.34*m.41 + m.14*m.31*m.43 - m.14*m.33*m.41)/d;
-          -(m.11*m.23*m.44 - m.11*m.24*m.43 - m.13*m.21*m.44 + m.13*m.24*m.41 + m.14*m.21*m.43 - m.14*m.23*m.41)/d;
-          (m.11*m.23*m.34 - m.11*m.24*m.33 - m.13*m.21*m.34 + m.13*m.24*m.31 + m.14*m.21*m.33 - m.14*m.23*m.31)/d];
-         [(m.21*m.32*m.44 - m.21*m.34*m.42 - m.22*m.31*m.44 + m.22*m.34*m.41 + m.24*m.31*m.42 - m.24*m.32*m.41)/d;
-          -(m.11*m.32*m.44 - m.11*m.34*m.42 - m.12*m.31*m.44 + m.12*m.34*m.41 + m.14*m.31*m.42 - m.14*m.32*m.41)/d;
-          (m.11*m.22*m.44 - m.11*m.24*m.42 - m.12*m.21*m.44 + m.12*m.24*m.41 + m.14*m.21*m.42 - m.14*m.22*m.41)/d;
-          -(m.11*m.22*m.34 - m.11*m.24*m.32 - m.12*m.21*m.34 + m.12*m.24*m.31 + m.14*m.21*m.32 - m.14*m.22*m.31)/d];
-         [-(m.21*m.32*m.43 - m.21*m.33*m.42 - m.22*m.31*m.43 + m.22*m.33*m.41 + m.23*m.31*m.42 - m.23*m.32*m.41)/d;
-          (m.11*m.32*m.43 - m.11*m.33*m.42 - m.12*m.31*m.43 + m.12*m.33*m.41 + m.13*m.31*m.42 - m.13*m.32*m.41)/d;
-          -(m.11*m.22*m.43 - m.11*m.23*m.42 - m.12*m.21*m.43 + m.12*m.23*m.41 + m.13*m.21*m.42 - m.13*m.22*m.41)/d;
-          (m.11*m.22*m.33 - m.11*m.23*m.32 - m.12*m.21*m.33 + m.12*m.23*m.31 + m.13*m.21*m.32 - m.13*m.22*m.31)/d]]%T.
+        [[(M.22*M.33*M.44 - M.22*M.34*M.43 - M.23*M.32*M.44 + M.23*M.34*M.42 + M.24*M.32*M.43 - M.24*M.33*M.42)/d;
+          -(M.12*M.33*M.44 - M.12*M.34*M.43 - M.13*M.32*M.44 + M.13*M.34*M.42 + M.14*M.32*M.43 - M.14*M.33*M.42)/d;
+          (M.12*M.23*M.44 - M.12*M.24*M.43 - M.13*M.22*M.44 + M.13*M.24*M.42 + M.14*M.22*M.43 - M.14*M.23*M.42)/d;
+          -(M.12*M.23*M.34 - M.12*M.24*M.33 - M.13*M.22*M.34 + M.13*M.24*M.32 + M.14*M.22*M.33 - M.14*M.23*M.32)/d];
+         [-(M.21*M.33*M.44 - M.21*M.34*M.43 - M.23*M.31*M.44 + M.23*M.34*M.41 + M.24*M.31*M.43 - M.24*M.33*M.41)/d;
+          (M.11*M.33*M.44 - M.11*M.34*M.43 - M.13*M.31*M.44 + M.13*M.34*M.41 + M.14*M.31*M.43 - M.14*M.33*M.41)/d;
+          -(M.11*M.23*M.44 - M.11*M.24*M.43 - M.13*M.21*M.44 + M.13*M.24*M.41 + M.14*M.21*M.43 - M.14*M.23*M.41)/d;
+          (M.11*M.23*M.34 - M.11*M.24*M.33 - M.13*M.21*M.34 + M.13*M.24*M.31 + M.14*M.21*M.33 - M.14*M.23*M.31)/d];
+         [(M.21*M.32*M.44 - M.21*M.34*M.42 - M.22*M.31*M.44 + M.22*M.34*M.41 + M.24*M.31*M.42 - M.24*M.32*M.41)/d;
+          -(M.11*M.32*M.44 - M.11*M.34*M.42 - M.12*M.31*M.44 + M.12*M.34*M.41 + M.14*M.31*M.42 - M.14*M.32*M.41)/d;
+          (M.11*M.22*M.44 - M.11*M.24*M.42 - M.12*M.21*M.44 + M.12*M.24*M.41 + M.14*M.21*M.42 - M.14*M.22*M.41)/d;
+          -(M.11*M.22*M.34 - M.11*M.24*M.32 - M.12*M.21*M.34 + M.12*M.24*M.31 + M.14*M.21*M.32 - M.14*M.22*M.31)/d];
+         [-(M.21*M.32*M.43 - M.21*M.33*M.42 - M.22*M.31*M.43 + M.22*M.33*M.41 + M.23*M.31*M.42 - M.23*M.32*M.41)/d;
+          (M.11*M.32*M.43 - M.11*M.33*M.42 - M.12*M.31*M.43 + M.12*M.33*M.41 + M.13*M.31*M.42 - M.13*M.32*M.41)/d;
+          -(M.11*M.22*M.43 - M.11*M.23*M.42 - M.12*M.21*M.43 + M.12*M.23*M.41 + M.13*M.21*M.42 - M.13*M.22*M.41)/d;
+          (M.11*M.22*M.33 - M.11*M.23*M.32 - M.12*M.21*M.33 + M.12*M.23*M.31 + M.13*M.21*M.32 - M.13*M.22*M.31)/d]]%A.
     
-    (** mdet m <> 0 -> minv4 m = inv m *)
-    Lemma minv4_eq_inv : forall m, mdet m != T0 -> minv4 m = minv m.
-    (* Proof. *)
-    (*   (* lma; reverse_neq0_neq0. *) *)
-    (*   Opaque Matrix.mdet Matrix.mdet3. *)
-    (*   lma;  rewrite mdet4_eq_mdet; field_simplify; f_equiv; auto. *)
-    (*   Transparent Matrix.mdet Matrix.mdet3. *)
-    (*   all: cbv; field; auto. *)
-    (*   Qed. *)
-    Admitted.
-
-    (** minv4 m * m = mat1 *)
-    Lemma minv4_correct_l : forall (m : smat 4),
-        mdet m != T0 -> (minv4 m) * m = mat1.
-    (* Proof. lma; reverse_neq0_neq0. Qed. *)
+    (** |M| <> 0 -> minv4 M = inv M *)
+    Lemma AM_minv4_eq_inv : forall M, mdet M <> Azero -> minv4AM M = minvAM M.
+    Proof.
+      intros. destruct M as [m pH pW].
+      pose proof (dl2elems_4_4 (Azero:=Azero) m pH pW) as H1.
+      rewrite mdet_eq_mdetList in H; simpl in H; rewrite H1 in H; cbn in H.
+      (* NEED 10 Seconds, JUST TURN OFF TO SPEED UP *)
+      (*
+      lma; unfold mdet,mdet4,mnth; simpl;
+        rewrite H1; simpl; field_simplify_eq; auto;
+        solve_neq0_neq0; solve_eq0_eq0.
+        Qed.
+       *)
     Admitted.
     
-    (** m * minv4 m = mat1 *)
-    Lemma minv4_correct_r : forall (m : smat 4),
-        mdet m != T0 -> m * (minv4 m) = mat1.
-    (* Proof. lma; reverse_neq0_neq0. Qed. *)
-    Admitted.
-  
   End concrete.
-
-End matrix_inversion.
+  
+End minvAM.
 
 Section test.
-  (* T Formal Proof of Sasaki-Murao Algorithm
-     https://pdfs.semanticscholar.org/ddc3/e8185e10a1d476497de676a3fd1a6ae29595.pdf
-   *)
-  Import ZArith.
-  Open Scope Z.
-  Let m1 := @l2m _ 0 4 4 [[2;2;4;5];[5;8;9;3];[1;2;8;5];[6;6;7;1]].
-  Notation mdet := (mdet (Tadd:=Z.add) (Topp:=Z.opp) (Tmul:=Z.mul) (T0:=0) (T1:=1)).
-  (* Compute mdet m1. *)
+  Import QcExt.
+  Notation "dl ! i ! j" := (nth j (nth i dl []) 0).
+  Notation "M $ i $ j " := (mnth 0 M i j) : mat_scope.
+  Notation mdet := (@mdet _ Qcplus 0 Qcopp Qcmult 1).
+  Notation mat1 := (@mat1 _ 0 1).
+  Notation minvAM := (@minvAM _ Qcplus 0 Qcopp Qcmult 1 Qcinv).
+  Notation minv3AM := (@minv3AM _ Qcplus 0 Qcopp Qcmult Qcinv).
+  Notation minvGE := (@minvGE _ Qcplus 0 Qcopp Qcmult 1 Qcinv).
+
+  (* 利用伴随矩阵求逆矩阵(数值矩阵) *)
+  Section ex1.
+    (*
+      来自《线性代数》同济，第5版，P64，例2
+      [[  0; -2;  1];
+       [  3;  0; -2];
+       [ -2;  3;  0]]
+
+      [[  6;  3;  4];
+       [  4;  2;  3];
+       [  9;  4;  6]]
+     *)
+    Let r : nat := 3. Let c : nat := 3.
+    Let m1 : mat r c :=
+        l2m 0 _ _
+          (Q2Qc_dlist
+             [[  0; -2;  1];
+              [  3;  0; -2];
+              [ -2;  3;  0]]%Q).
+    Let m2 : mat r c :=
+        l2m 0 _ _
+          (Q2Qc_dlist
+             [[  6;  3;  4];
+              [  4;  2;  3];
+              [  9;  4;  6]]%Q).
+    Goal m2l (minvAM m1) = m2l (m2).
+    Proof. cbv. auto. Qed.
+    
+    Goal m2l (minvAM m2) = m2l (m1).
+    Proof. cbv. auto. Qed.
+
+  End ex1.
+
+  (* 在 matlab 中的一些测试 *)
+  Section ex2.
+    (* 在 matlab 命令行中：
+       A = [1 2 3 4 5 6; 7 9 10 12 11 14; 20 25 27 29 24 26; ...
+       31 33 37 39 36 34; 45 58 43 55 42 47; 70 90 99 78 82 93]
+       inv(A)
+       结果：
+   -0.6879    0.5586   -0.3097    0.1479   -0.0114   -0.0015
+    0.4940   -0.4636    0.1002   -0.1035    0.0638    0.0155
+   -0.1782   -0.0225    0.1582   -0.0363   -0.0601    0.0143
+   -0.0802    0.0372    0.1845   -0.0277   -0.0083   -0.0377
+    0.7734   -0.5560   -0.0659    0.0881    0.0316    0.0041
+   -0.3853    0.5112   -0.1290   -0.0269   -0.0102    0.0097       
+     *)
+    Let m1 := @l2m _ 0%Qc 6 6
+                (Q2Qc_dlist
+                   [[ 1; 2; 3; 4; 5; 6];
+                    [ 7; 9;10;12;11;14];
+                    [20;25;27;29;24;26];
+                    [31;33;37;39;36;34];
+                    [45;58;43;55;42;47];
+                    [70;90;99;78;82;93]]%Q).
+    (* 0.1s *)
+    (* Time Compute (m2l (minvAM m1)). *)
+    Let d2 := Eval vm_compute in (m2l (minvAM m1)).
+    (* Print d2. *)
+    (* 由于Qc类型用分式来表示精确的值，而matlab给出的是浮点数，难以验证相等性，
+       已手工检验了多组数据，都是正确的。 *)
+
+    (* 0.008s *)
+    (* Time Compute (m2l (option_get (minvGE m1) mat1)). *)
+    Let d3 := Eval vm_compute in (m2l (option_get (minvGE m1) mat1)).
+    (* Print d3. *)
+  End ex2.
+
+  (* 性能测试，看可以解多大规模的矩阵 *)
+  Section ex3.
+    (* Performance of minvAM in Coq
+       dim    time(s)
+       5      0.009
+       6      0.035
+       7      0.288
+       8      3.116
+     *)
+    (* Time Compute m2l (minvAM (@mat1 7)). *)
+
+    (* Performance of minvGE in Coq
+       dim    time(s)
+       7      0.006
+       10     0.009
+       20     0.03
+       30     0.06
+       40     0.109
+       50     0.165
+       100    0.918
+       200    8.666
+     *)
+    (* Time Compute m2l (option_get (minvGE (@mat1 20)) mat1). *)
+  End ex3.
+  
 End test.
 
+(*
 
 (* ==================================== *)
 (** ** Orthogonal matrix *)
@@ -820,7 +533,7 @@ Section OrthogonalMatrix.
 
   In addition to preserving length, proper rotations must also preserve 
   orientation. 
-  T matrix will preserve or reverse orientation according to whether the 
+  A matrix will preserve or reverse orientation according to whether the 
   determinant of the matrix is positive or negative. 
   For an orthogonal matrix R, note that "det R\T = det R" implies 
   "(det R)^2 = 1", so that "det R = ±1".
@@ -851,22 +564,22 @@ Section OrthogonalMatrix.
   1. 特殊矩阵：对称（自伴）、斜对称（斜伴）、正交（酉）、正规矩阵
       实矩阵                      复矩阵
       条件           名称         条件            名称
-  (1) T = A\T        对称阵       T = A\H         自伴阵
-  (2) T = -A\T       斜称阵       T = -A\H        斜伴阵
+  (1) A = A\T        对称阵       A = A\H         自伴阵
+  (2) A = -A\T       斜称阵       A = -A\H        斜伴阵
   (3) AA\T = E       正交阵       AA\H = E        酉矩阵
-  (4)                            T A\H=A\H T      正规矩阵
+  (4)                            A A\H=A\H A      正规矩阵
   其中，(1),(2),(3)都是正规矩阵
 
   正规矩阵的一个定理：每个 n*n 正规矩阵A，都有一个由对应于特征值λ1,...,λn的特征向量
   组成的完全正交基 x1,...,xn。
   若设 U = (x1,...,xn)，则 U 是酉矩阵，并且有
-  U^{-1} T U = 对角阵 {λ1,...,λn}
+  U^{-1} A U = 对角阵 {λ1,...,λn}
 
   正交矩阵的应用（旋转）：若一个 n*n 实矩阵A是正交的，则其特征值等于
   ±1 或 e^{±iϕ}成对出现（ϕ是实数）。
   
   2. 特征值、特征向量、矩阵的谱
-  (1) 方阵A，使方程 T x = λ x 有非零解时，λ(复数)称一个特征值，x称对应的特征向量
+  (1) 方阵A，使方程 A x = λ x 有非零解时，λ(复数)称一个特征值，x称对应的特征向量
   (2) A的所有特征值的集合称为A的谱 σ(A)，A的特征值的绝对值的最大值称为A的谱半径，记做 r(A)
   (3) 特征方程：det(A-λE)=0，其解是A的特征值λ，λ的重数称为代数重数。
   (4) 设矩阵U是正交的（酉的），U的谱由数 e^{±iϕ} 组成，
@@ -884,22 +597,22 @@ Section OrthogonalMatrix.
 
   Context `{F : Field}.
   Add Field field_inst : (make_field_theory F).
-  Notation "1" := T1 : T_scope.
-  Notation "0" := T0 : T_scope.
-  Notation "- a" := (Topp a) : T_scope.
-  Infix "=" := Teq : T_scope.
+  Notation "1" := Aone : A_scope.
+  Notation "0" := Azero : A_scope.
+  Notation "- a" := (Aopp a) : A_scope.
+  Infix "=" := Teq : A_scope.
   Infix "=" := (@meq _ Teq _ _) : mat_scope.
-  Infix "*" := (@mmul _ Tadd T0 Tmul _ _ _) : mat_scope.
-  Notation "m ⁻¹" := (@minv _ Tadd T0 Topp Tmul T1 Tinv _ m) : mat_scope.
-  Notation smat n := (smat T n).
-  Notation mat1 n := (@mat1 _ T0 T1 n).
-  Notation minvertible := (@minvertible _ Tadd T0 Tmul T1 Teq _).
-  Notation mdet := (@mdet _ Tadd T0 Topp Tmul T1 _).
+  Infix "*" := (@mmul _ Aadd Azero Amul _ _ _) : mat_scope.
+  Notation "m \-1" := (@minvAM _ Aadd Azero Aopp Amul Aone Ainv _ m) : mat_scope.
+  Notation smat n := (smat A n).
+  Notation mat1 n := (@mat1 _ Azero Aone n).
+  Notation minvertible := (@minvertible _ Aadd Azero Amul Aone Teq _).
+  Notation mdet := (@mdet _ Aadd Azero Aopp Amul Aone _).
 
   (* ================== *)
   (** *** Orthogonal matrix *)
 
-  (** T square matrix m is an orthogonal matrix *)
+  (** A square matrix m is an orthogonal matrix *)
   Definition morth {n} (m : smat n) : Prop := m\T * m = mat1 n.
 
   (** orthogonal m -> invertible m *)
@@ -907,15 +620,15 @@ Section OrthogonalMatrix.
       morth m -> minvertible m.
   Proof. intros. hnf in *. exists (m\T). auto. Qed.
 
-  (** orthogonal m -> m⁻¹ = m\T *)
+  (** orthogonal m -> m\-1 = m\T *)
   Lemma morth_imply_inv_eq_trans : forall {n} (m : smat n),
-      morth m -> m⁻¹ = m\T.
-  Proof. intros. red in H. apply mmul_eq1_iff_minv_r in H. auto. Qed.
+      morth m -> m\-1 = m\T.
+  Proof. intros. red in H. apply mmul_eq1_iff_AM_minv_r in H. auto. Qed.
 
-  (** m⁻¹ = m\T -> orthogonal m*)
-  Lemma minv_eq_trans_imply_morth : forall {n} (m : smat n),
-      m⁻¹ = m\T -> morth m.
-  Proof. intros. apply mmul_eq1_iff_minv_r in H. auto. Qed.
+  (** m\-1 = m\T -> orthogonal m*)
+  Lemma AM_minv_eq_trans_imply_morth : forall {n} (m : smat n),
+      m\-1 = m\T -> morth m.
+  Proof. intros. apply mmul_eq1_iff_AM_minv_r in H. auto. Qed.
 
   (** orthogonal m <-> m\T * m = mat1 *)
   Lemma morth_iff_mul_trans_l : forall {n} (m : smat n),
@@ -927,8 +640,8 @@ Section OrthogonalMatrix.
       morth m <-> m * m\T = mat1 n.
   Proof.
     intros. split; intros H.
-    - apply mmul_eq1_iff_minv_r in H. rewrite <- H. apply mmul_minv_r.
-    - red. apply mmul_eq1_iff_minv_l in H. rewrite <- H. apply mmul_minv_l.
+    - apply mmul_eq1_iff_AM_minv_r in H. rewrite <- H. apply mmul_AM_minv_r.
+    - red. apply mmul_eq1_iff_AM_minv_l in H. rewrite <- H. apply mmul_AM_minv_l.
   Qed.
 
   (** orthogonal mat1 *)
@@ -951,8 +664,8 @@ Section OrthogonalMatrix.
     apply morth_iff_mul_trans_r in H. auto.
   Qed.
 
-  (** orthogonal m -> orthogonal m⁻¹ *)
-  Lemma morth_minv : forall {n} (m : smat n), morth m -> morth (m⁻¹).
+  (** orthogonal m -> orthogonal m\-1 *)
+  Lemma morth_minvAM : forall {n} (m : smat n), morth m -> morth (m\-1).
   Proof.
     intros. red.
     rewrite morth_imply_inv_eq_trans; auto. rewrite mtrans_mtrans.
@@ -1051,13 +764,13 @@ Section OrthogonalMatrix.
       - apply GOn_mul_proper.
       - apply GOn_inv_proper.
     Qed.
-  
+    
     (** *** Extract the properties of GOn to its carrier *)
 
-    (** m⁻¹ = m\T *)
+    (** m\-1 = m\T *)
     Lemma GOn_imply_inv_eq_trans : forall {n} (s : GOn n),
         let m := GOn_mat n s in
-        m⁻¹ = m\T.
+        m\-1 = m\T.
     Proof.
       intros. unfold m. destruct s as [m' H]. simpl in *.
       rewrite morth_imply_inv_eq_trans; auto. easy.
@@ -1074,7 +787,7 @@ Section OrthogonalMatrix.
     (** The set of SOn *)
     Record SOn (n: nat) := {
         SOn_mat :> smat n;
-        SOn_props : (morth SOn_mat) /\ (mdet SOn_mat = 1)%T
+        SOn_props : (morth SOn_mat) /\ (mdet SOn_mat = 1)%A
       }.
 
     Definition SOn_eq {n} (s1 s2 : SOn n) : Prop := SOn_mat _ s1 = SOn_mat _ s2.
@@ -1159,10 +872,10 @@ Section OrthogonalMatrix.
 
     (** *** Extract the properties of SOn to its carrier *)
 
-    (** m⁻¹ = m\T *)
+    (** m\-1 = m\T *)
     Lemma SOn_imply_inv_eq_trans : forall {n} (s : SOn n),
         let m := SOn_mat n s in
-        m⁻¹ = m\T.
+        m\-1 = m\T.
     Proof.
       intros. unfold m. destruct s as [m' [H1 H2]]. simpl in *.
       rewrite morth_imply_inv_eq_trans; auto. easy.
@@ -1173,197 +886,7 @@ Section OrthogonalMatrix.
 End OrthogonalMatrix.
 
 
-(* ==================================== *)
-(** ** Matrix inversion by Gauss Elimination, original by Shen Nan *)
-Section gauss_elimination.
-  Context `{F:Field}.
-  Add Field field_inst : (make_field_theory F).
-
-  Context {Teqdec: Dec Teq}.
-
-  Infix "=" := Teq : T_scope.
-  Infix "!=" := (fun a b => ~(a = b)) : T_scope.
-  Infix "+" := Tadd : T_scope.
-  Notation "- a" := (Topp a) : T_scope.
-  Notation Asub := (fun x y => Tadd x (Topp y)).
-  Infix "-" := Asub : T_scope.
-  Infix "*" := Tmul : T_scope.
-
-  Infix "+" := (@madd T Tadd _ _) : mat_scope.
-  Infix "*" := (@mmul T Tadd T0 Tmul _ _ _) : mat_scope.
-  Notation "/ a" := (Tinv a) : T_scope.
-  Infix "c*" := (@mcmul T Tmul _ _) : mat_scope.
-  Infix "=" := (meq (Teq:=Teq)) : mat_scope.
-  (* Notation "m ! i ! j " := (mnth T0 m i j) : mat_scope. *)
-  Notation mat1 := (@mat1 _ T0 T1).
-  (* Notation l2m := (@l2m T T0 _ _). *)
-
-  (** *** 初等行变换 (brt: Basic Row Transform) *)
-
-  (* 
-     0 0 0
-     0 0 0
-     0 c 0
-   *)
-  (* T matrix which only one element is non-zero *)
-  Definition brt_e {r c} (ri rj : nat) (k : T) : mat r c :=
-    f2m (fun i j => if (i =? ri) && (j =? rj) then k else T0).
-
-  
-  (* Multiply k times of a row *)
-  (*
-    1 0 0
-    0 c 0
-    0 0 1
-   *)
-  Definition brt_cmul {r c} (ri : nat) (k : T) : mat r c :=
-    f2m (fun i j => if i =? j then (if i =? ri then k else T1) else T0).
-
-  (* 第 y 行的 k 倍加到第 x 行 *)
-  (* 
-     1 0 0
-     0 1 0
-     0 c 1
-   *)
-  (* Definition row_add_to_row {n} (x y : nat) (k : T) : mat n n := *)
-  (*   mat1 + (brt_e x y k). *)
-
-  (** Add k times of rj-th row to rj-th row *)
-  Definition brt_add {n} (ri rj : nat) (k : T) : mat n n :=
-    (* f2m (fun i j => *)
-    (*           if (i =? ri) && (j =? rj) *)
-    (*           then k *)
-    (*           else (if i =? j then T1 else T0)). *)
-    mat1 + (brt_e ri rj k).
-
-  
-  (** 交换两行 *)
-  (*
-    x =1 , y=2
-
-    1 0 0  -1 0 0   0 0 0   0 0 0   0 1 0    0 1 0
-    0 1 0 + 0 0 0 + 0-1 0 + 1 0 0 + 0 0 0  = 1 0 0
-    0 0 1   0 0 0   0 0 0   0 0 0   0 0 0    0 0 1
-   *)
-  (* Definition swap {n} (x y : nat) : mat n n := *)
-  (*   mat1 + (e x x (-T1)) + (e y y (-T1)) + (e x y T1) + (e y x T1). *)
-
-  Definition brt_swap {n} (ri rj : nat) : mat n n :=
-    (* f2m (fun i j => *)
-    (*           if i =? ri *)
-    (*           then (if j =? rj then T1 else T0) *)
-    (*           else (if i =? rj *)
-    (*                 then (if j =? ri then T1 else T0) *)
-    (*                 else (if i =? j then T1 else T0))). *)
-    mat1
-    + (brt_e ri ri (-T1))
-    + (brt_e rj rj (-T1))
-    + (brt_e ri rj T1)
-    + (brt_e rj ri T1).
-
-  Definition invertible {n} (M : mat n n) :=
-    exists M', M * M' = mat1 /\ M' * M = mat1.
-
-  (* 
- 1 2 1      
--1-3 1  =>  return 0
- 1 0 6     
-[(n - i)++, y] , i 
-得到第一个非0 *)
-  (** 从第i行开始，检查第y列的第一个非零元素的序号 *)
-  Fixpoint get_first_none_zero {n} (MA: mat n n) (i: nat) (y: nat) : nat :=
-    match i with
-    | O => n
-    | S i' =>
-        if ((MA $ (n - i) $ y) =? T0) then
-          get_first_none_zero MA i' y
-        else
-          n - i
-    end.
-
-  (* 某一行加到另一行 *)
-  Fixpoint elem_change_down {n} (MA: mat n n) (x: nat) (cur: nat) : mat n n * mat n n :=
-    match cur with
-    | O => (mat1, MA)
-    | S cur' =>
-        (* 将第 n-cur 行的 MA[n-cur,x] 倍加到第 n 行 *)
-        let ee := brt_add (n - cur) x (- (MA $ (n - cur) $ x)) in
-        (* 递归进行，左侧是构造的初等矩阵的累乘，右侧是变换后的矩阵 *)
-        let (E', EA') := elem_change_down (ee * MA) x cur' in
-        (E' * ee, EA')
-    end.
-
-  Fixpoint row_echelon_form {n} (MA: mat n n) (i: nat) : option (mat n n * mat n n) :=
-    match i with
-    | O => Some (mat1, MA)
-    | S i' =>
-        let r := get_first_none_zero MA i (n - i) in
-        if (r =? n) then
-          None
-        else
-          let M0 := (brt_swap (n - i) r) * MA in
-          (* 把当前0行和第一个非0行互换 *)
-          let ee := (brt_cmul (n - i) (/(M0 $ (n - i) $ (n - i)))) in
-          (* 保证这一列第一个数字是1 *)
-          let (E', EA') := elem_change_down (ee * M0) (n - i) (i - 1) in
-          (* 下面元素全部与当前行相减，变成0 *)
-          let ret := row_echelon_form EA' i' in
-          match ret with
-          | None => None
-          | Some (E'', EA'') => Some (E'' * E' * ee * brt_swap (n - i) r, EA'')
-          end
-    end.
-
-  Fixpoint elem_change_up {n} (MA: mat n n) (x: nat) (i: nat) :=
-    match i with
-    | O => (mat1, MA)
-    | S i' =>
-        let ee := brt_add i' x (- (MA $ i' $ x)) in
-        let (E, MT) := elem_change_up (ee * MA) x i' in
-        (E * ee, MT)
-    end.
-
-  Fixpoint fst_to_I {n} (MA: mat n n) (i: nat) :=
-    match i with
-    | O => (mat1, MA)
-    | S i' =>
-        let (E, MT) := elem_change_up (MA) i' i' in
-        let (E', MT') := fst_to_I MT i' in
-        (E' * E, MT')
-    end.
-
-  Definition minv_gauss {n} (MA: mat n n) := 
-    match row_echelon_form MA n with
-    | None => None
-    | Some (E, MT) => Some (fst (fst_to_I MT n) * E)
-    end.
-
-End gauss_elimination.
-
-Section test.
-  Import ZArith.
-  Open Scope Z.
-
-  Definition z_brt_swap := (@brt_swap _ Z.add 0 Z.opp 1).
-  (* Compute m2l (z_brt_swap 3 0 2). *)
-  (* Compute m2l (z_brt_swap 3 1 2). *)
-  
-  Definition z_elem_change_down {n} (m:mat n n) i j :=
-    @elem_change_down _ Z.add 0 Z.opp Z.mul 1 _ m i j. 
-
-  Let m1 := @l2m _ 0 3 3 [[1;2;3];[4;5;6];[7;8;9]].
-  
-  (* Compute get_first_none_zero (T0:=0) m1 3 0. *)
-  
-  (* Compute let (m1,m2) := z_elem_change_down m1 0 0 in m2l m2. *)
-  (* Compute let (m1,m2) := z_elem_change_down m1 0 1 in m2l m2. *)
-  (* Compute let (m1,m2) := z_elem_change_down m1 0 2 in m2l m2. *)
-  (* Compute let (m1,m2) := z_elem_change_down m1 0 3 in m2l m2. *)
-  
-End test.
-
-
-(* ==================================== *)
+(* ======================================================================= *)
 (** ** test *)
 Section test.
   Import QArith Qcanon.
@@ -1376,25 +899,27 @@ Section test.
 
   Coercion Q2Qc : Q >-> Qc.
 
-  Definition m1 := (mk_mat_3_3 (T0:=0) 1 2 3 4 5 6 7 8 9)%Qc.
-  (* Compute mtrace (Tadd:=Qcplus)(T0:=0)(n:=3) m1. *)
+  Definition m1 := (mk_mat_3_3 (Azero:=0) 1 2 3 4 5 6 7 8 9)%Qc.
+  (* Compute mtrace (Aadd:=Qcplus)(Azero:=0)(n:=3) m1. *)
 
   Variable a11 a12 a13 a21 a22 a23 a31 a32 a33 : Qc.
-  Definition m2 := mk_mat_3_3 (T0:=0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
+  Definition m2 := mk_mat_3_3 (Azero:=0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
   (* Compute mrow 1 m2. *)
 
   (** *** rewrite support test *)
-  Notation mcmul := (mcmul (Tmul:=Qcmult)).
+  Notation mcmul := (mcmul (Amul:=Qcmult)).
   Infix "c*" := mcmul : mat_scope.
 
   Goal forall r c (m1 m2 : mat r c) (x : Qc), m1 = m2 -> x c* m1 = x c* m2.
   Proof. intros. f_equiv. easy. Qed.
 
   (** *** rewrite support test (cont.) *)
-  Notation msub := (msub (Tadd:=Qcplus)(Topp:=Qcopp)).
+  Notation msub := (msub (Aadd:=Qcplus)(Aopp:=Qcopp)).
   Infix "-" := msub : mat_scope.
 
   Goal forall r c (m1 m2 m3 m4 : mat r c), m1 = m2 -> m3 = m4 -> m1 - m3 = m2 - m4.
   Proof. clear. intros. rewrite H,H0. easy. Qed.
 
 End test.
+
+*)

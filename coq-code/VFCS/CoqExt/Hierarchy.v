@@ -107,6 +107,9 @@ Section Instances.
   Global Instance Dec_Z : @Dec Z.
   Proof. constructor. apply Z.eq_dec. Defined.
 
+  Global Instance Dec_Qc : @Dec Qc.
+  Proof. constructor. apply Qc_eq_dec. Defined.
+
   Global Instance Dec_R : @Dec R.
   Proof. constructor. apply Req_EM_T. Defined.
   

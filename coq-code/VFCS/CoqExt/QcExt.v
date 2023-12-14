@@ -15,6 +15,32 @@ Open Scope Qc.
 
 
 (* ######################################################################### *)
+(** ** Understanding the Qc type *)
+
+(* Why Qc is better than Q *)
+Section eq.
+  (* Why 1#2 and 2#4 could be equal? *)
+  
+  (* Compute Q2Qc (1#2). *)
+  (* = {| this := 1 # 2; canon := Qred_involutive (1 # 2) |} *)
+  (* Compute Q2Qc (2#4). *)
+  (* = {| this := 1 # 2; canon := Qred_involutive (2 # 4) |} *)
+
+  (* Answer: because the Qc type.
+
+     Record Qc : Set := Qcmake { 
+       this : Q;  
+       canon : Qred this = this }.
+
+     Here, canon is a proof of equality, so its unique by the help of UIP.
+     Then, only need the "this" component equal.
+   *)
+  Goal Q2Qc (1#2) = Q2Qc (2#4).
+  Proof. cbv. f_equal. apply UIP. Qed.
+End eq.
+
+
+(* ######################################################################### *)
 (** ** Convertion between Qc and other types *)
 
 (** Qc to Q *)
