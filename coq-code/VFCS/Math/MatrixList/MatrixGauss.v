@@ -145,32 +145,33 @@ Section GaussElim.
           | Some j =>
               let pivotsNew : LDict := ldictAdd (j,i) pivots in
               let pivot : A := m$i$j in
-              match Aeqb pivot Aone with
-              | true => F params pivotsNew i
-              | _ =>
-                  let coef1 : A := Aone / pivot in
-                  let params1 : list RowOp * mat r c :=
-                    (RowOp_K i coef1 :: fst params, mrowK (snd params) i coef1) in
-                  (* 第i行的第j列右侧准备消元 *)
-                  let params2 : list RowOp * mat r c :=
-                    fold_left (
-                        fun (p:list RowOp*mat r c) (j':nat) =>
-                          let ele : A := (snd p)$i$j' in
-                          match Aeqb ele Azero with
-                          | true => p
-                          | _ =>
-                              let oExistPivot : option nat := ldictFind j' pivots in
-                              match oExistPivot with
-                              | None => p
-                              | Some i' =>
-                                  let coef2 := - ele in
-                                  (RowOp_KAdd i' i coef2 :: fst p,
-                                    mrowKAdd (snd p) i' i coef2)
-                              end
-                          end)
-                      (seq (S j) (c - S j)) params1 in
-                  F params2 pivotsNew i
-              end
+              (* 若主元不是i，则做一次 rowK 变换 *)
+              let params1 : list RowOp * mat r c :=
+                match Aeqb pivot Aone with
+                | true => params 
+                | _ =>
+                    let coef1 : A := Aone / pivot in
+                    (RowOp_K i coef1 :: fst params, mrowK (snd params) i coef1)
+                end in
+              (* 第i行的第j列右侧准备消元 *)
+              let params2 : list RowOp * mat r c :=
+                fold_left (
+                    fun (p:list RowOp*mat r c) (j':nat) =>
+                      let ele : A := (snd p)$i$j' in
+                      match Aeqb ele Azero with
+                      | true => p
+                      | _ =>
+                          let oExistPivot : option nat := ldictFind j' pivots in
+                          match oExistPivot with
+                          | None => p
+                          | Some i' =>
+                              let coef2 := - ele in
+                              (RowOp_KAdd i' i coef2 :: fst p,
+                                mrowKAdd (snd p) i' i coef2)
+                          end
+                      end)
+                  (seq (S j) (c - S j)) params1 in
+              F params2 pivotsNew i
           end
       end in
     F ([], m) ldictEmpty r.

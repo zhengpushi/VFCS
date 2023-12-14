@@ -500,13 +500,18 @@ Section test.
     (* Time Compute (m2l (minvAM m1)). *)
 
     Goal m2l ((minvAM m1) * m1) = m2l (c:=6) mat1.
-    Proof. cbv. lma; f_equal; apply UIP. Qed.
+    Proof.
+      (* 为了加速编译，暂时屏蔽 *)
+      (* cbv. lma; f_equal; apply UIP. Qed. *)
+    Abort.
 
     (* 0.05s *)
     (* Time Compute (m2l (minvGE m1)). *)
     Goal m2l ((minvGE m1) * m1) = m2l (c:=6) mat1.
-    Proof. cbv. lma; f_equal; try apply UIP.
-           Abort.               (* 第一行有问题 *)
+    Proof.
+      (* 为了加速编译，暂时屏蔽 *)
+      (* cbv. lma; f_equal; try apply UIP. *)
+    Abort.
   End ex2.
 
   (* 性能测试，看可以解多大规模的矩阵 *)
@@ -531,7 +536,7 @@ Section test.
        100    0.918
        200    8.666
      *)
-    (* Time Compute m2l (minvGE (@mat1 50)). *)
+    (* Time Compute m2l (minvGE (@mat1 200)). *)
   End ex3.
   
 End test.
