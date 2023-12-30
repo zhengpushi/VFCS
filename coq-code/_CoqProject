@@ -26,6 +26,7 @@ VFCS/CoqExt/QcExt.v
 VFCS/CoqExt/RExt.v
 VFCS/CoqExt/StrExt.v
 VFCS/CoqExt/TupleExt.v
+VFCS/CoqExt/natfin.v
 # VFCS/CoqExt/ListSetoidExt.v
 VFCS/CoqExt/ListExt.v
 # VFCS/CoqExt/SequenceSetoid.v
@@ -65,6 +66,7 @@ VFCS/Math/Ratan2.v
 # VFCS/Math/Matrix/VectorR3.v
 # VFCS/Math/Matrix/VectorR4.v
 
+VFCS/Math/MatrixList/vec.v
 VFCS/Math/MatrixList/Matrix.v
 VFCS/Math/MatrixList/MatrixDet.v
 VFCS/Math/MatrixList/MatrixGauss.v
