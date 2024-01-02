@@ -1,0 +1,1808 @@
+{%% 
+%% Copyright 2007-2020 Elsevier Ltd
+%% 
+%% This file is part of the 'Elsarticle Bundle'.
+%% ---------------------------------------------
+%% 
+%% It may be distributed under the conditions of the LaTeX Project Public
+%% License, either version 1.2 of this license or (at your option) any
+%% later version.  The latest version of this license is in
+%%    http://www.latex-project.org/lppl.txt
+%% and version 1.2 or later is part of all distributions of LaTeX
+%% version 1999/12/01 or later.
+%% 
+%% The list of all files belonging to the 'Elsarticle Bundle' is
+%% given in the file `manifest.txt'.
+%% 
+
+%% Template article for Elsevier's document class `elsarticle'
+%% with numbered style bibliographic references
+%% SP 2008/03/01
+%%
+%% 
+%%
+%% $Id: elsarticle-template-num.tex 190 2020-11-23 11:12:32Z rishi $
+%%
+%%
+\documentclass[preprint,12pt]{elsarticle}
+
+%% Use the option review to obtain double line spacing
+%% \documentclass[authoryear,preprint,review,12pt]{elsarticle}
+
+%% Use the options 1p,twocolumn; 3p; 3p,twocolumn; 5p; or 5p,twocolumn
+%% for a journal layout:
+%% \documentclass[final,1p,times]{elsarticle}
+%% \documentclass[final,1p,times,twocolumn]{elsarticle}
+%% \documentclass[final,3p,times]{elsarticle}
+%% \documentclass[final,3p,times,twocolumn]{elsarticle}
+%% \documentclass[final,5p,times]{elsarticle}
+%% \documentclass[final,5p,times,twocolumn]{elsarticle}
+
+%% For including figures, graphicx.sty has been loaded in
+%% elsarticle.cls. If you prefer to use the old commands
+%% please give \usepackage{epsfig}
+
+%% The amssymb package provides various useful mathematical symbols
+\usepackage{amssymb}
+%% The amsthm package provides extended theorem environments
+\usepackage{amsthm}
+
+%% The lineno packages adds line numbers. Start line numbering with
+%% \begin{linenumbers}, end it with \end{linenumbers}. Or switch it on
+%% for the whole article with \linenumbers.
+%% \usepackage{lineno}
+
+% \journal{Null Journal}
+
+%% ===================== szp 新增 ===================================
+
+%% 支持在bib中或正文中使用\url命令
+\usepackage{url}        % hyperlinks
+
+%% Generate bookmarks
+% \usepackage{pdfcomment}
+% \hypersetup{hidelinks,
+%   colorlinks=true,
+%   allcolors=black,
+%   pdfstartview=Fit,
+%   breaklinks=true
+% }
+\usepackage[
+bookmarksnumbered=true,
+bookmarksopen=false,
+bookmarksopenlevel=1,
+colorlinks=true,  % it must be enabled to enable other color option
+citecolor=black,
+filecolor=black,
+linkcolor=black,
+urlcolor=black,
+pdfstartview=Fit
+]{hyperref}
+
+
+% 自定义等宽字体，更好的显示效果
+\usepackage[T1]{fontenc}
+% \usepackage[scaled]{beramono}
+\usepackage[scaled]{inconsolata}
+% \usepackage{courier}
+
+%% 直立体的希腊字母，用于代码环境中的希腊字母显示
+% 使用 \upalpha 代替 \alpha，
+\usepackage{upgreek}
+
+%% 支持 align 等环境
+\usepackage{amsmath,amssymb,amsfonts}
+
+% 支持子图片的小标题
+\usepackage{subfig}
+
+%% lstings for Source code
+\input{listings.setting}
+
+%% 缩写
+\newcommand{\Ocaml}{{\sc Ocaml}}
+\newcommand{\MC}{{\sc Mathematical Components}}
+\newcommand{\Coq}{{\sc Coq}}
+%% 数学符号
+% 坐标系（花体数学符号）
+\newcommand{\cS}{\mathcal{S}}
+\newcommand{\cB}{\mathcal{B}}
+% 变换（花体数学符号）
+\newcommand{\cF}{\mathcal{F}}
+% 矩阵
+\newcommand{\bI}{\mathbf{I}}
+\newcommand{\bA}{\mathbf{A}}
+\newcommand{\bB}{\mathbf{B}}
+\newcommand{\bC}{\mathbf{C}}
+\newcommand{\bD}{\mathbf{D}}
+\newcommand{\bE}{\mathbf{E}}
+\newcommand{\bP}{\mathbf{P}}
+\newcommand{\bR}{\mathbf{R}}
+\newcommand{\bzero}{\mathbf{0}}
+% 向量
+\newcommand{\ba}{\mathbf{a}}
+\newcommand{\bb}{\mathbf{b}}
+\newcommand{\bc}{\mathbf{c}}
+\newcommand{\bn}{\mathbf{n}}
+\newcommand{\bu}{\mathbf{u}}
+\newcommand{\bv}{\mathbf{v}}
+\newcommand{\be}{\mathbf{e}}
+% 基矢量
+\newcommand{\basex}{\hat{\mathbf{x}}}
+\newcommand{\basey}{\hat{\mathbf{y}}}
+\newcommand{\basez}{\hat{\mathbf{z}}}
+% 四元数
+\newcommand{\bp}{\mathbf{p}}
+\newcommand{\bq}{\mathbf{q}}
+% 数域集合
+\newcommand{\bbN}{\mathbb{N}}
+\newcommand{\bbQ}{\mathbb{Q}}
+\newcommand{\bbR}{\mathbb{R}}
+\newcommand{\bbH}{\mathbb{H}}
+% 运算符
+\newcommand{\trans}{^\mathtt{T}}
+\newcommand{\minv}{^\mathtt{-1}}
+% 专门的函数（使用 mathtt 的直立体格式）
+\newcommand{\tQ}{\mathtt{Q}}
+\newcommand{\tQV}{\mathtt{QV}}
+\newcommand{\tQL}{\mathtt{L}}
+\newcommand{\tQR}{\mathtt{R}}
+\newcommand{\tSgn}{\mathtt{Sgn}}
+
+%% 斜的平行符号。在txfonts或pxfonts中的\varparallel最好看，但会改变其他数学字体
+\newcommand{\pll}{\kern 0.56em/\kern -0.8em /\kern 0.56em} 
+
+%% 定理环境的样式，需要 amsthm 宏包
+% definition 正体，标题加粗
+% plain 斜体，标题加粗
+% definition 正体，标题不加粗。
+% \theoremstyle{definition}
+%% 定理环境
+% {环境名}{显示的名称}[chapter/section/subsection]
+%% (1) 定义+引理+定理统一编号。
+%% 一个计数器
+% \newcounter{counter4math}
+% \newtheorem{definition}[counter4math]{Definition}%[section]
+% \newtheorem{lemma}[counter4math]{Lemma}%[section]
+% \newtheorem{theorem}[counter4math]{Theorem}%[section]
+% (2) 定义，引理，定理，分别编号
+\newtheorem{definition}{Definition}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{theorem}{Theorem}[section]
+
+
+\begin{document}
+
+\begin{frontmatter}
+
+%% Title, authors and addresses
+
+%% use the tnoteref command within \title for footnotes;
+%% use the tnotetext command for theassociated footnote;
+%% use the fnref command within \author or \address for footnotes;
+%% use the fntext command for theassociated footnote;
+%% use the corref command within \author for corresponding author footnotes;
+%% use the cortext command for theassociated footnote;
+%% use the ead command for the email address,
+%% and the form \ead[url] for the home page:
+%% \title{Title\tnoteref{label1}}
+%% \tnotetext[label1]{}
+%% \author{Name\corref{cor1}\fnref{label2}}
+%% \ead{email address}
+%% \ead[url]{home page}
+%% \fntext[label2]{}
+%% \cortext[cor1]{}
+%% \affiliation{organization={},
+%%             addressline={},
+%%             city={},
+%%             postcode={},
+%%             state={},
+%%             country={}}
+%% \fntext[label3]{}
+
+  \title{Proof of Associativity Law of Matrix Multiplication}
+  \author{ZhengPu Shi\corref{cor1}}
+  \ead{zhengpushi@nuaa.edu.cn}
+  % \author{GuoJun Xie}
+  % \author{Gang Chen}
+  % \ead{gangchensh@nuaa.edu.cn}
+  \affiliation{
+    organization={Nanjing University of Aeronautics and Astronautics},
+    % addressline={}, 
+    city={NanJing},
+    postcode={211106}, 
+    % state={},
+    country={China}}
+  % \cortext[cor1]{Corresponding author}
+
+%% use optional labels to link authors explicitly to addresses:
+%% \author[label1,label2]{}
+%% \affiliation[label1]{organization={},
+%%             addressline={},
+%%             city={},
+%%             postcode={},
+%%             state={},
+%%             country={}}
+%%
+%% \affiliation[label2]{organization={},
+%%             addressline={},
+%%             city={},
+%%             postcode={},
+%%             state={},
+%%             country={}}
+
+  \begin{abstract}
+    This is the proof for associativity law of matrix multiplication.
+    Since many errors in exist mathematical document, I give this proof again.
+  \end{abstract}
+
+  %% Graphical abstract
+  % \begin{graphicalabstract}
+  %   % \includegraphics{grabs}
+  % \end{graphicalabstract}
+
+  %% Research highlights
+  % \begin{highlights}
+  % \item Research highlight 1
+  % \item Research highlight 2
+  % \end{highlights}
+
+  \begin{keyword}
+    %% keywords here, in the form: keyword \sep keyword
+    Matrix\sep
+    Matrix Multiplication
+
+    %% PACS codes here, in the form: \PACS code \sep code
+
+    %% MSC codes here, in the form: \MSC code \sep code
+    %% or \MSC[2008] code \sep code (2000 is the default)
+
+  \end{keyword}
+
+\end{frontmatter}
+
+%% \linenumbers
+
+\section{Associativity of Matrix Multiplication}
+
+\begin{theorem}Let $\bA{}$ be an $m\times n$ matrix, $\bB{}$ be an $n\times r$ matrix, and $\bC$ be an $r\times s$ matrix.
+  $(\bA{}\bB{})\bC{}=\bA{}(\bB{}\bC{})$
+\end{theorem}
+\begin{proof}
+  Let $\bD{}=\bA{}\bB{}$ and $\bE{}=\bB{}\bC{}$.
+  We must show that $\bD{}\bC{}=\bA{}\bE{}$.
+  By the definition of matrix multiplication,
+  $$
+  d_{il}=\sum_{k=1}^{n}a_{ik}b_{kl}\quad\text{and}\quad e_{kj}=\sum_{l=1}^{r}a_{kl}b_{lj}
+  $$
+  The $(i,j)$ entry of $\bD{}\bC{}$ is
+  $$
+  \sum_{l=1}^{r}d_{il}c_{lj}=\sum_{l=1}^{r}\left(\sum_{k=1}^{n}a_{ik}b_{kl}\right)c_{lj}
+  $$
+  and the $(i,j)$ entry of $\bA{}\bE{}$ is
+  $$
+  \sum_{k=1}^{n}a_{ik}e_{kj}=\sum_{k=1}^{n}a_{ik}\left(\sum_{l=1}^{r}b_{kl}c_{lj}\right)
+  $$
+  Since
+  $$
+  \sum_{l=1}^{r}\left(\sum_{k=1}^{n}a_{ik}b_{kl}\right)c_{lj}
+  =\sum_{l=1}^{r}\left(\sum_{k=1}^{n}a_{ik}b_{kl}c_{lj}\right)
+  = \sum_{k=1}^{n}a_{ik}\left(\sum_{l=1}^{r}b_{kl}c_{lj}\right)
+  $$
+  it follows that
+  $$
+  (\bA{}\bB{})\bC{}=\bD{}\bC{}=\bA\bE{}=\bA{}(\bB{}\bC{})
+  $$
+\end{proof}
+\paragraph{a}b
+
+% The method of describing the orientation of objects in space is known as orientation representation (\textit{OR}), which is a fundamental topic in fields such as robotics, navigation, and computer graphics.
+% In flight control, an aircraft needs to calculate its own orientation (also known attitude) to perform control.
+% In computer graphics, three-dimensional (\textit{3D}) scenes require rendering and interaction based on the attitude of cameras or objects.
+% There are several mathematical models available for the OR problem.
+% (1) Rotation matrices are a common approach and suitable for computations in computer
+% (2) Based on the Euler rotation theorem, any orientation in 3D can be achieved by three basic rotations, leading to the Euler angles.
+% (3) Any two relative orientations can be represented as rotations about a single fixed axis, a more direct approach called axis-angle method can be used.
+% (4) Quaternion methods provide a solution with better numerical stability, computational efficiency, and handling of spherical interpolations.
+% Each representation method has its advantages and limitations, and researchers continue to explore new models and algorithms to strike a balance between efficiency, accuracy, and numerical stability\cite{dunn_3d_2011}.
+
+% The algorithms used for OR may contain hidden errors.
+% These algorithms involve numerous geometry and algebra derivations, most of which are performed manually.
+% However, the use of informal natural language, which is inherently ambiguous, and potentially imprecise logic, diminishes the reliability of these algorithms.
+% Some scholars argue that future mathematical research papers should undergo verification by proof checkers \cite{chen_fm_2016,wiedijk_formal_2008}.
+% This implies that even derivations made by professional mathematicians may conceal errors or flaws.
+% When applying these foundational algorithms in safety-critical systems, potential design errors can pose severe security risks.
+% Therefore, we require thorough measures to ensure the correctness of the OR algorithms.
+
+% Ensuring the correctness of OR algorithms is challenging.
+% Software testing methods can check algorithm outputs and identify errors, but they cannot guarantee error-free algorithms.
+% Formal verification, which uses mathematical language to describe system behavior, offers a more reliable guarantee.
+% Two common techniques in formal verification are model checking and theorem proving.
+% Model checking provides automatic verification of system behavior but may have limitations for OR algorithms due to their infinite input space.
+% Automatic theorem proving employs reasoning and proofs but may not be suitable for complex OR algorithms.
+% Interactive theorem proving, on the other hand, allows gradual construction of proofs through human-computer interaction.
+% It offers a more flexible approach for verifying complex algorithms and mathematical operations.
+
+% The \Coq{} theorem prover \cite{coqofficial} can be used for the formal verification of OR algorithms.
+% \Coq{} describes mathematical theories, programming languages, and systems, allowing specification and verification of target systems.
+% The verification process is interactive, requiring manual programming for reasoning.
+% However, verified algorithms in \Coq{} are highly reliable.
+% Meanwhile, \Coq{} offers some automation techniques to reducing the proof developer's burden.
+
+% The purpose of this study is to provide formal descriptions and specifications for OR algorithms, verifying their correctness by proving the derivation processes behind them using the \Coq{} theorem prover.
+% The OR algorithm is based on algebraic and geometric concepts, so it is necessary to establish the relevant basic mathematical theories first.
+% Matrices, vectors, and quaternions serve as mathematical models in OR, and our initial focus is to formalize these models, including their operations and properties.
+% Building upon this foundation, we can rigorously describe various OR algorithms and their formal specifications.
+% We will investigate common OR algorithms, including rotation matrices, Euler angles, axis-angle, and unit quaternions.
+
+% This study has limitations as it focuses on the concept of OR rather than pose representation (\textit{PR}) which includes translation.
+% The simpler translation issue is not discussed here as the PR problem can be decomposed into translation, OR, and reverse translation.
+% Thus, the paper concentrates on the more complex OR problem, assuming the origins of the two orientations are the same.
+
+% The remaining content is organized as follows.
+% Section \ref{sec:related} introduces related work.
+% Section \ref{sec:math} introduces a formal fundamental mathematical library for the OR problem, covering matrices, vectors, quaternions, and more.
+% Section \ref{sec:orientation} discusses various OR algorithms, as well as the formal verification of several important theorems.
+% Section \ref{sec:conclude} concludes our work.
+
+% \section{Related Works}\label{sec:related}
+
+% % In the field of OR or PR algorithms, there have been notable works, both informal and formal,
+% % that have contributed to our understanding these algorithms.
+% In the field of OR or PR algorithms, there have been notable contributions from both theoretical analysis and formalized studies, enhancing our understanding of these algorithms.
+
+% \subsection{Theoretical analysis}
+% Fletcher Dunn and Ian Parberry's book \cite{dunn_3d_2011} provides a comprehensive guide to fundamental mathematical concepts in 3D graphics and game development. It covers vectors, matrices, transformations, collision detection, physics simulations, and animation, serving as a valuable resource for developers in these fields.
+% %
+% Peter Corke's book \cite{peter_rvc_2017} is widely used in robotics, computer vision, and control. It offers a detailed introduction to rigid body transformations, kinematics of robots, and mathematical representations for pose transformations.
+% %
+% Quan Quan's book \cite{quan_multicopter_2017} focuses on OR algorithms in multirotor aircraft design. It addresses singularity issues and establishes the relationship between OR derivatives and body angular velocity.
+% %
+% James Diebel's work \cite{diebel_attitude_2006} provides a comprehensive overview of mathematical models and formulas for OR of rigid bodies in 3D space.
+% %
+% YouLiang Gu's work \cite{gu_orien_lie_1990} explores 3D orientation vectors using Lie algebra-based analysis and their application in robot control.
+
+% \subsection{Formalized studies}
+% Li et al. formalized geometric algebra theory in HOL Light \cite{li_geometric_2019}.
+% They introduced a multi-vector structure to represent geometric objects and defined operations such as outer product, inner product, and geometric product.
+% This work provides valuable insights for formal verification of complex geometric problems.
+% %
+% Pham utilized \Coq{} to formalize concepts related to similar triangles in elementary plane geometry \cite{pham_triangle_2010}.
+% They also verified several common theorems in geometry.
+% %
+% Xie et al. formalized coordinate transformations of robot rigid body kinematics in \Coq{} \cite{xie_formal_2023}.
+% They proposed a representation model for continuous rotation around a fixed axis and provided a formal description of the conversion between rotation matrices and Euler angles, along with an initial verification of the Rodriguez Formula.
+% %
+% Ma et al. proposed a method for implementing matrices using the Record type in \Coq{} and verified transformation matrices in flight control \cite{ma_recordmatrix_2019}.
+% %
+% Ma et al. introduced a method for block matrices based on the Record type in \Coq{} \cite{ma_blockmatrix_2021}.
+% %
+% Ma et al. presented a technique for generating C code from functional matrix programs in \Coq{} \cite{ma_matrix2c_2022}.
+% %
+% Shi et al. analyzed and compared different implementation approaches of matrices in \Coq{}, offering insights for the technical selection of formal matrices \cite{shi_matrix_2022}.
+
+% \subsection{Comparison our work to previous work}
+% Our work differentiates itself by conducting formal verification of all mathematical models and algorithms for OR using the \Coq{} theorem prover.
+% We prioritize the analysis of geometric relationships to ensure algorithm correctness.
+% Furthermore, we maintain a scalable formalized mathematical library and employ custom tactics to enhance automation wherever possible.
+
+% \section{Mathematics Preliminary}\label{sec:math}
+
+% % 本节介绍基础的数学库，这是解决OR问题的预备工作。
+% % 包括了序列、矩阵、向量和四元数的形式化描述。
+% % 限于篇幅，我们只介绍了本文要用到的部分，并只对关键部分给出\Coq{}形式化描述。
+% This section introduces the basic mathematical libraries, which are preparatory work for solving problems related to OR.
+% It includes formal descriptions of sequences, matrices, vectors, and quaternions.
+% Due to space limitations, we only present the relevant portions in this paper and provide formal descriptions in \Coq{} only for the key parts.
+
+% \subsection{Sequence}
+% A sequence is a function that maps from the set of natural numbers to an arbitrary set.
+% It can be used to model data structures organized by indices, such as vectors and matrices.
+
+% \begin{definition}[Sequence Sum]
+%   \label{seqsum}
+%   Given a sequence $f:\bbN\mapsto T$ for any set $T$, the \textit{sum} of its first $n$ items is defined as:
+%   \begin{equation}
+%     \label{eq:seqsum}
+%     S(f,n)\triangleq \sum\nolimits_{i=1}^{n}f(i).
+%   \end{equation}
+%   The formal definition is as follows.
+%   \begin{coq}
+% Fixpoint seqsum {T} {T0:T} {Tadd} (f:nat->T) (n:nat) : T := 
+%   match n with O => T0 | S n' => Tadd (seqsum f n') (f n') end.
+%   \end{coq}
+%   Here, \texttt{Fixpoint} is the \Coq{} keyword used to define ordinary recursive functions, \texttt{T} is an arbitrary type $T$, \texttt{T0} is the zero element in $T$, and \texttt{Tadd} is the addition operation on $T$.
+  
+% \end{definition}
+
+% \subsection{Matrix}
+
+% Matrices are essential mathematical tools in OR and PR, facilitating the representation and manipulation of transformations like rotation, translation, and scaling.
+% They enable the combination of multiple transformations through matrix multiplication and provide inverse matrices for representing reverse transformations.
+% In this section, we formalize matrix theory in \Coq{}, organizing it into a hierarchical structure of generic matrices and real matrices.
+
+% \subsubsection{Generic Matirx Theory}\label{sec:matrix}
+
+% % 这一小节，我们建立在一般集合上的通用矩阵理论的形式化。
+% % 我们详细介绍了矩阵类型的定义、矩阵与函数的转换、取元素操作、矩阵与列表的转换、矩阵相等关系。
+% % 然后简要描述了矩阵运算。
+% % 最后展示了利用函子来抽象矩阵元素。
+% % 这部分放在命名空间 \texttt{Matrix} 中。
+% In this subsection, we formalize the generic matrix theory on a general set.
+% We first detailed introduces the matrix types, the conversion between matrices, functions and lists, element-wise operations, and matrix equality.
+% Then, we briefly describe matrix operations.
+% Finally, we demonstrate the abstraction of matrix elements using functors.
+% This part is placed within the namespace \texttt{Matrix}.
+
+% % % 我们定义了矩阵类型，矩阵加法、数乘、转置、乘法等基本运算，以及行列式、逆矩阵等更复杂的运算，并验证了与这些运算有关的一组性质。
+% % In this subsection, we formalize the general matrix theory on a generic set.
+% % We define the matrix type and the basic operations such as matrix addition, scalar multiplication, transpose, and multiplication. We also include more complex operations like determinant and inverse, and verify a set of properties associated with these operations.
+% % This section is encapsulated within the namespace \texttt{Matrix}.
+
+% \begin{definition}[Matrix Type]
+%   % 设 $E$ 是任意集合，一个由$F$中的元素组成的 $r$ 行 $c$ 列的矩形的数组，称为一个$F$上的$r\times c$矩阵，简记为 $\bA_{r\times c}$ 或 $\bA$。
+%   A \textit{matrix} $\bA$ with $r \times c$ elements over set $T$ is a rectangular array of $r$ rows and $c$ columns consisting of elements from the set $T$, denoted by $\bA_{r\times c}$ or $\bA$.
+%   We also write $(a_{ij})_{r\times c}$ to denote the matrix $\bA$, where $a_{ij}$ represents the element in the $i$-th row and $j$-th column of $\bA$.
+% \end{definition}
+
+% The formal definition is as follows.
+% \begin{coq}
+% Inductive mat {T} (r c:nat) : Type := mk_mat (f:nat->nat->T).
+% Definition smat {T} (n : nat) := @mat T n n.
+% \end{coq}
+
+% % 这里，元素类型为$T$的具有$r$行$c$列的的矩阵类型$\mathtt{mat}$被定义为需要$A,r,c$三个参数的依赖类型。
+% % 该类型只有一个名为\texttt{mk_mat}的构造函数。
+% % 该构造函数需要一个二元函数$f$作为参数，而该参数表示从矩阵的行和列索引到元素的映射。
+% % 我们还定义了经常要用的方阵类型$\mathtt{smat}$。
+% Here, the matrix type \texttt{mat} with $r\times c$ elements over set $T$ is defined as a dependent type that takes three parameters \texttt{T}, \texttt{r}, and \texttt{c}.
+% The type has a single constructor \texttt{mk\_mat} which takes a binary function \texttt{f} as argument, and \texttt{f} represents a mapping from row and column indices to elements.
+% We also define the commonly used square matrix type \texttt{smat}.
+
+% % 决定使用该定义有以下考虑：
+% % (1) 依赖类型保证了矩阵变量具有维度约束，可排除不良定义；
+% % (2) 相比使用list和pair等结构化的构造方法，可更方便的定义矩阵运算；
+% % (3) 相比于有名的\MC{}库\cite{mathcomp}中的复杂定义，它更容易理解和使用。
+% % 关于\Coq{}中不同矩阵定义方案的比较，参考\cite{shi_matrix_2022}。
+% The decision to use this definition is based on the following considerations.
+% (1) Dependent type ensures that the matrix variables have dimension constraints, eliminating ill-defined cases.
+% (2) Compared to structured constructions such as lists and pairs, it allows for a more convenient definition of matrix operations.
+% (3) Compared to the complex definitions in the well-known \MC{} library \cite{mathcomp}, it is easier to understand and use.
+% For a comparison of different schemes of matrix definition in \Coq{}, refer to \cite{shi_matrix_2022}.
+
+% % 我们定义了函数和矩阵之间的转换函数$\mathtt{f2m}$和$\mathtt{m2f}$。
+% The conversion between function and matrix is as follows.
+% \begin{coq}
+% Definition f2m {T r c} (f:nat->nat->T) :mat r c :=mk_mat r c f.
+% Definition m2f {T r c} (A:mat r c) : nat->nat->T :=
+%   let '(mk_mat _ _ f) := A in f.
+% \end{coq}
+
+% % 并提供了方便的记号来取出矩阵中的元素，这里给出一小部分。
+% Convenient notations for get element of matrix is defined:
+% % extracting elements from matrices, here is a small part:
+% % And provided convenient notations for extracting elements from matrices, here is a small part:
+% \begin{coq}
+% Notation "A $ i $ j " := (m2f A i j) : mat_scope.
+% Notation "A .11" := (A $ 0 $ 0) : mat_scope. (* A.11 *)
+% Notation "A .23" := (A $ 1 $ 2) : mat_scope. (* A.23 *)
+% \end{coq}
+% % 其中，$\mathtt{A~\$~i~\$~j}$ 是取出矩阵$\bA$的第$(i,j)$个元素。
+% % 而记号 $\mathtt{A.11}$ 是取出矩阵$\bA$的第$(1,1)$个元素，对应于数学符号$a_{11}$，以此类推。
+% % 注意，$\mathtt{A~\$~i~\$~j}$的下标从0开始，一般在内部使用。
+% Where \texttt{A\$i\$j} retrieves the $(i, j)$-th element from matrix $\bA$,
+% and \texttt{A.11} retrieves the element $a_{11}$ of $\bA$.
+% Note that the indices in \texttt{A\$i\$j} start from 0 and are typically used internally.
+
+% % 由于列表库较为常用，我们也定义了列表和矩阵之间的转换函数$\mathtt{l2m}$和$\mathtt{m2l}$。
+% As lists are commonly used, we also define functions \texttt{l2m} and \texttt{m2l} for converting between lists and matrices:
+% \begin{coq}
+% Definition l2m {T r c} (l : list (list T)) : mat r c :=
+%   f2m (fun i j => nth j (nth i l []) T0).
+% Definition m2l {T r c} (m : mat r c) : list (list T) :=
+%   map (fun i => (map (fun j => m$i$j) (seq 0 c))) (seq 0 r).
+% \end{coq}
+% % 其中，$\mathtt{nth}$是取出列表指定位置的元素，$\mathtt{map}$是将一个函数作用与列表的每个元素生成新的列表，
+% % $\mathtt{seq}$生成一个自然数序列。
+% Where \texttt{nth} retrieves the element in a list, \texttt{map} applies a function to each element of a list to generate a new list, and \texttt{seq} generates a sequence of natural numbers.
+
+% % 两个矩阵$\bA$和$\bB$相等被定义为所有$\r\times c$下标内的元素对都相等，形式化为$\mathtt{meq}$ 。
+% Two matrices $\bA$ and $\bB$ are defined to be equal if all the elements in the $r\times c$ indices are equal, as follows.
+% \begin{coq}
+% Context `{e : Equivalence T Teq}.  Infix "==" := Teq : T_scope.
+% Definition meq {r c : nat} (A B : @mat T r c) : Prop := 
+%   forall i j, i < r -> j < c -> (A $ i $ j) == (B $ i $ j).
+% Infix "==" := meq : mat_scope.
+% \end{coq}
+% Where keyword \texttt{Context} declares an equivalence relation by three variables:
+% element type \texttt{T};
+% binary relation \texttt{Teq} on \texttt{T} is a predicate for element equality;
+% the term \texttt{e} showing that \texttt{Teq} is an equivalence relation.
+% We use the equivalence relation \texttt{Teq} rather than the Leibniz equality relation \texttt{eq},
+% allows for support of more possible types of matrix elements.
+% For example, two elements $\frac{4}{2}$ and $\frac{2}{1}$ in $\bbQ$ are equal in mathematics, but they are not equal in \Coq{} due to the construction.
+% We also provide an infix notation ``\texttt{==}'' to represent the matrix equality \texttt{meq}.
+
+% % % 很容易证明$\mathtt{meq}$是等价关系。
+% % It is easy to prove that $\mathtt{meq}$ is an equivalence relation:
+% % \begin{coq}
+% % Instance meq_equiv : forall r c : nat, Equivalence (@meq r c).
+% % \end{coq}
+% % % 其中，$\mathtt{Instance}$用于向\Coq{}声明$\mathtt{meq}$是等价关系，以便使能重写机制的支持。
+% % Where $\mathtt{Instance}$ is used to declare $\mathtt{meq}$ as an equivalence relation in \Coq{}, enabling support for rewriting mechanisms.
+
+% % 我们定义了常见的矩阵运算，以及较为复杂的包括行列式、基于经典伴随矩阵的逆矩阵等，见表\ref{tb:mat_ops}。
+% % 在形式化的函数名称中使用了统一的前缀$\mathtt{m}$表示矩阵。
+% % 同时，我们也证明了这些运算上的常见的数学性质。
+% We formalized common matrix operations, as well as complex operations such as determinant and inverse matrix, as shown in Table \ref{tb:mat_ops}.
+% \begin{table}[htbp]
+%   \caption{Operations on generic matrices}
+%   \label{tb:mat_ops}
+%   \centering
+%   \addtolength{\tabcolsep}{-0mm} % 控制列间距
+%   \begin{tabular}{l|l|l|l}
+%     \hline
+%     Function & Notation & Name & \Coq{} Notation \\
+%     \hline
+%     matrix transpose & $\bA\trans$ & \texttt{mtrans} & \texttt{A\textbackslash T} \\
+%     matrix addition & $\bA+\bB$ & \texttt{madd} & \texttt{A + B} \\
+%     zero matrix & $\bzero$ & \texttt{mat0} & -- \\
+%     identity matrix & $\bI$ & \texttt{mat1} & -- \\
+%     matrix scalar multiplication & $k\bA$ & \texttt{mcmul} & \texttt{k c* A} \\
+%     matrix multiplication & $\bA\bB$ & \texttt{mmul} & \texttt{A * B} \\
+%     determinant of matrix & $|\bA|$ & \texttt{mdet} & -- \\
+%     inverse matrix & $\bA\minv$ & \texttt{minv} & \texttt{A}$\minv$ \\
+%     \hline
+%   \end{tabular}
+% \end{table}
+% We also proved related properties of them.
+
+% The following code shows the element abstraction by functor (i.e., parameterized module).
+% \begin{coq}
+% Module Type ElementType.
+%   Parameter (T: Type) (Teq: relation T).  (* ... *)
+% Module MatrixTheory (E: ElementType).
+%   Definition mat r c : Type := @mat T r c.  (* ... *)
+% \end{coq}
+% Where keyword \texttt{Module} \texttt{Type} is used to define an abstract element type, and \texttt{Module} to define a functor for generic matrix.
+% Instantiating this functor with a specific element type can yield a specific matrix theory, as shown in Section \ref{sec:rmatrix}.
+
+% \subsubsection{Matirx Theory over Real Number}\label{sec:rmatrix}
+% In this subsection, we present the formalization of matrix theory over real numbers (i.e., real matrices).
+% Real matrices are matrices where the elements are restricted to the field of real numbers.
+% This part is placed within the namespace \texttt{MatrixR}.
+
+% By instantiating the generic matrix functor with the real number type, we obtain the basic theory of real matrices.
+% \begin{coq}
+% Module ElementTypeR : ElementType
+%   Definition T : Type := R.  (* ... *)
+% Module Export MatrixTheoryR := MatrixTheory ElementTypeR.
+% \end{coq}
+% Here, the keyword \texttt{Export} makes the module's content available in later environments.
+% Subsequently, all types, operations, notations, and properties from the \texttt{Matrix} are immediately available here, need not to explicitly specify the element operations.
+% For example, the type \texttt{MatrixR.mat1} will be automatically inferred as the type \texttt{@Matrix.mat1 R R0 R1}.
+
+% \subsection{Vector}
+% Vectors are essential in mathematics and engineering.
+% They represent elements of vector spaces and possess operations such as addition and scalar multiplication.
+% In geometry, vectors describe spatial elements, enabling the application of algebraic methods to solve geometric problems.
+% Vectors can be categorized as fixed vectors, which have defined starting and ending points, or free vectors, which consider only length and direction.
+% Our focus in this section is on free vectors, as they are of primary interest in mathematics.
+
+% This section introduces the formalization of vector theory in \Coq{}.
+% We adopt a hierarchical structure that encompasses generic vectors, real vectors, and 3D real vectors.
+
+% \subsubsection{Generic Vector Theory}\label{sec:vector}
+% In this subsection, we establish the generic vector theory within the \texttt{Vector} namespace.
+% Vectors in mathematics can be categorized as row vectors and column vectors, with notable distinctions in theory and practice.
+% Theoretical conventions represent an $n$-dimensional column vector as an $n \times 1$ matrix, and an $n$-dimensional row vector as a $1 \times n$ matrix.
+% In practical use, popular graphics APIs have distinct conventions: OpenGL uses column vectors, while DirectX uses row vectors.
+% Therefore, we explicitly differentiate between these two types of vectors.
+
+% We generate the basic vector theory based on the existing matrix theory.
+% This design ensures that there is no overhead in type conversion between vectors and matrices, and the matrix theory are immediately available for vectors.
+% An $n$ dimensional \textit{row vector} is defined as a $1 \times n$ matrix, denoted as $\ba_n\trans$ or $\ba\trans$.
+% An $n$ dimensional \textit{column vector} is defined as an $n \times 1$ matrix, denoted as $\ba_n$ or $\ba$.
+% We write $(a_{i})_n$ to represent the vector $\ba$, where $a_{i}$ refers to the $i$-th element of $\ba$.
+% Formally:
+
+% \begin{coq}
+% Definition rvec {T : Type} (n : nat) := @mat T 1 n.
+% Definition cvec {T : Type} (n : nat) := @mat T n 1.
+% Notation "v $ i " := (v $ i $ 0) : cvec_scope.
+% Notation "v .1" := (v $ 0) : cvec_scope.
+% \end{coq}
+% Here, the prefix \texttt{r} and \texttt{c} distinguishes a row or column vector.
+
+% % 由于惯例是使用列向量，因此我们大多数时候只讨论列向量。
+% % 我们定义的向量运算见表\ref{tb:vec_ops}。
+% % 使用前缀$\mathtt{cv}$表示列向量。
+% Since the convention is to use column vectors, we mostly discuss column vector.
+% The vector operations are shown in Table \ref{tb:vec_ops}.
+% The prefix \texttt{cv} is used to denote column vectors.
+
+% \begin{table}[htbp]
+%   \caption{Operations on generic vectors}
+%   \label{tb:vec_ops}
+%   \centering
+%   \addtolength{\tabcolsep}{-0mm} % 控制列间距
+%   \begin{tabular}{l|l|l|l}
+%     \hline
+%     Function & Notation & Name & \Coq{} Notation \\
+%     \hline
+%     vector addition & $\ba+\bb$ & \texttt{cvadd} & \texttt{a + b} \\
+%     vector scalar multiplication & $k\ba$ & \texttt{cvcmul} & \texttt{k c* a} \\
+%     zero vector & $\bzero$ & \texttt{cvec0} & -- \\
+%     dot product & $\langle\ba,\bb\rangle$ & \texttt{cvdot} & \texttt{<a,b>} \\
+%     \hline
+%   \end{tabular}
+% \end{table}
+
+% Additionally, we have implemented element abstraction with functor, similar to the approach in Section \ref{sec:matrix}.
+
+% \subsubsection{Vector Theory over Real Number}\label{sec:rvector}
+
+% % 这一小节，我们介绍实向量的形式化。
+% % 实向量是通用向量限制了其元素在实数域上的向量，它会有更多的运算和性质。
+% % 已定义的运算包括向量长度、夹角、投影等运算，以及平行、垂直、共面等谓词。
+% % 这部分内容放在命名空间 \texttt{VectorR} 中。
+% In this subsection, we introduce the formalization of real vectors, which provides more operations and properties.
+% The formalized operations include vector length, angle, projection, as well as predicates such as parallelism and orthogonality, is shown in Table \ref{tb:rvec_ops}.
+% This part is placed within the namespace \texttt{VectorR}.
+
+% % % 将通用向量理论的函子用实数域模块实例化，得到了基本的实向量理论。参考第\ref{sec:rmatrix}节。
+% % By instantiating the functor of the general vector theory with the real number field module, we obtain the fundamental theory of real vectors. Refer to Section \ref{sec:rmatrix} for details.
+
+% \begin{table}[htbp]
+%   \caption{Operations on real vectors}
+%   \label{tb:rvec_ops}
+%   \centering
+%   \addtolength{\tabcolsep}{-0mm} % 控制列间距
+%   \begin{tabular}{l|l|l|l}
+%     \hline
+%     Function & Notation & Name & \Coq{} Notation \\
+%     \hline
+%     length of real vector & $\|\ba\|$ & \texttt{cvlen} & \texttt{||a||} \\
+%     normalize a vector & $\frac{\ba}{\|\ba\|}$ & \texttt{cvnorm} & -- \\
+%     angle of two real vectors & $\ba\angle\bb$ & \texttt{cvangle} & \texttt{a} $\angle$ \texttt{b} \\
+%     parallel component & $\ba_{\bb\parallel}$ & \texttt{cvproj} & -- \\
+%     perpendicular component & $\ba_{\bb\perp}$ & \texttt{cvperp} & -- \\
+%     unit real vector & $\hat\ba$ & \texttt{cvunit} & -- \\
+%     parallel relation & $\ba\pll\bb$ & \texttt{cvpara} & \texttt{a} // \texttt{b} \\
+%     orthogonal relation & $\ba\perp\bb$ & \texttt{cvorth} & \texttt{a} $\perp$ \texttt{b} \\
+%     \hline
+%   \end{tabular}
+% \end{table}
+
+% % 两向量$\ba,\bb$正交被定义$\langle\ba,\bb\rangle=1$。
+% % 向量$\ba$平行于$\bb$被定义为$\exists~k,k\neq0\land k\ba=\bb$。
+% Two vectors $\ba,\bb$ are defined to be orthogonal if $\langle \ba, \bb \rangle = 0$.
+% A vector $\ba$ is defined to be parallel to $\bb$ if $\exists~k, k\neq0\land k\ba=\bb$.
+
+% \begin{definition}[Parallel and Perpendicular Component]
+%   For any vector $\ba$ and non-zero vector $\bb$, the parallel component and the perpendicular component of $\ba$ projected onto $\bb$ are defined as follows:  
+%   \begin{align}
+%     \ba_{\bb\parallel}\triangleq\frac{\langle\ba,\bb\rangle}{\langle\bb,\bb\rangle} \bb,
+%     \qquad
+%     \ba_{\bb\perp}\triangleq\ba-\ba_{\bb\parallel}.
+%   \end{align}
+% \end{definition}
+% % 其中，$\ba_{\bb\perp}$可被理解为是$\ba$在$\bb$的垂直平面上的投影。
+% % 图\ref{fig:vproj}分别在2D平面和3D立体空间中给出了投影的图形化解释。
+% Here, $\ba_{\bb\perp}$ can be understood as the projection of $\ba$ onto the perpendicular plane of $\bb$.
+% Figure \ref{fig:vproj} provides a graphical interpretation of the relation in both 2D plane and 3D space.
+% \begin{figure}[htbp]
+%   \centering
+%   \subfloat[]{\includegraphics[width=0.3\linewidth]{figures/vpara_vperp_2d}}
+%   \qquad\qquad %\hfill
+%   \subfloat[]{\includegraphics[width=0.3\linewidth]{figures/vpara_vperp_3d}}
+%   \caption{Parallel and perpendicular component of a vector}
+%   \label{fig:vproj}
+% \end{figure}
+
+% The formal definitions are as follows.
+% \begin{coq}
+% Definition cvproj {n} a b : cvec n := (<a,b> / <b,b>) c* b.
+% Definition cvperp {n} a b : cvec n := a - cvproj a b.
+% \end{coq}
+
+
+% \subsubsection{Three-dimensional Real Vector}
+
+% % 这一小节，我们进一步将实向量量理论的维数限制在3，讨论常见的欧几里得空间。
+% % 这部分内容放在命名空间 \texttt{VectorR3} 中。
+% % 我们定义的运算见表\ref{tb:rvec3_ops}。
+% % 使用前缀$\mathtt{cv3}$表示实三维列向量。
+% In this subsection, we discuss the 3D real vector, that is the Euclidean space.
+% This part is placed in the namespace \texttt{VectorR3}.
+% The operations on \texttt{VectorR3} are shown in Table \ref{tb:rvec3_ops}.
+
+% \begin{table}[htbp]
+%   \caption{Operations on 3D real vectors}
+%   \label{tb:rvec3_ops}
+%   \centering
+%   \addtolength{\tabcolsep}{-0mm} % 控制列间距
+%   \begin{tabular}{l|l|l|l}
+%     \hline
+%     Function & Notation & Name & \Coq{} Notation \\
+%     \hline
+%     cross product & $\ba\times\bb$ & \texttt{cv3cross} & \texttt{a}$\times$\texttt{b}\\
+%     vector to skew-symm. mat. & $[\ba]_\times$ & \texttt{cv3skew} & -- \\
+%     % convert skew-symmetric matrix to vector & -- & \texttt{cv3vex} & -- \\
+%     \hline
+%   \end{tabular}
+% \end{table}
+
+% The formal definitions of these operations are as follows:
+% \begin{coq}
+% Definition cv3cross (a b : cvec 3) : cvec 3 := l2cv
+%   [a.2*b.3 - a.3*b.2; a.3*b.1 - a.1*b.3; a.1*b.2 - a.2*b.1].
+% Definition cv3skew (v : cvec 3) : mat 3 3 := l2m
+%   [[0; -v.3; v.2]; [v.3; 0; -v.1]; [-v.2; v.1; 0]].
+% \end{coq}
+
+% \subsection{Quaternion}\label{sec:math.quat}
+% % 四元数是一种重要的数学对象，可用于表示和操作三维空间中的旋转和姿态信息。
+% % 通过四元数的运算，可以方便的实现旋转的组合和插值等操作。
+% Quaternion is an important mathematical theory used for OR.
+% Quaternion theory facilitate operations such as composition and interpolation of rotations.
+
+% % 四元数是一种数学结构，可用于表示和操作三维空间中的旋转和姿态信息。
+% % 四元数提供了一种简洁而高效的方式来表示旋转操作，具有较好的数学性质和计算性能。
+% % A quaternion is a mathematical structure used to represent and manipulate rotation and orientation information in 3D space. Quaternions provide a concise and efficient way to represent rotation operations, with good mathematical properties and computational performance.
+
+% \begin{definition}[Quaternion]
+%   A quaternion $\bq\in\bbH$ is a composite number consisting of four real numbers $w,x,y,z$ and three imaginary units $i,j,k$. It can be expressed as $\bq=w+xi+yj+zk$, satisfying the following rules:
+%   \begin{equation}
+%     \label{eq:quat}
+%     i^2 = j^2 = k^2 = -1,\quad ij=k,\quad jk=i,\quad ki=j.
+%   \end{equation}
+%   The $x$, $y$, and $z$ components of the quaternion can be represented by a 3D vector $\bv$.
+%   The $w$ component is called the scalar component, while the $\bv$ component is called the vector component.
+%   A quaternion $\bq$ can be denoted with:
+%   \begin{equation}
+%     % \footnotesize
+%     \label{eq:quat}
+%     \bq=(w,\bv)=(w,x,y,z)
+%     =\begin{pmatrix}w\\\bv\end{pmatrix}
+%     =\begin{pmatrix}w\\x\\y\\z\end{pmatrix}.
+%   \end{equation}
+% \end{definition}
+
+% For any quaternion $\bq=(w,x,y,z)$, its magnitude is defined as $|\bq|\triangleq\sqrt{w^2+x^2+y^2+z^2}$, and its conjugate is defined as $(w,-x,-y,-z)$, and denoted with $\overline{\bq}$ or $\bq^{\ast}$. For any two quaternions $\bq_1=(w_1,x_1,y_1,z_1)$ and $\bq_2=(w_2,x_2,y_2,z_2)$, their multiplication is defined as follows:
+
+% \begin{equation}
+%   % \footnotesize
+%   \label{eq:qmul}
+%   \bq_1\otimes\bq_2\triangleq
+%   \begin{pmatrix}
+%     w_1 w_2 - x_1 x_2 - y_1 y_2 - z_1 z_2\\
+%     w_1 x_2 + x_1 w_2 + y_1 z_2 - z_1 y_2\\
+%     w_1 y_2 - x_1 z_2 + y_1 w_2 + z_1 x_2\\ 
+%     w_1 z_2 + x_1 y_2 - y_1 x_2 + z_1 w_2
+%   \end{pmatrix}.
+% \end{equation}
+
+% \begin{lemma}[Matrix Form of Quaternion Multiplication]\label{def:qmulLR}
+%   The multiplication of quaternions $\bq_1$ and $\bq_2$ is equivalent to the following matrix multiplication:
+%   \begin{equation}
+%     % \footnotesize
+%     \label{eq:qmulLR}
+%     \bq_1\otimes\bq_2=\tQL(\bq_1)\bq_2',\quad
+%     \bq_1\otimes\bq_2=\tQR(\bq_2)\bq_1',
+%   \end{equation}
+%   \begin{equation}
+%     % \footnotesize
+%     % \renewcommand{\arraystretch}{0.9}
+%     % \setlength{\arraycolsep}{3pt}
+%     \label{eq:qmatLR}
+%     \tQL(\bq),\tQR(\bq)\triangleq
+%     \begin{pmatrix}
+%       w & -x & -y & -z\\
+%       x & w & -z & y\\
+%       y & z & w & -x\\
+%       z & -y & x & w
+%     \end{pmatrix},
+%     \begin{pmatrix}
+%       w & -x & -y & -z\\
+%       x & w & z & -y\\
+%       y & -z & w & x\\
+%       z & y & -x & w
+%     \end{pmatrix},
+%   \end{equation}
+%   \normalsize
+%   where $\bq_1'$ and $\bq_2'$ are the 4-dimentional vector form of $\bq$.
+% \end{lemma}
+% \begin{proof}
+%   Formal proof of the first equation in \eqref{eq:qmulLR}:  
+%   \begin{coq}
+% Definition qmatL (q : quat) : smat 4 := let (w,x,y,z) := q in
+%   l2m [[w;-x;-y;-z]; [x;w;-z;y]; [y;z;w;-x]; [z;-y;x;w]].
+% Lemma qmatL_spec: forall p q, p*q = cv2q ((qmatL p)*(q2cv q)).
+% Proof. intros. destruct p,q. lqa. Qed.
+%   \end{coq}
+%   Here, \texttt{qmatL} is the formal definition of the function $\tQL$, \texttt{cv2q} and \texttt{q2cv} are conversions between vector and quaternion.
+%   It can be observed that the proof is done automatically by \texttt{lqa}, where the \texttt{lqa} tactic will convert quaternion equality into component-wise equalities.
+% \end{proof}
+
+% \section{Orientation Representation}\label{sec:orientation}
+
+% % 现有多种建模OR的方法，我们将在本节讨论如下几种方法：正交旋转矩阵、欧拉角、轴角，和单位四元数。
+% % 首先澄清基本概念。
+% In this section, we will discuss methods for OR: orthogonal rotation matrix, Euler angles, axis-angle, and unit quaternions.
+% We will begin by clarifying some important basic concepts.
+
+% \subsection{Basic Concepts}
+% \subsubsection{Coordinate System}\label{sec:coordinate}
+% % 由于相对性，我们必须指定一个参考系(也称frame)才能描述空间中的位置或朝向。
+% % 我们使用两种坐标系：空间(Space)固定坐标系，记做$\cS$；物体(Body)坐标系，记做$\cB$。
+% % 我们用记号${}^{\cS}\ba$表示$\cS$中的向量$\ba$。
+% % 用记号${}^{\cS}\bA_{\cB}$表示$\cB$到$\cS$的变换，也表示了$\cB$在$\cS$下的相对朝向。
+% % 所以关系式${}^{\cS}\ba = {}^{\cS}\bA_{\cB}~{}^{\cB}\ba$成立。
+% % 与坐标系的三个坐标轴正方向相同的单位向量称作基向量，记做$\basex,\basey,\basez$ 。
+% % 一个点$P$可以被表示为坐标$(x,y,z)$，或是一个bound vector：$p = x\basex+y\basey+z\basez$。
+% Due to relativity, we must specify a reference \textit{coordinate system} (also known \textit{frames}) to describe the positions and orientations in space.
+% We utilize two coordinate systems: the space-fixed coordinate system, denoted as $\cS$, and the body coordinate system, denoted as $\cB$.
+% We use the notation ${}^{\cS}\ba$ to represent the vector $\ba$ in $\cS$.
+% The notation ${}^{\cS}\bA_{\cB}$ represents the transformation from $\cB$ to $\cS$, which also indicates the relative orientation of $\cB$ with respect to $\cS$.
+% Thus, the relationship ${}^{\cS}\ba = {}^{\cS}\bA_{\cB} \, {}^{\cB}\ba$ holds.
+% % Unit vectors that align with the positive directions of the coordinate axes in the coordinate system are referred to as the basis vectors and are denoted as $\be_x, \be_y, \be_z$.
+
+% \subsubsection{Active or Passive Transformation}\label{sec:active_passive}
+% % 由于相对性，描述变换有主动变换和被动变换两种方式。
+% % 主动变换是指在坐标系固定不动的情况下改变物体的姿态；而被动变换是指在物体固定不动的情况下改变坐标系，它相当于主动变换的逆操作。
+% % 这两种方式都非常有用，但不充分理解它们之间的差异是错误的常见因素~\cite{dunn_3d_2011}。
+% Due to relativity, transformations can be described in two ways.
+% \textit{Active transformation} refers to changing the object while the coordinate frame remains fixed, while \textit{Passive transformation} refers to changing the coordinate system while the object remains fixed.
+% Understanding the differences between these ways is crucial to avoid common mistakes~\cite{dunn_3d_2011}.
+
+% % % 主动变换和被动变换可以互相转化。
+% % % 给定变换$f:\bbR^3\mapsto\bbR^3$，若$f$可逆，则有一个相反的变换$f^{-1}:\bbR^3\mapsto\bbR^3$。
+% % % 若一个向量$\ba\in\bbR^3$通过$f$得到向量$\ba'\in\bbR^3$称作主动变换，则$\ba'$通过$f^{-1}$得到向量$\ba$就是被动变换。
+% % % 在三维旋转中，一种方法是使用旋转矩阵来表示这个变换，而且所有的旋转矩阵都是可逆和正交的。
+% % % 这意味着，我们使用矩阵转置就能很容易的转换主动和被动变换。
+% % % 也就是说：若$\ba'=\bA\ba$，则$\ba=\bA\trans(\ba').$
+% % Active and passive transformations can be interchanged. Given a transformation $f: \bbR^3 \mapsto \bbR^3$, if $f$ is invertible, there exists an inverse transformation $f^{-1}: \bbR^3 \mapsto \bbR^3$. If a vector $\ba \in \bbR^3$ is transformed to $\ba'$ by $f$, it is an active transformation, and $\ba$ is obtained from $\ba'$ by $f^{-1}$, which is a passive transformation. In 3D rotations, one way to represent this transformation is by using rotation matrices, which are invertible and orthogonal. This means that we can easily switch between active and passive transformations by using the transpose of the matrix. In other words, if $\ba' = \bA\ba$, then $\ba = \bA\trans(\ba')$.
+
+% \subsubsection{Handedness and Positive direction}\label{sec:handedness_positive_dir}
+% % 在三维空间中，不同的\textit{handedness}决定了左(右)手坐标系，从而决定了第三个坐标轴的正方向，以及旋转运动的正方向。
+% % 在左(右)手坐标系中，先伸出左(右)手，当将拇指、食指和中指三根手指摆出相互垂直的造型时，这三根手指分别表示了$+x,+y$和$+z$方向；
+% % 当将手摆出一个“竖起大拇指”的造型，并拇指指向旋转轴的正端时，手指卷曲的方向就是旋转正方向。
+% In 3D space, different \textit{handedness} determines the left (right) hand coordinate system, thereby determining the \textit{positive direction} of the third coordinate axis, as well as the \textit{positive direction} of the rotational movement.
+% In the left (right) hand coordinate system, first stretch out the left (right) hand:
+% when the thumb, index, and middle finger are positioned perpendicular to each other, these three fingers represent the $+x$, $+y$, and $+z$ directions, respectively;
+% when you shape your hand into a ``thumbs-up'' gesture and points the thumb to the positive end of the rotation axis, the direction of the curled fingers represents the positive direction of rotation.
+
+% \subsubsection{Intrinsic or Extrinsic Rotation}\label{sec:intrinsic_extrinsic}
+% % 有两个坐标系，讨论绕坐标轴旋转时需明确是哪个坐标系的旋转轴。
+% % (1) 内旋是使用$\cB$的旋转轴。
+% % (2) 外旋是使用$\cS$的旋转轴。
+% When discussing rotations around coordinate axes, it is necessary to specify which coordinate system the rotation axis belongs to.
+% (1) \textit{Intrinsic rotation} uses the rotation axis of $\cB$.
+% (2) \textit{Extrinsic rotation} uses the rotation axis of $\cS$.
+
+% \subsubsection{Pre- or Post- Multiplication}\label{sec:pre_post}
+% % 同一个向量，可以被表示为列向量$\ba$或行向量$\ba\trans$。
+% % 旋转矩阵$\bA$能被预乘以列向量，或者后乘以行向量来表达变换。
+% % 也就是说，有$\bA\ba$或$\ba\trans\bA$这两种做法。
+% % 显然它们的结果是不同的。
+% % 通常，我们会约定使用哪一种向量形式，并通过封装常用操作为更友好的函数来避免底层运算的差异。
+% A vector can be represented as a column vector $\ba$ or a row vector $\ba\trans$.
+% A rotation matrix $\bA$ can be \textit{pre-multiplied} by a column vector ($\bA\ba$) or \textit{post-multiplied} by a row vector ($\ba\trans\bA$) to represent the transformation.
+% To avoid such differences, we typically use a single vector form and provide user-friendly functions to encapsulate the mathematical operations.
+
+% \subsection{Rotation Matrix}
+
+% % 旋转矩阵是在乘以一个向量的时候有改变向量的方向但不改变大小的效果并保持了手性的矩阵。
+% % 旋转矩阵常常作为欧拉角、轴角、四元数等不同OR方法的中间形式。
+% A \textit{rotation matrix} changes the direction of a vector while preserving its magnitude and maintaining handedness.
+% Rotation matrices often serve as an intermediate form for different OR methods.
+
+% % 构造旋转矩阵的一种方法是，给出$\cB$在$\cS$下的的基矢量，并作为行或列构成一个$3\times3$的矩阵。
+% % 作为行还是列，取决于使用预乘还是后乘方式。
+% % 由于相对性，也可以构造$\cS$在$\cB$下的矩阵。
+% One way to construct a rotation matrix is to provide the basis vectors of $\cB$ in the $\cS$ and use them as rows or columns to form a $3\times3$ matrix.
+% Whether they are rows or columns depends on pre-multiplication or post-multiplication.
+% % Due to relativity, it is also possible to construct a matrix representing $\cS$ in $\cB$.
+
+% \subsubsection{Orthogonal Rotation Matrix}
+% % 旋转矩阵都是正交矩阵，具有良好的数学性质。
+% % 正交矩阵的逆矩阵等于矩阵转置，从而很容易实现旋转的逆变换。
+% % 这里介绍正交矩阵的定义和部分性质。
+% Rotation matrices are orthogonal matrices and possess good mathematical properties.
+% The inverse of an orthogonal matrix is equal to its transpose, making it easy to perform inverse transformations.
+% Here, we give the definition and properties of orthogonal matrices.
+
+% \begin{definition}[Orthogonal matrix]
+% An $n\times n$ matrix $\bA$ is called an \textit{orthogonal matrix} if it satisfies the orthonormality condition $\bA\trans \bA = \bI$, where $\bI$ represents the identity matrix.
+% \end{definition}
+
+% Formally, this predicate is defined as follows:
+% \begin{coq}
+% Definition morth {n} (m : smat n) : Prop := m\T * m == mat1.
+% \end{coq}
+
+% We proved the following properties on \texttt{Matrix}.
+% \begin{itemize}
+% \item If matrix $\bA$ is orthogonal, then $\bA^{-1}=\bA\trans$
+% \item An orthogonal matrix is invertible.
+% \item Inverse an orthogonal matrix is orthogonal.
+% \item Transpose an orthogonal matrix is orthogonal.
+% \item Multiplication of two orthogonal matrices is orthogonal.
+% \end{itemize}
+
+% These lemmas are formally stated as follows:
+% \begin{coq}
+% Variables (n : nat) (A B : smat n).
+% Lemma morth_invertible : morth A -> minvertible A.
+% Lemma morth_minv : morth A -> morth (A<!${}^{-1}$!>).
+% Lemma morth_mtrans : morth A -> morth (A\T).
+% Lemma morth_mul : morth A -> morth B -> morth (A * B).
+% \end{coq}
+
+% % % 如果正交矩阵还满足行列式为$1$的条件，则这样的矩阵会形成被称为$\mathcal{SO}(3)$的群。
+% % % 我们形式化的构造了这个群，并可以利用群的性质辅助证明。
+% % % 限于篇幅，这里不再介绍。
+% % If an orthogonal matrix satisfies the condition that its determinant is 1, such matrices form a group known as $\mathcal{SO}(3)$. We have formalized the construction of this group and can use the properties of groups to aid in the proofs. Due to space limitations, further details are not provided here.
+
+% For \texttt{MatrixR}, there are additional properties:
+% \begin{itemize}
+% \item The determinant of an orthogonal matrix is $\pm1$.
+% \item Orthogonal matrix will keep dot product.
+% \item Orthogonal matrix will keep length.
+% \item Orthogonal matrix will keep normalization.
+% \item Orthogonal matrix will keep angle.
+% \end{itemize}
+% The formal descriptions of these lemmas are as follows:
+% \begin{coq}
+% Variables (n: nat) (A : smat n) (v v1 v2 : cvec n).
+% Hypothesis Horth: morth A.
+% Lemma morth_mdet : mdet A = 1 \/ mdet A = -1.
+% Lemma morth_keep_dot : <A * v1, A * v2> = <v1, v2>.
+% Corollary morth_keep_length : ||A * v|| = ||v||.
+% Corollary morth_keep_norm : cvnorm (A * v) == A * (cvnorm v).
+% Corollary morth_keep_angle : A * v1 <!$\angle$!> A * v2 = v1 <!$\angle$!> v2.
+% \end{coq}
+
+% % 限于篇幅，上述引理的证明不做介绍。
+% % Due to space limitations, the proofs of the above lemmas are not provided here.
+
+% \subsubsection{Pros and Cons of Matrix Form}
+% % 矩阵形式有这些优点：
+% % 1. 使用矩阵乘法即可立即算出向量旋转后的结果。
+% % 2. 这是图形API使用的格式。
+% % 3. 使用矩阵转置可快速计算“反向”变换。
+% Advantages of matrix form:
+% (1). the rotated vector can be computed immediately using matrix multiplication;
+% (2). this form is used by graphics APIs;
+% (3). inverse transformation can be quickly computed.
+
+% % 矩阵形式的缺点：
+% % (1). 9个数值会占用更多内存。
+% % (2). 矩阵元素值是介于$-1$到$+1$的数，无助于人的直观理解。
+% % (3). 矩阵可能因蠕变而不正交，需要额外的校正。
+% Disadvantages of the matrix form:
+% (1) nine numerical values occupy more memory;
+% (2) matrix element values ranging from $-1$ to $+1$ are not intuitive for human understanding;
+% (3) matrix may become non-orthogonal, requiring extra correction.
+
+% \subsection{Euler Angle}
+% \subsubsection{Concepts of Euler Angle}
+% % 欧拉角提供了一种直观的描述方法，将OR定义为绕固定坐标轴进行的三次旋转。
+% % 但是，欧拉角存在万向节锁问题（Gimbal lock），在某些情况下可能导致旋转计算出现奇点。
+% Euler angles provide an intuitive way to describe rotations as three consecutive rotations around fixed coordinate axes.
+% However, Euler angles suffer from the problem of gimbal lock, which can lead to singularities in rotation calculations in certain cases.
+
+% % 欧拉角总共有24种定义方式，取决于对旋转轴的2种选择策略和12种顺序\cite{roithmayr_dynamics_2015}。
+% % 旋转轴的选择策略指内旋或外旋\ref{sec:intrinsic_extrinsic}。
+% % 旋转轴的顺序根据是否有重复的轴分为两类：
+% % (1) Eulerian: 有重复，但不是相继的重复。包括：$\mathtt{XYX, XZX, YXY, YZY, ZXZ, ZYZ}$。
+% % (2) Cardanian: 没有重复。包括：$\mathtt{XYZ,XZY,YXZ,YZX,ZXY,ZYX}$。
+% There are a total of 24 ways to define Euler angles, depending on 2 choices of rotation axis and 12 possible orders \cite{roithmayr_dynamics_2015}.
+% The choice of rotation axis refers to intrinsic or extrinsic rotation in \ref{sec:intrinsic_extrinsic}.
+% The order of rotation axes are classified into two categories based on whether there are repeated axes:
+% (1) Eulerian: there are repeated axes, but not consecutive, including: \texttt{XYX}, \texttt{XZX}, \texttt{YXY}, \texttt{YZY}, \texttt{ZXZ}, \texttt{ZYZ}.
+% (2) Cardanian: there are no repeated axes, including: \texttt{XYZ},\texttt{XZY},\texttt{YXZ},\texttt{YZX},\texttt{ZXY},\texttt{ZYX}.
+
+% % 关于欧拉角的名称在不同的上下文有不同的含义和记号。
+% % 在航空领域使用术语yaw, pitch, and yaw angles，而在航海领域可能使用 bank, attitude, and heading angles.
+% The names of Euler angles have different meanings and notations in different contexts.
+% In aviation, the terms ``yaw, pitch, and roll angles'' are used, while in navigation, ``bank, attitude, and heading angles'' may be used.
+
+% % 为了简化描述，我们使用一些简写。
+% % 用\texttt{B}代表绕物体轴的内旋，用\texttt{S}代表绕空间参考系轴的外旋，用\texttt{1},\texttt{2},\texttt{3}分别代表\texttt{X},\texttt{Y},\texttt{Z}轴。
+% % 例如，记号\texttt{B123}表示使用内旋和\texttt{XYZ}的旋转轴顺序来定义欧拉角。
+% To simplify the description, we will define some notations.
+% We use \texttt{B} to represent an intrinsic rotation about the axis of $\cB$, \texttt{S} to represent an extrinsic rotation about the axis of $\cS$, and \texttt{1}, \texttt{2}, \texttt{3} to represent the \texttt{X}, \texttt{Y}, \texttt{Z} axes, respectively.
+% For example, the notation \texttt{B123} represents the use of intrinsic rotation with the rotation axis sequence \texttt{XYZ} to define Euler angles.
+
+% \subsubsection{Basic rotation matrix}
+% % 基本旋转矩阵表示绕坐标轴旋转时的变换。
+% % 当约定使用右手坐标系，预乘，和主动变换，
+% % 绕 $x-,y-$ 或 $z-$ 轴旋转$\theta$角的基本旋转矩阵定义如下：
+% The \textit{basic rotation matrix} represents transformations rotating about coordinate axes.
+% When using the right-hand coordinate system, pre-multiplication, and active transformations,
+% the basic rotation matrices for rotating $\theta$ around the $x$-, $y$-, or $z$-axis are defined as follows:
+% \begin{equation}
+%   % \footnotesize
+%   \label{eq:basic_rot_mat}
+%   % \renewcommand{\arraystretch}{0.9}
+%   % \setlength{\arraycolsep}{2pt}
+%   \mathbf{R_x,R_y,R_z}(\theta)\triangleq
+%   \begin{bmatrix}1&0&0\\0&c&-s\\0&s&c\end{bmatrix},
+%   \begin{bmatrix}c&0&s\\0&1&0\\-s&0&c\end{bmatrix},
+%   \begin{bmatrix}c&-s&0\\s&c&0\\0&0&1\end{bmatrix}.
+% \end{equation}
+% % 其中，$c$代表$\cos{\theta}$，$s$代表$\sin{\theta}$。
+% % 这些矩阵的正确性可通过分析几何关系来验证，也可通过检查它们与定理\ref{thm:rotaamat}中的一般矩阵在给定转轴时的值一致来验证，这里省略了。
+% Here, $c$ represents $\cos{\theta}$ and $s$ represents $\sin{\theta}$.
+% The correctness of these matrices can be verified by geometric analyzing or by checking their equivalence to the general matrices in Theorem \ref{thm:aarot} with a given rotation axis, which is omitted here.
+
+% \subsubsection{B123 Convention}
+% % 这里以\texttt{B123}为例，介绍其有关的算法。
+% % \texttt{B123}是指：使用内旋策略（即每次绕物体坐标系$\cB$），依次绕$\mathtt{X},\mathtt{Y}$和$\mathtt{Z}$轴旋转。
+% % 这是航空领域最常用的一种方式，也称\texttt{RPY}方式，也就是将三个旋转角分别称为\textit{Roll},\textit{Pitch}和\textit{Roll}角，
+% % 并记做$\phi,\theta,\psi$。
+% Here, we illustrate the related algorithms using the \texttt{B123} convention, which utilizes intrinsic rotation with the axes sequence of \texttt{X}, \texttt{Y}, and \texttt{Z}.
+% This convention, also known as the \textit{RPY} (Roll, Pitch, Yaw) convention, is widely used in the aerospace field, where the rotation angles are denoted as $\phi$, $\theta$, and $\psi$.
+
+% % 我们不打算详细介绍领域知识，重点关注数学推导的形式验证。
+% % 我们将三个旋转角依次称为$\theta_1,\theta_2,\theta_3$。
+% % 以下分别介绍了欧拉角和旋转矩阵之间的转换算法，奇异性问题的处理等。
+% Our intention is not to extensively introduce domain knowledge, but rather to focus on the formal verification of mathematical derivations.
+% The three rotation angles are denoted as $\theta_1$, $\theta_2$, and $\theta_3$.
+% In the subsequent content, we will present the conversion algorithms between Euler angles and rotation matrices, as well as addressing singularity issues.
+
+% \begin{lemma}[Correctness of the conversion from Euler angles to rotation matrices in \texttt{B123}]\label{lem:B123_e2m}
+%   For any three rotation angles $\theta_1$, $\theta_2$, and $\theta_3$, the rotation matrix obtained according to the \texttt{B123} convention has the following form:
+%   \begin{equation}
+%     % \footnotesize
+%     \label{eq:B123_e2m}
+%     % \renewcommand{\arraystretch}{0.9}
+%     % \setlength{\arraycolsep}{1pt}
+%     \mathbf{B123}(\theta_1,\theta_2,\theta_3)\triangleq
+%     \begin{bmatrix}
+%       c_2c_3 & -c_2s_3 & s_2\\
+%       s_1s_2c_3 + s_3c_1 & -s_1s_2s_3 + c_3c_1 & -s_1c_2\\
+%       -c_1s_2c_3 + s_3s_1 & c_1s_2s_3 + c_3s_1 & c_1c_2
+%     \end{bmatrix},
+%   \end{equation}
+%   where $c_i$ represents $\cos{\theta_i}$, $s_i$ represents $\sin{\theta_i}$.
+%   In other words, the following equation hold:
+%   \begin{equation}
+%     \label{eq:B123_e2m_spec}
+%     \mathbf{B123}(\theta_1,\theta_2,\theta_3)=
+%     \mathbf{R_x}(\theta_1)\mathbf{R_y}(\theta_2)\mathbf{R_z}(\theta_3).
+%   \end{equation}
+% \end{lemma}
+% \begin{proof}
+%   The algorithm \eqref{eq:B123_e2m} is descripted as follows:  
+%   \begin{coq}
+% Variable <!$\uptheta1~\uptheta2~\uptheta3$!> : R.
+% Notation c1 := (cos <!$\uptheta1$!>). Notation s1 := (sin <!$\uptheta1$!>).
+% Notation c2 := (cos <!$\uptheta2$!>). Notation s2 := (sin <!$\uptheta2$!>).
+% Notation c3 := (cos <!$\uptheta3$!>). Notation s3 := (sin <!$\uptheta3$!>).
+% Definition B123 : mat 3 3 := l2m [[c2*c3; -c2*s3; s2];
+%   [s1*s2*c3 + s3*c1; -s1*s2*s3 + c3*c1; -s1*c2];
+%   [-c1*s2*c3 + s3*s1; c1*s2*s3 + c3*s1; c1*c2]]%R.
+%   \end{coq}
+%   The formal description and proof of this lemma are as follows:  
+%   \begin{coq}
+% Theorem B123_spec: B123 == Rx <!$\uptheta1$!>*Ry <!$\uptheta2$!>*Rz <!$\uptheta3$!>. Proof. lma. Qed.
+%   \end{coq}
+%   Here, \texttt{lma} is a tactic defined in \texttt{Matrix}, which allows us to complete the proof about \texttt{meq} in one step.\end{proof}
+
+% \begin{lemma}[Existence of singularity in \texttt{B123}]\label{lem:B123_singular}
+%   If $\theta = \pm\frac{\pi}{2}$, the values of $\phi$ and $\psi$ cannot be uniquely determined.
+% \end{lemma}
+% \begin{proof}
+%   We formally present the following theorem to demonstrate the existence of the singularity:
+%   \begin{coq}
+% Lemma B123_phi_singular : forall <!$\upphi~\uptheta~\uppsi$!>, (<!$\uptheta$!>=PI/2 \/ <!$\uptheta$!>=-PI/2) -> forall <!$\upphi'$!>, (exists <!$\uppsi'$!>, B123 <!$\upphi'~\uptheta~\uppsi'$!> == B123 <!$\upphi~\uptheta~\uppsi$!>).
+%   \end{coq}
+%   Here, the theorem states that for a given Euler angles $(\phi, \theta, \psi)$ and the corresponded rotation matrix $\mathtt{B123}(\phi,\theta,\psi)$, if $\theta$ is equal to $\frac{\pi}{2}$ or $\frac{-\pi}{2}$,
+%   then infinite $\phi'$ could be found such that it's rotation matrix $\mathtt{B123}(\phi',\theta,\psi')$ is equal to $\mathtt{B123}(\phi,\theta,\psi)$, where $\psi'$ is the third angle.
+%   The proof is omitted.
+% \end{proof}
+
+% Although the singularity prevents a unique algorithm from rotation matrix to Euler angles, we have solutions in specific cases.
+% We present multiple algorithms from simple to complex.
+
+% \begin{lemma}[Correctness of the conversion from rotation matrix to euler angles within a small range in \texttt{B123}]
+%   \label{lem:B123_m2e_alg1}
+%   For a rotation matrix $\bC$ obtained from a rotation in the \texttt{B123} convention, and assuming the original Euler angles satisfy $\phi, \theta, \psi \in (\frac{-\pi}{2}, \frac{\pi}{2})$, the Euler angles can be computed by:
+%   \begin{equation}
+%     \label{eq:B123_m2e_alg1}
+%     \left\{
+%       \begin{array}{l}
+%         \phi'(\bC)\triangleq\arctan(-c_{23}/c_{33})\\
+%         \theta'(\bC)\triangleq\arcsin(c_{13})\\
+%         \psi'(\bC)\triangleq\arctan(-c_{12}/c_{11})
+%       \end{array},
+%     \right.
+%   \end{equation}
+%   where $c_{ij}$ is the elements of $\bC$.
+%   Show that $\phi', \theta', \psi'$ obtained from equation \eqref{eq:B123_m2e_alg1} are equal to the original $\phi, \theta, \psi$.
+% \end{lemma}
+% \begin{proof}
+%   The algorithm \eqref{eq:B123_m2e_alg1} is descripted as follows:  
+%   \begin{coq}
+% Definition <!$\upphi'$!> (C : smat 3) := atan (- C.23 / C.33).
+% Definition <!$\uptheta'$!> (C : smat 3) := asin (C.13).
+% Definition <!$\uppsi'$!> (C : smat 3) := atan (- C.12 / C.11).
+%   \end{coq}
+%   The formal statement of this lemma is as follows:  
+%   \begin{coq}
+% Lemma alg1_spec : forall (<!$\upphi~\uptheta~\uppsi$!> : R) (C : smat 3),
+%   -PI/2 < <!$\upphi$!> < PI/2 -> -PI/2 < <!$\uptheta$!> < PI/2 -> -PI/2 < <!$\uppsi$!> < PI/2 ->
+%   C == B123 <!$\upphi~\uptheta~\uppsi$!> -> <!$\upphi'$!> C = <!$\upphi$!> /\ <!$\uptheta'$!> C = <!$\uptheta$!> /\ <!$\uppsi'$!> C = <!$\uppsi$!>.
+%   \end{coq}
+%   Here, \texttt{C} == \texttt{B123}$~\upphi~\uptheta~\upphi$ indicates that the input matrix $\bC$ is generated from $\phi, \theta, \psi$ according to \texttt{B123}.
+%   The proof of this lemma is as follows:  
+%   \begin{coq}
+% Proof. intros. cbv. rewrite !H2; auto. cbv. ra. Qed.
+%   \end{coq}
+%   We defined the \texttt{ra} tactic for equalities and inequalities involving real numbers.
+%   The proof is automatically done by \texttt{ra}.
+% \end{proof}
+
+% Due to the wider range of motion required for roll and yaw angles in the real-world, more applicable algorithms are required.
+% \begin{lemma}[Correctness of the conversion from rotation matrix to euler angles within a large range in \texttt{B123}]\label{lem:B123_m2e_alg2}
+%   For a rotation matrix $\bC$ obtained from a rotation in the \texttt{B123} convention, and assuming the original Euler angles satisfy $\phi, \psi \in (-\pi, \pi)$ and $\theta \in (\frac{-\pi}{2}, \frac{\pi}{2})$, the Euler angles can be computed as follows:
+%   \begin{equation}
+%     \label{eq:B123_m2e_alg2}
+%     \left\{
+%       \begin{array}{l}
+%         \phi'(\bC)\triangleq\mathrm{arctan2}(-c23, c33)\\
+%         \theta'(\bC)\triangleq\arcsin(c13)\\
+%         \psi'(\bC)\triangleq\mathrm{arctan2}(-c12,c11)
+%       \end{array},
+%     \right.
+%   \end{equation}
+%   where $c_{ij}$ is the elements of $\bC$, and $\mathrm{arctan2}$ is extended version of the $\arctan$ function which expands the range from $[\frac{-\pi}{2}, \frac{\pi}{2}]$ to $[-\pi, \pi]$.
+%   Show that $\phi', \theta', \psi'$ obtained from equation \eqref{eq:B123_m2e_alg2} are equal to the original $\phi, \theta, \psi$.
+% \end{lemma}
+% \begin{proof}
+%   Since the function $\mathrm{arctan2}$ is absence in \Coq{} standard library yet, we formalized it with name $\mathtt{atan2}$. Due to space limitations, we will not describe the detail here. The algorithm \eqref{eq:B123_m2e_alg2} is descripted as follows:
+%   \begin{coq}
+% Definition <!$\upphi'$!> (C : smat 3) := atan2 (- C.23) (C.33).
+% Definition <!$\uptheta'$!> (C : smat 3) := asin (C.13).
+% Definition <!$\uppsi'$!> (C : smat 3) := atan2 (- C.12) (C.11).
+%   \end{coq}
+%   The formal statement of this lemma is as follows:
+%   \begin{coq}
+% Lemma alg2_spec : forall (<!$\upphi~\uptheta~\uppsi$!> : R) (C : smat 3),
+%   -PI < <!$\upphi$!> < PI -> -PI/2 < <!$\uptheta$!> < PI/2 -> -PI < <!$\uppsi$!> < PI ->
+%   C == B123 <!$\upphi~\uptheta~\uppsi$!> -> <!$\upphi'$!> C = <!$\upphi$!> /\ <!$\uptheta'$!> C = <!$\uptheta$!> /\ <!$\uppsi'$!> C = <!$\uppsi$!>.
+%   \end{coq}
+%   The proof of this lemma is as follows:
+%   \begin{coq}
+% Proof. intros. cbv. rewrite !H2. cbv. ra.
+%   assert (0 < cos <!$\uptheta$!>). { apply cos_gt_0; lra. } repeat split.
+%   - rewrite atan2_eq1; auto.
+%   - rewrite !(Rmult_comm (cos <!$\uptheta$!>)), atan2_eq1; auto. Qed.
+%   \end{coq}
+%   Here, a key simplification is achieved by \texttt{atan2\_eq1} which is a property of $\mathtt{atan2}$, and defined as follows:
+%   \begin{equation}
+%     % \footnotesize
+%     \label{eq:atan2_eq1}
+%     \forall~a~b,
+%     -\pi < a < \pi \rightarrow b > 0\rightarrow
+%     \mathrm{atan2}~((\sin a)b)~((\cos a)b) = a.
+%   \end{equation}
+%   We can observed that the proof is concise.
+% \end{proof}
+
+% It should be noted that both algorithms \eqref{eq:B123_m2e_alg1} and \eqref{eq:B123_m2e_alg2} skip the case of Euler angle singularity.
+% The general approach is to artificially set one of the angles to 0 to determine the second angle.
+% We have formalized a complex algorithm proposed in the literature \cite{quan_multicopter_2017} to handle singularity,
+% but will not introduce it due to the space limitations.
+
+% \subsubsection{Other Conventions}
+% While not all 24 conventions are used in practice, we have formalized all of them.
+% The conversion from Euler angles to rotation matrices has been fully implemented, while the conversion from rotation matrices to Euler angles is only partially completed.
+% The formalization are similar to those described in Lemma \ref{lem:B123_e2m}, \ref{lem:B123_singular}, \ref{lem:B123_m2e_alg1}, and \ref{lem:B123_m2e_alg2}.
+
+% \subsection{Axis-Angle}
+% % 轴角是一种用一个单位向量$\hat{\bn}$和一个角度$\theta$来描述旋转的方法，其中，向量$\hat{\bn}$指定了旋转轴的正方向，而角度$\theta$则表示绕该轴旋转的角度。
+% % 轴角方法具有良好的数学性质和直观的物理意义，并且没有万向节锁问题。
+% Axis-angle is a method for describing rotation using a unit vector $\hat{\bn}$ and an angle $\theta$, where the vector $\hat{\bn}$ specifies the positive direction of the rotation axis, and the angle $\theta$ indicates the amount of rotation around that axis.
+% The axis-angle method possesses good mathematical properties and intuitive physical meaning while avoiding the gimbal lock problem.
+
+% % 接下来，我们将推导使用轴角参数来计算向量旋转的算法，以及将轴角参数转换为旋转矩阵的算法。
+% % 其中，第一个算法也称Rodrigues Formula。
+% Next, we will derive the algorithms for calculating vector rotation using axis-angle parameters, as well as the algorithm for converting axis-angle parameters into a rotation matrix.
+% The first algorithm is also known as the Rodrigues Formula.
+
+% % % 也就是说，我们想要推导出矩阵$\bR(\hat{\bn},\theta)$，使得矢量$\ba$被旋转后得到的$\ba'$满足$\ba'=\bR(\hat{\ba},\theta)\ba$。
+% % Considering the rotation around an arbitrary axis in 3D, we aim to derive a matrix for rotating vectors by an angle $\theta$ about the axis $\hat{\bn}$. In other words, we want to derive a matrix $\bR(\hat{\bn},\theta)$ such that a vector $\ba$ rotated by this matrix results in $\ba'$ satisfying $\ba'=\bR(\hat{\bn},\theta)\ba$. For now, we disregard translation and assume that the rotation axis passes through the origin.
+
+% \begin{theorem}[Correnctness of the Rodrigues' formula]\label{thm:aarot}
+%   Given a unit vector $\hat{\bn}$ respresenting the positive direction of a rotation axis,
+%   for any vector $\ba$ and any angle $\theta$, rotate $\ba$ about $\bn$ by $\theta$ will got another vector $\ba'$ such that:
+%   \begin{equation}
+%     \label{eq:aarot}
+%     \ba' =
+%     \langle\ba,\hat{\bn}\rangle\hat{\bn}
+%     + \cos\theta(\ba - \langle\ba,\hat{\bn}\rangle\hat{\bn})
+%     + \sin\theta(\hat{\bn}\times\ba).
+%   \end{equation}
+% \end{theorem}
+
+% \begin{proof}
+%   We will give informal and formal proof separately.
+
+%   \textbf{Informal Proof}
+%   As shown in Figure \ref{fig:aa}, vector $\ba$ rotates about the axis $\hat{\bn}$ by an angle $\theta$ and reaches $\ba'$.
+%   \begin{figure}[htbp]
+%     \centering
+%     \subfloat[\label{fig:aa.3d}]{\includegraphics[width=0.4\linewidth]{figures/aa_3d}}
+%     \qquad\qquad %\hfill
+%     \subfloat[\label{fig:aa.2d}]{\includegraphics[width=0.25\linewidth]{figures/aa_2d}}
+%     \caption{The proof of axis-angle representaton}
+%     \label{fig:aa}
+%   \end{figure}
+%   First, decompose the $\ba$ into its parallel component $\ba_\parallel$ and perpendicular component $\ba_\perp$, such that $\ba=\ba_\parallel+\ba_\perp$.
+%   By utilizing the vector properties, we have the following equations:
+%   \begin{align}
+%     \ba_\parallel
+%     &\triangleq\ba_{\hat{\bn}\parallel}
+%       =\frac{\langle\ba,\hat{\bn}\rangle}{\langle\hat{\bn},\hat{\bn}\rangle} \hat{\bn}
+%       =\langle\ba,\hat{\bn}\rangle \hat{\bn}
+%       \label{aaDeriv.a_proj},\\
+%     \ba_\perp
+%     &\triangleq\ba_{\hat{\bn}\perp}
+%       =\ba-\ba_\parallel
+%       =\ba - \langle\ba,\hat{\bn}\rangle\hat{\bn}\label{aaDeriv.a_perp}.
+%   \end{align}
+  
+%   By independently rotating these two components, we obtain $\ba_\parallel'$ and $\ba_\perp'$, respectively.
+%   Since $\ba_\parallel$ is parallel to $\hat{\bn}$ and it remains unchanged after rotation, we have:
+%   \begin{align}
+%     \ba_\parallel'
+%     \triangleq \ba_\parallel
+%     = \langle\ba,\hat{\bn}\rangle\hat{\bn}\label{aaDeriv.a_proj'}.
+%   \end{align}
+
+%   The next step is to determine $\ba_\perp'$.
+%   By taking the cross product of $\hat{\bn}$ and $\ba_\perp$, we obtain a vector $\bb$ that is perpendicular to both of them, i.e., $\bb\triangleq\hat{\bn}\times\ba_\perp$.
+%   By rotating $\ba_\perp$ an angle $\theta$ in the 2D plane formed by $\ba_\perp$ and $\bb$, we obtain $\ba_\perp'$.
+%   We can prove a equivalent form of $\bb$ as follows:
+%   \begin{align}
+%     \bb
+%     =\hat{\bn}\times(\ba-\ba_\parallel)=\hat{\bn}\times \ba - \hat{\bn}\times \ba_\parallel
+%     =\hat{\bn}\times \ba.
+%   \end{align}
+%   Additionally, we claim that vectors $\ba_\perp,\ba_\perp'$ and $\bb$ have the same length.
+%   The $|\ba_\perp|=|\ba_\perp'|$ holds since rotation preserves length,
+%   and $|\ba_\perp|=|\bb|$ holds due to the derivation
+%   $|\bb|=|\hat{\bn}\times\ba_\perp|=|\hat{\bn}||\ba_\perp|\sin\frac{\pi}{2}=|\ba_\perp|$.
+%   The geometric relationship among $\ba_\perp$, $\ba_\perp'$, and $\bb$ is depicated in Figure \ref{fig:aa.2d}.
+%   According to vector theory, $\ba_\perp' = \cos\theta\ba_\perp + \sin\theta\bb$ holds. Thus, we have:
+%   \begin{align}
+%     \ba_\perp'
+%     = \cos\theta(\ba - \langle\ba,\hat{\bn}\rangle\hat{\bn})
+%     +\sin\theta(\hat{\bn}\times\ba)\label{aaDeriv.a_perp'}.
+%   \end{align}
+%   Hence the rotation preserves vector addition, we have $\ba'=\ba_\parallel'+\ba_\perp'$,
+%   and immediately get the formula \eqref{eq:aarot} by \eqref{aaDeriv.a_proj'}, \eqref{aaDeriv.a_perp'}.
+
+%   \textbf{Formal Proof}
+%   The formal description of equation \eqref{eq:aarot} is:
+%   \begin{coq}
+% Definition rotaa (<!$\uptheta$!>:R) (n: cvec 3) (a: cvec 3) : cvec 3 :=
+%   <a,n> c* n + (cos <!$\uptheta$!>) c* (a - <a,n> c* n) + (sin <!$\uptheta$!>) c* (n<!$\times$!>a).
+%   \end{coq}
+%   The formal description of this theorem is provided:
+%   \begin{coq}
+% Theorem rotaa_spec : forall (<!$\uptheta$!> : R) (n : cvec 3) (a : cvec 3),
+%   let a_para : cvec 3 := cvproj a n in
+%   let a_perp : cvec 3 := cvperp a n in
+%   let b : cvec 3 := n <!$\times$!> a_perp in
+%   let a_perp' : cvec 3 := (cos <!$\uptheta$!>) c* a_perp + (sin <!$\uptheta$!>) c* b in
+%   let a' : cvec 3 := a_perp' + a_para in
+%   cvunit n -> a' == rotaa <!$\uptheta$!> n a.
+%   \end{coq}
+%   The proof is consistent with the informal derivation mentioned above, but it is more rigorous and reliable.  
+% \end{proof}
+
+% \begin{theorem}[Correctness of conversion from Axis-angle to rotation matrix]\label{thm:aa2mat}
+%   % 给定任意轴角参数$(\hat{\bn},\theta)$，构造如下的$3\times3$矩阵：
+%   For any axis-angle parameters $(\hat{\bn}, \theta)$, construct a $3\times3$ matrix as follows:
+%   \begin{equation}
+%     \bR(\hat{\bn},\theta)
+%     = \bI_{3\times 3} + (\sin \theta) [\hat{\bn}]_\times
+%     + (1 - \cos \theta) [\hat{\bn}]_\times [\hat{\bn}]_\times,
+%   \end{equation}
+%   % 则任意三维向量$\ba$若绕$\hat{\bn}$旋转$\theta$角所到达的向量$\ba'$满足$\ba'=\bR(\ba)$。
+%   show that for any 3D vector $\ba$, the resulting vector $\ba'$ after rotating $\ba$ by angle $\theta$ around $\hat{\bn}$ satisfies $\bR(\hat{\bn},\theta)\ba=\ba'$.
+% \end{theorem}
+% \begin{proof}
+%   % 形式化的描述为：
+%   The formalized description is as follows:  
+%   \begin{coq}
+% Definition aa2mat <!$\uptheta$!> n : smat 3 := let N := cv3skew n in
+%   (mat1 + (sin <!$\uptheta$!>) c* N + (1 - cos <!$\uptheta$!>)%R c* N * N)%M.
+% Theorem aa2mat_spec : forall (<!$\uptheta$!> : R) (n a : cvec 3),
+%   cvunit n -> (aa2mat <!$\uptheta$!> n) * a == rotaa <!$\uptheta$!> n a.
+%   \end{coq}
+%   The proof of this theorem can be completed using basic properties of vector operations, which is omitted here.  
+% \end{proof}
+
+% \subsection{Unit Quaternion}\label{sec:or_quat}
+% % 我们已经在\ref{math.quat}节介绍了四元数的定义和基本运算，
+% % 在此基础之上，我们来讨论使用单位单元数实现OR的算法。
+% % 首先给出从轴角到单位四元数的转换，然后详细验证四元数能够表示旋转的原理，这是本文的核心贡献之一。
+% % 最后介绍单位四元数与其他OR方法之间的转换。
+% We have already introduced the definition and basic operations of quaternions in Section \ref{sec:math.quat}.
+% Building upon that, we now discuss the algorithm for OR using unit quaternions.
+% First, we provide the conversion from axis-angle representation to unit quaternions.
+% Then, we thoroughly validate the principle of quaternion representation for rotations, which is one of the key contributions of this paper.
+% Finally, we explore the conversions between unit quaternions and other OR methods.
+
+% \begin{definition}[Axis-Angle $\Rightarrow$ Unit Quaternion]
+%   % 任给一个轴角对$(\hat{\bn},\theta)$，其中，单位向量$\hat{n}$表示旋转轴的方向，$\theta$表示旋转角，定义该轴角参数对应的单位四元数为：
+%   % For any axis-angle pair $(\hat{\bn}, \theta)$, where the unit vector $\hat{\bn}$ represents the rotation axis and $\theta$ represents the rotation angle, the unit quaternion corresponding to this axis-angle parameter is defined as:
+%   \begin{equation}
+%     \label{eq:aa2q}
+%     \mathtt{aa2q}(\hat{\bn},\theta) \triangleq \left(\cos\left(\tfrac{\theta}{2}\right),\sin\left(\tfrac{\theta}{2}\right)\hat{\bn}\right)
+%   \end{equation}
+% \end{definition}
+
+% \subsubsection{Verification of the Quaternion Rotation Algorithm}
+% % \begin{definition}[利用单位四元数旋转3D向量]\label{def:qrot}
+% \begin{definition}[Rotation of vector using unit quaternion]\label{def:qrot}
+%   Given a unit rotation axis vector $\hat{\bn}$ and a rotation angle $\theta$,
+%   the rotation of an arbitrary 3D vector $\bv$ around $\hat{\bn}$ by angle $\theta$ to obtain the new vector $\bv'$ is defined by the formula:
+%   \begin{equation}
+%     \label{eq:qrot_formula}
+%     \begin{pmatrix}0\\\bv'\end{pmatrix}\triangleq
+%     \bq\otimes\begin{pmatrix}0\\\bv\end{pmatrix}\otimes\bq^{-1}=
+%     \bq\otimes\begin{pmatrix}0\\\bv\end{pmatrix}\otimes\overline{\bq}
+%   \end{equation}
+%   where $\bq=\mathtt{aa2q}(\hat{\bn}, \theta)$.
+%   To simplify the usage with vectors and quaternions, we define two functions:  
+%   \begin{align}
+%     \tQ(\bp)\triangleq\bq\otimes\bp\otimes\bq^{-1},
+%     \qquad
+%     \tQV(\bv)\triangleq\mathtt{Im}(\tQ(\bq,(0,\bv)))\label{eq:qrot}.
+%   \end{align}
+%   where $\tQ$ takes and outputs quaternion, and $\tQV$ takes and outputs vector.
+%   Note that these two functions omit the parameter $\bq$.
+%   They are formalized as \texttt{qrot} and \texttt{qrotv}, respectively.
+%   \begin{coq}
+% Definition qpure (v:cvec 3) : quat := quat_of_s_v 0 v.
+% Definition qrot q (v:quat) : quat := q * v * q<!${}^{-1}$!>.
+% Definition qrotv q (v:cvec 3) : cvec 3 :=(qrot q (qpure v)).Im.
+%   \end{coq}
+% \end{definition}
+
+% The function $\tQ$ and $\tQV$ have the following properties:
+% \begin{itemize}
+% \item \label{q_qv.keep_w}
+%   $\tQ$ preserves the $w$ component:  
+%   $\tQ(\bp).\mathtt{W} = \bp.\mathtt{W}$
+% \item \label{q_qv.keep_cvdot}
+%   $\tQV$ preserves the dot product:
+%   {
+%     % \small
+%     $\langle\tQV(\bv_1),\tQV(\bv_2)\rangle=\langle\bv_1,\bv_2\rangle$}
+% \item \label{q_qv.keep_cvlen}
+%   $\tQV$ preserves the length:
+%   $\|\tQV(\bv)\|=\|\bv\|$
+% \item \label{q_qv.linear_cvadd}
+%   $\tQV$ preserves the addition:
+%   {
+%     % \footnotesize
+%     $\tQV(\bv_0+\bv_1)=\tQV(\bv_0)+\tQV(\bv_1)$},
+% \item \label{q_qv.linear_cvcmul}
+%   $\tQV$ preserves the scalar multiplication:
+%   $\tQV(k\bv)=k\tQV(\bv)$,
+% \end{itemize}
+% Here is some of the description of these propertities:
+% \begin{coq}
+% Variable q : quat. Hypothesis Hq : qunit q.
+% Lemma qrot_keep_w (p:quat): (qrot q p).W = p.W.
+% Lemma qrot_keep_dot (a b:cvec 3): <qrotv q a,qrotv q b>=<a,b>.
+% \end{coq}
+% % Lemma qrot_keep_cvlen (v:cvec 3): (||qrotv q v|| = ||v||)%CV.
+
+% \begin{lemma}[The form of the equation \eqref{eq:qrot_formula} is reasonable]
+%   Show that the $w$ component of the quaternion on the left-hand side in the Equation \eqref{eq:qrot_formula} is indeed $0$.
+% \end{lemma}
+% \begin{proof}
+%   It is obviously from the first property of $\tQ$.
+% \end{proof}
+
+% \begin{lemma}[Decomposition form of quaternion multiplication]
+%   For any two unit vectors $\bv_0$ and $\bv_1$, we have
+%   \begin{equation}
+%     \begin{pmatrix}\langle\bv_0,\bv_1\rangle\\\bv_0\times\bv_1\end{pmatrix}
+%     =\begin{pmatrix}0\\\bv_1\end{pmatrix}\otimes\begin{pmatrix}0\\{\bv_0}\end{pmatrix}^{\ast}.
+%   \end{equation}
+% \end{lemma}
+% \begin{proof}
+%   The lemma can be formally expressed as:
+%   \begin{coq}
+% Definition uv2q (u v:cvec 3) : quat := sv2quat (<u,v>) (u<!$\times$!>v).
+% Definition uv2q' (u v:cvec 3) : quat :=(qpure v)*((qpure u)<!$^{\ast}$!>).
+% Lemma uv2q_eq_uv2q' : forall u v, uv2q u v = uv2q' u v.
+% Proof. intros. lqa. Qed.
+%   \end{coq}
+%   Here, \texttt{uv2q} provides a geometric perspective, while \texttt{uv2q'} offers an algebraic representation.
+% \end{proof}
+
+% \begin{lemma}[Invariant of rotation quaternions]  
+%   Given two unit vectors $\bv_0$ and $\bv_1$, let $\bq$ be the quaternion
+%   $\begin{pmatrix}\langle\bv_0,\bv_1\rangle\\ \bv_0\times\bv_1\end{pmatrix}$,
+%   and let $\bv_2$ be the result of $\tQV(\bv_0)$, show
+%   $\begin{pmatrix}\langle\bv_1,\bv_2\rangle\\ \bv_1\times\bv_2\end{pmatrix}=\bq$.
+% \end{lemma}
+% \begin{proof}
+%   The formal statement of this lemma is as follows:
+%   \begin{coq}
+% Lemma uv2q_eq : forall (v0 v1 : cvec 3),
+%   let q := uv2q v0 v1 in let v2 := qrotv q v0 in
+%   cvunit v0 -> cvunit v1 -> uv2q v1 v2 = q.
+%   \end{coq}
+%   The proof of this lemma relies on properties of quaternion multiplication and conjugation, which are omitted here.
+% \end{proof}
+
+% \begin{theorem}[Correctness of quaternion rotation algorithm in Definition \ref{def:qrot}]\label{thm:qrot}
+%   % 给定一组轴角参数$(\hat{\bn},\theta)$，其中$0<\theta<2\pi$，构造出单位四元数$\bq=(\cos\frac{\theta}{2},\sin\frac{\theta}{2}\bn)$，
+%   % 任给三维向量$\bv$，使用公式\eqref{eq:qrotv}和$\bq$对$\bv$做旋转变换后得到$\bv'$，
+%   % 证明$\bv'$是$\bv$绕$\bn$旋转了$\theta$角后的向量。
+%   % 即要证明：变换前后长度未改变，并且投影到$\bn$的垂直平面上的向量的夹角是$\theta$角。
+%   % 如图\ref{fig:qrot}所示，我们利用$\bn$的垂直平面\texttt{c}，将$\bv,\bv'$投影为$\bv_{\perp},\bv'_{\perp}$。
+%   Given an axis-angle parameter $(\hat{\bn},\theta)$, where $\theta\in(0,2\pi)$, and a unit quaternion $\bq\triangleq(\cos\frac{\theta}{2},\sin\frac{\theta}{2}\bn)$.
+%   For any 3D vector $\bv$, using equation \eqref{eq:qrot} with $\bq$ to perform a transformation on $\bv$ results in $\bv'$,
+%   show that $\bv'$ is the rotation result of the vector $\bv$ about the axis $\bn$ by angle $\theta$.
+%   That is, to prove that the length is preserved, and the angle of the projected vectors of $\bv$ and $\bv'$ onto the plane perpendicular to $\bn$ is $\theta$.
+%   As shown in Figure \ref{fig:qrot}, the projection of $\bv$ and $\bv'$ in plane \texttt{c} is $\bv_{\perp}$ and $\bv'_{\perp}$, respectively.  
+%   \begin{figure}[htbp]
+%     \centerline{\includegraphics[width=0.6\linewidth]{figures/qrot}}
+%     \caption{Rotate $\bv$ to $\bv'$ about $\bn$ by $\theta$ degree}
+%     \label{fig:qrot}
+%   \end{figure}
+%   Formally, we need to prove  
+%   $\|\bv'\|=\|\bv\|$ and $\bv_{\perp}~\angle~\bv'_{\perp}=\theta$.
+% \end{theorem}
+% \begin{proof}
+%   The invariance of vector length is ensured by the third property of $\tQ$ and $\tQV$.
+%   Formally:
+%   \begin{coq}
+% Fact cvlen_vv' : (||v'|| = ||v||)%CV.
+% Proof. unfold v',v. rewrite qrot_keep_cvlen; auto. Qed.
+%   \end{coq}
+  
+%   Now, we will analyze the angle.
+%   Since the magnitude and direction of $\bv$ are arbitrary, it is not convenient for analysis. We decompose it into a linear combination represented by a set of basis vectors and discuss the transformation of each component.
+%   As shown in Figure \ref{fig:qrot_detail}, we project $\bv$ and $\bv'$ onto another plane $\texttt{d}$ perpendicular to $\bn$.
+%   % \vspace{-10pt}
+%   \begin{figure}[htbp]
+%     \centerline{\includegraphics[width=0.8\linewidth]{figures/qrot_detail}}
+%     \caption{Principle of quaternion rotation}
+%     \label{fig:qrot_detail}
+%   \end{figure}
+  
+%   % 首先构造一组基向量来表示$\bv$。
+%   % 假设在$\bn$的垂直平面$\mathtt{d}$中存在一对线性无关的单位向量$\bv_0,\bv_1$
+%   % 使得$\bv_0\angle\bv_1=\theta/2$。
+%   % 这里的假设是合理的，因为$0<\theta/2<\pi$，所以$\bv_0,\bv_1$不可能平行，它们一定线性无关。
+%   % 此时，$\bv_0,\bv_1,\bn$构成了三维空间的一组基向量，于是$\bv$一定可以分解为 $\bv=s_0\bv_0+s_1\bv_1+s_2\bn$。
+%   % 形式化的描述这组变量与假设条件：
+%   First, we construct a set of basis vectors to represent $\bv$.
+%   Assume that there exists a pair of linearly independent unit vectors $\bv_0$ and $\bv_1$ in the plane $\mathtt{d}$ perpendicular to $\bn$ such that $\bv_0\angle\bv_1=\theta/2$.
+%   This assumption is reasonable because $0<\theta/2<\pi$, so $\bv_0$ and $\bv_1$ must be linearly independent.
+%   Thus, $\bv_0$, $\bv_1$, and $\bn$ form a set of basis vectors in 3D space, and $\bv$ can be decomposed as $\bv=s_0\bv_0+s_1\bv_1+s_2\bn$ for some $s_0,s_1,s_2$.
+%   Formally, these assumptions are stated as:
+%   \begin{coq}
+% Variables (<!$\uptheta$!> : R) (n v0 v1 : cvec 3) (s0 s1 s2 : R).
+% Hypotheses (H<!$\uptheta$!>: 0<<!$\uptheta$!><2*PI) (Hv0: cvunit v0) (Hv1: cvunit v1)
+%   (H01n: cvnorm (v0<!$\times$!>v1)==n) (H01: v0<!$\angle$!>v1=<!$\uptheta$!>/2)
+%   (Hs0: s0<>0) (Hs1: s1<>0).
+% Let v : cvec 3 := (s0 c* v0 + s1 c* v1 + s2 c* n)%CV.
+% Let v' : cvec 3 := qrotv q v.
+% \end{coq}
+% We can prove the following facts:
+%   \begin{equation}
+%     % \footnotesize
+%     \begin{pmatrix}\langle\bv_0,\bv_1\rangle\\\bv_0\times\bv_1\end{pmatrix}=q,\quad
+%     \bv_0\perp\bv,\quad
+%     \bv_1\perp\bv.
+%   \end{equation}
+%   % 接着，我们使用$\bq$对$\bv_0$进行变换后到达$\bv_2$，并分析$\bv_0$和$\bv_2$的几何关系。
+%   % 我们可以证明如下结论：
+% Next, we use $\bq$ to transform $\bv_0$ to $\bv_2$, and get following:
+% \begin{equation}
+%   \label{eq:v02}
+%   % \footnotesize
+%   \begin{pmatrix}\langle\bv_1,\bv_2\rangle\\\bv_1\times\bv_2\end{pmatrix}=q,~~
+%   \bv_2\perp\bv,~~
+%   \hat{\bv}_2,~~
+%   \bv_1\angle\bv_2=\theta/2,~~
+%   \bv_0\angle\bv_2=\theta.
+% \end{equation}
+% Then, we use $\bq$ to transform $\bv_1$ to $\bv_3$, and get following:
+% \begin{equation}
+%   \label{eq:v13}
+%   % \footnotesize
+%   \begin{pmatrix}\langle\bv_2,\bv_3\rangle\\\bv_2\times\bv_3\end{pmatrix}=q,~~
+%   \bv_3\perp\bv,~~
+%   \hat{\bv}_3,~~
+%   \bv_2\angle\bv_3=\theta/2,~~
+%   \bv_1\angle\bv_3=\theta.
+% \end{equation}
+% Then, we use $\bq$ to transform $\bn$, and it can be proven that $\bn$ remains unchanged, that is: $\tQV(\bn)=\bn$.  
+
+% Finally, we can prove that the angle between the projection of $\bv$ and $\bv'$ onto the plane $\mathtt{d}$ which perpendicular to $\bn$ is $\theta$.
+% The formal description is as follows:
+% \begin{coq}
+% Fact cangle_vv' : cvperp v n <!$\angle$!> cvperp v' n = <!$\uptheta$!>.
+% \end{coq}
+% Once unfold the definitions of $v$ and $v'$, the goal becomes to:
+%   \begin{coq}
+% cvperp (s0 c* v0 + s1 c* v1 + s2 c* n) n
+% <!$\angle$!> cvperp (qrotv q (s0 c* v0 + s1 c* v1 + s2 c* n)) n = <!$\uptheta$!>
+%   \end{coq}
+%   % 使用$\tQ/\tQV$及投影运算的线性化性质可重写为：
+%   By using the linearity property of $\tQ/\tQV$ and projection operations, the goal becomes to:
+%   \begin{coq}
+% s0 c* cvperp v0 n + s1 c* cvperp v1 n + s2 c* cvperp n n
+% <!$\angle$!> s0 c* cvperp v2 n + s1 c* cvperp v3 n + s2 c* cvperp n n = <!$\uptheta$!>
+%   \end{coq}
+%   % 使用向量投影等运算的性质可重写为
+%   By using the properties of projection, the goal becomes to:
+%   \begin{coq}
+% (s0 c* v0 + s1 c* v1) <!$\angle$!> (s0 c* v2 + s1 c* v3) = <!$\uptheta$!>
+%   \end{coq}
+%   % 此时，利用角度对向量加法和数乘的保持性可变换为两个子目标：
+%   Now, by utilizing the properties of preserving angles under linear operation, we have two subgoals:
+%   \begin{coq}
+% v0 <!$\angle$!> v2 = <!$\uptheta$!>             v0 <!$\angle$!> v1 = v2 <!$\angle$!> v3
+%   \end{coq}
+%   % 而这两个子目标已经证明。
+%   % 至此，我们完成了整个证明。
+%   These two subgoals have already been proven in \eqref{eq:v02} and \eqref{eq:v13}.
+%   Thus, we have completed the entire proof.
+%   Note that we have omitted many intermediate proof steps here.
+
+%   % 下面，我们给出一个完整的定理描述。
+%   Next, we provide a complete theorem statement:
+%   \begin{coq}
+% Theorem qrot_spec : forall (v0 v1 n:cvec 3) (<!$\uptheta$!>:R) (s0 s1 s2:R)
+%   let q : quat := aa2quat (<!$\uptheta$!>, n) in
+%   let v : cvec 3 := (s0 c* v0 + s1 c* v1 + s2 c* n)%CV in
+%   let v' : cvec 3 := qrotv q v in
+%   cvunit v0 -> cvunit v1 -> 0 < <!$\uptheta$!> < 2*PI ->
+%   cvnorm (v0 <!$\times$!> v1) == n -> v0<!$\angle$!>v1 = <!$\uptheta$!>/2 -> s0<>0 -> s1<>0 ->
+%   (||v'|| = ||v||) /\ cvperp v n <!$\angle$!> cvperp v' n = <!$\uptheta$!>.
+%   \end{coq}
+%   The proof of this theorem is as follows:
+% \begin{coq}
+% Proof. split; [apply cvlen_vv'|apply cvangle_vv']; auto. Qed.
+%   \end{coq}
+%   Here, we immediately done the proof with the facts above.
+% \end{proof}
+
+% Additionally, we proved the Theorem \ref{thm:qrot} using another method.
+% By comparing the result obtained from the quaternion rotation algorithm \eqref{eq:qrot} and obtained from the axis-angle formula \eqref{eq:aarot}, we can see that they are the same.
+% This is the approach adopted by most literature.
+% \begin{proof}
+%   The formal description is as follows:
+%   \begin{coq}
+% Lemma qrot_spec1 : forall (<!$\uptheta$!> : R) (n v : cvec 3),
+%   cvunit n -> qrotv (aa2quat (<!$\uptheta$!>,n)) v == rotaa <!$\uptheta$!> n v.
+%   \end{coq}
+%   The proof is basically done by computation.
+%   The initial part is shown here.
+%   \begin{coq}
+% Proof. intros. pose proof (cv3unit_eq1 n H). cvec2fun. lma.
+%   - cbv in H0; ring_simplify in H0. ring_simplify.
+%   \end{coq}
+%   % 这里只给出初始的部分。其中，$cv3unit\_eq1$利用$\bn$是单位向量而构造一个等式$n_1^2=n_2^2+n_3^2$。
+%   % $cvec2fun$将vector定义展开成函数形式，$lma$是我们惯用的策略，将矩阵或向量的相等转化为元素对的相等。
+%   % 剩余工作主要是对含有三角函数的实数等式进行证明，这里不多介绍。
+%   In this part, \texttt{cv3unit\_eq1} is used to construct an equation $n_1^2 = 1 - n_2^2 + n_3^2$,
+%   and \texttt{cvec2fun} expands the vector into a functional form.
+%   % and \texttt{lma} is our usual strategy for transforming equality of matrices or vectors into equality of their elements.
+%   The remaining work involves equations contain trigonometric functions, which is omitted here.
+% \end{proof}
+
+% \begin{lemma}[Composition of multiple rotations by unit quaternion]
+%   Given two axis-angle parameters $(\hat{\bn}_1,\theta_1)$ and $(\hat{\bn}_2,\theta_2)$, corresponding to quaternions $\bq_1$ and $\bq_2$, respectively. For any vector $\bv$, if it is rotated by $\bq_1$ and then rotated by $\bq_2$, the result vector $\bv''$ is obtained by the following:
+%   \begin{equation}
+%     \label{eq:qrot_twice}
+%     \begin{pmatrix}0\\\bv''\end{pmatrix}=
+%     \bq\otimes\begin{pmatrix}0\\\bv\end{pmatrix}\otimes\overline{\bq},
+%   \end{equation}
+%   where $\bq=\bq_2\otimes\bq_1$.
+% \end{lemma}
+% \begin{proof}
+%   {
+%     % \footnotesize
+%     \begin{align*}
+%       \label{eq:qrot_twice_proof}
+%       \begin{pmatrix}0\\\bv''\end{pmatrix}
+%       &\triangleq\bq_2\otimes\begin{pmatrix}0\\\bv'\end{pmatrix}\otimes\overline{\bq_2}&by~\eqref{eq:qrot}\\
+%       &=\bq_2\otimes\left(\bq_1\otimes\begin{pmatrix}0\\\bv\end{pmatrix}\otimes\overline{\bq_1}\right)\otimes\overline{\bq_2}
+%       &by~\eqref{eq:qrot}\\
+%       &=(\bq_2\otimes\bq_1)\otimes\begin{pmatrix}0\\\bv\end{pmatrix}\otimes(\overline{\bq_1}\otimes\overline{\bq_2})
+%       &Assoc.\\
+%       &=(\bq_2\otimes\bq_1)\otimes\begin{pmatrix}0\\\bv\end{pmatrix}\otimes(\overline{\bq_2\otimes\bq_1})
+%       &more..
+%     \end{align*}
+%   }
+%   The proof is done by the properties of quaternion.
+% \end{proof}
+
+% The formal proof is provided below:
+% \begin{coq}
+% Lemma qrot_twice q1 q2 v (H1: q1<>qzero) (H2: q2<>qzero) :
+%   qrot q2 (qrot q1 (qpure v)) = qrot (q2 * q1) (qpure v).
+% Proof. unfold qrot. rewrite qinv_qmul,!qmul_assoc;auto. Qed.
+% \end{coq}
+
+% This property can be extended to the composition of any number of rotations using quaternion multiplication.
+
+% % \subsubsection{单位四元数与其他方式的转换}
+% \subsubsection{Conversion between Unit Quaternion and Other Methods}
+
+% The conversion between a unit quaternion $\bq=(\cos\frac{\theta}{2},\sin\frac{\theta}{2}\bn)$ and axis-angle $(\bn,\theta)$ is relatively straightforward and will be omitted here.
+% The conversion between Euler angles and unit quaternion can be achieved by rotation matrices.
+% We will focus on the conversion between unit quaternion and rotation matrices.
+
+% \begin{lemma}[Correctness of the Conversion from Unit Quaternion to Rotation Matrix]
+%   % 给定一个单位四元数$\bq=(w,x,y,z)$表示了从$\cB$到$\cS$的旋转，即任意三维向量$\ba$，有
+%   % ${}^{\cS}\ba=\tQV({}^{\cB}\ba)$。
+%   % 则可以构造如下矩阵：
+%   Given a unit quaternion $\bq=(w,x,y,z)$ representing the rotation from $\cB$ to $\cS$, for any 3D vector $\ba$, we have ${}^{\cS}\ba=\tQV({}^{\cB}\ba)$.
+%   Show that the matrix:  
+%   \begin{equation}
+%     % \footnotesize
+%     % \renewcommand{\arraystretch}{0.9}
+%     % \setlength{\arraycolsep}{-3pt}
+%     \bR\triangleq
+%     \begin{bmatrix}
+%       w^2+x^2-y^2-z^2 & 2(xy-wz) & 2(xz+wy)\\
+%       2(xy+wz) & w^2-x^2+y^2-z^2 & 2(yz-wx)\\
+%       2(xz-wy) & 2(yz+wx) & w^2-x^2-y^2+z^2
+%     \end{bmatrix},
+%   \end{equation}
+%   satisfy ${}^{\cS}\ba=\bR{}^{\cB}\ba$.
+% \end{lemma}
+% \begin{proof}
+%   From the equation ${}^{\cS}\ba=\tQV({}^{\cB}\ba)$, we know that $(0,{}^{\cS}\ba)=\tQ((0,{}^{\cB}\ba))$. Expanding this definition, we have:  
+%   \begin{equation*}
+%     (0, {}^{\cS}\ba) =\bq\otimes(0,{}^{\cB}\ba)\otimes\bq^{-1}
+%   \end{equation*}
+%   According to equations \eqref{eq:qmulLR}, as well as the associativity of quaternion and matrix multiplications, we have:
+%   \begin{equation*}
+%     \begin{bmatrix}0\\{}^{\cS}\ba\end{bmatrix}
+%     =\tQL(\bq)\tQR(\bq^{-1})\begin{bmatrix}0\\{}^{\cB}\ba\end{bmatrix}
+%   \end{equation*}
+%   Here, $\tQL(\bq)\tQR(\bq^{-1})$ yields a $4\times4$ matrix,
+%   where  the right bottom part should be exactly equal to $\bR$.
+%   The formalization is below:
+%   \begin{coq}
+% Lemma q2m_spec q v : qunit q -> qrotv q v == (q2m q) * v.
+% Proof. intros. unfold qrotv,qrot. rewrite qinv_eq_qconj; auto.
+%   destruct q. lma. Qed.
+% \end{coq}
+% Here, \texttt{qinv\_eq\_conj} rewrites quaternion inversion as conjugation,
+% and the remaining part is done automatically.
+% \end{proof}
+
+% \begin{lemma}[Correctness of the conversion from rotation matrix to unit quaternion]
+%   Given an orthogonal matrix $\bA_{3\times3}$ representing the rotation from $\cB$ to $\cS$, that is, for any 3D vector $\ba$, we have ${}^{\cS}\ba=\bA{}^{\cB}\ba$.
+%   Show that the quaternion:  
+%   \begin{equation}
+%     \bq\triangleq
+%     \begin{pmatrix}
+%       s_0\frac{1}{2}\sqrt{1+a_{11}+a_{22}+a_{33}}\\
+%       s_1\frac{1}{2}\sqrt{1+a_{11}-a_{22}-a_{33}}\\
+%       s_2\frac{1}{2}\sqrt{1-a_{11}+a_{22}-a_{33}}\\
+%       s_3\frac{1}{2}\sqrt{1-a_{11}-a_{22}-a_{33}}
+%     \end{pmatrix},
+%   \end{equation}
+%   satisfy ${}^{\cS}\ba=\tQV(\bq, {}^{\cB}\ba)$.
+%   Here, $s_0\triangleq\pm1,
+%   s_1\triangleq s_0\tSgn(a_{32}-a_{23}),
+%   s_2\triangleq s_0\tSgn(a_{13}-a_{31}),
+%   s_3\triangleq s_0\tSgn(a_{21}-a_{12})$.
+%   Hence, there are two possible results: $\bq$ and $-\bq$.
+  
+%   The correctness of this algorithm relies on the properties of orthogonal matrices, which is omitted here.
+% \end{lemma}
+
+% \section{Conclusions}\label{sec:conclude}
+
+% % 控制系统的目的之一是使物体或系统按照预定的姿态或轨迹进行运动或保持稳定。
+% % 姿态是由平移和旋转两种运动作用的结果，其中较为复杂的旋转运动需要研究定向表示（OR）。
+% % 现有多种数学模型可以实现OR，并且每个模型都有一套数学理论。
+% % 数学家和工程师使用这些模型来构造算法进行实际的工程应用，
+% % 但这些构造出的算法是否功能正确，以及是否存在潜在的设计缺陷，我们并未得到保证。
+
+% % 本文使用\Coq{}定理证明器对OR的数学模型和算法进行形式化的描述和验证。
+% % 一方面，通过详细的验证算法背后的每一步数学推导过程，更彻底的保证算法的正确性。
+% % 另一方面，由于显式的给出了各种定义和性质的依赖关系，使得不熟悉相关工程领域的软件开发人员更容易的理解和使用这些算法。
+
+% % 我们做了这些工作。
+% % 首先，构建了一套基础数学库，包括通用矩阵和实矩阵，通用向量、实向量和实三维向量，以及四元数。
+% % 限于篇幅，我们文中只列出了本文会用到的一部分定义及性质的形式化。
+% % 然后，使用这些基础设施建立OR背后的数学模型及算法，包括旋转矩阵、欧拉角、轴角、单位四元数这四种表示方法，以及它们之间的常用的转换算法。
+% % 值得提及的是，我们重点展示了两个模型的正确性的验证过程：
+% % 一个是轴角表示算法的正确性，见定理\ref{thm:aarot}；
+% % 另一个是四元数表示算法的正确性，见定理\ref{thm:qrot}。
+
+% % 本文的主要贡献有：
+% % - 建立了矩阵、向量、四元数基本数学工具的形式化软件库，而且这些库具有层次化结构，具有良好的可扩展性和复用性。
+% % - 对旋转矩阵、欧拉角、轴角、单位四元数等表示方式下的算法及其规约进行了形式化。
+% % - 对几个关键算法进行了完整的推导和验证，例如定理\ref{thm:aarot}和定理\ref{thm:qrot}，展示了利用Coq对几何和运动学中的问题进行建模和验证的基本方法。
+
+% % 本文的研究工作还有很多努力的方向。包括：
+% % - 控制系统中更多算法的形式化，比如包含平移运动的位姿表示问题。
+% % - 更多矩阵理论的形式化，比如特征值、矩阵分解等。
+% % - 将我们已经验证的算法提取为实际编程语言中所用的软件库供编程人员直接使用。
+
+% The purpose of control systems is to enable objects or systems to move or maintain stability according to predefined poses or trajectories.
+% Pose is the result of two types of motion: translation and rotation, with the latter requiring the study of orientation representation (OR) due to its complexity.
+% Several mathematical models exist to achieve OR, each with its own set of mathematical theories.
+% Mathematicians and engineers use these models to construct algorithms for practical engineering applications.
+% However, we lack guarantees regarding the functionality and potential design flaws of these constructed algorithms.
+
+% In this paper, we have employed the \Coq{} theorem prover to formally describe and verify the mathematical models and algorithms for OR.
+% On one hand, by rigorously verifying every step of the mathematical deduction process underlying the algorithms, we can provide more thorough guarantees of their correctness.
+% On the other hand, by explicitly presenting the dependencies of various definitions and properties, we make it easier for software developers unfamiliar with the relevant engineering domain to understand and utilize these algorithms.
+
+% % We have accomplished the following in this work.
+% % First, we constructed a foundational mathematical library that includes generic matrices and real matrices, generic vectors, real vectors, and 3D real vectors, as well as quaternions.
+% % Due to space limitations, we have only presented a subset of the formalizations of definitions and properties that we will employ in this paper.
+% % Then, using this infrastructure, we established the mathematical models and algorithms behind OR, including rotation matrices, Euler angles, axis-angle representations, and unit quaternions, along with commonly used conversion algorithms between them.
+% % It is worth noting that we placed particular emphasis on the verification process for the correctness of two models: the axis-angle representation algorithm (see Theorem \ref{thm:aarot}) and the quaternion representation algorithm (see Theorem \ref{thm:qrot}).
+
+% The main contributions of this paper are as follows:
+% (1) We established a formal software library for fundamental mathematical tools such as matrices, vectors, and quaternions.
+% These libraries have a hierarchical structure, ensuring good scalability and reusability.
+% (2) We formalized algorithms and specifications for common representation methods, including rotation matrices, Euler angles, axis-angle, and unit quaternions.
+% (3) We conducted complete derivations and verifications of several critical algorithms (such as Theorem \ref{thm:aarot} and \ref{thm:qrot}), demonstrating the fundamental methods for modeling and verifying geometric and kinematic problems using \Coq{}.
+
+% There are several directions for further research in our work, including:
+% (1) Formalizing more algorithms in control systems, such as pose representation problems that involve translation motion.
+% (2) Formalizing additional matrix theories, such as eigenvalues and matrix decomposition.
+% (3) Extracting our verified algorithms into software libraries for direct use by programmers using a practical programming language.
+
+% By continuing this research, we can improve the reliability and efficiency of control systems and contribute to the broader fields of mathematics, engineering, and software development.
+
+% \section*{Acknowledgment}
+% % 感谢讨论班上的同事们所提出的宝贵意见。
+% The first author would like to express his gratitude to colleagues in the seminar for their valuable input and discussions.
+
+% %% The Appendices part is started with the command \appendix;
+% %% appendix sections are then done as normal sections
+% %% \appendix
+
+% %% \section{}
+% %% \label{}
+
+% %% If you have bibdatabase file and want bibtex to generate the
+% %% bibitems, please use
+% %%
+% \bibliographystyle{elsarticle-num} 
+% \bibliography{reference}
+
+%% else use the following coding to input the bibitems directly in the
+%% TeX file.
+
+% \begin{thebibliography}{00}
+
+% %% \bibitem{label}
+% %% Text of bibliographic item
+
+% \bibitem{}
+
+% \end{thebibliography}
+\end{document}
+\endinput
+%%
+%% End of file `elsarticle-template-num.tex'.

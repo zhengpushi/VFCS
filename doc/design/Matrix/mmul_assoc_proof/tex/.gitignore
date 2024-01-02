@@ -1,0 +1,12 @@
+**/*.aux
+**/*.log
+**/*.spl
+**/*.gz
+**/*.out
+**/*.pdf
+**/_minted*
+**/_region_.tex
+**/*.upa
+**/*.upb
+**/*.bbl
+**/*.blg

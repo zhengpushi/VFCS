@@ -1,0 +1,96 @@
+%% %% Format and highlight programming language source code with minted
+%% \usepackage{minted}
+%% % 风格    关键字    类型    注释     备注
+%% % default 绿色      红色    深青斜体
+%% % colorful绿色      深蓝    灰色斜体
+%% % abap    浅蓝      浅蓝    灰色斜体
+%% % autumn  深蓝      青色    灰色斜体
+%% % sas     浅蓝      浅蓝    绿色斜体
+%% % vs      浅蓝      深青    绿色
+%% % igor    浅蓝      浅蓝    红色斜体
+%% \usemintedstyle{autumn}%default}%autumn}
+%% % delimit with # (Jing hao))
+%% \newminted[coqJ]{coq}{fontsize=\footnotesize,%\small,
+%%   mathescape, texcomments, escapeinside=\#\#}
+%% % delimit with # (Jing hao)), and with line number
+%% \newminted[coqJL]{coq}{fontsize=\footnotesize,%\small,
+%%   mathescape, texcomments, escapeinside=\#\#,
+%%   linenos,numbersep=-5pt}
+%% % delimit with # (Jing hao)), and scriptsize
+%% \newminted[coqJS]{coq}{fontsize=\scriptsize,%\small,
+%%   mathescape, texcomments, escapeinside=\#\#}
+%% % delimit with ? (Wen hao)
+%% \newminted[coqW]{coq}{fontsize=\footnotesize,
+%%   mathescape, texcomments, escapeinside=??}
+
+% 自定义等宽字体，更好的显示效果
+\usepackage[T1]{fontenc}
+% \usepackage[scaled]{beramono}
+\usepackage[scaled]{inconsolata}
+% \usepackage{courier}
+
+%% 格式化程序源码
+\usepackage{listings}
+\usepackage{xcolor}
+\lstdefinestyle{Coq}{
+  %% parser
+  sensitive=true,
+  keywords=[1]{Definition,Lemma,Theorem,Proof,Qed,Inductive,Record,Fixpoint,
+    Type,Prop,Class,Context,Variable,Variables,Goal,Infix,Notation,Module,End,Parameter,
+    Axiom,Include,Require,Import,Export,Hypothesis,Hypotheses,Check,Print,Compute,
+    Global,Instance,Example,Let,Fact,Corollary,From,Variant,Open,Scope},
+  keywords=[2]{forall,in,let,match,with,end,fun,intro,intros,rewrite,apply,
+    hnf,cbn,cbv,reflexivity,easy,auto,repeat,constructor,of},
+  morestring=[b]",
+  morestring=[d]{'}{'},
+  morecomment=[n]{(*}{*)},
+  commentstyle=\color{blue},
+  %% 布局设定
+  aboveskip=0.1em, 		% Whole top margin
+  belowskip=0.1em, 		% Whole bottom margin
+  xleftmargin=0em,		% Whole left margin
+  xrightmargin=0em, 	% Whole right margin
+  abovecaptionskip=0pt,	% Space between title top
+  belowcaptionskip=0pt, % Space between title bottom
+  captionpos=b,			% Position of caption: {t:top | b:bottom}
+  %% 排版、字体
+  % 字体：衬线罗马字体 rmfalily, 无衬线字体 sffamily, 等宽 ttfamily,
+  % 字体大小：tiny < scriptsize < footnotesize < small, normalsize
+  flexiblecolumns=true, 	% If enable free style {true: free, default | false: by column}
+  basicstyle=\ttfamily\footnotesize, 	% Font + font size
+  lineskip=1.1ex,			% Line space
+  tabsize=2, 			% Width of "Tab"
+  keepspaces=false,
+  breaklines=true, 		% Auto wrap to long line
+  breakautoindent=true,	% Auto indent of breaked line (flag)
+  breakindent=1em, 		% Auto indent of breaked line (width)
+  showspaces=false, 	% Show empty flag
+  showstringspaces=false,
+  % stringstyle=\ttfamily,
+  %% 字体、颜色等样式
+  keywordstyle=[1]\color{magenta},%\bfseries,
+  keywordstyle=[2]\color{green!50!black},
+  stringstyle=\color{red},
+  %% 边框
+  frame=none,%single, 		% Frame style {none | lrtb | single | shadowbox }
+  framesep=1pt,             % Frame whole margin
+  % framexleftmargin=0pt,	% Frame left margin
+  % framextopmargin=0pt,	% Frame top margin
+  % framexbottommargin=0pt,	% Frame bottom margin
+  % frameround=tttt,
+  %% 编号
+  % numbers=none,%left,
+  % numberstyle=\tiny\color{gray},
+  % numbersep=5pt,
+  %% escape to latex
+  escapeinside={<!}{!>},
+  % postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space}, # Wrap char
+  %% 不认识的
+  % fontadjust,
+  % texcl=true,
+}
+% 普通的coq代码
+\lstnewenvironment{coq}{\lstset{style=Coq}}{}
+
+% 带有number的coq代码
+\lstnewenvironment{coqn}{\lstset{style=Coq,numbers=left,numbersep=5pt}}{}
