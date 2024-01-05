@@ -191,7 +191,7 @@ Qed.
 
 
 (* ######################################################################### *)
-(** * Lost or deprecated lemmas in some Coq version *)
+(** * Lost or deprecated lemmas *)
 
 (** Coq.Arith.Lt.lt_S_n is deprecated since Coq 8.16.
     1. although coqc suggest us to use Nat.succ_lt_mono,
@@ -202,4 +202,37 @@ Qed.
 Definition lt_S_n: forall n m : nat, S n < S m -> n < m.
 Proof.
   intros. apply Nat.succ_lt_mono. auto.
+Qed.
+
+(* 0 < x < S n -> pred x < n *)
+Lemma pred_lt : forall x n : nat, 0 < x < S n -> pred x < n.
+Proof.
+  intros. destruct H. destruct x. easy.
+  rewrite Nat.pred_succ. apply Nat.succ_lt_mono; auto.
+Qed.
+
+
+(* ######################################################################### *)
+(** * Properties for div and mod *)
+
+(* Check Nat.div_add.    (* (a + b * c) / c = a / c + b *) *)
+(* Check Nat.div_add_l.  (* a * b + c) / b = a + c / b *) *)
+(* Check Nat.div_small.  (* a < b -> a / b = 0 *) *)
+(* Check Nat.add_mod.    (* (a + b) % n = (a % n + b % n) % n *) *)
+(* Check Nat.mod_add.    (* (a + b * c) mod c = a mod c *) *)
+(* Check Nat.mod_mul.    (* (a * b) % b = 0 *) *)
+(* Check Nat.mod_small.  (* a < b -> a % b = 0 *) *)
+
+
+(* i < n -> (m * n + i) / n = m *)
+Lemma add_mul_div : forall m n i, n <> 0 -> i < n -> (m * n + i) / n = m.
+Proof.
+  intros. rewrite Nat.div_add_l; auto. rewrite Nat.div_small; auto.
+Qed.
+ 
+(* i < n -> (m * n + i) % n = i *)
+Lemma add_mul_mod : forall m n i, n <> 0 -> i < n -> (m * n + i) mod n = i.
+Proof.
+  intros. rewrite Nat.add_mod; auto. rewrite Nat.mod_mul; auto.
+  repeat rewrite Nat.mod_small; auto.
 Qed.

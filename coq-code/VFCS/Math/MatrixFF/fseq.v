@@ -50,7 +50,7 @@ Section fseqeq.
   Proof.
     intros. split; intros. subst. split; auto.
     destruct H. unfold f0,g0 in H0.
-    rewrite ffeq_iff_feq. rewrite ffeq_iff_feq in H0. intros.
+    rewrite ffeq_iff_nth_nat. rewrite ffeq_iff_nth_nat in H0. intros.
     bdestruct (i <? n).
     - specialize (H0 i H2).
   Abort.
@@ -141,7 +141,7 @@ Section fseqsum.
       (forall i, f i = Azero) -> fseqsum f = Azero.
   Proof.
     intros. unfold fseqsum. apply seqsum_eq0.
-    intros. unfold ff2f. destruct (_?<_); auto.
+    intros. unfold ff2f. destruct (_??<_); auto.
   Qed.
 
   (** Two sequences are equal, imply the sum are equal. *)
@@ -149,7 +149,7 @@ Section fseqsum.
       (forall i, f i = g i) -> fseqsum f = fseqsum g.
   Proof.
     intros. unfold fseqsum. apply seqsum_eq.
-    intros. unfold ff2f. destruct (_?<_); auto.
+    intros. unfold ff2f. destruct (_??<_); auto.
   Qed.
 
   
@@ -183,7 +183,7 @@ Section fseqsum.
       (forall i, h i = f i + g i) -> fseqsum h = fseqsum f + fseqsum g.
   Proof.
     intros. unfold fseqsum. apply seqsum_add.
-    intros. unfold ff2f. destruct (_?<_); auto. monoid.
+    intros. unfold ff2f. destruct (_??<_); auto. monoid.
   Qed.
 
   
@@ -197,7 +197,7 @@ Section fseqsum.
       (forall i, f i = - g i) -> fseqsum f = - fseqsum g.
   Proof.
     intros. unfold fseqsum. apply seqsum_opp.
-    intros. unfold ff2f. destruct (_?<_); auto. rewrite group_inv_id; auto.
+    intros. unfold ff2f. destruct (_??<_); auto. rewrite group_inv_id; auto.
   Qed.
 
   
@@ -212,7 +212,7 @@ Section fseqsum.
       (forall i, f i = k * g i) -> fseqsum f = k * fseqsum g.
   Proof.
     intros. unfold fseqsum. apply seqsum_cmul.
-    intros. unfold ff2f. destruct (_?<_); auto. ring.
+    intros. unfold ff2f. destruct (_??<_); auto. ring.
   Qed.
 
   Lemma fin2nat_iff_nat2fin : forall {n} (i : fin n) j (H: j < n),
@@ -228,7 +228,7 @@ Section fseqsum.
   Proof.
     intros. unfold fseqsum. apply seqsum_unique with (i:=fin2nat i).
     apply fin2nat_lt. rewrite ff2f_fin2nat; auto.
-    intros. unfold ff2f. destruct (_?<_); auto. apply H0.
+    intros. unfold ff2f. destruct (_??<_); auto. apply H0.
     apply not_eq_sym. rewrite fin2nat_iff_nat2fin. auto.
   Qed.
 
@@ -243,9 +243,9 @@ Section fseqsum.
       fseqsum f = fseqsum g + fseqsum h.
   Proof.
     intros. unfold fseqsum. apply seqsum_plusIdx_ext.
-    - intros. unfold ff2f. destruct (_?<_),(_?<_); try lia.
+    - intros. unfold ff2f. destruct (_??<_),(_??<_); try lia.
       rewrite <- H. f_equal. apply fin_eq_iff. rewrite fin2nat_nat2fin_id; auto.
-    - intros. unfold ff2f. destruct (_?<_),(_?<_); try lia.
+    - intros. unfold ff2f. destruct (_??<_),(_??<_); try lia.
       rewrite <- H0. f_equal. apply fin_eq_iff. rewrite fin2nat_nat2fin_id; auto.
   Qed.
 
@@ -279,10 +279,10 @@ Section fseqsum.
   Proof.
     intros. unfold fseqsum. destruct r,c.
     - simpl. auto.
-    - simpl. rewrite seqsum_eq0. unfold ff2f. destruct (_?<_); ring.
-      intros. unfold ff2f. destruct (_?<_); auto.
-    - simpl. rewrite seqsum_eq0. unfold ff2f. destruct (_?<_); ring.
-      intros. unfold ff2f. destruct (_?<_); ring.
+    - simpl. rewrite seqsum_eq0. unfold ff2f. destruct (_??<_); ring.
+      intros. unfold ff2f. destruct (_??<_); auto.
+    - simpl. rewrite seqsum_eq0. unfold ff2f. destruct (_??<_); ring.
+      intros. unfold ff2f. destruct (_??<_); ring.
     - pose proof (seqsum_seqsum_exchg).
       specialize (H (fun i j => f (nat2finS i) (nat2finS j)) (S r) (S c)).
       match goal with

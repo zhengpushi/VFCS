@@ -43,10 +43,10 @@ Require Arith ZArith QArith Qcanon Reals List SetoidList.
 
 (* ****************************************************** *)
 (* The precedence ∈ [60,100) are logic operations *)
-Reserved Infix    "==?"     (at level 65, no associativity).      (* decidable *)
-Reserved Infix    "<>?"     (at level 65, no associativity).      (* decidable right *)
-Reserved Infix    "=="      (at level 70, no associativity).      (* equiv *)
-Reserved Notation "a != b"  (at level 70, no associativity).      (* not equiv *)
+(* Reserved Infix    "==?"     (at level 65, no associativity).      (* decidable *) *)
+(* Reserved Infix    "<>?"     (at level 65, no associativity).      (* decidable right *) *)
+(* Reserved Infix    "=="      (at level 70, no associativity).      (* equiv *) *)
+(* Reserved Notation "a != b"  (at level 70, no associativity).      (* not equiv *) *)
 Reserved Infix    "=?"      (at level 70, no associativity).      (* bool equal *)
 
 (* ****************************************************** *)
@@ -73,6 +73,9 @@ Reserved Notation "M \-1"    (at level 20, format "M \-1").         (* minv *)
 Reserved Notation "M1 @ M2" (at level 30, no associativity).      (* cons by col *)
 Reserved Notation "'tr' M"  (at level 33, no associativity).
 
+Reserved Notation "'\sum' f" (at level 10).       (* sum of a fin-function *)
+
+
 (* ****************************************************** *)
 (* The precedence ∈ [1,30) are element operations *)
 
@@ -81,45 +84,47 @@ Reserved Notation "| r |"   (at level 30, r at level 25, format "| r |").  (* Ra
 (* this level is consistent with Mathcomp.ssreflect.ssrnotations.v *)
 
 (* get element of list or dlist *)
-Reserved Notation "l ! i"      (at level 20, i at next level, format "l ! i" ).
-Reserved Notation "dl ! i ! j" (at level 20, i, j at next level, format "dl ! i ! j").
+(* Reserved Notation "l ! i"      (at level 20, i at next level, format "l ! i" ). *)
+(* Reserved Notation "dl ! i ! j" (at level 20, i, j at next level, format "dl ! i ! j"). *)
+Reserved Notation "l ! i"      (at level 25, left associativity, i at next level, format "l ! i" ).
+Reserved Notation "dl ! i ! j" (at level 25, left associativity, i,j at next level, format "dl ! i ! j").
 
 (* get element of vector or matrix *)
-Reserved Notation "V $ i"      (at level 20, i at next level, format "V $ i" ).
-Reserved Notation "M $ i $ j"  (at level 20, i, j at next level, format "M $ i $ j").
+Reserved Notation "V $ i"      (at level 25, left associativity, i at next level, format "V $ i" ).
+(* Reserved Notation "M $ i $ j"  (at level 20, i, j at next level, format "M $ i $ j"). *)
 
 (* index-of-matrix or index-of-nat-nat-function.
  Note, there are two style of start number to count index, 0 or 1.
  Many programming language use 0, but MATLAB and many mathematical textbook use 1.
  Maybe it is a convention problem, we choose 1. *)
-Reserved Notation "M .11"      (at level 20, format "M .11").     (* m[1,1] *)
-Reserved Notation "M .12"      (at level 20, format "M .12").
-Reserved Notation "M .13"      (at level 20, format "M .13").
-Reserved Notation "M .14"      (at level 24, format "M .14").
-Reserved Notation "M .21"      (at level 20, format "M .21").
-Reserved Notation "M .22"      (at level 20, format "M .22").
-Reserved Notation "M .23"      (at level 20, format "M .23").
-Reserved Notation "M .24"      (at level 20, format "M .24").
-Reserved Notation "M .31"      (at level 20, format "M .31").
-Reserved Notation "M .32"      (at level 20, format "M .32").
-Reserved Notation "M .33"      (at level 20, format "M .33").
-Reserved Notation "M .34"      (at level 20, format "M .34").
-Reserved Notation "M .41"      (at level 20, format "M .41").
-Reserved Notation "M .42"      (at level 20, format "M .42").
-Reserved Notation "M .43"      (at level 20, format "M .43").
-Reserved Notation "M .44"      (at level 20, format "M .44").
+Reserved Notation "M .11"      (at level 25, format "M .11").     (* m[1,1] *)
+Reserved Notation "M .12"      (at level 25, format "M .12").
+Reserved Notation "M .13"      (at level 25, format "M .13").
+Reserved Notation "M .14"      (at level 25, format "M .14").
+Reserved Notation "M .21"      (at level 25, format "M .21").
+Reserved Notation "M .22"      (at level 25, format "M .22").
+Reserved Notation "M .23"      (at level 25, format "M .23").
+Reserved Notation "M .24"      (at level 25, format "M .24").
+Reserved Notation "M .31"      (at level 25, format "M .31").
+Reserved Notation "M .32"      (at level 25, format "M .32").
+Reserved Notation "M .33"      (at level 25, format "M .33").
+Reserved Notation "M .34"      (at level 25, format "M .34").
+Reserved Notation "M .41"      (at level 25, format "M .41").
+Reserved Notation "M .42"      (at level 25, format "M .42").
+Reserved Notation "M .43"      (at level 25, format "M .43").
+Reserved Notation "M .44"      (at level 25, format "M .44").
 
 (* index-of-vector or index-of-nat-function. We choose 0 as start number. *)
-Reserved Notation "V .1"       (at level 20, format "V .1").      (* v[1] *)
-Reserved Notation "V .2"       (at level 20, format "V .2").
-Reserved Notation "V .3"       (at level 20, format "V .3").
-Reserved Notation "V .4"       (at level 20, format "V .4").
+Reserved Notation "V .1"       (at level 25, format "V .1").      (* v[1] *)
+Reserved Notation "V .2"       (at level 25, format "V .2").
+Reserved Notation "V .3"       (at level 25, format "V .3").
+Reserved Notation "V .4"       (at level 25, format "V .4").
 
 (* only for 3D vector, the "w" component has two conventions, we won't use it *)
-Reserved Notation "V .x"       (at level 20, format "V .x").      (* v[1] *)
-Reserved Notation "V .y"       (at level 20, format "V .y").
-Reserved Notation "V .z"       (at level 20, format "V .z").
-(* Reserved Notation "V .w"       (at level 20, format "V .w"). *)
+Reserved Notation "V .x"       (at level 25, format "V .x").      (* v[1] *)
+Reserved Notation "V .y"       (at level 25, format "V .y").
+Reserved Notation "V .z"       (at level 25, format "V .z").
+(* Reserved Notation "V .w"       (at level 25, format "V .w"). *)
 
 
 (* this level is consistent with coq.ssr.ssrbool.v *)
@@ -244,15 +249,15 @@ Declare Scope fun_scope.
 Delimit Scope fun_scope with F. (* Note that, Ranalysis1 defined Rfun_scope with F *)
 (* Open Scope fun_scope. *)
 
+(** Scope for vector type *)
+Declare Scope vec_scope.
+Delimit Scope vec_scope with V.
+Open Scope vec_scope.
+
 (** Scope for matrix type *)
 Declare Scope mat_scope.
 Delimit Scope mat_scope with M.
 Open Scope mat_scope.
-
-(** Scope for vector type (limited use) *)
-(* Declare Scope vec_scope. *)
-(* Delimit Scope vec_scope with V. *)
-(* Open Scope vec_scope. *)
 
 (** Scope for row-vector type *)
 Declare Scope rvec_scope.

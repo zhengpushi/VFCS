@@ -553,7 +553,7 @@ End Instances.
 
 (** ** Class *)
 Class ASGroup {A} (Aadd : A -> A -> A) := {
-    asgroup_sgroup :> SGroup Aadd;
+    asgroupSGroup :> SGroup Aadd;
     asgroupComm :> Commutative Aadd
   }.
 
@@ -643,7 +643,7 @@ Ltac elimt :=
     end.
 
 (** 在交换半群中，自动消去左式和右式中所有可能相同的头部和尾部 *)
-Ltac elim_auto :=
+Ltac asemigroup :=
   elimh; elimt; (* 消去左式的头部和尾部 *)
   symmetry;
   elimh; elimt. (* 消去右式的头部和尾部 *)
@@ -704,19 +704,19 @@ Section test.
 
   (** 在不确定左右两侧中哪一侧更“合适”时，可以两侧都做一遍。
       而且需要同时处理头部和尾部。*)
-  Goal eq2. unfold eq2. elim_auto. Abort.
+  Goal eq2. unfold eq2. asemigroup. Abort.
 
   (** 还有一种可能，某个相同的项出现中中间，既不在头部，也不在尾部 *)
   Let eq3 : Prop := a1 + a0 + a2 = a3 + a0 + a4.
 
   (* 可以发现，上面的方法不能处理这种情况 *)
-  Goal eq3. unfold eq3. elim_auto. Abort.
+  Goal eq3. unfold eq3. asemigroup. Abort.
 
   (* 也许能够设计一种方法来遍历左侧或右侧的所有的项，但暂时可以手工来做。
      比如，可以手工调用 move2h 或 move2t 来移动一个项，然后调用 elimh 或
-     elimt 或 elim_auto 来消除它 *)
-  Goal eq3. unfold eq3. move2h a0. elim_auto. Abort.
-  Goal eq3. unfold eq3. move2t a0. elim_auto. Abort.
+     elimt 或 asemigroup 来消除它 *)
+  Goal eq3. unfold eq3. move2h a0. asemigroup. Abort.
+  Goal eq3. unfold eq3. move2t a0. asemigroup. Abort.
   
 End test.
 
@@ -731,6 +731,7 @@ Class Monoid {A} (Aadd : A -> A -> A) (Azero : A) := {
     monoidAssoc :> Associative Aadd;
     monoidIdL :> IdentityLeft Aadd Azero;
     monoidIdR :> IdentityRight Aadd Azero;
+    monoidSGroup :> SGroup Aadd
   }.
 
 (** Get parameter of a monoid *)
@@ -811,7 +812,7 @@ Ltac monoid_rw :=
     rewrite identityRight at 3||
     rewrite associative.
 
-Ltac monoid_simpl := intros; repeat monoid_rw; try reflexivity; auto.
+Ltac monoid := intros; repeat monoid_rw; try reflexivity; auto.
 
 Section Theory.
   Context `{M:Monoid}.
@@ -840,6 +841,7 @@ End Examples.
 Class AMonoid {A} Aadd Azero := {
     amonoidMonoid :> @Monoid A Aadd Azero;
     amonoidComm :> Commutative Aadd;
+    amonoidASGroup :> ASGroup Aadd
   }.
 
 (** ** Instances *)
@@ -864,9 +866,9 @@ End Instances.
   
 (** ** Extra Theories *)
 
-Ltac amonoid_simpl :=
-  monoid_simpl;
-  apply commutative.
+Ltac amonoid :=
+  monoid;
+  try apply commutative.
 
 (* Section Theory. *)
 
@@ -888,7 +890,7 @@ Section Examples.
   
   Goal forall a b : Qc, a * b = b * a.
   Proof.
-    amonoid_simpl.
+    amonoid.
   Qed.
 
 End Examples.
@@ -899,6 +901,7 @@ End Examples.
 (** * Group *)
 
 (** ** Class *)
+(* Notice that, this is a one-sided definition, it is equivalence to double-sided *)
 Class Group {A} Aadd Azero (Aopp : A -> A) := {
     groupMonoid :> Monoid Aadd Azero;
     groupInvL :> InverseLeft Aadd Azero Aopp;
@@ -933,7 +936,7 @@ Ltac group_rw_strict G :=
   repeat (try rewrite (@inverseLeft _ _ _ _ _ (@groupInvL _ _ _ _ _ G));
           try rewrite (@inverseRight _ _ _ _ _ (@groupInvR _ _ _ _ _ G))).
 
-Ltac group_simp :=
+Ltac group :=
   intros;
   repeat (group_rw || monoid_rw || group_rw);
   try reflexivity;
@@ -971,35 +974,27 @@ Section GroupTheory.
   End additional_props.
   
   (** Theorem 5.1 *)
-  (* Note that, I give two theorem rather than one. *)
   Theorem group_id_uniq_l : forall e',
       (forall a, e' + a = a) -> e' = 0.
   Proof.
-    intros.
     (* e = e' + e = e' *)
-    assert (e' = e' + 0). { rewrite identityRight. reflexivity. }
-    assert (e' + 0 = 0); auto.
-    rewrite H0. rewrite <- H1 at 2. reflexivity.
+    intros. rewrite <- H. rewrite identityRight; auto.
   Qed.
 
   Theorem group_id_uniq_r : forall e', (forall a, a + e' = a) -> e' = 0.
   Proof.
-    intros.
     (* e = e + e' = e' *)
-    assert (0 = 0 + e'). { rewrite H. easy. }
-    assert (0 + e' = e') by group_simp.
-    apply transitivity with (0 + e'); auto.
+    intros. rewrite <- H. rewrite identityLeft; auto.
   Qed.
 
-  (* Note that, I give two theorem rather than one. *)
   Theorem group_inv_uniq_l : forall x1 x2 y,
       x1 + y = 0 /\ y + x2 = 0 -> x1 = x2.
   Proof.
     intros. destruct H as [Ha Hb].
     (* x1 = x1+e = x1+(y+x2) = (x1+y)+x2 = e+x2 = x2 *)
-    assert (x1 = x1 + 0) by group_simp.
+    assert (x1 = x1 + 0) by group.
     rewrite H. rewrite <- Hb. rewrite <- associative.
-    rewrite Ha. group_simp.
+    rewrite Ha. group.
   Qed.
 
   Theorem group_inv_uniq_r :
@@ -1007,9 +1002,28 @@ Section GroupTheory.
   Proof.
     intros. destruct H as [Ha Hb].
     (* y1 = e+y1 = (y2+x)+y1 = y2+(x+y1) = y2+e = y2 *)
-    assert (y1 = 0 + y1). group_simp.
+    assert (y1 = 0 + y1). group.
     rewrite H. rewrite <- Hb. rewrite associative.
-    rewrite Ha. group_simp.
+    rewrite Ha. group.
+  Qed.
+
+  (* 2023.12 新的表述，也许更适合 *)
+  Theorem group_inv_uniq_l' : forall x, (forall x', x' + x = 0 -> x' = -x).
+  Proof.
+    (* x' = x' + 0 = x' + x + -x = 0 + -x = -x *)
+    intros.
+    replace x' with (x' + 0); try apply G.
+    replace 0 with (x + -x); try apply G.
+    rewrite <- associative. rewrite H. apply G.
+  Qed.
+
+  Theorem group_inv_uniq_r' : forall x, (forall x', x + x' = 0 -> x' = -x).
+  Proof.
+    (* x' = 0 + x' = -x + x + x' = -x + 0 = -x *)
+    intros.
+    replace x' with (0 + x'); try apply G.
+    replace 0 with (-x + x); try apply G.
+    rewrite associative. rewrite H. apply G.
   Qed.
 
   (** Theorem 14.1 *)
@@ -1019,9 +1033,9 @@ Section GroupTheory.
     (* y1 = e+y1 = (-x+x)+y1 = (-x)+(x+y1) = (-x)+(x+y1) 
       = (-x+x)+y1 = e+y1 = y1*)
     rewrite <- identityLeft at 1.
-    assert (0 = (-x) + x). group_simp.
+    assert (0 = (-x) + x). group.
     rewrite H0. rewrite associative. rewrite H.
-    rewrite <- associative. group_simp.
+    rewrite <- associative. group.
   Qed.
 
   Theorem group_cancel_r : forall x1 x2 y, x1 + y = x2 + y -> x1 = x2.
@@ -1030,14 +1044,14 @@ Section GroupTheory.
     (* x1 = x1+e = x1+(y+ -y) = (x1+y)+(-y) = (x2+y)+(-y)
       = x2+(y+ -y) = x2+e = x2 *)
     rewrite <- identityRight at 1.
-    assert (0 = y + (-y)). group_simp.
+    assert (0 = y + (-y)). group.
     rewrite H0. rewrite <- associative. rewrite H.
-    rewrite associative. group_simp.
+    rewrite associative. group.
   Qed.
 
   Theorem group_inv_inv : forall x,  - - x = x.
   Proof.
-    intros. apply group_cancel_l with (- x). group_simp.
+    intros. apply group_cancel_l with (- x). group.
   Qed.
 
   Theorem group_inv_distr : forall x y, - (x + y) = (- y) + (- x).
@@ -1047,7 +1061,7 @@ Section GroupTheory.
       = (x+y)+(-y+ -x), by cancel_l, got it *)
     apply group_cancel_l with (x + y).
     rewrite inverseRight. rewrite <- associative. rewrite (associative x y).
-    group_simp.
+    group.
   Qed.
     
   (** Theorem 14.2 *)
@@ -1057,7 +1071,7 @@ Section GroupTheory.
     intros.
     (* left mult a *)
     apply group_cancel_l with (a).
-    rewrite <- associative. group_simp.
+    rewrite <- associative. group.
   Qed.
 
   (* a + x = b /\ a + y = b -> x = -a + b /\ y = -a + b *)
@@ -1074,7 +1088,7 @@ Section GroupTheory.
   Proof.
     intros.
     (* right mult a *)
-    apply group_cancel_r with (a). group_simp.
+    apply group_cancel_r with (a). group.
   Qed.
 
   (* (x + a = b /\ y + a = b) -> (x = b + -a /\ y = b + -a) *)
@@ -1119,8 +1133,8 @@ Section GroupTheory.
       (group_batch l1) + (group_batch l2) =  group_batch (l1 ++ l2).
     Proof.
       (* reduct to fold_left *)
-      destruct l1,l2; simpl; group_simp.
-      - rewrite app_nil_r. group_simp.
+      destruct l1,l2; simpl; group.
+      - rewrite app_nil_r. group.
       - rename a into a1, a0 into a2.
         (* H1. forall a l1 l2, Σ a & (l1 ++ l2) = Σ (Σ a & l1) & l2
            H2. forall a b l, a + Σ b & l = Σ (a + b) & l
@@ -1140,7 +1154,7 @@ Section GroupTheory.
           assert (forall l a1 a2, a1 = a2 -> Σ a1 & l = Σ a2 & l).
           { induction l0; intros; simpl in *; auto.
             apply IHl0. rewrite H. easy. }
-          apply H. group_simp. }
+          apply H. group. }
         assert (forall a b l, Σ a & (b :: l) = Σ (a + b) & l) as H3.
         { intros. gd b. gd a. induction l; auto. }
         rewrite H1. rewrite H2. rewrite H3. easy.
@@ -1202,7 +1216,7 @@ Section GroupTheory.
   Proof.
     intros.
     (* -e = -e + e = e *)
-    rewrite <- identityRight at 1.  group_simp.
+    rewrite <- identityRight at 1.  group.
   Qed.
 
 End GroupTheory.
@@ -1608,11 +1622,11 @@ Section Theory.
 
   (** a <> 0 -> (1/a) * a = 1 *)
   Lemma field_mul_inv1_l : forall a : A, a <> 0 -> (1/a) * a = 1.
-  Proof. intros. simpl. group_simp. apply field_mul_inv_l. auto. Qed.
+  Proof. intros. simpl. group. apply field_mul_inv_l. auto. Qed.
   
   (** a <> 0 -> a * (1/a) = 1 *)
   Lemma field_mul_inv1_r : forall a : A, a <> 0 -> a * (1/a) = 1.
-  Proof. intros. simpl. group_simp. apply field_mul_inv_r. auto. Qed.
+  Proof. intros. simpl. group. apply field_mul_inv_r. auto. Qed.
   
   (** a <> 0 -> a * b = a * c -> b = c *)
   Lemma field_mul_cancel_l : forall a b c : A,
@@ -1656,7 +1670,7 @@ Section Theory.
       a * b = b -> (a = 1) \/ (b = 0).
   Proof.
     intros. destruct (dec a 1), (dec b 0); auto.
-    replace b with (1 * b) in H at 2 by group_simp.
+    replace b with (1 * b) in H at 2 by group.
     apply field_mul_cancel_r in H; auto.
   Qed.
   
@@ -1681,15 +1695,15 @@ End Examples.
 (** ** Class *)
 Class LinearSpace `{F : Field} {V : Type}
   (Vadd : V -> V -> V) (Vzero : V) (Vopp : V -> V) (Vcmul : A -> V -> V) := {
-    ls_addC : Commutative Vadd;
-    ls_addA : Associative Vadd;
-    ls_add_0_r : IdentityRight Vadd Vzero;
-    ls_add_inv_r : InverseRight Vadd Vzero Vopp;
+    ls_addC :> Commutative Vadd;
+    ls_addA :> Associative Vadd;
+    ls_add_0_r :> IdentityRight Vadd Vzero;
+    ls_add_inv_r :> InverseRight Vadd Vzero Vopp;
     ls_cmul_1_l : forall u : V, Vcmul Aone u = u;
-    lc_cmul_assoc : forall a b u, Vcmul (Amul a b) u = Vcmul a (Vcmul b u);
-    lc_cmul_aadd_distr : forall a b u,
+    ls_cmul_assoc : forall a b u, Vcmul (Amul a b) u = Vcmul a (Vcmul b u);
+    ls_cmul_aadd_distr : forall a b u,
       Vcmul (Aadd a b) u = Vadd (Vcmul a u) (Vcmul b u);
-    lc_cmul_vadd_distr : forall a u v,
+    ls_cmul_vadd_distr : forall a u v,
       Vcmul a (Vadd u v) = Vadd (Vcmul a u) (Vcmul a v);
   }.
 
@@ -1730,15 +1744,73 @@ Section Theory.
   Infix "-" := Vsub : LinearSpace_scope.
   Infix "c*" := Vcmul : LinearSpace_scope.
 
-  (** V中零元是唯一的。已内置 *)
 
-  (** V中每个元素的负元是唯一的。已内置 *)
+  (* 0 + v = v  *)
+  Global Instance ls_add_0_l : IdentityLeft Vadd Vzero.
+  Proof.
+    (* 0 + v = v + 0 = v *)
+    constructor; intros. rewrite commutative, identityRight; auto.
+  Qed.
+  
+  (* -v + v = 0  *)
+  Global Instance ls_add_inv_l : InverseLeft Vadd Vzero Vopp.
+  Proof.
+    (* -v + v = v + -v = 0 *)
+    constructor; intros. rewrite commutative, inverseRight; auto.
+  Qed.
+  
+  (** Vzero is unique *)
+  Theorem ls_vzero_uniq_l : forall v0, (forall v, (v0 + v)%LS = v) -> v0 = Vzero.
+  Proof. intros. rewrite <- H. rewrite identityRight; auto. Qed.
+  
+  Theorem ls_vzero_uniq_r : forall v0, (forall v, (v + v0)%LS = v) -> v0 = Vzero.
+  Proof. intros. rewrite <- H. rewrite identityLeft; auto. Qed.
 
-  (* ToDo: good exercise for linear algebra *)
+  (** (-v) is unique *)
+  Theorem ls_vopp_uniq_l : forall v, (forall v', (v' + v)%LS = Vzero -> v' = Vopp v).
+  Proof.
+    (* v' = v' + 0 = v' + v + -v = 0 + -v = -v *)
+    intros. rewrite <- identityRight at 1. rewrite <- (inverseRight v) at 1.
+    rewrite <- associative. rewrite H. apply identityLeft.
+  Qed.
+
+  Theorem ls_vopp_uniq_r : forall v, (forall v', v + v' = Vzero -> v' = -v)%LS.
+  Proof.
+    (* v' = 0 + v' = -v + v + v' = -v + 0 = -v *)
+    intros. rewrite <- identityLeft at 1. rewrite <- (inverseLeft v) at 1.
+    rewrite associative. rewrite H. apply identityRight.
+  Qed.
+
+  (* (-1) v = -v *)
+  Theorem LS_cmul_opp1 : forall v : V, (-Aone)%A c* v = (-v)%LS.
+  Proof.
+    (* -v is unique *)
+    intros.
+    rewrite <- (ls_vopp_uniq_r (v':=(- Aone)%A c* v)); auto.
+    rewrite <- (ls_cmul_1_l v) at 1. rewrite <- ls_cmul_aadd_distr.
+    rewrite inverseRight.
+    (* 用到下面的定理 *)
+  Admitted.
   
   (** 0 * v = 0 *)
   Theorem LS_cmul_0_l : forall v : V, Azero c* v = Vzero.
-  Proof. Abort.
+  Proof.
+    (* 0 * v = (1 - 1) * v = v + (-v) = 0 *)
+    intros. replace Azero with (Aone + (-Aone))%A.
+    rewrite ls_cmul_aadd_distr. rewrite (ls_cmul_1_l v). rewrite LS_cmul_opp1.
+    destruct LS. apply inverseRight. 
+    apply inverseRight.
+  Qed.
+
+  (* a 0 = 0 *)
+  Theorem LS_cmul_0_r : forall a : A, a c* Vzero = Vzero.
+  Proof.
+  Abort.
+
+  (* a<>0 -> v<>0 -> a v <> 0 *)
+  Theorem LS_cmul_neq0 : forall (a : A) (v : V), a <> Azero -> v <> Vzero -> a c* v <> Vzero.
+  Proof.
+  Abort.
   
 End Theory.
 

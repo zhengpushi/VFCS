@@ -670,15 +670,21 @@ Section fun_op_props.
   (** Monoid structure over (Rfun,+,0) *)
   Global Instance AMonoid_RfunAdd : AMonoid fadd fzero.
   Proof.
-    split_intro; intros; subst; auto.
-    apply fadd_assoc. apply fadd_0_l. apply fadd_0_r. apply fadd_comm.
+    split_intro; intros; subst; auto;
+      try apply fadd_comm;
+      try apply fadd_assoc;
+      try apply fadd_0_l;
+      try apply fadd_0_r.
   Qed.
 
   (** Monoid structure over (Rfun,*,1) *)
   Global Instance AMonoid_RfunMul : AMonoid fmul fone.
   Proof.
-    split_intro; intros; subst; auto.
-    apply fmul_assoc. apply fmul_1_l. apply fmul_1_r. apply fmul_comm.
+    split_intro; intros; subst; auto;
+      try apply fmul_assoc;
+      try apply fmul_1_l;
+      try apply fmul_1_r;
+      try apply fmul_comm.
   Qed.
 
   (** Group structure over (Rfun,+,0,-) *)
