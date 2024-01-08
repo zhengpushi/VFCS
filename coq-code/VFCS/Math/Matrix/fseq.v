@@ -238,8 +238,8 @@ Section fseqsum.
       Σ[i,0,(m+n)] f(i) = Σ[i,0,m] f(i) + Σ[i,0,n] f(m + i). *)
 
   Lemma fseqsum_plusIdx : forall m n (f:fin (m + n) -> A) (g:fin m -> A) (h:fin n -> A),
-      (forall i : fin m, f (fin2ExtendR i) = g i) ->
-      (forall i : fin n, f (fin2PlusL i) = h i) ->
+      (forall i : fin m, f (fin2AddRangeR i) = g i) ->
+      (forall i : fin n, f (fin2AddRangeAddL i) = h i) ->
       fseqsum f = fseqsum g + fseqsum h.
   Proof.
     intros. unfold fseqsum. apply seqsum_plusIdx_ext.

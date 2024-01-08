@@ -1145,10 +1145,10 @@ Section GroupTheory.
               Σ (c + a2) & l2 = Σ c & (a2 :: l2)
            by H3, we got it. *)
         assert (forall a l1 l2, Σ a & (l1 ++ l2) = Σ (Σ a & l1) & l2) as H1.
-        { intros a l0. gd a. induction l0; intros; try reflexivity.
+        { intros a l0. revert a. induction l0; intros; try reflexivity.
           simpl. rewrite IHl0. reflexivity. }
         assert (forall a b l, a + Σ b & l = Σ (a + b) & l) as H2.
-        { intros. gd b. gd a. induction l; simpl; intros; try reflexivity.
+        { intros. revert a b. induction l; simpl; intros; try reflexivity.
           simpl. rewrite IHl.
           (** fold_left preveres the aeq *)
           assert (forall l a1 a2, a1 = a2 -> Σ a1 & l = Σ a2 & l).
@@ -1156,7 +1156,7 @@ Section GroupTheory.
             apply IHl0. rewrite H. easy. }
           apply H. group. }
         assert (forall a b l, Σ a & (b :: l) = Σ (a + b) & l) as H3.
-        { intros. gd b. gd a. induction l; auto. }
+        { intros. revert a b. induction l; auto. }
         rewrite H1. rewrite H2. rewrite H3. easy.
     Qed.
     
@@ -1411,7 +1411,8 @@ End Examples.
 
 Class ARing {A} Aadd Azero Aopp Amul Aone := {
     aringRing :> @Ring A Aadd Azero Aopp Amul Aone;
-    aringMulComm :> @Commutative A Amul;
+    aringMulComm :> Commutative Amul;
+    aringASGroup :> ASGroup Amul
   }.
 
 (** ** Instances *)

@@ -142,21 +142,25 @@ Reserved Notation "V .z"       (at level 25, format "V .z").
 
 (** ** Tactics with a short name *)
 
-Global Ltac gd k := generalize dependent k.
+(* simplify the equality of two list *)
+#[global] Ltac list_eq :=
+  repeat match goal with
+    | |- cons ?h1 ?t1 = cons ?h2 ?t2 => f_equal
+    end.
 
-(** repeat split *)
-Ltac ssplit := 
+(* repeat split *)
+#[global] Ltac ssplit := 
   repeat 
   match goal with
   | |- _ /\ _ => split
   end.
 
 (** inversion and subst *)
-Ltac inv H :=
+#[global] Ltac inv H :=
   inversion H; clear H; subst.
 
 (** first step of the proof of Proper *)
-Ltac simp_proper :=
+#[global] Ltac simp_proper :=
   unfold Proper; unfold respectful.
 
 (** Use this tactic, the proposition of a comparision relation and the sumbool 
@@ -174,7 +178,7 @@ Ltac simp_proper :=
 (*       [ | try first [apply not_lt in H | apply not_le in H]]]. *)
 
 (* modified version, support any data type which registered a reflection relation *)
-Ltac bdestruct X :=
+#[global] Ltac bdestruct X :=
   let H := fresh in
   let e := fresh "e" in
   evar (e: Prop);
@@ -210,7 +214,7 @@ Qed.
 (** use reflect to connect bool and proposition equality *)
 Example eqnP (n m : nat) : reflect (n = m) (Nat.eqb n m).
 Proof.
-  gd m. induction n; intros [|m]; simpl; try constructor; auto.
+  revert m. induction n; intros [|m]; simpl; try constructor; auto.
   destruct IHn with m; subst; constructor; auto.
 Qed.
 

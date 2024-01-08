@@ -74,8 +74,9 @@ Proof. intros. lia. Qed.
 Lemma lt_ge_dec : forall x y : nat, {x < y} + {x >= y}.
 Proof. intros. destruct (le_gt_dec y x); auto. Defined.
 
-Infix "??<" := (lt_ge_dec) (at level 70).
 Infix "??=" := (Nat.eq_dec) (at level 70).
+Infix "??<" := (lt_ge_dec) (at level 70).
+Infix "??<=" := (le_gt_dec) (at level 70).
 
 
 #[export] Hint Rewrite
@@ -279,75 +280,131 @@ Proof.
   intros. unfold fin2fin,fin2nat,nat2fin. simpl. apply fin_proj1_eq.
 Qed.
 
+(** {i<m} + {k<m} -> (i+k<m) ? {i+k<m} : {0<m} *)
+Definition fin2SameRangeAdd {m : nat} (i k:fin m) : fin (m).
+  pose (if fin2nat i + fin2nat k ??< m then fin2nat i + fin2nat k else 0)%nat as x.
+  refine (nat2fin x _).
+  unfold x. destruct (_??<_); auto.
+  destruct (0??=m).
+  - exfalso. clear g. rewrite <- e in i. apply (fin0_False i).
+  - apply Arith_prebase.neq_0_lt_stt; auto.
+Defined.
+
+Lemma fin2SameRangeAdd_spec : forall {m} (i k : fin m),
+    fin2nat (fin2SameRangeAdd i k) =
+      if fin2nat i + fin2nat k ??< m then (fin2nat i + fin2nat k)%nat else 0.
+Proof. intros. unfold fin2SameRangeAdd. simpl. auto. Qed.
+
+(** {i<m} - {k<m} -> {i-k<m} *)
+Definition fin2SameRangeSub {m : nat} (i k:fin m) : fin (m).
+  refine (nat2fin (fin2nat i - fin2nat k) _).
+  pose proof (fin2nat_lt i). apply Nat.le_lt_trans with (fin2nat i).
+  apply Nat.le_sub_l. apply fin2nat_lt.
+Defined.
+
+Lemma fin2SameRangeSub_spec : forall {m} (i k : fin m),
+    fin2nat (fin2SameRangeSub i k) = fin2nat i - fin2nat k.
+Proof. intros. unfold fin2SameRangeSub. simpl. auto. Qed.
+
+(** Loop shift left : {i<m} << {k<m}. Eg: 0 1 2 =1=> 1 2 0  *)
+Definition fin2SameRangeLSL {m : nat} (i k:fin m) : fin (m).
+  destruct (m ??= 0).
+  - rewrite e in i. exfalso. apply fin0_False; auto.
+  - refine (nat2fin ((m + fin2nat i + fin2nat k) mod m) _).
+    apply Nat.mod_upper_bound. auto.
+Defined.
+
+Lemma fin2SameRangeLSL_spec : forall {m} (i k : fin m),
+    fin2nat (fin2SameRangeLSL i k) = (m + fin2nat i + fin2nat k) mod m.
+Proof.
+  intros. unfold fin2SameRangeLSL. destruct (_??=_); simpl; auto.
+  exfalso. apply fin0_False. subst. auto.
+Qed.
+
+(** Loop shift right : {i<m} <-> {k<m}. Eg: 0 1 2 =1=> 2 0 1  *)
+Definition fin2SameRangeLSR {m : nat} (i k:fin m) : fin (m).
+  destruct (m ??= 0).
+  - rewrite e in i. exfalso. apply fin0_False; auto.
+  - refine (nat2fin ((m + fin2nat i - fin2nat k) mod m) _).
+    apply Nat.mod_upper_bound. auto.
+Defined.
+
+Lemma fin2SameRangeLSR_spec : forall {m} (i k : fin m),
+    fin2nat (fin2SameRangeLSR i k) = (m + fin2nat i - fin2nat k) mod m.
+Proof.
+  intros. unfold fin2SameRangeLSR. destruct (_??=_); simpl; auto.
+  exfalso. apply fin0_False. subst. auto.
+Qed.
+
+(** {i<m} -> {i<S m} *)
+Definition fin2SuccRange {m} (i:fin m) : fin (S m).
+  refine (nat2finS (fin2nat i)).
+Defined.
+
+Lemma fin2SuccRange_spec : forall {m} (i:fin m),
+    fin2nat (@fin2SuccRange m i) = fin2nat i.
+Proof.
+  intros. unfold fin2SuccRange. apply fin2nat_nat2finS_id.
+  pose proof (fin2nat_lt i). lia.
+Qed.
+
+(** {i<S m} -> {i<m} *)
+Definition fin2PredRange {m} (i:fin (S m)) (H:fin2nat i < m) : fin m :=
+  nat2fin (fin2nat i) H.
+
+Lemma fin2PredRange_spec : forall {m} (i:fin (S m)) (H:fin2nat i < m),
+    fin2nat (@fin2PredRange m i H) = fin2nat i.
+Proof. intros. unfold fin2PredRange. simpl. auto. Qed.
+
 (* {i<m} -> {i<n+m} *)
-Definition fin2ExtendL {m n} (i:fin m) : fin (n+m).
+Definition fin2AddRangeL {m n} (i:fin m) : fin (n+m).
   refine (nat2fin (fin2nat i) _).
   apply Nat.lt_lt_add_l. apply fin2nat_lt.
 Defined.
 
-Lemma fin2ExtendL_spec : forall {m n} (i:fin m),
-    fin2nat (@fin2ExtendL m n i) = fin2nat i.
-Proof. intros. unfold fin2ExtendL. rewrite fin2nat_nat2fin_id. auto. Qed.
+Lemma fin2AddRangeL_spec : forall {m n} (i:fin m),
+    fin2nat (@fin2AddRangeL m n i) = fin2nat i.
+Proof. intros. unfold fin2AddRangeL. rewrite fin2nat_nat2fin_id. auto. Qed.
 
 (* {i<m} -> {i<m+n} *)
-Definition fin2ExtendR {m n} (i:fin m) : fin (m+n).
+Definition fin2AddRangeR {m n} (i:fin m) : fin (m+n).
   refine (nat2fin (fin2nat i) _).
   apply Nat.lt_lt_add_r. apply fin2nat_lt.
 Defined.
 
-Lemma fin2ExtendR_spec : forall {m n} (i:fin m),
-    fin2nat (@fin2ExtendR m n i) = fin2nat i.
-Proof. intros. unfold fin2ExtendR. rewrite fin2nat_nat2fin_id. auto. Qed.
-
-(* {i<m} -> {i<S m} *)
-Definition fin2ExtendSucc {m} (i:fin m) : fin (S m).
-  refine (nat2finS (fin2nat i)).
-Defined.
-
-Lemma fin2ExtendSucc_spec : forall {m} (i:fin m),
-    fin2nat (@fin2ExtendSucc m i) = fin2nat i.
-Proof.
-  intros. unfold fin2ExtendSucc. apply fin2nat_nat2finS_id.
-  pose proof (fin2nat_lt i). lia.
-Qed.
-
-(* {i<S m} -> {i<m} *)
-Definition fin2ExtendPred {m} (i:fin (S m)) (H:fin2nat i < m) : fin m :=
-  nat2fin (fin2nat i) H.
-
-Lemma fin2ExtendPred_spec : forall {m} (i:fin (S m)) (H:fin2nat i < m),
-    fin2nat (@fin2ExtendPred m i H) = fin2nat i.
-Proof. intros. unfold fin2ExtendPred. apply fin2nat_nat2fin_id. Qed.
+Lemma fin2AddRangeR_spec : forall {m n} (i:fin m),
+    fin2nat (@fin2AddRangeR m n i) = fin2nat i.
+Proof. intros. unfold fin2AddRangeR. rewrite fin2nat_nat2fin_id. auto. Qed.
 
 (* {i<m} -> {n+i<n+m} *)
-Definition fin2PlusL {m n} (i:fin m) : fin (n+m).
+Definition fin2AddRangeAddL {m n} (i:fin m) : fin (n+m).
   refine (nat2fin (n + fin2nat i)%nat _).
   apply (Plus.plus_lt_compat_l_stt). apply fin2nat_lt.
 Defined.
 
-Lemma fin2PlusL_spec : forall {m n} (i:fin m),
-    fin2nat (@fin2PlusL m n i) = n + fin2nat i.
-Proof. intros. unfold fin2PlusL. apply fin2nat_nat2fin_id. Qed.
+Lemma fin2AddRangeAddLL_spec : forall {m n} (i:fin m),
+    fin2nat (@fin2AddRangeAddL m n i) = n + fin2nat i.
+Proof. intros. unfold fin2AddRangeAddL. apply fin2nat_nat2fin_id. Qed.
   
 (* {i<m} -> {i+n<m+n} *)
-Definition fin2PlusR {m n} (i:fin m) : fin (m+n).
+Definition fin2AddRangeAddR {m n} (i:fin m) : fin (m+n).
   refine (nat2fin (fin2nat i + n)%nat _).
   apply (Plus.plus_lt_compat_r_stt). apply fin2nat_lt.
 Defined.
 
-Lemma fin2PlusR_spec : forall {m n} (i:fin m),
-    fin2nat (@fin2PlusR m n i) = fin2nat i + n.
-Proof. intros. unfold fin2PlusR. apply fin2nat_nat2fin_id. Qed.
+Lemma fin2AddRangeAddR_spec : forall {m n} (i:fin m),
+    fin2nat (@fin2AddRangeAddR m n i) = fin2nat i + n.
+Proof. intros. unfold fin2AddRangeAddR. apply fin2nat_nat2fin_id. Qed.
   
 (* {S i<S m} -> {i<m} *)
-Definition fin2Pred {m} (i:fin (S m)) (H:0 < fin2nat i) : fin m.
+Definition fin2PredRangePred {m} (i:fin (S m)) (H:0 < fin2nat i) : fin m.
   refine (nat2fin (pred (fin2nat i)) _).
   destruct i; simpl in *. apply pred_lt; auto.
 Defined.
 
-Lemma fin2Pred_spec : forall {m} (i:fin (S m)) (H:0 < fin2nat i),
-    fin2nat (fin2Pred i H) = pred (fin2nat i).
-Proof. intros. unfold fin2Pred. apply fin2nat_nat2fin_id. Qed.
+Lemma fin2PredRangePred_spec : forall {m} (i:fin (S m)) (H:0 < fin2nat i),
+    fin2nat (fin2PredRangePred i H) = pred (fin2nat i).
+Proof. intros. unfold fin2PredRangePred. apply fin2nat_nat2fin_id. Qed.
 
 
 (** ** Properties of Fin-index-Fun (ff) *)
@@ -508,6 +565,9 @@ Section ff2l_l2ff.
   (** [list] to `ff` *)
   Definition l2ff (n : nat) (l : list A) : fin n -> A :=
     fun f => nth (fin2nat f) l Azero.
+
+  Lemma nth_l2ff : forall {n} (l : list A) i, (l2ff n l) i = nth (fin2nat i) l Azero.
+  Proof. intros. unfold l2ff. auto. Qed.
   
   Lemma l2ff_inj : forall {n} (l1 l2 : list A),
       length l1 = n -> length l2 = n ->

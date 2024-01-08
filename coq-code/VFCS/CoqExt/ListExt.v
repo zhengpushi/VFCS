@@ -523,17 +523,6 @@ Hint Resolve lzero_length : mat.
 Section map_A_B.
   Context {A B} (Azero : A) (Bzero : B) (f : A -> B).
   
-  (** map is equal, imply the list is equal *)
-  Lemma map_eq_imply_eq : forall (l1 l2 : list A),
-      map f l1 = map f l2 ->
-      (* f is `Injective` when the domain is `In` the list *)
-      (forall a b : A, In a l1 -> In b l2 -> f a = f b -> a = b) ->
-      l1 = l2.
-  Proof.
-    induction l1; destruct l2; intros; simpl in *; try easy.
-    inversion H. f_equal; auto.
-  Qed.
-  
   (** map and repeat is communtative *)
   Lemma map_repeat : forall (a : A) n, map f (repeat a n) = repeat (f a) n.
   Proof.
@@ -548,6 +537,36 @@ Section map_A_B.
     intros n i l. revert n i.
     induction l; intros; simpl in *. lia. destruct n. lia.
     destruct i; auto. apply IHl with (n:=n); auto. lia.
+  Qed.
+
+  (** map is injective, if `f` is injective on the given list *)
+  Lemma map_inj : forall (l1 l2 : list A),
+      (forall a b : A, In a l1 -> In b l2 -> f a = f b -> a = b) ->
+      map f l1 = map f l2 ->
+      l1 = l2.
+  Proof.
+    induction l1; destruct l2; intros; simpl in *; try easy.
+    inversion H0. f_equal; auto.
+  Qed.
+
+  (** map is surjective, if `f` is surjective on the given list *)
+  Lemma map_surj : forall (lb : list B),
+    (forall b : B, In b lb -> exists (a : A), f a = b) ->
+    exists (la : list A), length la = length lb /\ map f la = lb.
+  Proof.
+    intros lb H. induction lb as [|b lb]; intros.
+    - exists []. auto.
+    - destruct (H b) as [a]. constructor; auto. destruct IHlb as [la].
+      + intros. apply H. simpl; auto.
+      + exists (a :: la). simpl. destruct H1. rewrite H0,H1,H2. auto.
+  Qed.
+
+  (* If any element `a` in list `l` satisfy `P (f a)`, then `Forall P (map f l)` hold *)
+  Lemma Forall_map_forall : forall (P : B -> Prop) (l : list A),
+      (forall (a : A), In a l -> P (f a)) -> Forall P (map f l).
+  Proof.
+    intros. induction l; simpl; auto. constructor.
+    apply H. simpl; auto. apply IHl. intros. apply H. simpl; auto.
   Qed.
 
 End map_A_B.
@@ -1101,6 +1120,7 @@ Section lcmul_lmulc.
   
 End lcmul_lmulc.
 
+
 (* ===================================================================== *)
 (** ** product of two lists *)
 Section ldot.
@@ -1318,7 +1338,7 @@ Section listN.
     end.
   
   Lemma listN_length : forall (l : list A) (n : nat), length (listN l n) = n.
-  Proof. intros l n. gd l. induction n; intros; simpl; auto. Qed.
+  Proof. intros l n. revert l. induction n; intros; simpl; auto. Qed.
   
   Lemma listN_eq : forall (l : list A), listN l (length l) = l.
   Proof. induction l; simpl; auto. f_equal; auto. Qed.
@@ -1635,7 +1655,7 @@ Section dlist_map2.
   Lemma map2_dnil_l : forall (dl : @dlist B) (f : A -> B -> C) n, 
       length dl = n -> map2 (map2 f) (dnil n) dl = dnil n.
   Proof.
-    intros. gd dl. induction n; intros; simpl; try easy.
+    intros. revert dl H. induction n; intros; simpl; try easy.
     destruct dl. inversion H. inversion H. rewrite H1. f_equal. auto.
   Qed.
 
@@ -1643,7 +1663,7 @@ Section dlist_map2.
   Lemma map2_dnil_r : forall (dl:dlist A) (f : A -> B -> C) n, 
       length dl = n -> map2 (map2 f) dl (dnil n) = dnil n.
   Proof.
-    intros. gd dl. induction n; intros; simpl; try easy.
+    intros. revert dl H. induction n; intros; simpl; try easy.
     - rewrite map2_nil_r. easy.
     - destruct dl. easy. simpl. rewrite IHn; auto. rewrite map2_nil_r. easy.
   Qed.
