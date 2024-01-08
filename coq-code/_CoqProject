@@ -41,16 +41,16 @@ VFCS/Math/Calculus/Calculus.v
 
 VFCS/Math/Ratan2.v
 
-VFCS/Math/MatrixFF/fin.v
-VFCS/Math/MatrixFF/seq.v
-VFCS/Math/MatrixFF/fseq.v
-VFCS/Math/MatrixFF/vec.v
-VFCS/Math/MatrixFF/Matrix.v
-VFCS/Math/MatrixFF/MatrixDet.v
-VFCS/Math/MatrixFF/MatrixGauss.v
-VFCS/Math/MatrixFF/MatrixInv.v
-VFCS/Math/MatrixFF/ElementType.v
-VFCS/Math/MatrixFF/MatrixModule.v
+VFCS/Math/Matrix/Fin.v
+VFCS/Math/Matrix/Sequence.v
+VFCS/Math/Matrix/Fsequence.v
+VFCS/Math/Matrix/Vector.v
+VFCS/Math/Matrix/Matrix.v
+VFCS/Math/Matrix/MatrixDet.v
+VFCS/Math/Matrix/MatrixGauss.v
+VFCS/Math/Matrix/MatrixInv.v
+VFCS/Math/Matrix/ElementType.v
+VFCS/Math/Matrix/MatrixModule.v
 
 # VFCS/Math/Matrix/Matrix.v
 # VFCS/Math/Matrix/ElementType.v
@@ -74,33 +74,6 @@ VFCS/Math/MatrixFF/MatrixModule.v
 # VFCS/Math/Matrix/VectorR2.v
 # VFCS/Math/Matrix/VectorR3.v
 # VFCS/Math/Matrix/VectorR4.v
-
-# VFCS/Math/MatrixList/vec.v
-# VFCS/Math/MatrixList/Matrix.v
-# VFCS/Math/MatrixList/MatrixDet.v
-# VFCS/Math/MatrixList/MatrixGauss.v
-# VFCS/Math/MatrixList/MatrixInv.v
-# VFCS/Math/MatrixList/ElementType.v
-# VFCS/Math/MatrixList/MatrixModule.v
-# VFCS/Math/MatrixList/MatrixNat.v
-# VFCS/Math/MatrixList/MatrixZ.v
-# VFCS/Math/MatrixList/MatrixQ.v
-# VFCS/Math/MatrixList/MatrixQc.v
-# VFCS/Math/MatrixList/MatrixR.v
-# VFCS/Math/MatrixList/MatrixRFun.v
-# VFCS/Math/MatrixList/MatrixC.v
-# VFCS/Math/MatrixList/Vector.v
-# VFCS/Math/MatrixList/VectorModule.v
-# VFCS/Math/MatrixList/VectorNat.v
-# VFCS/Math/MatrixList/VectorZ.v
-# VFCS/Math/MatrixList/VectorQ.v
-# VFCS/Math/MatrixList/VectorQc.v
-# VFCS/Math/MatrixList/VectorR.v
-# VFCS/Math/MatrixList/VectorRFun.v
-# VFCS/Math/MatrixList/VectorC.v
-# VFCS/Math/MatrixList/VectorR2.v
-# VFCS/Math/MatrixList/VectorR3.v
-# VFCS/Math/MatrixList/VectorR4.v
 
 # VFCS/Math/LinearAlgebra/PermutationExt.v
 
