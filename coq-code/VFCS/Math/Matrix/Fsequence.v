@@ -12,7 +12,7 @@ Require Export Basic.
 Require Export NatExt.
 Require Export ListExt.
 Require Export Hierarchy.
-Require Export fin seq.
+Require Export Fin Sequence.
 Require RExt.
 
 Generalizable Variables A Aadd Azero Aopp Amul Aone Ainv.
@@ -30,49 +30,27 @@ Open Scope A_scope.
 Section fseqeq.
   Context {A} {Azero : A}.
 
-  (* Variable n : nat. *)
-  (* Variable ff : fin (S n) -> A. *)
-  (* Goal fin n -> A. *)
-  (* apply (f2ff (@ff2f _ Azero _ ff)). *)
-  (* Definition  *)
-  (** seqeq of S has a equivalent form. *)
-  (* Variable n : nat. *)
-  (* Variable f : fin (S n) -> A. *)
-  (* Check fun (i : fin n) => f (fin2fin _ _ i _). *)
-  (* Variable i : fin n. *)
-  (* Let H1: (fin2nat i < S n). *)
-  (*   Search fin2nat. *)
-  (*   apply ? *)
-  Lemma fseqeq_S : forall n (f g : fin (S n) -> A),
-      let f0 : fin n -> A := ff2ff (Azero:=Azero) _ _ f in
-      let g0 : fin n -> A := ff2ff (Azero:=Azero) _ _ g in
-      f = g <-> (f (nat2finS n) = g (nat2finS n) /\ f0 = g0).
-  Proof.
-    intros. split; intros. subst. split; auto.
-    destruct H. unfold f0,g0 in H0.
-    rewrite ffeq_iff_nth_nat. rewrite ffeq_iff_nth_nat in H0. intros.
-    bdestruct (i <? n).
-    - specialize (H0 i H2).
-  Abort.
-
   (** seqeq is decidable  *)
   Lemma fseqeq_dec : forall {n} (f g : fin n -> A),
       (forall a b : A, {a = b} + {a <> b}) -> {f = g} + {f <> g}.
   Proof.
-    intros n f g. induction n.
-    - left. extensionality i. destruct fin0_False; auto.
-    - intros.
-      destruct (IHn (@ff2ff _ Azero _ _ f) (@ff2ff _ Azero _ _ g)); auto.
-      apply ff2ff_inj in e; auto. Abort.
-  
-  (*     ? *)
-  (*     easy. *)
-  (*   - destruct IHn as [H1 | H1]. *)
-  (*     + destruct (H (f n) (g n)) as [H2 | H2]. *)
-  (*       * left. intros. bdestruct (i =? n). subst; auto. apply H1. lia. *)
-  (*       * right. intro H3. rewrite H3 in H2; auto. *)
-  (*     + right. intro H3. destruct H1. auto. *)
-  (* Qed. *)
+    intros n f g H. induction n.
+    left. extensionality i. destruct fin0_False; auto.
+    destruct (IHn (@ff2ff _ Azero _ _ f) (@ff2ff _ Azero _ _ g)); auto.
+    - destruct (H (f (nat2finS n)) (g (nat2finS n))).
+      + left. extensionality i. destruct (fin2nat i ??< n).
+        * pose proof (equal_f e). specialize (H0 (fin2fin _ _ i l)).
+          unfold ff2ff,f2ff,ff2f in H0. rewrite fin2nat_fin2fin in H0.
+          destruct (_??<_); try lia.
+          rewrite nat2fin_fin2nat_id in H0. auto.
+        * assert (fin2nat i = n). { pose proof (fin2nat_lt i). lia. }
+          replace (@nat2finS n n) with i in e0; auto.
+          rewrite <- (nat2fin_fin2nat_id (S n) i (fin2nat_lt _)).
+          rewrite (nat2finS_eq n n (Nat.lt_succ_diag_r _)).
+          apply fin_eq_iff; auto.
+      + right. intro. destruct n0. subst. auto.
+    - right. intro. destruct n0. subst. auto.
+  Qed.
   
 End fseqeq.
 
@@ -82,32 +60,8 @@ End fseqeq.
 Section fseq2eq.
   Context {A} {Azero : A}.
 
-  (** seq2eq of Sr has a equivalent form. *)
-  (* Variable r c : nat. *)
-  (* Variable f g : fin r -> fin c -> A. *)
-  (* Variable i : fin (S r). *)
-  (* Variable j : fin c. *)
-  (* Goal fin (S r) -> fin c -> A. *)
-  (*   Check f i. *)
-  (*   Check (fun i j =>  *)
-  (* Variable *)
-  (* Lemma seq2eq_Sr : forall r c (f g : nat -> nat -> A),  *)
-  (*     seq2eq (S r) c f g <-> (seq2eq r c f g) /\ (seqeq c (f r) (g r)). *)
-  (* Proof. *)
-  (*   intros. unfold seq2eq, seqeq. split; intros. split; auto. *)
-  (*   destruct H. bdestruct (ri =? r); subst; auto. apply H; lia. *)
-  (* Qed. *)
-
-  (** seq2eq of Sc has a equivalent form. *)
-  (* Lemma seq2eq_Sc : forall r c (f g : nat -> nat -> A),  *)
-  (*     seq2eq r (S c) f g <-> (seq2eq r c f g) /\ (seqeq r (fun i => f i c) (fun i => g i c)). *)
-  (* Proof. *)
-  (*   intros. unfold seq2eq, seqeq. split; intros. split; auto. *)
-  (*   destruct H. bdestruct (ci =? c); subst; auto. apply H; lia. *)
-  (* Qed. *)
-
-  (** seq2eq is decidable  *)
-  (* Lemma seq2eq_dec : forall r c f g, *)
+  (** fseq2eq is decidable  *)
+  (* Lemma fseq2eq_dec : forall r c f g, *)
   (*     (forall a b : A, {a = b} + {a <> b}) -> {seq2eq r c f g} + {~seq2eq r c f g}. *)
   (* Proof. *)
   (*   intros r c f g H. unfold seq2eq. revert c. induction r; intros. *)
@@ -156,28 +110,6 @@ Section fseqsum.
   (** Let's have an abelian monoid structure *)
   Context {AM : AMonoid Aadd Azero}.
 
-  (* (** Sum a sequence of (S n) elements, equal to addition of Sum and tail *) *)
-  (* Lemma seqsumS_tail : forall n f,  *)
-  (*     seqsum f (S n) = seqsum f n + f n. *)
-  (* Proof. reflexivity. Qed. *)
-  
-  (* (** Sum a sequence of (S n) elements, equal to addition of head and Sum *) *)
-  (* Lemma seqsumS_head : forall n f,  *)
-  (*     seqsum f (S n) = f O + seqsum (fun i => f (S i)) n. *)
-  (* Proof. *)
-  (*   intros. induction n; simpl in *. amonoid. rewrite IHn. amonoid. *)
-  (* Qed. *)
-
-  (* (** Sum of a sequence given by `l2f l` equal to folding of `l` *) *)
-  (* Lemma seqsum_l2f : forall (l : list A) n, *)
-  (*     length l = n -> *)
-  (*     seqsum (@l2f _ Azero n l) n = fold_right Aadd Azero l. *)
-  (* Proof. *)
-  (*   unfold l2f. induction l; intros. *)
-  (*   - simpl in H. subst; simpl. auto. *)
-  (*   - destruct n; simpl in H. lia. rewrite seqsumS_head. rewrite IHl; auto. *)
-  (* Qed. *)
-  
   (** Sum with plus of two sequence equal to plus with two sum. *)
   Lemma fseqsum_add : forall {n} (f g h : fin n -> A),
       (forall i, h i = f i + g i) -> fseqsum h = fseqsum f + fseqsum g.
@@ -202,9 +134,9 @@ Section fseqsum.
 
   
   (** Let's have an ring structure *)
-  Context `{AR : ARing A Aadd Azero Aopp Amul Aone}.
+  Context `{HARing : ARing A Aadd Azero Aopp Amul Aone}.
   Infix "*" := Amul : A_scope.
-  Add Ring ring_inst : make_ring_theory.
+  Add Ring ring_inst : (make_ring_theory HARing).
   
   
   (** Scalar multiplication of the sum of a sequence. *)

@@ -13,7 +13,7 @@
 
 Require Export TupleExt Hierarchy.
 Require Export ListExt.
-Require Export vec.
+Require Export Vector.
 Require Reals.
 Require Import Extraction.
 
@@ -39,22 +39,22 @@ Notation smat A n := (mat A n n).
 Notation rvec A n := (mat A 1 n).
 Notation cvec A n := (mat A n 1).
 
-(* Notation "M .11" := (M $ 0 $ 0) : mat_scope. *)
-(* Notation "M .12" := (M $ 0 $ 1) : mat_scope. *)
-(* Notation "M .13" := (M $ 0 $ 2) : mat_scope. *)
-(* Notation "M .14" := (M $ 0 $ 3) : mat_scope. *)
-(* Notation "M .21" := (M $ 1 $ 0) : mat_scope. *)
-(* Notation "M .22" := (M $ 1 $ 1) : mat_scope. *)
-(* Notation "M .23" := (M $ 1 $ 2) : mat_scope. *)
-(* Notation "M .24" := (M $ 1 $ 3) : mat_scope. *)
-(* Notation "M .31" := (M $ 2 $ 0) : mat_scope. *)
-(* Notation "M .32" := (M $ 2 $ 1) : mat_scope. *)
-(* Notation "M .33" := (M $ 2 $ 2) : mat_scope. *)
-(* Notation "M .34" := (M $ 2 $ 3) : mat_scope. *)
-(* Notation "M .41" := (M $ 3 $ 0) : mat_scope. *)
-(* Notation "M .42" := (M $ 3 $ 1) : mat_scope. *)
-(* Notation "M .43" := (M $ 3 $ 2) : mat_scope. *)
-(* Notation "M .44" := (M $ 3 $ 3) : mat_scope. *)
+Notation "M .11" := (M $ nat2finS 0 $ nat2finS 0) : mat_scope.
+Notation "M .12" := (M $ nat2finS 0 $ nat2finS 1) : mat_scope.
+Notation "M .13" := (M $ nat2finS 0 $ nat2finS 2) : mat_scope.
+Notation "M .14" := (M $ nat2finS 0 $ nat2finS 3) : mat_scope.
+Notation "M .21" := (M $ nat2finS 1 $ nat2finS 0) : mat_scope.
+Notation "M .22" := (M $ nat2finS 1 $ nat2finS 1) : mat_scope.
+Notation "M .23" := (M $ nat2finS 1 $ nat2finS 2) : mat_scope.
+Notation "M .24" := (M $ nat2finS 1 $ nat2finS 3) : mat_scope.
+Notation "M .31" := (M $ nat2finS 2 $ nat2finS 0) : mat_scope.
+Notation "M .32" := (M $ nat2finS 2 $ nat2finS 1) : mat_scope.
+Notation "M .33" := (M $ nat2finS 2 $ nat2finS 2) : mat_scope.
+Notation "M .34" := (M $ nat2finS 2 $ nat2finS 3) : mat_scope.
+Notation "M .41" := (M $ nat2finS 3 $ nat2finS 0) : mat_scope.
+Notation "M .42" := (M $ nat2finS 3 $ nat2finS 1) : mat_scope.
+Notation "M .43" := (M $ nat2finS 3 $ nat2finS 2) : mat_scope.
+Notation "M .44" := (M $ nat2finS 3 $ nat2finS 3) : mat_scope.
 
 Lemma meq_iff_mnth : forall {A r c} (M1 M2 : mat A r c),
     M1 = M2 <-> (forall i j, M1$i$j = M2$i$j).
@@ -74,6 +74,24 @@ Section f2m_m2f.
     
   Definition m2f {r c} (M : mat A r c) : (nat -> nat -> A) :=
     fun i => @v2f _ Azero c (@v2f _ (vzero Azero) r M i).
+  
+  (* M[i,j] = m2f M i j *)
+  Lemma mnth_eq_nth_m2f : forall {r c} (M : @mat A r c) (i j : nat) (Hi:i < r)(Hj:j < c),
+      M (exist _ i Hi) (exist _ j Hj) = m2f M i j.
+  Proof.
+    intros. unfold m2f,v2f,ff2f.
+    destruct (_??<_); try lia.
+    destruct (_??<_); try lia. f_equal; apply fin_eq_iff; auto.
+  Qed.
+
+  Lemma meq_iff_nth_m2f : forall {r c} (M1 M2 : mat A r c),
+      M1 = M2 <-> (forall i j, i < r -> j < c -> (m2f M1) i j = (m2f M2) i j).
+  Proof.
+    intros. rewrite meq_iff_mnth. split; intros.
+    - specialize (H (exist _ i H0) (exist _ j H1)).
+      rewrite !mnth_eq_nth_m2f in H. auto.
+    - destruct i, j. rewrite !mnth_eq_nth_m2f. auto.
+  Qed.
 
 End f2m_m2f.
 
@@ -122,6 +140,15 @@ Section l2m_m2l.
   Definition l2m {r c} (dl : dlist A) : mat A r c :=
     l2v (vzero Azero) r (map (l2v Azero c) dl).
 
+  Lemma mnth_l2m : forall {r c} (d : dlist A) i j,
+      (* length d = r -> *)
+      (@l2m r c d) i j = nth (fin2nat i) (nth (fin2nat i) d []) Azero.
+  Proof.
+    intros r c d. revert r c. induction d; intros.
+    - simpl.
+      unfold l2m.
+  Abort.
+
   Lemma l2m_inj : forall {r c} (d1 d2 : dlist A),
       length d1 = r -> width d1 c ->
       length d2 = r -> width d2 c ->
@@ -138,7 +165,7 @@ Section l2m_m2l.
   Proof.
     intros. unfold l2m. destruct (@l2v_surj _ (vzero Azero) r M).
     exists (map v2l x). rewrite <- H. f_equal.
-    rewrite map_map. apply map_id. intros. apply l2v_v2l_id.
+    rewrite map_map. apply ListExt.map_id. intros. apply l2v_v2l_id.
   Qed.
 
   Lemma l2m_m2l_id : forall {r c} (M : mat A r c), (@l2m r c (m2l M)) = M.
@@ -377,6 +404,38 @@ Section test.
   (* Compute m2l (mclsl M1 (nat2finS 1)). *)
   (* Compute m2l (mclsr M1 (nat2finS 1)). *)
 End test.
+
+
+(* ==================================== *)
+(** ** matrix set row / column *)
+Section mset.
+  Context {A} (Azero : A).
+
+  (** set row *)
+  Definition msetr {r c} (M : mat A r c) (V : @vec A c) (i0 : fin r) : mat A r c :=
+    fun i j => if finEqdec i i0 then V$j else M$i$j.
+
+  Lemma mnth_msetr_same : forall {r c} (M:mat A r c) (V:@vec A c) (i0:fin r) i j,
+      i = i0 -> (msetr M V i0)$i$j = V$j.
+  Proof. intros. unfold msetr. destruct finEqdec; auto. easy. Qed.
+
+  Lemma mnth_msetr_diff : forall {r c} (M:mat A r c) (V:@vec A c) (i0:fin r) i j,
+      i <> i0 -> (msetr M V i0)$i$j = M$i$j.
+  Proof. intros. unfold msetr. destruct finEqdec; auto. easy. Qed.
+
+  (** set column *)
+  Definition msetc {r c} (M : mat A r c) (V : @vec A r) (j0 : fin c) : mat A r c :=
+    fun i j => if finEqdec j j0 then V$i else M$i$j.
+
+  Lemma mnth_msetc_same : forall {r c} (M:mat A r c) (V:@vec A r) (j0:fin c) i j,
+      j = j0 -> (msetc M V j0)$i$j = V$i.
+  Proof. intros. unfold msetc. destruct finEqdec; auto. easy. Qed.
+
+  Lemma mnth_msetc_diff : forall {r c} (M:mat A r c) (V:@vec A r) (j0:fin c) i j,
+      j <> j0 -> (msetc M V j0)$i$j = M$i$j.
+  Proof. intros. unfold msetc. destruct finEqdec; auto. easy. Qed.
+
+End mset.
 
 
 (** ** matrix transpose *)
@@ -689,9 +748,9 @@ Section malg.
   Proof. intros. unfold msub. rewrite mtrace_madd, mtrace_mopp; auto. Qed.
 
   
-  Context `{AR : ARing A Aadd Azero Aopp Amul Aone}.
+  Context `{HARing : ARing A Aadd Azero Aopp Amul Aone}.
   Infix "*" := Amul : A_scope.
-  Add Ring ring_inst : make_ring_theory.
+  Add Ring ring_inst : (make_ring_theory HARing).
 
   Notation vcmul := (@vcmul _ Amul).
   Notation vdot v1 v2 := (@vdot _ Aadd Azero Amul _ v1 v2).
@@ -1035,35 +1094,6 @@ Section malg.
   Qed.
 
   Section Extra.
-    
-    (* Notation "M $ i $ j " := (mnth Azero M i j) : mat_scope. *)
-    (* Notation "M .11" := (M $ 0 $ 0) : mat_scope. *)
-    (* Notation "M .12" := (M $ 0 $ 1) : mat_scope. *)
-    (* Notation "M .13" := (M $ 0 $ 2) : mat_scope. *)
-    (* Notation "M .14" := (M $ 0 $ 3) : mat_scope. *)
-    (* Notation "M .21" := (M $ 1 $ 0) : mat_scope. *)
-    (* Notation "M .22" := (M $ 1 $ 1) : mat_scope. *)
-    (* Notation "M .23" := (M $ 1 $ 2) : mat_scope. *)
-    (* Notation "M .24" := (M $ 1 $ 3) : mat_scope. *)
-    (* Notation "M .31" := (M $ 2 $ 0) : mat_scope. *)
-    (* Notation "M .32" := (M $ 2 $ 1) : mat_scope. *)
-    (* Notation "M .33" := (M $ 2 $ 2) : mat_scope. *)
-    (* Notation "M .34" := (M $ 2 $ 3) : mat_scope. *)
-    (* Notation "M .41" := (M $ 3 $ 0) : mat_scope. *)
-    (* Notation "M .42" := (M $ 3 $ 1) : mat_scope. *)
-    (* Notation "M .43" := (M $ 3 $ 2) : mat_scope. *)
-    (* Notation "M .44" := (M $ 3 $ 3) : mat_scope. *)
-    
-    (* Definition det_of_mat_3_3 (M : mat A 3 3) : A := *)
-    (*   let b1 := (M.11 * M.22 * M.33)%A in *)
-    (*   let b2 := (M.12 * M.23 * M.31)%A in *)
-    (*   let b3 := (M.13 * M.21 * M.32)%A in *)
-    (*   let c1 := (M.11 * M.23 * M.32)%A in *)
-    (*   let c2 := (M.12 * M.21 * M.33)%A in *)
-    (*   let c3 := (M.13 * M.22 * M.31)%A in *)
-    (*   let b := (b1 + b2 + b3)%A in *)
-    (*   let c := (c1 + c2 + c3)%A in *)
-    (*   (b - c)%A. *)
 
     (* Definition skew_sym_mat_of_v3 (V : @cvec A 3) : mat A 3 3. *)
     (* Proof. *)

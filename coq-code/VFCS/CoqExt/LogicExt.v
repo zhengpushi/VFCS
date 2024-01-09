@@ -40,6 +40,11 @@ Require Export Classical.
 (* Check functional_extensionality. *)
 (* forall f g : ?A -> ?B, (forall x, f x = g x) -> f = g. *)
 
+(* 函数外延性的反方向 *)
+(* Check equal_f. *)
+(* : ?f = ?g -> forall x : ?A, ?f x = ?g x *)
+
+
 (* 策略 extensionality *)
 
 

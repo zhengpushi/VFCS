@@ -79,14 +79,14 @@ End cons.
 (* ===================================================================== *)
 (** ** Properties of hd and tl *)
 Section hd_tl.
-  
-  Context {A : Type}.
+  Context {A} {Azero : A}.
   
   (** length of tl. (pred version) *)
   Lemma tl_length : forall (l : list A), length (tl l) = pred (length l).
-  Proof.
-    induction l; auto.
-  Qed.
+  Proof. induction l; auto. Qed.
+
+  Lemma hd_eq_nth_0 : forall (l : list A), hd Azero l = nth 0 l Azero.
+  Proof. intros. destruct l; simpl; auto. Qed.
 
 End hd_tl.
 
@@ -157,20 +157,17 @@ Section fold_left.
   Context `{HAMonoid:AMonoid}.
   Infix "+" := Aadd.
   
-  Lemma fold_left_intVal_rebase_l : forall (l : list A) a b,
+  Lemma fold_left_rebase_l : forall (l : list A) a b,
       fold_left Aadd l (a + b) = (fold_left Aadd l a) + b.
   Proof.
     induction l; intros; simpl; auto.
-    replace (a0 + b + a) with (a0 + a + b). apply IHl.
-    rewrite ?associative. f_equal. apply commutative.
+    replace (a0 + b + a) with (a0 + a + b). apply IHl. asemigroup.
   Qed.
 
-  Lemma fold_left_intVal_rebase_r : forall (l : list A) a b,
+  Lemma fold_left_rebase_r : forall (l : list A) a b,
       fold_left Aadd l (a + b) = (fold_left Aadd l b) + a.
   Proof.
-    induction l; intros; simpl; auto. apply commutative.
-    replace (a0 + b + a) with (a0 + (b + a)). apply IHl.
-    rewrite ?associative. f_equal.
+    intros. rewrite (commutative a b). rewrite fold_left_rebase_l. auto.
   Qed.
 
   (** (a+0+0+0+... = a *)
@@ -178,7 +175,7 @@ Section fold_left.
       fold_left Aadd (repeat Azero n) a = a.
   Proof.
     induction n; intros; simpl; auto.
-    rewrite fold_left_intVal_rebase_r. rewrite IHn. monoid.
+    rewrite fold_left_rebase_r. rewrite IHn. monoid.
   Qed.
 
   (** Σ(ai+bi) = Σ(ai) + Σ(bi) *)
@@ -191,7 +188,7 @@ Section fold_left.
     - monoid.
     - destruct n. lia.
       inversion H; clear H. inversion H0; clear H0. inversion H1; clear H1.
-      rewrite !fold_left_intVal_rebase_l.
+      rewrite !fold_left_rebase_l.
       rewrite (IHl l1 l2 n); auto.
       + asemigroup.
         specialize (H2 0). simpl in H2. rewrite H2; auto. lia.
@@ -210,7 +207,7 @@ Section fold_left.
     - rewrite group_inv_zero; auto.
     - destruct n. lia.
       inversion H; clear H. inversion H0; clear H0.
-      rewrite !fold_left_intVal_rebase_l.
+      rewrite !fold_left_rebase_l.
       rewrite (IHl1 l2 n); auto.
       + rewrite group_inv_distr. asemigroup.
         specialize (H1 0). simpl in H1. rewrite H1; auto. lia.
@@ -218,18 +215,20 @@ Section fold_left.
   Qed.
 
   Context `{HARing:ARing A Aadd Azero Aopp Amul Aone}.
+  Add Ring ring_inst : (make_ring_theory HARing).
+  Infix "*" := Amul.
 
   (** k*a1+k*a2+... = k * (a1+a2+...) *)
-  Lemma fold_left_mul : forall (l1 l2:list A) n a,
+  Lemma fold_left_cmul : forall (l1 l2:list A) n a,
       length l1 = n -> length l2 = n ->
-      (forall i, i < n -> nth i l1 Azero = Amul a (nth i l2 Azero)) ->
-      fold_left Aadd l1 Azero = Amul a (fold_left Aadd l2 Azero).
+      (forall i, i < n -> nth i l1 Azero = a * (nth i l2 Azero)) ->
+      fold_left Aadd l1 Azero = a * (fold_left Aadd l2 Azero).
   Proof.
     induction l1,l2; intros; simpl in *; try lia.
     - rewrite ring_mul_0_r; auto.
     - destruct n. lia.
       inversion H; clear H. inversion H0; clear H0.
-      rewrite !fold_left_intVal_rebase_l.
+      rewrite !fold_left_rebase_l.
       rewrite (IHl1 l2 n a1); auto.
       + rewrite distributiveLeft. asemigroup.
         specialize (H1 0). simpl in H1. rewrite H1; auto. lia.
@@ -237,6 +236,79 @@ Section fold_left.
   Qed.
 
 End fold_left.
+
+
+(* ===================================================================== *)
+(** ** Properties of fold_right *)
+Section fold_right.
+
+  Context `{HAMonoid:AMonoid}.
+  Infix "+" := Aadd.
+  
+  Lemma fold_right_rebase_l : forall (l : list A) a b,
+      fold_right Aadd (a + b) l = b + (fold_right Aadd a l).
+  Proof.
+    induction l; intros; simpl; auto. asemigroup. rewrite IHl. asemigroup.
+  Qed.
+
+  Lemma fold_right_rebase_r : forall (l : list A) a b,
+      fold_right Aadd (a + b) l = a + (fold_right Aadd b l).
+  Proof.
+    intros. rewrite (commutative a b). rewrite fold_right_rebase_l. auto.
+  Qed.
+
+  (** (a+0+0+0+... = a *)
+  Lemma fold_right_lzero : forall n a,
+      fold_right Aadd a (repeat Azero n) = a.
+  Proof. induction n; intros; simpl; auto. rewrite IHn. monoid. Qed.
+  
+  (** Σ(ai+bi) = Σ(ai) + Σ(bi) *)
+  Lemma fold_right_add : forall (l l1 l2:list A) n,
+      length l = n -> length l1 = n -> length l2 = n ->
+      (forall i, i < n -> nth i l Azero = nth i l1 Azero + nth i l2 Azero) ->
+      fold_right Aadd Azero l = (fold_right Aadd Azero l1) +
+                                  (fold_right Aadd Azero l2).
+  Proof.
+    induction l; destruct l1,l2; intros; simpl in *; try lia. monoid.
+    destruct n. lia. rewrite (IHl l1 l2 n); auto.
+    - specialize (H2 0); simpl in H2. rewrite H2; try lia. asemigroup.
+    - intros. specialize (H2 (S i)); simpl in H2. rewrite H2; auto. lia.
+  Qed.
+
+  Context `{HGroup:Group A Aadd Azero Aopp}.
+
+  (** (-a1)+(-a2)+... = -(a1+a2+...) *)
+  Lemma fold_right_opp : forall (l1 l2:list A) n,
+      length l1 = n -> length l2 = n ->
+      (forall i, i < n -> nth i l1 Azero = Aopp (nth i l2 Azero)) ->
+      fold_right Aadd Azero l1 = Aopp (fold_right Aadd Azero l2).
+  Proof.
+    induction l1,l2; intros; simpl in *; try lia.
+    - rewrite group_inv_zero; auto.
+    - destruct n. lia. rewrite (IHl1 l2 n); auto.
+      + specialize (H1 0); simpl in H1.
+        rewrite H1; try lia. rewrite group_inv_distr. asemigroup.
+      + intros. specialize (H1 (S i)); simpl in H1. rewrite H1; auto. lia.
+  Qed.
+
+  Context `{HARing:ARing A Aadd Azero Aopp Amul Aone}.
+  Infix "*" := Amul.
+
+  (** k*a1+k*a2+... = k * (a1+a2+...) *)
+  Lemma fold_right_cmul : forall (l1 l2:list A) n a,
+      length l1 = n -> length l2 = n ->
+      (forall i, i < n -> nth i l1 Azero = a * (nth i l2 Azero)) ->
+      fold_right Aadd Azero l1 = a * (fold_right Aadd Azero l2).
+  Proof.
+    induction l1,l2; intros; simpl in *; try lia.
+    - rewrite ring_mul_0_r; auto.
+    - destruct n. lia. rewrite (IHl1 l2 n a1); auto.
+      + rewrite (distributiveLeft a1). asemigroup.
+        specialize (H1 0); simpl in H1; rewrite H1; auto. lia.
+      + intros. specialize (H1 (S i)); simpl in H1. apply H1. lia.
+  Qed.
+
+End fold_right.
 
 
 (* ===================================================================== *)
@@ -1024,9 +1096,8 @@ End ladd_opp_sub.
 (* ===================================================================== *)
 (** ** constant multiplication of list *)
 Section lcmul_lmulc.
-  
-  Context `{R:ARing}.
-  Add Ring ring_inst : make_ring_theory.
+  Context `{HARing:ARing}.
+  Add Ring ring_inst : (make_ring_theory HARing).
 
   Infix "*" := Amul.
   Context `{ADec: Dec A}.
@@ -1053,8 +1124,8 @@ Section lcmul_lmulc.
   Lemma lmulc_nil : forall a, lmulc [] a = [].
   Proof. intros. easy. Qed.
   
-  Context `{F:Field A Aadd Azero Aopp Amul Aone Ainv}.
-  Add Field field_inst : make_field_theory.
+  Context `{HField:Field A Aadd Azero Aopp Amul Aone Ainv}.
+  Add Field field_inst : (make_field_theory HField).
 
   (** mul k x = x -> k = 1 \/ x = 0 *)
   Lemma fcmul_fixpoint_imply_k1_or_zero :
@@ -1125,8 +1196,8 @@ End lcmul_lmulc.
 (** ** product of two lists *)
 Section ldot.
   
-  Context `{AR:ARing}.
-  Add Ring ring_inst : make_ring_theory.
+  Context `{HARing:ARing}.
+  Add Ring ring_inst : (make_ring_theory HARing).
 
   Infix "+" := Aadd.
   Infix "*" := Amul.
@@ -1137,7 +1208,7 @@ Section ldot.
 
   (** l1 . l2 = l2 . l1 *)
   Lemma ldot_comm : forall (l1 l2 : list A), ldot l1 l2 = ldot l2 l1.
-  Proof. intros. unfold ldot. rewrite map2_comm; auto. apply AR. Qed.
+  Proof. intros. unfold ldot. rewrite map2_comm; auto. apply HARing. Qed.
   
   (** [] . l = 0 *)
   Lemma ldot_nil_l : forall (l : list A), ldot nil l = Azero.
@@ -1369,6 +1440,51 @@ Section test.
   (* Compute listFirstNonZero 0 Nat.eqb [0;0;1;2;3]. *)
 End test.
 
+
+(* ===================================================================== *)
+(** ** Sub list *)
+Section sublist.
+  Context {A} (Azero : A).
+
+  Definition sublist {A} (l : list A) (lo n : nat) : list A :=
+    firstn n (skipn lo l).
+
+  Lemma sublist_overflow : forall (l : list A) lo n,
+      length l <= lo -> sublist l lo n = [].
+  Proof.
+    intros. unfold sublist. rewrite skipn_all2; try lia. apply firstn_nil.
+  Qed.
+  
+  Lemma sublist_Sn : forall (l : list A) lo n,
+      sublist l lo (S n) =
+        if length l <=? lo
+        then []
+        else (nth lo l Azero) :: sublist l (S lo) n.
+  Proof.
+    intros. unfold sublist. simpl.
+    revert lo. induction l; destruct lo; simpl; auto.
+  Qed.
+
+  Lemma sublist_cons : forall (a : A) (l : list A) lo n,
+      sublist (a :: l) lo (S n) =
+        if lo =? 0
+        then a :: sublist l 0 n
+        else sublist l (pred lo) (S n).
+  Proof. intros. unfold sublist. simpl. destruct lo; simpl; auto. Qed.
+  
+End sublist.
+
+Section test.
+  (* Compute sublist [1;2;3;4;5] 1 3. *)
+End test.
+
+
+
+
+
+(* ##################################################################### *)
+(* ##################################################################### *)
+(* ##################################################################### *)
 
 
 (* ##################################################################### *)
@@ -2792,8 +2908,8 @@ End dlsub.
 (* ===================================================================== *)
 (** ** list dot dlist, and dlist dot dlist *)
 Section ldotdl_dldotdl.
-  Context `{AR:ARing}.
-  Add Ring ring_inst : make_ring_theory.
+  Context `{HARing : ARing}.
+  Add Ring ring_inst : (make_ring_theory HARing).
   Infix "+" := Aadd.
   Infix "*" := Amul.
   Notation "- b" := (Aopp b).

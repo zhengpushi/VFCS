@@ -29,7 +29,7 @@
 
 Require Export TupleExt Hierarchy.
 Require Export ListExt.
-Require Export fin seq fseq fin.
+Require Export Fin Sequence Fsequence.
 Require Import Extraction.
 
 Generalizable Variable A Aadd Azero Aopp Amul Aone Ainv.
@@ -474,7 +474,7 @@ Section alg.
   Proof. intros. split; intros; subst; rewrite vopp_vopp; auto. Qed.
 
   (** - (vzero) = vzero *)
-  Lemma vopp_vzero : forall {n:nat}, - (@vec.vzero _ Azero n) = vzero.
+  Lemma vopp_vzero : forall {n:nat}, - (@Vector.vzero _ Azero n) = vzero.
   Proof. intros. apply group_inv_id. Qed.
 
   (** - (V1 + V2) = (-V1) + (-V2) *)
@@ -525,9 +525,9 @@ Section alg.
   Proof. intros. unfold vsub. group. Qed.
 
   
-  Context `{AR : ARing A Aadd Azero Aopp Amul Aone}.
+  Context `{HARing : ARing A Aadd Azero Aopp Amul Aone}.
   Infix "*" := Amul : A_scope.
-  Add Ring ring_inst : make_ring_theory.
+  Add Ring ring_inst : (make_ring_theory HARing).
   
   
   (** *** Vector scalar multiplication *)
@@ -564,7 +564,7 @@ Section alg.
   Proof. intros. apply veq_iff_vnth; intros. cbv. ring. Qed.
 
   (** a c* vzero = vzero *)
-  Lemma vcmul_0_r : forall {n} a, a c* vzero = (@vec.vzero _ Azero n).
+  Lemma vcmul_0_r : forall {n} a, a c* vzero = (@Vector.vzero _ Azero n).
   Proof. intros. apply veq_iff_vnth; intros. cbv. ring. Qed.
   
   (* 1 c* A = A *)

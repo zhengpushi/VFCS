@@ -49,6 +49,7 @@ VFCS/Math/Matrix/Matrix.v
 VFCS/Math/Matrix/MatrixDet.v
 VFCS/Math/Matrix/MatrixGauss.v
 VFCS/Math/Matrix/MatrixInv.v
+VFCS/Math/Matrix/MatrixOrth.v
 VFCS/Math/Matrix/ElementType.v
 VFCS/Math/Matrix/MatrixModule.v
 

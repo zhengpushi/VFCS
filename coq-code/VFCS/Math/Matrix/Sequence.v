@@ -135,12 +135,13 @@ Section seqsum.
 
   
   (** Sum of a sequence *)
+  (* ∑(f,n) = 0 + f 0 + f 1 + ... + f (n-1) *)
   Fixpoint seqsum (f : nat -> A) (n : nat) : A := 
     match n with
     | O => Azero
     | S n' => seqsum f n' + f n'
     end.
-    
+
   (** Sum of a sequence which every element is zero get zero. *)
   Lemma seqsum_eq0 : forall (f : nat -> A) (n : nat), 
       (forall i, i < n -> f i = Azero) -> seqsum f n = Azero.
@@ -156,12 +157,12 @@ Section seqsum.
   Context {AM : AMonoid Aadd Azero}.
 
   (** Sum a sequence of (S n) elements, equal to addition of Sum and tail *)
-  Lemma seqsumS_tail : forall n f, 
+  Lemma seqsumS_tail : forall f n, 
       seqsum f (S n) = seqsum f n + f n.
   Proof. reflexivity. Qed.
   
   (** Sum a sequence of (S n) elements, equal to addition of head and Sum *)
-  Lemma seqsumS_head : forall n f, 
+  Lemma seqsumS_head : forall f n, 
       seqsum f (S n) = f O + seqsum (fun i => f (S i)) n.
   Proof.
     intros. induction n; simpl in *. amonoid. rewrite IHn. amonoid.
@@ -204,9 +205,9 @@ Section seqsum.
 
   
   (** Let's have an ring structure *)
-  Context `{AR : ARing A Aadd Azero Aopp Amul Aone}.
+  Context `{HARing : ARing A Aadd Azero Aopp Amul Aone}.
   Infix "*" := Amul : A_scope.
-  Add Ring ring_inst : make_ring_theory.
+  Add Ring ring_inst : (make_ring_theory HARing).
   
   
   (** Scalar multiplication of the sum of a sequence. *)
@@ -297,6 +298,206 @@ Section seqsum.
   Qed.
   
 End seqsum.
+
+
+(* ======================================================================= *)
+(** ** Sum of a sequence with bounds *)
+Section seqsumb.
+  
+  (** Let's have an monoid structure *)
+  Context `{M : Monoid}.
+  Infix "+" := Aadd : A_scope.
+  Notation seqsum := (@seqsum _ Aadd Azero).
+
+  (** Sum of a sequence with lower bounds and length *)
+  (* ∑(f,lo,n) = 0 + f lo + f (lo+1) + ... + f (lo+n-1) *)
+  Fixpoint seqsumb (f : nat -> A) (lo n : nat) : A := 
+    match n with
+    | O => Azero
+    | S n' => seqsumb f lo n' + f (lo + n')%nat
+    end.
+
+  (** Sum of a sequence with bounds equal to sum of a sequence *)
+  Lemma seqsumb_eq_seqsum : forall (f : nat -> A) (n : nat),
+      seqsumb f 0 n = seqsum f n.
+  Proof. intros. induction n; simpl; auto. rewrite IHn. auto. Qed.
+
+  (** Sum of a sequence which every element is zero get zero. *)
+  Lemma seqsumb_eq0 : forall (f : nat -> A) (lo n : nat), 
+      (forall i, i < n -> f (lo+i)%nat = Azero) -> seqsumb f lo n = Azero.
+  Proof.
+    intros. induction n; simpl; auto. rewrite H,IHn; auto; try lia. monoid.
+  Qed.
+
+  (** Two sequences are equal, imply the sum are equal. *)
+  Lemma seqsumb_eq : forall (f g : nat -> A) (lo n : nat),
+      (forall i, i < n -> f (lo+i) = g (lo+i))%nat ->
+      seqsumb f lo n = seqsumb g lo n.
+  Proof. intros. induction n; simpl; auto. rewrite H,IHn; auto. Qed.
+  
+  
+  (** Let's have an abelian monoid structure *)
+  Context {AM : AMonoid Aadd Azero}.
+
+  (** Sum a sequence of (S n) elements, equal to addition of Sum and tail *)
+  Lemma seqsumbS_tail : forall f lo n,
+      seqsumb f lo (S n) = seqsumb f lo n + f (lo + n)%nat.
+  Proof. reflexivity. Qed.
+  
+  (** Sum a sequence of (S n) elements, equal to addition of head and Sum *)
+  Lemma seqsumbS_head : forall f lo n, 
+      seqsumb f lo (S n) = f lo + seqsumb (fun i => f (S i)) lo n.
+  Proof.
+    intros. induction n; simpl in *. amonoid. rewrite IHn.
+    replace (lo + S n)%nat with (S (lo + n)); auto. amonoid.
+  Qed.
+
+  (** Sum of a sequence given by `l2f l` equal to folding of sublist of `l` *)
+  Lemma seqsumb_l2f : forall (l : list A) lo n,
+      length l = n ->
+      seqsumb (@l2f _ Azero n l) lo n = fold_right Aadd Azero (sublist l lo n).
+  Proof.
+    unfold l2f. induction l; intros.
+    - simpl in H. subst; simpl. auto.
+    - destruct n; simpl in H. lia. rewrite seqsumbS_head. rewrite IHl; auto.
+      rewrite sublist_cons. simpl. destruct lo; simpl; auto.
+      rewrite (sublist_Sn Azero).
+      bdestruct (length l <=? lo); simpl; auto.
+      rewrite nth_overflow; try lia.
+      rewrite sublist_overflow; try lia. simpl. monoid.
+  Qed.
+  
+  (** Sum with plus of two sequence equal to plus with two sum. *)
+  Lemma seqsumb_add : forall (f g h : nat -> A) (lo n : nat),
+      (forall i, i < n -> h (lo+i)%nat = f (lo+i)%nat + g (lo+i)%nat) ->
+      seqsumb h lo n = seqsumb f lo n + seqsumb g lo n.
+  Proof.
+    intros. induction n; simpl. monoid.
+    rewrite IHn; auto. asemigroup. rewrite H; auto.
+  Qed.
+
+  
+  (** Let's have a group structure *)
+  Context `{G : Group A Aadd Azero Aopp}.
+  Notation "- a" := (Aopp a) : A_scope.
+
+  
+  (** Opposition of the sum of a sequence. *)
+  Lemma seqsumb_opp : forall (f g : nat -> A) (lo n : nat),
+      (forall i, i < n -> f (lo+i)%nat = - g (lo+i)%nat) ->
+      (seqsumb f lo n) = - (seqsumb g lo n).
+  Proof.
+    intros. induction n; simpl. rewrite group_inv_id; auto.
+    rewrite H,IHn; auto. rewrite group_inv_distr. amonoid.
+  Qed.
+
+  
+  (** Let's have an ring structure *)
+  Context `{HARing : ARing A Aadd Azero Aopp Amul Aone}.
+  Infix "*" := Amul : A_scope.
+  Add Ring ring_inst : (make_ring_theory HARing).
+  
+  
+  (** Scalar multiplication of the sum of a sequence. *)
+  Lemma seqsumb_cmul : forall k (f g : nat -> A) (lo n : nat),
+       (forall i, i < n -> f (lo+i)%nat = k * g (lo+i)%nat) ->
+      seqsumb f lo n = k * seqsumb g lo n.
+  Proof.
+    intros. induction n; simpl. ring. rewrite H, IHn; auto. ring.
+  Qed.
+
+  (** Sum a sequence which only one item is nonzero, then got this item. *)
+  Lemma seqsumb_unique : forall (f : nat -> A) (k : A) (lo n i : nat), 
+      i < n -> f (lo+i)%nat = k ->
+      (forall j, j < n -> i <> j -> f (lo+j)%nat = Azero) -> seqsumb f lo n = k.
+  Proof.
+    intros f k lo n. induction n; intros. lia. simpl. bdestruct (i =? n).
+    - subst. rewrite seqsumb_eq0; try ring. intros. apply H1. lia. lia.
+    - replace (seqsumb f lo n) with k.
+      replace (f (lo + n)%nat) with Azero; try ring.
+      rewrite H1; auto. rewrite (IHn i); auto. lia.
+  Qed.
+
+  (** Sum the m+n elements equal to plus of two parts.
+      Σ[i,lo,(m+n)] f(i) = Σ[i,lo,m] f(i) + Σ[i,lo+m,n] f(m + i). *)
+  Lemma seqsumb_plusSize : forall f lo m n,
+      seqsumb f lo (m + n) = seqsumb f lo m + seqsumb f (lo+m) n. 
+  Proof.
+    (* induction on `n` is simpler than on `m` *)
+    intros. induction n; intros; simpl.
+    - rewrite Nat.add_0_r. monoid.
+    - replace (m + S n)%nat with (S (m + n))%nat; auto. simpl.
+      rewrite IHn. asemigroup.
+  Qed.
+
+  (* (** Sum the m+n elements equal to plus of two parts. *)
+  (*     Σ[i,(lo,(m+n)] f(i) = Σ[i,lo,m] f(i) + Σ[i,lo+m,n] f(m + i). *) *)
+  (* Lemma seqsumb_minusIdx : forall f lo m n, *)
+  (*     seqsumb f lo (m + n) = seqsumb f lo m + seqsumb f (lo+m) n.  *)
+  (* Proof. *)
+  (*   (* induction on `n` is simpler than on `m` *) *)
+  (*   intros. induction n; intros; simpl. *)
+  (*   - rewrite Nat.add_0_r. monoid. *)
+  (*   - replace (m + S n)%nat with (S (m + n))%nat; auto. simpl. *)
+  (*     rewrite IHn. asemigroup. *)
+  (* Qed. *)
+  
+  (** Sum the m+n elements equal to plus of two parts.
+      (i < m -> f(lo+i) = g(lo+i)) ->
+      (i < n -> f(lo+m+i) = h(lo+i)) ->
+      Σ[i,lo,(m+n)] f(i) = Σ[i,lo,m] g(i) + Σ[i,lo+m,n] h(i). *)
+  Lemma seqsumb_plusIdx_ext : forall f g h lo m n,
+      (forall i, i < m -> f (lo+i)%nat = g (lo+i)%nat) ->
+      (forall i, i < n -> f (lo+m+i)%nat = h (lo+i)%nat) ->
+      seqsumb f lo (m + n) = seqsumb g lo m + seqsumb h lo n.
+  Proof.
+    intros. induction n; intros; simpl.
+    - rewrite Nat.add_0_r. monoid. apply seqsumb_eq. auto.
+    - replace (m + S n)%nat with (S (m + n))%nat; auto. simpl.
+      rewrite IHn. asemigroup. rewrite H0; auto. intros. auto.
+  Qed.
+
+  (** Product two sum equal to sum of products.
+      Σ[i,lo,m] f(i) * Σ[i,lo,n] g(i) = Σ[i,lo,m*n] f((i-lo)/n)*g((i-lo)%n).
+    
+      For example:
+        (a + b + c) * (x + y) = a*x + a*y + b*x + b*y + c*x + c*y
+   *)
+  Lemma seqsumb_product : forall f g lo m n,
+      n <> O ->
+      seqsumb f lo m * seqsumb g lo n =
+        seqsumb (fun i => f ((i-lo) / n)%nat * g ((i-lo) mod n)%nat) lo (m * n). 
+  Proof.
+    intros. induction m; simpl. ring. ring_simplify. rewrite IHm.
+    replace (n + m * n)%nat with (m * n + n)%nat by ring.
+    rewrite seqsumb_plusSize. asemigroup.
+    Abort.
+  
+  (** The order of two nested summations can be exchanged.
+      ∑[i,lor,r](∑[j,loc,c] f_ij) = 
+      ... + f11 + ... + f1c + 
+                    ...
+      ... + fr1 + ... + frc = 
+      ∑[j,loc,c](∑[i,lor,r] f_ij) *)
+  Lemma seqsumb_seqsumb_exchg : forall f lor loc r c,
+      seqsumb (fun i => seqsumb (fun j => f i j) loc c) lor r =
+        seqsumb (fun j => seqsumb (fun i => f i j) lor r) loc c.
+  Proof.
+    intros f lor loc. induction r.
+    - destruct c; simpl; auto. rewrite seqsumb_eq0; auto. ring.
+    - destruct c; simpl; auto. rewrite seqsumb_eq0; auto. ring.
+      replace (seqsumb (fun i : nat => seqsumb (fun j : nat => f i j) loc c + f i (loc+c)%nat) lor r)
+        with ((seqsumb (fun i : nat => seqsumb (fun j : nat => f i j) loc c) lor r) +
+                (seqsumb (fun i : nat => f i (loc + c)%nat) lor r)).
+      replace (seqsumb (fun j : nat => seqsumb (fun i : nat => f i j) lor r + f (lor+r)%nat j) loc c)
+        with ((seqsumb (fun j : nat => seqsumb (fun i : nat => f i j) lor r) loc c) +
+                (seqsumb (fun j : nat => f (lor+r)%nat j) loc c)).
+      rewrite IHr. asemigroup.
+      symmetry. apply seqsumb_add; auto.
+      symmetry. apply seqsumb_add; auto.
+  Qed.
+  
+End seqsumb.
 
 
 (* ======================================================================= *)

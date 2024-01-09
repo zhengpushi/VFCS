@@ -1432,24 +1432,24 @@ Section Instances.
 End Instances.
 
 (** ** Extra Theories *)
-Section Theory.
-  Context `{ARing}.
 
+Lemma make_ring_theory `(H:ARing)
+  : ring_theory Azero Aone Aadd Amul (fun x y => Aadd x (Aopp y)) Aopp eq.
+Proof.
+  constructor; intros;
+    try (rewrite ?identityLeft,?associative; reflexivity);
+    try (rewrite commutative; reflexivity).
+  rewrite distributiveRight; reflexivity.
+  rewrite inverseRight; reflexivity.
+Qed.
+
+Section Theory.
+  Context `{HARing: ARing}.
+  Add Ring ring_inst : (make_ring_theory HARing).
   Infix "+" := Aadd.
   Notation "- a" := (Aopp a).
   Notation Asub := (fun a b => a + -b).
   Infix "*" := Amul.
-
-  Lemma make_ring_theory : ring_theory Azero Aone Aadd Amul Asub Aopp eq.
-  Proof.
-    constructor; intros;
-      try (rewrite ?identityLeft,?associative; reflexivity);
-      try (rewrite commutative; reflexivity).
-    rewrite distributiveRight; reflexivity.
-    rewrite inverseRight; reflexivity.
-  Qed.
-
-  Add Ring ring_inst : make_ring_theory.
     
   (** 0 * a = 0 *)
   (* 证明思路：a*0 + 0 = a*0 = a*(0+0) = a*0 + a*0，然后消去律 *)
@@ -1460,23 +1460,26 @@ Section Theory.
   Lemma ring_mul_0_l : forall a : A, Azero * a = Azero.
   Proof. intros. ring. Qed.
 
+  (* a * a = 1, then a = 1 or a = -1 *)
+  (* Tips: I can't prove it now..., and this is used in `OrthogonalMatrix` *)
+  Lemma ring_sqr_eq1_imply_1_neg1 : forall (a : A),
+      a * a = Aone -> a = Aone \/ a = (- Aone).
+  Proof.
+  Admitted.
+
 End Theory.
 
+
 (** ** Examples *)
-
-Section Examples.
-
-End Examples.
-
 
 (** This example declares an abstract abelian-ring structure, and shows how to use
     fewer code to enable "ring" tactic. *)
 Module Demo_AbsARing.
-  Context `{AR:ARing}.
+  Context `{HARing:ARing}.
   Infix "+" := Aadd. Infix "*" := Amul.
   Notation "0" := Azero. Notation "1" := Aone.
 
-  Add Ring ring_inst : (@make_ring_theory _ Aadd Azero Aopp Amul Aone AR).
+  Add Ring ring_inst : (make_ring_theory HARing).
 
   Goal forall a b c : A, (a + b) * c = 0 + b * c * 1 + 0 + 1 * c * a.
   Proof. intros. ring. Qed.
@@ -1546,7 +1549,7 @@ A={a b e}.
     repeat constructor; intros;
       destruct a; auto; destruct b; auto; destruct c; auto.
   Qed.
-  Add Ring ring_thy_inst2 : make_ring_theory.
+  (* Add Ring ring_thy_inst2 : (make_ring_theory ARing_inst). *)
 
   Goal forall a b c : A, a + b + c - b = a + c.
   Proof.
@@ -1587,8 +1590,21 @@ End Instances.
 
 
 (** ** Extra Theories *)
-Section Theory.
 
+Lemma make_field_theory `(H:Field)
+  : field_theory Azero Aone Aadd Amul
+      (fun x y => Aadd x (Aopp y)) Aopp
+      (fun x y => Amul x (Ainv y)) Ainv eq.
+Proof.
+  constructor; intros;
+    try (rewrite ?identityLeft,?associative; reflexivity);
+    try (rewrite commutative; reflexivity).
+  apply (make_ring_theory fieldRing).
+  apply field_1_neq_0.
+  apply field_mulInvL. auto.
+Qed.
+
+Section Theory.
   Context `{F:Field}.
   Infix "+" := Aadd.
   Notation "- a" := (Aopp a).
@@ -1600,18 +1616,7 @@ Section Theory.
   Notation Adiv := (fun a b => a * (/b)).
   Infix "/" := Adiv.
 
-  Lemma make_field_theory :
-    field_theory Azero Aone Aadd Amul Asub Aopp Adiv Ainv eq.
-  Proof.
-    constructor; intros;
-      try (rewrite ?identityLeft,?associative; reflexivity);
-      try (rewrite commutative; reflexivity).
-    apply make_ring_theory.
-    apply field_1_neq_0.
-    apply field_mulInvL. auto.
-  Qed.
-
-  Add Field field_inst : make_field_theory.
+  Add Field field_inst : (make_field_theory F).
 
   (** a <> 0 -> /a * a = 1 *)
   Lemma field_mul_inv_l : forall a : A, a <> 0 -> /a * a = 1.
@@ -1714,7 +1719,7 @@ Section Instances.
   (** A field itself is a liner space *)
   Section field_is_linearspace.
     Context `{F : Field}.
-    Add Field field_inst : make_field_theory.
+    Add Field field_inst : (make_field_theory F).
     
     Global Instance LinearSpace_Field : LinearSpace Aadd Azero Aopp Amul.
     split_intro; try field. Qed.

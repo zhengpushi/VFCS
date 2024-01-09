@@ -306,6 +306,22 @@ Lemma fin2SameRangeSub_spec : forall {m} (i k : fin m),
     fin2nat (fin2SameRangeSub i k) = fin2nat i - fin2nat k.
 Proof. intros. unfold fin2SameRangeSub. simpl. auto. Qed.
 
+(** {i<m} -> (S i<m) ? {S i<m} : {0<m} *)
+Definition fin2SameRangeSucc {m : nat} (i:fin m) : fin (m).
+  pose (if S (fin2nat i) ??< m then S (fin2nat i) else 0)%nat as x.
+  refine (nat2fin x _).
+  unfold x. destruct (_??<_); auto.
+  destruct (0??=m).
+  - exfalso. clear g. rewrite <- e in i. apply (fin0_False i).
+  - apply Arith_prebase.neq_0_lt_stt; auto.
+Defined.
+
+Lemma fin2SameRangeSucc_spec : forall {m} (i : fin m),
+    fin2nat (fin2SameRangeSucc i) =
+      if S (fin2nat i) ??< m then S (fin2nat i) else 0.
+Proof. intros. unfold fin2SameRangeSucc. simpl. auto. Qed.
+
+
 (** Loop shift left : {i<m} << {k<m}. Eg: 0 1 2 =1=> 1 2 0  *)
 Definition fin2SameRangeLSL {m : nat} (i k:fin m) : fin (m).
   destruct (m ??= 0).
@@ -405,6 +421,16 @@ Defined.
 Lemma fin2PredRangePred_spec : forall {m} (i:fin (S m)) (H:0 < fin2nat i),
     fin2nat (fin2PredRangePred i H) = pred (fin2nat i).
 Proof. intros. unfold fin2PredRangePred. apply fin2nat_nat2fin_id. Qed.
+  
+(* {i<m} -> {S i<S m} *)
+Definition fin2SuccRangeSucc {m} (i:fin m) : fin (S m).
+  refine (nat2fin (S (fin2nat i)) _).
+  apply Arith_prebase.lt_n_S_stt. apply fin2nat_lt.
+Defined.
+
+Lemma fin2SuccRangeSucc_spec : forall {m} (i:fin m),
+    fin2nat (fin2SuccRangeSucc i) = S (fin2nat i).
+Proof. intros. unfold fin2SuccRangeSucc. simpl. auto. Qed.
 
 
 (** ** Properties of Fin-index-Fun (ff) *)
@@ -546,6 +572,53 @@ Section finseq.
   Qed.
   
 End finseq.
+
+
+(** ** Sequence of fin with bounds *)
+Section finseqb.
+
+  (* A list of `fin (S n)` which its value is from `lo` to `lo + cnt -1` *)
+  Definition finseqb (n : nat) (lo cnt : nat) : list (fin (S n)) :=
+    map nat2finS (seq lo cnt).
+
+  Lemma finseqb_length : forall n lo cnt, length (finseqb n lo cnt) = cnt.
+  Proof. intros. unfold finseqb. autorewrite with fin; auto. Qed.
+
+  Lemma finseqb_eq_seq : forall n lo cnt,
+      lo + cnt <= S n ->
+      map fin2nat (finseqb n lo cnt) = seq lo cnt.
+  Proof.
+    intros. unfold finseqb. rewrite map_map. apply map_id_In. intros.
+    rewrite fin2nat_nat2finS_id; auto. apply in_seq in H0. lia.
+  Qed.
+
+  (* Lemma nth_finseqb : forall (n lo cnt : nat) i (H: i < n), *)
+  (*     nth i (finseqb n lo cnt) fin0 = (exist _ i H : fin n). *)
+  (* Proof. *)
+  (*   intros. destruct n. lia. simpl. destruct i; simpl. *)
+  (*   - apply nat2finS_eq. *)
+  (*   - rewrite nth_map_seq; try lia. *)
+  (*     replace (i + 1) with (S i) by lia. apply nat2finS_eq. *)
+  (* Qed. *)
+
+  (* Lemma nth_map_finseqb : forall {A} (n : nat) (f : fin n -> A) i (H: i < n) (a : A), *)
+  (*     nth i (map f (finseqb n)) a = f (exist _ i H). *)
+  (* Proof. *)
+  (*   intros. rewrite nth_map with (n:=n)(Azero:=exist _ i H:fin n); auto. *)
+  (*   rewrite nth_finseqb with (H:=H). auto. *)
+  (*   rewrite finseqb_length; auto. *)
+  (* Qed. *)
+
+  (* (* {i<n} ∈ (finseqb n) *) *)
+  (* Lemma In_finseqb : forall {n} (i : fin n), In i (finseqb n). *)
+  (* Proof. *)
+  (*   intros. unfold finseqb. destruct n. exfalso. apply fin0_False; auto. *)
+  (*   apply in_map_iff. exists (fin2nat i). split. *)
+  (*   - apply nat2finS_fin2nat_id. *)
+  (*   - apply in_seq. pose proof (fin2nat_lt i). lia. *)
+  (* Qed. *)
+  
+End finseqb.
 
 
 (** ** Sum of a Fin-indexing-Fun (FF) *)
