@@ -9,9 +9,15 @@
   
   remark    :
   1. Element type is orgainized to several levels
-  (1) ElementType
-  (2) ARingElementType, based on ElementType.
-  (3) FieldElementType, based on RingEementType.
+  * ElementType
+  * MonoidElementType, based on ElementType.
+  * RingElementType, based on MonoidElementType.
+  * FieldElementType, based on RingElementType.
+
+  2. Future plan:
+  * SemiRingElementType.
+    Because, we can define `add` and `mul` on `nat` type, 
+    such that `vcmul` and `vdot` could be defined on natural numbers.
 *)
 
 Require NatExt ZExt QExt QcExt RExt RealFunction Complex.
@@ -29,7 +35,6 @@ Module Type ElementType.
 
   Axiom ADec : @Dec A.
   #[export] Existing Instance ADec.
-  
 End ElementType.
 
 
@@ -104,7 +109,6 @@ Module ElementTypeRFun <: ElementType.
   Proof. constructor. intros a b. unfold tpRFun in *.
          (* rewrite (functional_extensionality a b). *)
   Admitted.
-  
 End ElementTypeRFun.
 
 Module ElementTypeFun (I O : ElementType) <: ElementType.
@@ -115,7 +119,6 @@ Module ElementTypeFun (I O : ElementType) <: ElementType.
   Lemma ADec : @Dec A.
   Proof. constructor. intros a b. unfold A in *.
   Admitted.
-  
 End ElementTypeFun.
 
 
@@ -132,20 +135,180 @@ End ElementType_Test.
 
 
 (* ######################################################################### *)
+(** * Element with abelian-monoid structure *)
+
+(** ** Type of Element with abelian-monoid structure *)
+(* Note, we won't use `AMonoidElementType` to emphasize the `abelian` property *)
+Module Type MonoidElementType <: ElementType.
+  Include ElementType.
+  Open Scope A_scope.
+
+  Parameter Aadd : A -> A -> A.
+  Infix "+" := Aadd : A_scope.
+
+  Axiom Aadd_AMonoid : AMonoid Aadd Azero.
+  #[export] Existing Instance Aadd_AMonoid.
+End MonoidElementType.
+
+(** ** Instances *)
+
+Module MonoidElementTypeNat <: MonoidElementType.
+  Include ElementTypeNat.
+
+  Definition Aadd := Nat.add.
+  Hint Unfold Aadd : A.
+
+  Infix "+" := Aadd : A_scope.
+
+  #[export] Instance Aadd_AMonoid : AMonoid Aadd Azero.
+  Proof. intros. repeat constructor; intros; autounfold with A; ring. Qed.
+End MonoidElementTypeNat.
+
+Module MonoidElementTypeZ <: MonoidElementType.
+  Include ElementTypeZ.
+
+  Definition Aadd := Zplus.
+  Hint Unfold Aadd : A.
+
+  Infix "+" := Aadd : A_scope.
+
+  #[export] Instance Aadd_AMonoid : AMonoid Aadd Azero.
+  Proof. intros. repeat constructor; intros; autounfold with A; ring. Qed.
+End MonoidElementTypeZ.
+
+Module MonoidElementTypeQc <: MonoidElementType.
+  Include ElementTypeQc.
+
+  Definition Aadd := Qcplus.
+  Hint Unfold Aadd : A.
+  
+  Infix "+" := Aadd : A_scope.
+
+  #[export] Instance Aadd_AMonoid : AMonoid Aadd Azero.
+  Proof. intros. repeat constructor; intros; autounfold with A; ring. Qed.
+End MonoidElementTypeQc.
+
+Module MonoidElementTypeR <: MonoidElementType.
+  Include ElementTypeR.
+  
+  Definition Aadd := Rplus.
+  Hint Unfold Aadd : A.
+  
+  Infix "+" := Aadd : A_scope.
+
+  #[export] Instance Aadd_AMonoid : AMonoid Aadd Azero.
+  Proof. intros. repeat constructor; intros; autounfold with A; ring. Qed.
+End MonoidElementTypeR.
+
+Module MonoidElementTypeC <: MonoidElementType.
+  Include ElementTypeC.
+
+  Definition Aadd := Cadd.
+  
+  (** Note that, this explicit annotation is must, 
+      otherwise, the ring has no effect. (because C and T are different) *)
+  (* Definition Aadd : A -> A -> A := fun a b => Cadd a b. *)
+  Hint Unfold Aadd : A.
+  
+  Infix "+" := Aadd : A_scope.
+
+  #[export] Instance Aadd_AMonoid : AMonoid Aadd Azero.
+  Proof. intros. repeat constructor; intros; autounfold with A; ring. Qed.
+End MonoidElementTypeC.
+
+Module MonoidElementTypeRFun <: MonoidElementType.
+  Include ElementTypeRFun.
+  
+  Definition Aadd := fadd.
+  Hint Unfold Aadd : A.
+  
+  Infix "+" := Aadd : A_scope.
+
+  #[export] Instance Aadd_AMonoid : AMonoid Aadd Azero.
+  Proof. intros. repeat constructor; intros; autounfold with A; ring. Qed.
+End MonoidElementTypeRFun.
+
+Module MonoidElementTypeFun (I O : MonoidElementType) <: MonoidElementType.
+  (* Export I O. *)
+  
+  Include (ElementTypeFun I O).
+  Open Scope A_scope.
+
+  Definition Aadd (f g : A) : A := fun x : I.A => O.Aadd (f x) (g x).
+  Hint Unfold Aadd : A.
+  
+  Infix "+" := Aadd : A_scope.
+
+  Lemma Aadd_Associative : Associative Aadd.
+  Proof.
+    intros. constructor; intros; autounfold with A.
+    extensionality x. apply O.Aadd_AMonoid.
+  Qed.
+  
+  Lemma Aadd_Commutative : Commutative Aadd.
+  Proof.
+    intros. constructor; intros; autounfold with A.
+    extensionality x. apply O.Aadd_AMonoid.
+  Qed.
+  
+  Lemma Aadd_IdentityLeft : IdentityLeft Aadd Azero.
+  Proof.
+    intros. constructor; intros; autounfold with A.
+    extensionality x. apply O.Aadd_AMonoid.
+  Qed.
+  
+  Lemma Aadd_IdentityRight : IdentityRight Aadd Azero.
+  Proof.
+    intros. constructor; intros; autounfold with A.
+    extensionality x. apply O.Aadd_AMonoid.
+  Qed.
+
+  #[export] Instance Aadd_AMonoid : AMonoid Aadd Azero.
+  Proof.
+    intros. constructor; intros; autounfold with A.
+    intros. constructor; intros; autounfold with A.
+    constructor. apply Aadd_Associative.
+    apply Aadd_IdentityLeft. apply Aadd_IdentityRight.
+    constructor. apply Aadd_Associative.
+    apply Aadd_Commutative.
+    constructor. constructor. apply Aadd_Associative.
+    apply Aadd_Commutative.
+  Qed.
+End MonoidElementTypeFun.
+
+
+Module MonoidElementTypeTest.
+  Import MonoidElementTypeQc.
+  Import MonoidElementTypeR.
+  
+  Module Import MonoidElementTypeFunEx1 :=
+    MonoidElementTypeFun MonoidElementTypeQc MonoidElementTypeR.
+
+  (* Definition f : A := fun i:Qc => Qc2R i + R1. *)
+  (* Definition g : A := fun i:Qc => Qc2R (i+1). *)
+  Definition f : A := fun i => 1.
+  Definition g : A := fun i => 2.
+  Definition h : A := fun i => 3.
+
+  Goal f + g + h = f + (g + h).
+  Proof. rewrite associative. auto. Qed.
+End MonoidElementTypeTest.
+
+
+(* ######################################################################### *)
 (** * Element with abelian-ring structure *)
 
 (** ** Type of Element with abelian-ring structure *)
 (* Note, we won't use `ARingElementType` to emphasize the `abelian` property *)
-Module Type RingElementType <: ElementType.
-  Include ElementType.
+Module Type RingElementType <: MonoidElementType.
+  Include MonoidElementType.
   Open Scope A_scope.
 
   Parameter Aone : A.
-  Parameter Aadd Amul : A -> A -> A.
+  Parameter Amul : A -> A -> A.
   Parameter Aopp : A -> A.
 
   Notation Asub := (fun x y => Aadd x (Aopp y)).
-  Infix "+" := Aadd : A_scope.
   Infix "*" := Amul : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
   Infix "-" := Asub : A_scope.
@@ -159,22 +322,19 @@ Module Type RingElementType <: ElementType.
   (** A Ring structure can be derived from the context *)
   Axiom ARing_inst : ARing Aadd Azero Aopp Amul Aone.
   #[export] Existing Instance ARing_inst.
-
 End RingElementType.
 
 (** ** Instances *)
 
 Module RingElementTypeZ <: RingElementType.
-  Include ElementTypeZ.
+  Include MonoidElementTypeZ.
 
   Definition Aone : A := 1.
-  Definition Aadd := Zplus.
   Definition Aopp := Z.opp.
   Definition Amul := Zmult.
-  Hint Unfold Aone Aadd Aopp Amul : A.
+  Hint Unfold Aone Aopp Amul : A.
 
   Notation Asub := (fun x y => Aadd x (Aopp y)).
-  Infix "+" := Aadd : A_scope.
   Infix "*" := Amul : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
   Infix "-" := Asub : A_scope.
@@ -189,20 +349,17 @@ Module RingElementTypeZ <: RingElementType.
 
   #[export] Instance ARing_inst : ARing Aadd Azero Aopp Amul Aone.
   Proof. repeat constructor; autounfold with A; intros; ring. Qed.
-  
 End RingElementTypeZ.
 
 Module RingElementTypeQc <: RingElementType.
-  Include ElementTypeQc.
+  Include MonoidElementTypeQc.
 
   Definition Aone : A := 1.
-  Definition Aadd := Qcplus.
   Definition Aopp := Qcopp.
   Definition Amul := Qcmult.
   Hint Unfold Aone Aadd Aopp Amul : A.
   
   Notation Asub := (fun x y => Aadd x (Aopp y)).
-  Infix "+" := Aadd : A_scope.
   Infix "*" := Amul : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
   Infix "-" := Asub : A_scope.
@@ -217,20 +374,17 @@ Module RingElementTypeQc <: RingElementType.
 
   #[export] Instance ARing_inst : ARing Aadd Azero Aopp Amul Aone.
   Proof. repeat constructor; autounfold with A; intros; ring. Qed.
-
 End RingElementTypeQc.
 
 Module RingElementTypeR <: RingElementType.
-  Include ElementTypeR.
+  Include MonoidElementTypeR.
   
   Definition Aone : A := 1.
-  Definition Aadd := Rplus.
   Definition Aopp := Ropp.
   Definition Amul := Rmult.
   Hint Unfold Aone Aadd Aopp Amul : A.
   
   Notation Asub := (fun x y => Aadd x (Aopp y)).
-  Infix "+" := Aadd : A_scope.
   Infix "*" := Amul : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
   Infix "-" := Asub : A_scope.
@@ -245,14 +399,12 @@ Module RingElementTypeR <: RingElementType.
 
   #[export] Instance ARing_inst : ARing Aadd Azero Aopp Amul Aone.
   Proof. repeat constructor; autounfold with A; intros; ring. Qed.
-
 End RingElementTypeR.
 
 Module RingElementTypeC <: RingElementType.
-  Include ElementTypeC.
+  Include MonoidElementTypeC.
 
   Definition Aone : A := 1.
-  Definition Aadd := Cadd.
   Definition Aopp := Copp.
   Definition Amul := Cmul.
   
@@ -264,7 +416,6 @@ Module RingElementTypeC <: RingElementType.
   Hint Unfold Aone Aadd Aopp Amul : A.
   
   Notation Asub := (fun x y => Aadd x (Aopp y)).
-  Infix "+" := Aadd : A_scope.
   Infix "*" := Amul : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
   Infix "-" := Asub : A_scope.
@@ -279,21 +430,18 @@ Module RingElementTypeC <: RingElementType.
 
   #[export] Instance ARing_inst : ARing Aadd Azero Aopp Amul Aone.
   Proof. repeat constructor; autounfold with A; intros; ring. Qed.
-
 End RingElementTypeC.
 
 
 Module RingElementTypeRFun <: RingElementType.
-  Include ElementTypeRFun.
+  Include MonoidElementTypeRFun.
   
   Definition Aone : A := fone.
-  Definition Aadd := fadd.
   Definition Aopp := fopp.
   Definition Amul := fmul.
   Hint Unfold Aone Aadd Aopp Amul : A.
   
   Notation Asub := (fun x y => Aadd x (Aopp y)).
-  Infix "+" := Aadd : A_scope.
   Infix "*" := Amul : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
   Infix "-" := Asub : A_scope.
@@ -317,7 +465,6 @@ Module RingElementTypeRFun <: RingElementType.
     repeat constructor; intros;  autounfold with A;
       apply functional_extensionality; intros; cbv; ring.
   Qed.
-
 End RingElementTypeRFun.
 
 
@@ -326,10 +473,9 @@ Module RingElementTypeFun (I O : RingElementType) <: RingElementType.
   (* Add Ring Ring_thy_inst_i : I.Ring_thy. *)
   Add Ring Ring_thy_inst_o : O.Ring_thy.
   
-  Include (ElementTypeFun I O).
+  Include (MonoidElementTypeFun I O).
 
   Definition Aone : A := fun _ => O.Aone.
-  Definition Aadd (f g : A) : A := fun x : I.A => O.Aadd (f x) (g x).
   Definition Aopp (f : A) : A := fun x : I.A => O.Aopp (f x).
   Definition Amul (f g : A) : A := fun x : I.A => O.Amul (f x) (g x).
   Notation Asub := (fun x y => Aadd x (Aopp y)).
@@ -351,7 +497,6 @@ Module RingElementTypeFun (I O : RingElementType) <: RingElementType.
     repeat constructor; autounfold with A; intros;
       apply functional_extensionality; intros; cbv; ring.
   Qed.
-
 End RingElementTypeFun.
 
 
@@ -362,12 +507,11 @@ Module RingElementTypeTest.
   Module Import RingElementTypeFunEx1 :=
     RingElementTypeFun RingElementTypeQc RingElementTypeR.
   
-  Definition f : A := fun i:Qc => Qc2R i + R1.
+  Definition f : A := fun i:Qc => (Qc2R i + R1)%R.
   Definition g : A := fun i:Qc => Qc2R (i+1).
 
   Goal f = g.
   Proof. Abort.
-  
 End RingElementTypeTest.
 
 
@@ -397,7 +541,6 @@ Module Type FieldElementType <: RingElementType.
 
   Axiom Field_inst : Field Aadd Azero Aopp Amul Aone Ainv.
   #[export] Existing Instance Field_inst.
-
 End FieldElementType.
 
 
@@ -429,7 +572,6 @@ Module FieldElementTypeQc <: FieldElementType.
     intros. autounfold with A. field. auto.
     apply Aone_neq_Azero.
   Qed.
-
 End FieldElementTypeQc.
 
 Module FieldElementTypeR <: FieldElementType.
@@ -458,7 +600,6 @@ Module FieldElementTypeR <: FieldElementType.
     autounfold with A. field. auto.
     apply Aone_neq_Azero.
   Qed.
-  
 End FieldElementTypeR.
 
 Module FieldElementTypeC <: FieldElementType.
@@ -486,7 +627,6 @@ Module FieldElementTypeC <: FieldElementType.
     autounfold with A. field. auto.
     apply Aone_neq_Azero.
   Qed.
-  
 End FieldElementTypeC.
 
 (* Module FieldElementTypeFun (I O : FieldElementType) <: FieldElementType. *)
@@ -534,7 +674,6 @@ End FieldElementTypeC.
 (*        *) *)
 (*       admit. *)
 (*   Admitted. *)
-
 (* End FieldElementTypeFun. *)
 
 Module FieldElementTypeTest.

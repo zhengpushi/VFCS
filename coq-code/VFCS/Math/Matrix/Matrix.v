@@ -17,7 +17,6 @@ Require Export Vector.
 Require Reals.
 Require Import Extraction.
 
-
 Generalizable Variable A Aadd Azero Aopp Amul Aone Ainv.
 
 (** Control the scope *)
@@ -39,6 +38,9 @@ Notation smat A n := (mat A n n).
 Notation rvec A n := (mat A 1 n).
 Notation cvec A n := (mat A n 1).
 
+(* Note that: these notatiosn are dangerous.
+   The reason can be found in the definition of `V.1` in file `Vector.v`
+ *)
 Notation "M .11" := (M $ nat2finS 0 $ nat2finS 0) : mat_scope.
 Notation "M .12" := (M $ nat2finS 0 $ nat2finS 1) : mat_scope.
 Notation "M .13" := (M $ nat2finS 0 $ nat2finS 2) : mat_scope.
@@ -986,7 +988,7 @@ Section malg.
   Proof.
     intros. apply meq_iff_mnth; intros.
     repeat rewrite ?mnth_mmul, ?mnth_mcmul.
-    rewrite mrow_mcmul. rewrite vdot_assoc_cmul_l. auto.
+    rewrite mrow_mcmul. rewrite vdot_vcmul_l. auto.
   Qed.
   
   (** M1 * (a c* M2) = a c* (M1 * M2) *)
@@ -995,7 +997,7 @@ Section malg.
   Proof.
     intros. apply meq_iff_mnth; intros.
     repeat rewrite ?mnth_mmul, ?mnth_mcmul.
-    rewrite mcol_mcmul. rewrite vdot_assoc_cmul_r. auto.
+    rewrite mcol_mcmul. rewrite vdot_vcmul_r. auto.
   Qed.
 
   (** (M1 * M2)\T = M2\T * M1\T *)

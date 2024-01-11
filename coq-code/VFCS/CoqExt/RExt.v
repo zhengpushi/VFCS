@@ -1005,10 +1005,12 @@ Proof. ra. Qed.
 
 Lemma Rsqr_eq0_if0 : forall r, r = 0 -> r² = 0. ra. Qed.
 
-Section TEST_r_eq_0.
-  Goal forall r r1 r2 : R, r * r1 = r * r2 -> r1 <> r2 -> r = 0. ra. Qed.
-  Goal forall r r1 r2 : R, r1 * r = r2 * r -> r1 <> r2 -> r = 0. ra. Qed.
-End TEST_r_eq_0.
+Lemma Rmult_eq_reg_l_rev : forall r r1 r2 : R, r * r1 = r * r2 -> r1 <> r2 -> r = 0.
+Proof. ra. Qed.
+
+Lemma Rmult_eq_reg_r_rev : forall r r1 r2 : R, r1 * r = r2 * r -> r1 <> r2 -> r = 0.
+Proof. ra. Qed.
+
 
 (* ======================================================================= *)
 (** ** 0 <= x *)

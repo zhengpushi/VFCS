@@ -85,6 +85,7 @@ Lemma proof_irrelevance : forall (P:Prop) (p1 p2:P), p1 = p2.
 (* : forall (U : Type) (x : U) (p : x = x), p = eq_refl *)
 
 
+
 (** ** 新的性质 *)
 
 (* (A -> B \/ C) <-> (A -> B) \/ (A -> C). *)
@@ -111,6 +112,12 @@ Proof. intros.
 
 (** *** Good exercises for logic *)
 Section exercise_forall_exist_not.
+
+  (** Existing lemmas
+ex_not_not_all: forall (U : Type) (P : U -> Prop), (exists n : U, ~ P n) -> ~ (forall n : U, P n)
+not_all_ex_not: forall (U : Type) (P : U -> Prop), ~ (forall n : U, P n) -> exists n : U, ~ P n
+not_all_not_ex: forall (U : Type) (P : U -> Prop), ~ (forall n : U, ~ P n) -> exists n : U, P n
+  *)
 
   (** These lemmas needn't axiom *)
 
