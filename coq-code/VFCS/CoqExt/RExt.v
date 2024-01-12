@@ -248,9 +248,33 @@ Ltac ra :=
 (* ######################################################################### *)
 (** * Reqb,Rleb,Rltb: Boolean comparison of R *)
 
-Definition Reqb (r1 r2 : R) : bool := Aeqb r1 r2.
-Definition Rleb (r1 r2 : R) : bool := if Rle_lt_dec r1 r2 then true else false.
-Definition Rltb (r1 r2 : R) : bool := if Rlt_le_dec r1 r2 then true else false.
+
+#[export] Instance R_eq_Dec : Dec (@eq R).
+Proof. constructor. apply Req_EM_T. Defined.
+
+#[export] Instance R_le_Dec : Dec Rle.
+Proof. constructor. intros. destruct (Rle_lt_dec a b); auto. right; lra. Qed.
+
+#[export] Instance R_lt_Dec : Dec Rlt.
+Proof. constructor. intros. destruct (Rlt_le_dec a b); auto. right; lra. Qed.
+
+(* n <= n *)
+Lemma R_le_refl : forall n : R, n <= n.
+Proof. intros. lra. Qed.
+
+Lemma R_zero_le_sqr : forall a : R, 0 <= a * a.
+Proof. intros. nra. Qed.
+
+Lemma R_add_le_compat : forall a1 b1 a2 b2 : R, a1 <= a2 -> b1 <= b2 -> a1 + b1 <= a2 + b2.
+Proof. intros. lra. Qed.
+
+Lemma R_add_eq_0_reg_l : forall a b : R, 0 <= a -> 0 <= b -> a + b = 0 -> a = 0.
+Proof. intros. lra. Qed.
+
+
+Definition Reqb (r1 r2 : R) : bool := Acmpb R_eq_Dec r1 r2.
+Definition Rleb (r1 r2 : R) : bool := Acmpb R_le_Dec r1 r2.
+Definition Rltb (r1 r2 : R) : bool := Acmpb R_lt_Dec r1 r2.
 Infix "=?"  := Reqb : R_scope.
 Infix "<=?" := Rleb : R_scope.
 Infix "<?"  := Rltb : R_scope.
@@ -260,69 +284,45 @@ Infix ">=?" := (fun x y => y <=? x) : R_scope.
 (** Reflection of (=) and (=?) *)
 Hint Resolve eq_refl : bdestruct.
 Lemma Reqb_true : forall x y, x =? y = true <-> x = y.
-Proof. apply Aeqb_true. Qed.
+Proof. apply Acmpb_true. Qed.
 
 Lemma Reqb_false : forall x y, x =? y = false <-> x <> y.
-Proof. apply Aeqb_false. Qed.
+Proof. apply Acmpb_false. Qed.
     
 Lemma Reqb_reflect : forall x y, reflect (x = y) (x =? y).
 Proof.
-  intros. unfold Reqb,Aeqb. destruct dec; constructor; auto.
+  intros. unfold Reqb,Acmpb. destruct dec; constructor; auto.
 Qed.
 
 Lemma Reqb_refl : forall r, r =? r = true.
-Proof.
-  intros. destruct (Reqb_reflect r r); auto.
-Qed.
+Proof. intros. unfold Reqb,Acmpb. destruct dec; auto. Qed.
 
 Lemma Reqb_comm : forall r1 r2, (r1 =? r2) = (r2 =? r1).
-Proof.
-  intros. destruct (Reqb_reflect r1 r2),(Reqb_reflect r2 r1); auto. subst. easy.
-Qed.
+Proof. intros. unfold Reqb,Acmpb. destruct dec,dec; auto. lra. Qed.
 
 Lemma Reqb_trans : forall r1 r2 r3, r1 =? r2 = true ->
   r2 =? r3 = true -> r1 =? r3 = true.
-Proof.
-  intros.
-  destruct (Reqb_reflect r1 r2),(Reqb_reflect r2 r3),(Reqb_reflect r1 r3); auto.
-  subst. easy.
-Qed.
+Proof. intros. unfold Reqb,Acmpb in *. destruct dec,dec,dec; auto. lra. Qed.
 
 Lemma Rltb_reflect : forall x y, reflect (x < y) (x <? y).
-Proof.
-  intros. unfold Rltb. destruct (Rlt_le_dec x y); constructor; lra.
-Qed.
+Proof. intros. unfold Rltb,Acmpb in *. destruct dec; auto; constructor; lra. Qed.
 
 Lemma Rleb_reflect : forall x y, reflect (x <= y) (x <=? y).
-Proof.
-  intros. unfold Rleb. destruct (Rle_lt_dec x y); constructor; lra.
-Qed.
+Proof. intros. unfold Rleb,Acmpb in *. destruct dec; auto; constructor; lra. Qed.
 
-Lemma Rgtb_reflect : forall x y, reflect (x > y) (x >? y).
-Proof.
-  intros. unfold Rltb. destruct (Rlt_le_dec y x); constructor; lra.
-Qed.
-
-Lemma Rgeb_reflect : forall x y, reflect (x >= y) (x >=? y).
-Proof.
-  intros. unfold Rleb. destruct (Rle_lt_dec y x); constructor; lra.
-Qed.
-
-(** (a - b <? 0) = (0 <? a - b) *)
+(** (a - b <? 0) = (0 <? b - a) *)
 Lemma Rminus_ltb0_comm : forall a b : R, (a - b <? 0) = (0 <? b - a).
-Proof. intros. unfold Rltb. destruct Rlt_le_dec, Rlt_le_dec; auto; lra. Qed.
+Proof. intros. unfold Rltb,Acmpb. destruct dec,dec; auto; lra. Qed.
   
 (** (a - b >? 0) = (0 >? b - a) *)
 Lemma Rminus_gtb0_comm : forall a b : R, (a - b >? 0) = (0 >? b - a).
-Proof. intros. unfold Rltb. destruct Rlt_le_dec, Rlt_le_dec; auto; lra. Qed.
+Proof. intros. unfold Rltb,Acmpb. destruct dec,dec; auto; lra. Qed.
 
 (** These theorems are automatic used. *)
 Global Hint Resolve
   Reqb_reflect
   Rltb_reflect
   Rleb_reflect
-  Rgtb_reflect
-  Rgeb_reflect
   : bdestruct.
 
 
@@ -727,7 +727,8 @@ Qed.
 Lemma sqrt_eq0_iff : forall r, sqrt r = 0 <-> r <= 0.
 Proof.
   intros. split; intros.
-  - bdestruct (r <=? 0); ra. apply Rnot_ge_gt in H0. apply sqrt_lt_R0 in H0. ra.
+  - bdestruct (r <=? 0); ra.
+    apply Rnot_le_lt in H0. apply sqrt_lt_R0 in H0. ra.
   - apply sqrt_neg_0; auto.
 Qed.
 

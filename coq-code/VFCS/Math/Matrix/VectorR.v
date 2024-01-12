@@ -63,7 +63,7 @@ Require Export RExt VectorModule.
 (* ######################################################################### *)
 (** * Vector theory come from common implementations *)
 
-Module Export VectorTheoryR := FieldVectorTheory FieldElementTypeR.
+Module Export VectorTheoryR := OrderedFieldVectorTheory OrderedFieldElementTypeR.
 
 Open Scope R_scope.
 Open Scope vec_scope.
@@ -157,128 +157,23 @@ Infix "//" := vpara (at level 50) : vec_scope.
 
 
 (* ======================================================================= *)
-(** ** Propertities for vector dot product *)
-Section vdot.
-
-  (** 0 <= <V,V> *)
-  Lemma vdot_same_ge0 : forall {n} (V : vec n), 0 <= <V,V>.
-  Proof.
-    intros. unfold vdot, Vector.vdot, Vector.vsum, fseqsum.
-    apply seqsum_ge0; intros. unfold ff2f,Vector.vmap2.
-    destruct (_??<_); [|lia]. ra.
-  Qed.
-
-  (** <V,V> = 0 <-> V = 0 *)
-  Lemma vdot_same_eq0_iff : forall {n} (V : vec n), <V,V> = 0 <-> V = vzero.
-  Proof.
-    intros. split; intros; subst; auto.
-    - unfold vdot, Vector.vdot, Vector.vsum, fseqsum in H.
-      pose proof (seqsum_eq0_imply_seq0).
-      ?
-      rewrite (H0 _ n) in H; auto.
-      _ n). in H.
-    2:{
-
-                                        rewrite vdot_0_l. auto.
-    intros. unfold vdot, Vector.cvdot. vec2fun.
-    split; intros.
-    - revert V H. induction n; intros; simpl in *. lma.
-      apply Rplus_eq_R0 in H; ra.
-      + destruct H. apply IHn in H. apply Rsqr_eq_0 in H0.
-        apply seq2eq_Sr. split; auto.
-        hnf; simpl. intros. assert (i = 0%nat) by lia. subst; auto.
-      + apply seqsum_ge0. intros. ra.
-    - hnf in H; simpl in *.
-      apply seqsum_eq0. intros. apply Rsqr_eq0_if0. apply H; auto.
-  Qed.
-
-  (** Another proof. *)
-  Lemma vdot_same_eq0' : forall {n} (V : vec n), <V,V> = 0 <-> V = vzero.
-  Proof.
-    intros. unfold vdot. split; intros.
-    - hnf; intros. apply (seqsum_eq0_imply_seq0) with (i:=i) in H; auto; ra.
-      vec2fun; cbv in H.
-      assert (j = 0)%nat by nia.
-      assert (v i 0%nat = 0); ra. subst. easy.
-    - rewrite H. rewrite vdot_0_l. auto.
-  Qed.
-      
-  (** <v, v> != Azero <-> vnonzero V *)
-  Lemma vdot_same_neq0 : forall {n} (V : vec n),
-      <v, v> <> 0 <-> vnonzero V.
-  Proof.
-    intros. split; intros; intro; apply vdot_same_eq0 in H0; easy.
-  Qed.
-
-  (** <row(m1,i), col(m2,j)> = (m1 * m2)[i,j] *)
-  Lemma vdot_row_col_eq : forall {r c s} (m : mat r c) (n : mat c s) i j,
-      (i < r)%nat -> (j < c)%nat ->
-      vdot ((mrow m i)\T) (mcol n j) = (m * n) $ i $ j.
-  Proof. intros. apply seqsum_eq. intros. simpl. auto. Qed.
-
-  (** <col(m1,i), col(m2,j)> = (m1\T * m2)[i,j] *)
-  Lemma vdot_col_col : forall {n} (m : smat n) i j,
-      (i < n)%nat -> (j < n)%nat ->
-      vdot (mcol m i) (mcol m j) = (m\T * m) $ i $ j.
-  Proof. intros. apply seqsum_eq. intros. simpl. auto. Qed.
-
-  (** <row(m1,i), row(m2,j)> = (m1 * m2\T)[i,j] *)
-  Lemma vdot_row_row : forall {n} (m : smat n) i j,
-      (i < n)%nat -> (j < n)%nat ->
-      rvdot (mrow m i) (mrow m j) = (m * m\T) $ i $ j.
-  Proof. intros. apply seqsum_eq. intros. simpl. auto. Qed.
-
-  (** <-v1, V2> = - <v1,v2> *)
-  Lemma vdot_cvopp_l : forall {n} (V1 V2 : vec n), < -v1, V2> = (- <v1,v2>)%R.
-  Proof.
-    intros. unfold vdot, Vector.cvdot. vec2fun.
-    rewrite seqsum_opp. apply seqsum_eq. intros. cbv. ring.
-  Qed.
-
-  (** <v1, -v2> = - <v1,v2> *)
-  Lemma vdot_cvopp_r : forall {n} (V1 V2 : vec n), < V1, -v2> = (- <v1,v2>)%R.
-  Proof. intros. rewrite vdot_comm, vdot_cvopp_l, vdot_comm. auto. Qed.
-
-  (** <k * V1, V2> = k * <v1,v2> *)
-  Lemma vdot_cvcmul_l : forall {n} (k : R) (V1 V2 : vec n),
-      < k c* V1, V2> = (k * <v1,v2>)%R.
-  Proof.
-    intros. unfold vdot, Vector.cvdot. vec2fun.
-    rewrite seqsum_cmul_l. apply seqsum_eq. intros. cbv. ring.
-  Qed.
-
-  (** <v1, k * V2> = k * <v1,v2> *)
-  Lemma vdot_cvcmul_r : forall {n} (k : R) (V1 V2 : vec n),
-      < V1, k c* V2> = (k * <v1,v2>)%R.
-  Proof. intros. rewrite vdot_comm, vdot_cvcmul_l, vdot_comm. auto. Qed.
-  
-End vdot.
-
-
-(* ======================================================================= *)
 (** ** Length of a vector *)
 Section vlen.
 
   (** Length (magnitude) of a vector, is derived by inner-product *)
   Definition vlen {n} (V : vec n) : R := sqrt (<V,V>).
 
-  Notation "|| V ||" := (cvlen v) : vec_scope.
-
-  #[export] Instance vlen_mor {n} : Proper (meq ==> eq) (@cvlen n).
-  Proof.
-    simp_proper. intros. unfold vlen. f_equiv. rewrite H. auto.
-  Qed.
+  Notation "|| V ||" := (vlen V) : vec_scope.
   
-  (** Dot product a same vector equal to the square of its length *)
-  Lemma vdot_same : forall {n} (V : vec n), <V,V> = ||v||².
+  Lemma vlen2_eq_vdot : forall {n} (V : vec n), ||V||² = <V,V>.
   Proof. intros. unfold vlen. rewrite Rsqr_sqrt; auto. apply vdot_ge0. Qed.
 
   (** 0 <= ||v|| *)
-  Lemma vlen_ge0 : forall {n} (V : vec n), 0 <= ||v||.
+  Lemma vlen_ge0 : forall {n} (V : vec n), 0 <= ||V||.
   Proof. intros. unfold vlen. ra. Qed.
 
   (** Length equal iff dot-product equal *)
-  Lemma vlen_eq_iff_dot_eq : forall {n} (u V : vec n), ||u|| = ||v|| <-> <u,u> = <V,V>.
+  Lemma vlen_eq_iff_dot_eq : forall {n} (V1 V2 : vec n), ||V1|| = ||V2|| <-> <V1,V1> = <V2,V2>.
   Proof.
     intros. unfold vlen. split; intros H; try rewrite H; auto.
     apply sqrt_inj in H; auto; apply vdot_ge0.
@@ -289,40 +184,37 @@ Section vlen.
   Proof. intros. unfold vlen. rewrite vdot_0_l. ra. Qed.
 
   (** ||v|| = 0 <-> V = 0 *)
-  Lemma vlen_eq0_iff_eq0 : forall {n} (V : vec n), ||v|| = 0 <-> vzero V.
+  Lemma vlen_eq0_iff_eq0 : forall {n} (V : vec n), ||V|| = 0 <-> V = vzero.
   Proof.
     intros. unfold vlen. split; intros.
-    - apply vdot_same_eq0. apply sqrt_eq_0 in H. auto. apply vdot_ge0.
-    - apply vdot_same_eq0 in H. rewrite H. ra.
+    - apply vdot_eq0_iff_vzero. apply sqrt_eq_0 in H; auto. apply vdot_ge0.
+    - rewrite H. rewrite vdot_0_l. cbv. apply sqrt_0.
   Qed.
 
   (** ||v|| <> 0 <-> V <> 0 *)
-  Lemma vlen_neq0_iff_neq0 : forall {n} (V : vec n), ||v|| <> 0 <-> vnonzero V.
-  Proof.
-    intros. split; intros; intro.
-    - apply vlen_eq0_iff_eq0 in H0. easy.
-    - apply vlen_eq0_iff_eq0 in H0. easy.
-  Qed.
+  Lemma vlen_neq0_iff_neq0 : forall {n} (V : vec n), ||V|| <> 0 <-> V <> vzero.
+  Proof. intros. rewrite vlen_eq0_iff_eq0. easy. Qed.
 
-  (** V <> vzero -> 0 < ||v|| *)
-  Lemma vlen_gt0 : forall {n} (V : vec n), vnonzero V -> 0 < ||v||.
-  Proof. intros. pose proof (cvlen_ge0 v). apply vlen_neq0_iff_neq0 in H. lra. Qed.
+  (** V <> vzero -> 0 < ||V|| *)
+  Lemma vlen_gt0 : forall {n} (V : vec n), V <> vzero -> 0 < ||V||.
+  Proof. intros. pose proof (vlen_ge0 V). apply vlen_neq0_iff_neq0 in H. lra. Qed.
 
-  (** Length of a vector u is 1, iff the dot product of u and u is 1 *)
-  Lemma vlen_eq1_iff_vdot1 : forall {n} (u : vec n), ||u|| = 1 <-> <u,u> = 1.
+  ?
+  (** || V || = 1 <-> <V,V> = 1 *)
+  Lemma vlen_eq1_iff_vdot1 : forall {n} (V : vec n), ||V|| = 1 <-> <u,u> = 1.
   Proof. intros. unfold vlen. split; intros; hnf in *. ra. rewrite H. ra. Qed.
 
   (** || - v|| = || V || *)
   Lemma vlen_copp : forall n (V : vec n), || - v|| = || V ||.
   Proof.
-    intros. unfold vlen. f_equal. rewrite vdot_cvopp_l,cvdot_cvopp_r.
+    intros. unfold vlen. f_equal. rewrite vdot_vopp_l,vdot_vopp_r.
     autorewrite with R. auto.
   Qed.
   
   (** ||k c* v|| = |k| * ||v|| *)
   Lemma vlen_cmul : forall n (V : vec n) k, ||k c* v|| = (|k| * ||v||)%R.
   Proof.
-    intros. unfold vlen. rewrite vdot_cvcmul_l, vdot_cvcmul_r.
+    intros. unfold vlen. rewrite vdot_vcmul_l, vdot_vcmul_r.
     rewrite <- Rmult_assoc.
     rewrite sqrt_mult_alt; ra. f_equal. autorewrite with R. ra.
   Qed.
@@ -341,7 +233,7 @@ Section vlen.
   Abort.
 
 End vlen.
-Notation "|| V ||" := (cvlen v) : vec_scope.
+Notation "|| V ||" := (vlen v) : vec_scope.
 
 
 (* ======================================================================= *)
@@ -354,14 +246,14 @@ Section vunit.
    *)
   Definition vunit {n} (u : vec n) : Prop := <u,u> = 1.
 
-  #[export] Instance vunit_mor {n} : Proper (meq ==> impl) (@cvunit n).
+  #[export] Instance vunit_mor {n} : Proper (meq ==> impl) (@vunit n).
   Proof. simp_proper. intros. unfold vunit. rewrite H. easy. Qed.
   
   (** (bool version) *)
   Definition vunitb {n} (u : vec n) : bool := (<u,u> =? 1)%R.
 
   (** Convenient property *)
-  Lemma vlen_cvunit : forall {n} (u : vec n), vunit u -> ||u|| = 1.
+  Lemma vlen_vunit : forall {n} (u : vec n), vunit u -> ||u|| = 1.
   Proof. intros. apply vlen_eq1_iff_vdot1. auto. Qed.
 
   (** Verify the definition is reasonable *)
@@ -375,10 +267,10 @@ Section vunit.
     rewrite vdot_0_l in H. ra.
   Qed.
 
-  (** vunit u <-> vunit (cvopp u). *)
-  Lemma vopp_cvunit : forall {n} (u : vec n), vunit (cvopp u) <-> vunit u.
+  (** vunit u <-> vunit (vopp u). *)
+  Lemma vopp_vunit : forall {n} (u : vec n), vunit (vopp u) <-> vunit u.
   Proof.
-    intros. unfold vunit. rewrite <- !cvlen_eq1_iff_vdot1.
+    intros. unfold vunit. rewrite <- !vlen_eq1_iff_vdot1.
     rewrite vlen_copp. easy.
   Qed.
 
@@ -404,33 +296,33 @@ Section vnormalize.
     That is, get a unit vector in the same directin as V. *)
   Definition vnorm {n} (V : vec n) : vec n := (1/||v||) c* V.
 
-  #[export] Instance vnorm_mor {n} : Proper (meq ==> meq) (@cvnorm n).
+  #[export] Instance vnorm_mor {n} : Proper (meq ==> meq) (@vnorm n).
   Proof. simp_proper. intros. unfold vnorm. rewrite H. easy. Qed.
 
   Lemma vnorm_len1 : forall {n} (V : vec n),
-      vnonzero V -> ||cvnorm v|| = 1.
+      vnonzero V -> ||vnorm v|| = 1.
   Proof.
     (* v̂ = v/|v|, |v̂| = sqrt (v/|v| ⋅ v/|v|) = sqrt ((v⋅v) / (|v|*|v|))
      = sqrt(v⋅v) / |v| = |v| / |v| = 1 *)
     intros. unfold vnorm. unfold vlen.
-    rewrite !cvdot_vcmul_l, !cvdot_vcmul_r. rewrite vdot_same.
+    rewrite !vdot_vcmul_l, !vdot_vcmul_r. rewrite vdot_same.
     remember (||v||). autounfold with T. autorewrite with R.
     apply sqrt_eq1_imply_eq1_rev.
-    assert (|r| = r). { pose proof (cvlen_ge0 v). subst. ra. }
+    assert (|r| = r). { pose proof (vlen_ge0 v). subst. ra. }
     rewrite H0. cbv. field. subst. apply vlen_neq0_iff_neq0; auto.
   Qed.
 
   (** Unit vector is fixpoint of vnorm operation *)
-  Lemma vnorm_cvunit_fixpoint : forall {n} (V : vec n),
+  Lemma vnorm_vunit_fixpoint : forall {n} (V : vec n),
       vunit V -> vnorm V = V.
   Proof.
-    intros. lma. rewrite (cvunit_spec v) in H. rewrite H. autorewrite with R. easy.
+    intros. lma. rewrite (vunit_spec v) in H. rewrite H. autorewrite with R. easy.
   Qed.
 
   (** The component of a normalized vector is equivalent to its original component 
       divide the vector's length *)
   Lemma vnorm_nth : forall {n} (V : vec n) i,
-      vnonzero V -> (i < n)%nat -> ((cvnorm v) $ i = V $ i / (||v||))%A.
+      vnonzero V -> (i < n)%nat -> ((vnorm v) $ i = V $ i / (||v||))%A.
   Proof.
     intros. unfold vnorm. rewrite vcmul_nth; auto.
     autounfold with T. field. apply vlen_neq0_iff_neq0; auto.
@@ -438,7 +330,7 @@ Section vnormalize.
 
   (** Normalization is idempotent *)
   Lemma vnorm_idem : forall {n} (V : vec n),
-      vnonzero V -> vnorm (cvnorm v) = vnorm V.
+      vnonzero V -> vnorm (vnorm v) = vnorm V.
   Proof.
     intros. unfold vnorm. rewrite vcmul_assoc.
     assert (1 / (||1 / (||v||) c* v||) = Aone)%A.
@@ -446,7 +338,7 @@ Section vnormalize.
       replace (|(1/r)|) with (1/r); try field.
       + rewrite Heqr. apply vlen_neq0_iff_neq0; auto.
       + rewrite Rabs_right; auto.
-        pose proof (cvlen_gt0 V H). rewrite <- Heqr in H0.
+        pose proof (vlen_gt0 V H). rewrite <- Heqr in H0.
         assert (forall r, 0 < r -> 0 <= r). intros. ra.
         apply Rle_ge. apply H1. apply Rdiv_lt_0_compat; lra. }
     rewrite H0. monoid_simp.
@@ -454,7 +346,7 @@ Section vnormalize.
 
   (** Keep the same direction as the original vector *)
   Lemma vnorm_direction : forall {n} (V : vec n),
-      vnonzero V -> (cvnorm v) // V.
+      vnonzero V -> (vnorm v) // V.
   Proof.
     intros. unfold vpara. unfold vnorm. exists (||v||). split.
     - apply vlen_neq0_iff_neq0; auto.
@@ -464,7 +356,7 @@ Section vnormalize.
   Qed.
 
   Lemma vnorm_spec : forall {n} (V : vec n),
-      vnonzero V -> (||cvnorm v|| = 1 /\ (cvnorm v) // v).
+      vnonzero V -> (||vnorm v|| = 1 /\ (vnorm v) // v).
   Proof.
     intros. split. apply vnorm_len1; auto.
     apply vnorm_direction; auto.
@@ -472,18 +364,18 @@ Section vnormalize.
 
   (** 单位化后的非零向量都是单位向量 *)
   Lemma vnorm_unit : forall {n} (V : vec n),
-      vnonzero V -> vunit (cvnorm v).
+      vnonzero V -> vunit (vnorm v).
   Proof. intros. apply vunit_spec. apply vnorm_len1; auto. Qed.
 
 End vnormalize.
 
 
 (* ======================================================================= *)
-(* (** ** About {cvdot, vunit,  vnorm} *) *)
-(* Section vdot_cvunit_cvnorm. *)
+(* (** ** About {vdot, vunit,  vnorm} *) *)
+(* Section vdot_vunit_vnorm. *)
   
 
-(* End vdot_cvunit_cvangle_cvnorm. *)
+(* End vdot_vunit_vangle_vnorm. *)
 
 
 (* ======================================================================= *)
@@ -498,7 +390,7 @@ Section vangle.
   
   Infix "∠" := vangle (at level 60) : vec_scope.
 
-  #[export] Instance vangle_mor {n} : Proper (meq ==> meq ==> eq) (@cvangle n).
+  #[export] Instance vangle_mor {n} : Proper (meq ==> meq ==> eq) (@vangle n).
   Proof.
     simp_proper. intros. unfold vangle. rewrite H,H0. auto.
   Qed.
@@ -511,7 +403,7 @@ Section vangle.
   (* Remark: Here, we can finish a demo proof with a special value π/4,
      but real cases maybe have any value, it is hard to finished in Coq.
      Because the construction of {sqrt, acos, PI, etc} is complex. *)
-  Example vangle_ex1 : (@l2cv 3 [1;0;0]) ∠ (l2cv [1;1;0]) = PI/4.
+  Example vangle_ex1 : (@l2v 3 [1;0;0]) ∠ (l2v [1;1;0]) = PI/4.
   Proof.
     rewrite <- acos_inv_sqrt2.
     compute. f_equiv. autorewrite with R. auto.
@@ -519,18 +411,18 @@ Section vangle.
 
   (** The law of cosine *)
   Axiom cosine_law : forall {n} (a b : vec n),
-      ((||(a - b)%CV||)² = ||a||² + ||b||² - 2 * ||a|| * ||b|| * cos (cvangle a b))%R.
+      ((||(a - b)%V||)² = ||a||² + ||b||² - 2 * ||a|| * ||b|| * cos (vangle a b))%R.
 
   (** The relation between dot product and the cosine of angle in 2D *)
   Theorem vdot_eq_cos_angle : forall {n} (a b : vec n),
-      <a,b> = (||a|| * ||b|| * cos (cvangle a b))%R.
+      <a,b> = (||a|| * ||b|| * cos (vangle a b))%R.
   Proof.
     intros.
     (* construct another form of "cosine_law" *)
-    assert (||(a-b)%CV||² = ||a||² + ||b||² - 2 * <a,b>)%R.
-    { rewrite <- !cvdot_same. unfold vsub.
-      rewrite !cvdot_vadd_distr_l, !cvdot_vadd_distr_r.
-      rewrite !cvdot_vopp_l, !cvdot_vopp_r. rewrite (cvdot_comm b a).
+    assert (||(a-b)%V||² = ||a||² + ||b||² - 2 * <a,b>)%R.
+    { rewrite <- !vdot_same. unfold vsub.
+      rewrite !vdot_vadd_distr_l, !vdot_vadd_distr_r.
+      rewrite !vdot_vopp_l, !vdot_vopp_r. rewrite (vdot_comm b a).
       autounfold with T; ring. }
     pose proof (cosine_law a b). ra.
   Qed.
@@ -540,7 +432,7 @@ Section vangle.
       vunit u -> vunit V -> -1 <= <u,v> <= 1.
   Proof.
     intros. rewrite vdot_eq_cos_angle.
-    rewrite ?cvlen_cvunit; auto.
+    rewrite ?vlen_vunit; auto.
     match goal with |- context [cos ?r] => remember r as a end.
     pose proof (COS_bound a). lra.
   Qed.
@@ -548,33 +440,33 @@ Section vangle.
   (** 单位化后的非零向量的点积介于 [-1,1] *)
   Lemma vdot_vnormalize_bound : forall {n} (u V : vec n),
       vnonzero u -> vnonzero V ->
-      -1 <= <cvnorm u, vnorm v> <= 1.
+      -1 <= <vnorm u, vnorm v> <= 1.
   Proof. intros. apply vdot_unit_bound; apply vnorm_unit; auto. Qed.
 
   (** 0 <= vangle u V <= PI *)
   Lemma vangle_bound : forall {n} (u V : vec n), 0 <= vangle u V <= PI.
   Proof. intros. unfold vangle. apply acos_bound. Qed.
 
-  (** 0 <= sin (cvangle u v) *)
-  Lemma sin_cvangle_ge0 : forall {n} (u V : vec n), 0 <= sin (cvangle u v).
+  (** 0 <= sin (vangle u v) *)
+  Lemma sin_vangle_ge0 : forall {n} (u V : vec n), 0 <= sin (vangle u v).
   Proof. intros. apply sin_ge_0; apply vangle_bound. Qed.
   
-  (** θ ≠ 0 -> θ ≠ π -> 0 < sin (cvangle u v) *)
-  Lemma sin_cvangle_gt0 : forall {n} (u V : vec n),
+  (** θ ≠ 0 -> θ ≠ π -> 0 < sin (vangle u v) *)
+  Lemma sin_vangle_gt0 : forall {n} (u V : vec n),
       u ∠ V <> 0 -> u ∠ V <> PI -> 0 < sin (u ∠ v).
-  Proof. intros. pose proof (cvangle_bound u v). apply sin_gt_0; ra. Qed.
+  Proof. intros. pose proof (vangle_bound u v). apply sin_gt_0; ra. Qed.
 
   (* (** V1 ∠ V2 = 0 <-> V1,v2同向平行 *) *)
-  (* Lemma vangle_eq0_cvpara : forall {n} (V1 V2 : vec n), *)
+  (* Lemma vangle_eq0_vpara : forall {n} (V1 V2 : vec n), *)
   (*     vnonzero V1 -> vnonzero V2 -> *)
-  (*     (cvangle V1 V2 = 0 <-> (exists k : R, k > 0 /\ k c* V1 = V2)). *)
+  (*     (vangle V1 V2 = 0 <-> (exists k : R, k > 0 /\ k c* V1 = V2)). *)
   (* Proof. *)
   (*   intros. unfold vangle. split; intros. *)
   (*   2:{ *)
   (*     destruct H1 as [k [H11 H12]]. *)
   (*     rewrite <- H12. rewrite <- acos_1. f_equal. *)
   (*     unfold vnorm. *)
-  (*     rewrite vcmul_assoc, !cvdot_cvcmul_l, !cvdot_cvcmul_r. *)
+  (*     rewrite vcmul_assoc, !vdot_vcmul_l, !vdot_vcmul_r. *)
   (*     rewrite vlen_cmul. rewrite vdot_same. rewrite Rabs_right; ra. *)
   (*     autounfold with T. field. *)
   (*     apply vlen_neq0_iff_neq0 in H,H0. lra. } *)
@@ -584,7 +476,7 @@ Section vangle.
   (*     1:{ *)
   (*       (** *)
   (*          V1 ∠ V2 = 0 -> acos(<v1',v2'>) = 0, where V1',v2' is normalized V1,v2. *)
-  (*          then <v1',v2'> = 1. that is <cvnormlize V1, vnorm V2> = , *)
+  (*          then <v1',v2'> = 1. that is <vnormlize V1, vnorm V2> = , *)
   (*          then (1/(|v1|*|v2|)) * <v1,v2> = 1 *)
   (*          可以借助投影来表明 V1和v2是k倍的关系 *)
   (*        *) *)
@@ -616,7 +508,7 @@ Section vangle.
 
   
   (* (** 给定两个向量，若将这两个向量同时旋转θ角，则向量之和在旋转前后的夹角也是θ。*) *)
-  (* Lemma vangle_cvadd : forall (V1 V2 V1' V2' : vec 2), *)
+  (* Lemma vangle_vadd : forall (V1 V2 V1' V2' : vec 2), *)
   (*     vnonzero V1 -> vnonzero V2 -> *)
   (*     ||v1|| = ||v1'|| -> ||v2|| = ||v2'|| -> *)
   (*     V1 ∠ V2 = V1' ∠ V2' -> *)
@@ -627,17 +519,17 @@ Section vangle.
   (*   { apply vlen_neq0_iff_neq0; auto. } *)
   (*   assert (||v2|| <> 0) as Hlen_neq0_v2. *)
   (*   { apply vlen_neq0_iff_neq0; auto. } *)
-  (*   assert (cvnonzero V1') as Hneq0_v1'. *)
+  (*   assert (vnonzero V1') as Hneq0_v1'. *)
   (*   { apply vlen_neq0_iff_neq0 in Hneq0_v1. apply vlen_neq0_iff_neq0. ra. } *)
-  (*   assert (cvnonzero V2') as Hneq0_v2'. *)
+  (*   assert (vnonzero V2') as Hneq0_v2'. *)
   (*   { apply vlen_neq0_iff_neq0 in Hneq0_v2. apply vlen_neq0_iff_neq0. ra. } *)
   (*   unfold vangle in *. f_equiv. *)
   (*   apply acos_inj in Hangle_eq; try apply vdot_vnormalize_bound; auto. *)
   (*   unfold vnorm in *. *)
-  (*   rewrite !cvdot_cvcmul_l, !cvdot_cvcmul_r in *. *)
-  (*   (* remember (||(V1 + V2)%CV||) as r1. *) *)
-  (*   (* remember (||(v1' + V2')%CV||) as r1'. *) *)
-  (*   rewrite !cvdot_vadd_distr_l, !cvdot_vadd_distr_r. *)
+  (*   rewrite !vdot_vcmul_l, !vdot_vcmul_r in *. *)
+  (*   (* remember (||(V1 + V2)%V||) as r1. *) *)
+  (*   (* remember (||(v1' + V2')%V||) as r1'. *) *)
+  (*   rewrite !vdot_vadd_distr_l, !vdot_vadd_distr_r. *)
   (*   rewrite <- Hlen_eq_11', <- Hlen_eq_22' in *. *)
   (*   assert (<v1,v2> = <v1',v2'>). *)
   (*   { apply Rmult_eq_reg_l with (r:=(1/(||v2||))). *)
@@ -669,7 +561,7 @@ Section vangle.
   (*   Admitted. *)
 
   (** 给定两个向量，若将这两个向量同时旋转θ角，则向量之和在旋转前后的夹角也是θ。*)
-  Lemma vangle_cvadd : forall (V1 V2 V1' V2' : vec 3),
+  Lemma vangle_vadd : forall (V1 V2 V1' V2' : vec 3),
       vnonzero V1 -> vnonzero V2 ->
       ||v1|| = ||v1'|| -> ||v2|| = ||v2'|| ->
       V1 ∠ V2 = V1' ∠ V2' ->
@@ -681,17 +573,17 @@ Section vangle.
     (* { apply vlen_neq0_iff_neq0; auto. } *)
     (* assert (||v2|| <> 0) as Hlen_neq0_v2. *)
     (* { apply vlen_neq0_iff_neq0; auto. } *)
-    (* assert (cvnonzero V1') as Hneq0_v1'. *)
+    (* assert (vnonzero V1') as Hneq0_v1'. *)
     (* { apply vlen_neq0_iff_neq0 in Hneq0_v1. apply vlen_neq0_iff_neq0. ra. } *)
-    (* assert (cvnonzero V2') as Hneq0_v2'. *)
+    (* assert (vnonzero V2') as Hneq0_v2'. *)
     (* { apply vlen_neq0_iff_neq0 in Hneq0_v2. apply vlen_neq0_iff_neq0. ra. } *)
     (* unfold vangle in *. f_equiv. *)
     (* apply acos_inj in Hangle_eq; try apply vdot_vnormalize_bound; auto. *)
     (* unfold vnorm in *. *)
-    (* rewrite !cvdot_cvcmul_l, !cvdot_cvcmul_r in *. *)
-    (* (* remember (||(V1 + V2)%CV||) as r1. *) *)
-    (* (* remember (||(v1' + V2')%CV||) as r1'. *) *)
-    (* rewrite !cvdot_vadd_distr_l, !cvdot_vadd_distr_r. *)
+    (* rewrite !vdot_vcmul_l, !vdot_vcmul_r in *. *)
+    (* (* remember (||(V1 + V2)%V||) as r1. *) *)
+    (* (* remember (||(v1' + V2')%V||) as r1'. *) *)
+    (* rewrite !vdot_vadd_distr_l, !vdot_vadd_distr_r. *)
     (* rewrite <- Hlen_eq_11', <- Hlen_eq_22' in *. *)
     (* assert (<v1,v2> = <v1',v2'>). *)
     (* { apply Rmult_eq_reg_l with (r:=(1/(||v2||))). *)
@@ -712,21 +604,21 @@ Section vangle.
     
 
   (** a <> 0 -> (a c* V1) ∠ V2 = V1 ∠ V2 *)
-  Lemma vangle_cvcmul_l : forall {n} (V1 V2 : vec n) (a : R),
+  Lemma vangle_vcmul_l : forall {n} (V1 V2 : vec n) (a : R),
       a <> 0 -> (a c* V1) ∠ V2 = V1 ∠ V2.
   Proof.
   Admitted.
 
   (** a <> 0 -> V1 ∠ (a c* V2) = V1 ∠ V2 *)
-  Lemma vangle_cvcmul_r : forall {n} (V1 V2 : vec n) (a : R),
+  Lemma vangle_vcmul_r : forall {n} (V1 V2 : vec n) (a : R),
       a <> 0 -> V1 ∠ (a c* V2) = V1 ∠ V2.
   Proof.
   Admitted.
 
-  Lemma vangle_cvnorm_l : forall {n} (V1 V2 : vec n),
+  Lemma vangle_vnorm_l : forall {n} (V1 V2 : vec n),
       vnorm V1 ∠ V2 = V1 ∠ V2.
   Admitted.
-  Lemma vangle_cvnorm_r : forall {n} (V1 V2 : vec n),
+  Lemma vangle_vnorm_r : forall {n} (V1 V2 : vec n),
       V1 ∠ vnorm V2 = V1 ∠ V2.
   Admitted.
 
@@ -744,21 +636,21 @@ Section vproj.
   (* (** The scalar projection of a on b is a simple triangle relation *) *)
   (* Lemma vsproj_spec : forall {n} (a b : vec n), vsproj a b = `|a| * vangle. *)
 
-  #[export] Instance vproj_mor {n} : Proper (meq ==> meq ==> meq) (@cvproj n).
+  #[export] Instance vproj_mor {n} : Proper (meq ==> meq ==> meq) (@vproj n).
   Proof. simp_proper. intros. unfold vproj. rewrite H,H0. easy. Qed.
 
   (** vproj (a1 + a2) b = vproj a1 b + vproj a2 b *)
-  Lemma vproj_linear_cvadd : forall {n} (a1 a2 b : vec n),
-      vnonzero b -> (cvproj (a1 + a2) b = vproj a1 b + vproj a2 b)%CV.
+  Lemma vproj_linear_vadd : forall {n} (a1 a2 b : vec n),
+      vnonzero b -> (vproj (a1 + a2) b = vproj a1 b + vproj a2 b)%V.
   Proof.
     intros. unfold vproj. rewrite vdot_vadd_distr_l.
     rewrite <- vcmul_add_distr. f_equiv. autounfold with T. field.
     rewrite vdot_same. apply vlen_gt0 in H. ra.
   Qed.
 
-  (** vproj (k * a) b = k * (cvproj a b) *)
-  Lemma vproj_linear_cvcmul : forall {n} (a b : vec n) (k : R),
-      vnonzero b -> (cvproj (k c* a) b = k c* (cvproj a b))%CV.
+  (** vproj (k * a) b = k * (vproj a b) *)
+  Lemma vproj_linear_vcmul : forall {n} (a b : vec n) (k : R),
+      vnonzero b -> (vproj (k c* a) b = k c* (vproj a b))%V.
   Proof.
     intros. unfold vproj. rewrite vdot_vcmul_l. rewrite vcmul_assoc. f_equiv.
     autounfold with T. field.
@@ -782,22 +674,22 @@ Section vperp.
   (** The perpendicular component of a respect to b *)
   Definition vperp {n} (a b : vec n) : vec n := a - vproj a b.
   
-  #[export] Instance vperp_mor {n} : Proper (meq ==> meq ==> meq) (@cvperp n).
+  #[export] Instance vperp_mor {n} : Proper (meq ==> meq ==> meq) (@vperp n).
   Proof. simp_proper. intros. unfold vperp. rewrite H,H0. easy. Qed.
 
   (** vperp (a1 + a2) b = vperp a1 b + vperp a2 b *)
-  Lemma vperp_linear_cvadd : forall {n} (a1 a2 b : vec n),
-      vnonzero b -> (cvperp (a1 + a2) b = vperp a1 b + vperp a2 b)%CV.
+  Lemma vperp_linear_vadd : forall {n} (a1 a2 b : vec n),
+      vnonzero b -> (vperp (a1 + a2) b = vperp a1 b + vperp a2 b)%V.
   Proof.
-    intros. unfold vperp. rewrite vproj_linear_cvadd; auto.
+    intros. unfold vperp. rewrite vproj_linear_vadd; auto.
     unfold vsub. elimh. rewrite vopp_vadd. easy.
   Qed.
 
-  (** vperp (k * a) b = k * (cvperp a b) *)
-  Lemma vperp_linear_cvcmul : forall {n} (a b : vec n) (k : R),
-      vnonzero b -> (cvperp (k c* a) b = k c* (cvperp a b))%CV.
+  (** vperp (k * a) b = k * (vperp a b) *)
+  Lemma vperp_linear_vcmul : forall {n} (a b : vec n) (k : R),
+      vnonzero b -> (vperp (k c* a) b = k c* (vperp a b))%V.
   Proof.
-    intros. unfold vperp. rewrite vproj_linear_cvcmul; auto.
+    intros. unfold vperp. rewrite vproj_linear_vcmul; auto.
     rewrite vcmul_vsub. easy.
   Qed.
 
@@ -825,7 +717,7 @@ Section vorth.
   Infix "⟂" := vorth ( at level 50).
 
   #[export] Instance vorth_mor {n} :
-    Proper (meq ==> meq ==> impl) (@cvorth n).
+    Proper (meq ==> meq ==> impl) (@vorth n).
   Proof.
     simp_proper. intros. unfold vorth. rewrite H,H0. easy.
   Qed.
@@ -835,7 +727,7 @@ Section vorth.
   Proof. intros. unfold vorth in *. rewrite vdot_comm; auto. Qed.
 
   (** u ⟂ V -> vproj u V = vzero *)
-  Lemma vorth_cvproj : forall (u V : vec 3),
+  Lemma vorth_vproj : forall (u V : vec 3),
       vnonzero V -> u ⟂ V -> vproj u V = vzero.
   Proof.
     intros. unfold vorth in H0.
@@ -844,24 +736,24 @@ Section vorth.
   Qed.
   
   (** u ⟂ V -> vperp u V = u *)
-  Lemma vorth_cvperp : forall (u V : vec 3),
+  Lemma vorth_vperp : forall (u V : vec 3),
       vnonzero V -> u ⟂ V -> vperp u V = u.
   Proof.
-    intros. unfold vperp. rewrite vorth_cvproj; auto. apply vsub_0_r.
+    intros. unfold vperp. rewrite vorth_vproj; auto. apply vsub_0_r.
   Qed.
 
   (** u ⟂ V -> vnorm u ⟂ V *)
-  Lemma vorth_cvnorm_l : forall (u V : vec 3), u ⟂ V -> vnorm u ⟂ V.
+  Lemma vorth_vnorm_l : forall (u V : vec 3), u ⟂ V -> vnorm u ⟂ V.
   Proof.
-    intros. unfold vorth, vnorm in *. rewrite vdot_cvcmul_l; ra.
+    intros. unfold vorth, vnorm in *. rewrite vdot_vcmul_l; ra.
   Qed.
 
   (** vnorm u ⟂ V -> u ⟂ V *)
-  Lemma vorth_cvnorm_l_reV : forall (u V : vec 3),
+  Lemma vorth_vnorm_l_reV : forall (u V : vec 3),
       u != vzero -> vnorm u ⟂ V -> u ⟂ V.
   Proof.
     intros. unfold vorth, vnorm in *.
-    rewrite vdot_cvcmul_l in H0; ra.
+    rewrite vdot_vcmul_l in H0; ra.
     assert (1 * / (||u||) <> 0)%R; ra.
     apply vlen_neq0_iff_neq0 in H.
     apply Rmult_integral_contrapositive_currified; ra.
@@ -869,46 +761,46 @@ Section vorth.
   Qed.
 
   (** u ⟂ V -> vnorm u ⟂ V *)
-  Lemma vorth_cvnorm_r : forall (u V : vec 3), u ⟂ V -> u ⟂ vnorm V.
+  Lemma vorth_vnorm_r : forall (u V : vec 3), u ⟂ V -> u ⟂ vnorm V.
   Proof.
-    intros. unfold vorth, vnorm in *. rewrite vdot_cvcmul_r; ra.
+    intros. unfold vorth, vnorm in *. rewrite vdot_vcmul_r; ra.
   Qed.
 
   (** u ⟂ vnorm V -> u ⟂ V *)
-  Lemma vorth_cvnorm_r_reV : forall (u V : vec 3),
+  Lemma vorth_vnorm_r_reV : forall (u V : vec 3),
       V != vzero -> u ⟂ vnorm V -> u ⟂ V.
   Proof.
     intros. unfold vorth, vnorm in *.
-    rewrite vdot_cvcmul_r in H0; ra. assert (1 * / (||v||) <> 0)%R; ra.
+    rewrite vdot_vcmul_r in H0; ra. assert (1 * / (||v||) <> 0)%R; ra.
     apply vlen_neq0_iff_neq0 in H.
     apply Rmult_integral_contrapositive_currified; ra.
     apply Rinv_neq_0_compat; auto.
   Qed.
   
   (** u ⟂ V -> (k c* u) ⟂ V *)
-  Lemma vorth_cvcmul_l : forall (u V : vec 3) (k : R), u ⟂ V -> (k c* u) ⟂ V.
+  Lemma vorth_vcmul_l : forall (u V : vec 3) (k : R), u ⟂ V -> (k c* u) ⟂ V.
   Proof.
-    intros. unfold vorth, vnorm in *. rewrite vdot_cvcmul_l; ra.
+    intros. unfold vorth, vnorm in *. rewrite vdot_vcmul_l; ra.
   Qed.
 
   (** (k c* u) ⟂ V -> u ⟂ V *)
-  Lemma vorth_cvcmul_l_reV : forall (u V : vec 3) (k : R),
+  Lemma vorth_vcmul_l_reV : forall (u V : vec 3) (k : R),
       k <> 0 -> (k c* u) ⟂ V -> u ⟂ V.
   Proof.
-    intros. unfold vorth, vnorm in *. rewrite vdot_cvcmul_l in H0; ra.
+    intros. unfold vorth, vnorm in *. rewrite vdot_vcmul_l in H0; ra.
   Qed.
 
   (** u ⟂ V -> u ⟂ (k c* v) *)
-  Lemma vorth_cvcmul_r : forall (u V : vec 3) (k : R), u ⟂ V -> u ⟂ (k c* v).
+  Lemma vorth_vcmul_r : forall (u V : vec 3) (k : R), u ⟂ V -> u ⟂ (k c* v).
   Proof.
-    intros. unfold vorth, vnorm in *. rewrite vdot_cvcmul_r; ra.
+    intros. unfold vorth, vnorm in *. rewrite vdot_vcmul_r; ra.
   Qed.
 
   (** u ⟂ (k c* v) -> u ⟂ V *)
-  Lemma vorth_cvcmul_r_reV : forall (u V : vec 3) (k : R),
+  Lemma vorth_vcmul_r_reV : forall (u V : vec 3) (k : R),
       k <> 0 -> u ⟂ (k c* v) -> u ⟂ V.
   Proof.
-    intros. unfold vorth, vnorm in *. rewrite vdot_cvcmul_r in H0; ra.
+    intros. unfold vorth, vnorm in *. rewrite vdot_vcmul_r in H0; ra.
   Qed.
 
   (** vproj ⟂ vperp *)
@@ -920,7 +812,7 @@ Section vorth.
     apply seqsum_eq0.
     intros.
     vec2fun. simpl.
-    unfold vdot, Vector.cvdot. simpl.
+    unfold vdot, Vector.vdot. simpl.
     autorewrite with R.
     remember (seqsum (fun i0 : nat => V i0 0%nat * V i0 0%nat) n)%A as r1.
     remember (seqsum (fun i0 : nat => u i0 0%nat * V i0 0%nat) n)%A as r2.
@@ -1064,7 +956,7 @@ Section morth.
 
   (** Transformation by orthogonal matrix will keep normalization. *)
   Corollary morth_keep_normalize : forall {n} (m : smat n) (V : vec n),
-      morth m -> vnorm (m * v) = m * (cvnorm v).
+      morth m -> vnorm (m * v) = m * (vnorm v).
   Proof.
     intros. unfold vnorm.
     rewrite morth_keep_length; auto. apply mcmul_mmul_assoc_r.
@@ -1093,8 +985,8 @@ Section exercise.
       sqrt (a1² + a2² + a3²) * sqrt (b1² + b2² + b3²) >= |a1*b1 + a2*b2 + a3*b3|.
   Proof.
     intros.
-    pose (a := t2cv_3 (a1,a2,a3)).
-    pose (b := t2cv_3 (b1,b2,b3)).
+    pose (a := t2v_3 (a1,a2,a3)).
+    pose (b := t2v_3 (b1,b2,b3)).
     pose (alen := vlen a).
     pose (blen := vlen b).
     replace (sqrt _) with alen; [| unfold alen; cbv; f_equal; ring].
@@ -1110,7 +1002,7 @@ End exercise.
 Section test.
   Let l1 := [1;2;3].
   Let V1 := @l2rv 2 l1.
-  Let V2 := @l2cv 2 l1.
+  Let V2 := @l2v 2 l1.
   (* Compute rv2l V1. *)
   (* Compute V2l V2. *)
 
@@ -1118,8 +1010,8 @@ Section test.
   Variable a1 a2 a3 : A.
   Variable f : A -> T.
   Let v3 := t2rv_3 (a1,a2,a3).
-  Let v4 := t2cv_3 (a1,a2,a3).
+  Let v4 := t2v_3 (a1,a2,a3).
   (* Compute rv2l (rvmap v3 f). *)
-  (* Compute V2l (cvmap v4 f). *)
+  (* Compute V2l (vmap v4 f). *)
   
 End test.

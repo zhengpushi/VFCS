@@ -20,6 +20,7 @@ VFCS/CoqExt/LogicExt.v
 VFCS/CoqExt/Hierarchy.v
 VFCS/CoqExt/BoolExt.v
 VFCS/CoqExt/NatExt.v
+VFCS/CoqExt/PositiveExt.v
 VFCS/CoqExt/ZExt.v
 VFCS/CoqExt/QExt.v
 VFCS/CoqExt/QcExt.v

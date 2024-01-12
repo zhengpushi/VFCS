@@ -32,7 +32,7 @@ Require Export ListExt.
 Require Export Fin Sequence Fsequence.
 Require Import Extraction.
 
-Generalizable Variable A Aadd Azero Aopp Amul Aone Ainv.
+Generalizable Variable A Aadd Azero Aopp Amul Aone Ainv Ale Alt.
 
 (** Control the scope *)
 Open Scope nat_scope.
@@ -69,10 +69,11 @@ Lemma veq_iff_vnth_nat : forall {A} {n} (V1 V2 : @vec A n),
     V1 = V2 <-> forall (i : nat) (H: i < n), V1 (nat2fin i H) = V2 (nat2fin i H).
 Proof. intros. unfold vec in *. apply ffeq_iff_nth_nat. Qed.
 
-#[export] Instance veq_dec : forall {A n} (Azero : A), @Dec A -> @Dec (@vec A n).
+#[export] Instance veq_dec : forall {A n} (Azero : A),
+    Dec (@eq A) -> Dec (@eq (@vec A n)).
 Proof.
   intros. constructor. intros.
-  apply (@fseqeq_dec _ Azero). apply dec.
+  apply (@fseqeq_dec _ Azero). apply Aeqdec.
 Qed.
 
 
@@ -618,14 +619,6 @@ Section alg.
   Proof.
     intros. rewrite vdot_comm. rewrite vdot_vadd_distr_l. f_equal; apply vdot_comm.
   Qed.
-  
-  Lemma vdot_vcmul_l : forall {n} (V1 V2 : vec n) k, <k c* V1, V2> = k * <V1,V2>.
-  Proof. intros. unfold vdot. apply vsum_cmul; intros. cbv. ring. Qed.
-  
-  Lemma vdot_vcmul_r : forall {n} (V1 V2 : vec n) k, <V1, k c* V2> = k * <V1,V2>.
-  Proof.
-    intros. rewrite vdot_comm. rewrite vdot_vcmul_l. f_equal; apply vdot_comm.
-  Qed.
 
   (* <0, V> = 0 *)
   Lemma vdot_0_l : forall {n} (V : vec n), <vzero, V> = Azero.
@@ -638,15 +631,33 @@ Section alg.
   Lemma vdot_0_r : forall {n} (V : vec n), <V, vzero> = Azero.
   Proof. intros. rewrite vdot_comm, vdot_0_l; auto. Qed.
 
+  (** <-V1, V2> = - <V1,V2> *)
+  Lemma vdot_vopp_l : forall {n} (V1 V2 : vec n), < -V1, V2> = (- <V1,V2>)%A.
+  Proof. intros. unfold vdot. apply vsum_opp; intros. cbv. ring. Qed.
+
+  (** <V1, -V2> = - <V1,V2> *)
+  Lemma vdot_vopp_r : forall {n} (V1 V2 : vec n), <V1, -V2> = (- <V1,V2>)%A.
+  Proof. intros. rewrite vdot_comm, vdot_vopp_l, vdot_comm. auto. Qed.
+
+  (* <k * V1, V2> = k * <V1, V2> *)
+  Lemma vdot_vcmul_l : forall {n} (V1 V2 : vec n) k, <k c* V1, V2> = k * <V1,V2>.
+  Proof. intros. unfold vdot. apply vsum_cmul; intros. cbv. ring. Qed.
   
-  Context `{ADec : Dec A}.
+  (* <V1, k * V2> = k * <V1, V2> *)
+  Lemma vdot_vcmul_r : forall {n} (V1 V2 : vec n) k, <V1, k c* V2> = k * <V1,V2>.
+  Proof.
+    intros. rewrite vdot_comm. rewrite vdot_vcmul_l. f_equal; apply vdot_comm.
+  Qed.
+
+  
+  Context {AeqDec : Dec (@eq A)}.
 
   
   (** k * V1 = V2 -> V1 <> 0 -> V2 <> 0 -> k <> 0 *)
   Lemma vcmul_eq_imply_k_neq0 : forall {n} k (V1 V2 : vec n),
       k c* V1 = V2 -> V1 <> vzero -> V2 <> vzero -> k <> Azero.
   Proof.
-    intros. destruct (dec k Azero); auto. exfalso. subst.
+    intros. destruct (Aeqdec k Azero); auto. exfalso. subst.
     rewrite vcmul_0_l in H3. easy.
   Qed.
  
@@ -658,7 +669,7 @@ Section alg.
   Lemma vcmul_eq0_imply_k0_or_V0 : forall {n} k (V : vec n),
       k c* V = vzero -> (k = Azero) \/ (V = vzero).
   Proof.
-    intros. destruct (dec k Azero); auto. right.
+    intros. destruct (Aeqdec k Azero); auto. right.
     apply veq_iff_vnth; intros. rewrite veq_iff_vnth in H1. specialize (H1 i).
     cbv in H1. cbv. apply field_mul_eq0_imply_a0_or_b0 in H1; auto. tauto.
   Qed.
@@ -682,7 +693,7 @@ Section alg.
   Lemma vcmul_same_imply_k1_or_V0 : forall {n} k (V : vec n),
       k c* V = V -> (k = Aone) \/ (V = vzero).
   Proof.
-    intros. destruct (dec k Aone); auto. right.
+    intros. destruct (Aeqdec k Aone); auto. right.
     apply veq_iff_vnth; intros. rewrite veq_iff_vnth in H1. specialize (H1 i).
     cbv in H1. cbv. apply field_mul_eq_imply_a1_or_b0 in H1; auto. tauto.
   Qed.
@@ -701,9 +712,9 @@ Section alg.
   Lemma vcmul_sameV_imply_eqK_or_V0 : forall {n} k1 k2 (V : vec n), 
       k1 c* V = k2 c* V -> (k1 = k2 \/ V = vzero).
   Proof.
-    intros. destruct (dec k1 k2); auto. right. rewrite veq_iff_vnth in H1.
+    intros. destruct (Aeqdec k1 k2); auto. right. rewrite veq_iff_vnth in H1.
     rewrite veq_iff_vnth. intros. specialize (H1 i). rewrite !vnth_vcmul in H1.
-    destruct (dec (V i) Azero); auto.
+    destruct (Aeqdec (V i) Azero); auto.
     apply field_mul_cancel_r in H1; tauto.
   Qed.
 
@@ -718,3 +729,56 @@ Section alg.
   Proof. intros. apply vcmul_sameV_imply_eqK_or_V0 in H1; tauto. Qed.
   
 End alg.
+
+
+(** ** Vector theory on ordered ring structure *)
+Section orderedRing.
+
+  Context `{ARing}.
+  Infix "+" := Aadd.
+  Infix "*" := Amul.
+  Notation "0" := Azero.
+  Notation "< V1 , V2 >" := (@vdot _ Aadd Azero Amul _ V1 V2).
+  Notation vzero := (vzero Azero).
+  
+  Context `{AleDec : Dec A Ale}.
+  Infix "<=" := Ale.
+  
+  Context (Ale_refl : forall a : A, a <= a).
+  Context (Azero_le_sqr : forall a : A, 0 <= a * a).
+  Context (Asqr_eq_0_reg : forall a : A, a * a = 0 -> a = 0).
+  Context (Aadd_le_compat : forall a1 b1 a2 b2 : A,
+              a1 <= a2 -> b1 <= b2 -> a1 + b1 <= a2 + b2).
+  Context (Aadd_eq_0_reg_l : forall a b : A, 0 <= a -> 0 <= b -> a + b = 0 -> a = 0).
+  
+  (** 0 <= <V,V> *)
+  Lemma vdot_ge0 : forall {n} (V : vec n), 0 <= (<V,V>).
+  Proof.
+    intros. unfold vdot, vsum, fseqsum, vmap2, ff2f.
+    apply seqsum_ge0; intros.
+    apply Ale_refl. apply Aadd_le_compat; auto.
+    destruct (_??<_). apply Azero_le_sqr. apply Ale_refl.
+  Qed.
+
+  (** <V,V> = 0 <-> V = 0 *)
+  Lemma vdot_eq0_iff_vzero : forall {n} (V : vec n), <V,V> = 0 <-> V = vzero.
+  Proof.
+    intros. split; intros.
+    - unfold vdot,vsum,fseqsum in H0.
+      apply veq_iff_vnth; intros.
+      apply @seqsum_eq0_imply_seq0 with (i:=fin2nat i)(Ale:=Ale) in H0; auto.
+      + rewrite nth_ff2f with (H:=fin2nat_lt _) in H0.
+        rewrite vnth_vmap2 in H0. rewrite nat2fin_fin2nat_id in H0.
+        apply Asqr_eq_0_reg in H0. auto.
+      + apply H.
+      + intros. rewrite nth_ff2f with (H:=H1). rewrite vnth_vmap2.
+        apply Azero_le_sqr.
+      + apply fin2nat_lt.
+    - rewrite H0. rewrite vdot_0_l. auto.
+  Qed.
+      
+  (** <V, V> <> 0 <-> V <> vzero *)
+  Lemma vdot_neq0_iff_vnonzero : forall {n} (V : vec n), <V, V> <> 0 <-> V <> vzero.
+  Proof. intros. rewrite vdot_eq0_iff_vzero. easy. Qed.
+  
+End orderedRing.

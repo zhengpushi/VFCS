@@ -9,7 +9,7 @@
  *)
 
 Require Export Hierarchy.
-Require Export RExt.
+Require Export NatExt RExt.
 Require Export Lra.
 
 Open Scope R_scope.
@@ -19,31 +19,6 @@ Open Scope R_scope.
 (** ** Some useful properties *)
 
 Section general_useful_props.
-
-  (** Equality of two pairs, iff their corresponding components are all equal. *)
-  Lemma prod_eq_iff : forall {A B} (z1 z2 : A * B),
-      z1 = z2 <-> fst z1 = fst z2 /\ snd z1 = snd z2.
-  Proof.
-    intros A B (a1,b1) (a2,b2). split; intros H; inv H; auto.
-    simpl in *; subst. auto.
-  Qed.
-
-  (** Inequality of two pairs, iff at least one of components are not equal. *)
-  Lemma prod_neq_iff : forall {A B} {ADec:@Dec A} {BDec:@Dec B}
-                         (z1 z2 : A * B),
-      z1 <> z2 <-> fst z1 <> fst z2 \/ snd z1 <> snd z2.
-  Proof.
-    intros A B HA HB (a1,b1) (a2,b2). split; intros H; simpl in *.
-    - destruct (dec a1 a2), (dec b1 b2); subst; auto.
-    - destruct (dec a1 a2), (dec b1 b2); subst; auto.
-      all: intro H1; inv H1; destruct H; auto.
-  Qed.
-
-  (* (** The equality of real numbers is decidable *) *)
-  (* Lemma Reqdec : forall (a b : R), {a = b}+{a <> b}. *)
-  (* Proof. *)
-  (*   intros. apply decidable. *)
-  (* Qed. *)
 
   (** Basic inequality *)
 
@@ -208,10 +183,10 @@ Section def.
   Qed.
 
   (** Equality on C is decidable *)
-  Global Instance Dec_Complex : @Dec C.
+  #[export] Instance Complex_eq_Dec : Dec (@eq C).
   Proof.
     constructor. intros (a1,b1) (a2,b2).
-    destruct (dec a1 a2), (dec b1 b2); subst.
+    destruct (Aeqdec a1 a2), (Aeqdec b1 b2); subst.
     - left; auto.
     - right; intro; inv H; easy.
     - right; intro; inv H; easy.
@@ -229,8 +204,8 @@ Section def.
   Proof.
     intros (a1,b1) (a2,b2); simpl.
     split; intros.
-    - destruct (dec a1 a2), (dec b1 b2); subst; auto.
-    - destruct (dec a1 a2), (dec b1 b2); subst; auto.
+    - destruct (Aeqdec a1 a2), (Aeqdec b1 b2); subst; auto.
+    - destruct (Aeqdec a1 a2), (Aeqdec b1 b2); subst; auto.
       + intro H1; inv H1. destruct H; auto.
       + intro H1; inv H1. destruct H; auto.
       + intro H1; inv H1. destruct H; auto.
@@ -253,7 +228,6 @@ Notation "0" := C0 : C_scope.
 Notation "1" := C1 : C_scope.
 Notation "z .a" := (Cre z) (at level 20, format "z .a") : C_scope.
 Notation "z .b" := (Cim z) (at level 20, format "z .b") : C_scope.
-
 
 
 (** *** Tactics for basic proof on complex number *)
@@ -414,7 +388,7 @@ Section Cnorm.
   (** |z| > 0 -> z <> 0 *)
   Lemma Cnorm_gt_not_eq : forall z, C|z| > R0 -> z <> 0.
   Proof.
-    intros. destruct (dec z 0); auto.
+    intros. destruct (Aeqdec z 0); auto.
     subst. rewrite Cnorm_C0 in H. lra.
   Qed.
 
@@ -447,7 +421,7 @@ Section Cnorm.
   Lemma Cre_le_Cnorm : forall z : C, R|z.a| <= C|z|.
   Proof.
     Csimpl. unfold Cnorm,Cnorm2; simpl.
-    destruct (dec b R0).
+    destruct (Aeqdec b R0).
     - subst. autorewrite with R. lra.
     - apply Rle_trans with (sqrt (a * a)).
       autorewrite with R. lra.
@@ -458,7 +432,7 @@ Section Cnorm.
   Lemma Cim_le_Cnorm : forall z : C, R|z.b| <= C|z|.
   Proof.
     Csimpl. unfold Cnorm,Cnorm2; simpl.
-    destruct (dec a R0).
+    destruct (Aeqdec a R0).
     - subst. autorewrite with R. lra.
     - apply Rle_trans with (sqrt (b * b)).
       autorewrite with R. lra.
@@ -714,7 +688,7 @@ Section Cpow.
   Lemma C0_pow : forall n, (0 < n)%nat -> 0 ^ n = 0.
   Proof.
     induction n; intros; auto. lia.
-    destruct (dec n 0%nat).
+    destruct (Aeqdec n 0%nat).
     - rewrite e. Ceq.
     - simpl. rewrite IHn. Ceq. lia.
   Qed.
@@ -1436,7 +1410,7 @@ Proof.
   unfold CmultTrigo, Ctrigo.
   rewrite cos_plus, sin_plus. unfold Ccmul.
   (* 是否为复数零来分类讨论 *)
-  destruct (dec z1 0), (dec z2 0); subst; Ceq;
+  destruct (Aeqdec z1 0), (Aeqdec z2 0); subst; Ceq;
     repeat rewrite Cnorm_C0_eq0; autorewrite with R; auto.
   (*   - autorewrite with R; auto. *)
 
@@ -1461,7 +1435,7 @@ Proof.
   intros. unfold CdivTrigo, Ctrigo.
   rewrite cos_minus, sin_minus. unfold Ccmul. simpl.
   (* 是否为复数零来分类讨论 *)
-  destruct (dec z1 0), (dec z2 0);
+  destruct (Aeqdec z1 0), (Aeqdec z2 0);
     subst; rewrite ?Cnorm_C0_eq0; unfold Cdiv.
   - destruct H. auto.
     (*   - rewrite Cmul_0_l. ring_simplify. unfold Rdiv, R_R_to_C.  *)

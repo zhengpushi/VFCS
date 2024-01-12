@@ -9,7 +9,9 @@
 *)
 
 Require Export ZArith.
+Require Export Hierarchy.  
 Open Scope Z.
+
 
 (* ######################################################################### *)
 (** * Mathematical Structure *)
@@ -18,6 +20,34 @@ Open Scope Z.
 Hint Resolve
   Z.add_wd Z.opp_wd Z.sub_wd Z.mul_wd (* Z *)
   : wd.
+
+#[export] Instance Z_eq_Dec : Dec (@eq Z).
+Proof. constructor. apply Z.eq_dec. Defined.
+
+#[export] Instance Z_le_Dec : Dec Z.le.
+Proof. constructor. intros. destruct (Z_le_gt_dec a b); auto. Defined.
+
+#[export] Instance Z_lt_Dec : Dec Z.lt.
+Proof. constructor. intros. destruct (Z_lt_le_dec a b); auto. right. lia. Defined.
+
+(* n <= n *)
+Lemma Z_le_refl : forall n : Z, n <= n.
+Proof. intros. lia. Qed.
+
+Lemma Z_zero_le_sqr : forall a : Z, 0 <= a * a.
+Proof. intros. apply Z.square_nonneg. Qed.
+
+Lemma Z_add_le_compat : forall a1 b1 a2 b2 : Z, a1 <= a2 -> b1 <= b2 -> a1 + b1 <= a2 + b2.
+Proof. intros. lia. Qed.
+
+Lemma Z_add_eq_0_reg_l : forall a b : Z, 0 <= a -> 0 <= b -> a + b = 0 -> a = 0.
+Proof. intros. lia. Qed.
+
+
+Section test.
+  Goal forall a b : Z, {a = b} + {a <> b}.
+  Proof. intros. apply Aeqdec. Abort.
+End test.
 
 
 (* ######################################################################### *)

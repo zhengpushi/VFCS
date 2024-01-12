@@ -10,10 +10,11 @@
   remark    :
   1. use functor to generate many similiar modules
   2. The vector theory is orgainized at several levels
-  * BasicVectoryTheory, vector theory on element with equivalence relaton.
-  * MonoidVectoryTheory, vector theory on element with monoid structure.
-  * RingVectoryTheory, vector theory on element with ring structure.
-  * FieldVectoryTheory, vector theory on element with field structure.
+  * BasicVectorTheory, vector theory on element with equivalence relaton.
+  * MonoidVectorTheory, vector theory on element with monoid structure.
+  * RingVectorTheory, vector theory on element with ring structure.
+  * OrderedRingVectorTheory, `RingVectorTheory` with order relation
+  * FieldVectorTheory, vector theory on element with field structure.
  *)
 
 Require Export Vector.
@@ -35,8 +36,8 @@ Module BasicVectorTheory (E : ElementType).
   Lemma veq_iff_vnth : forall {n} (V1 V2 : vec n), V1 = V2 <-> (forall i, V1$i = V2$i).
   Proof. intros. apply veq_iff_vnth. Qed.
 
-  #[export] Instance veq_dec : forall {n}, @Dec (vec n).
-  Proof. intros. apply (veq_dec Azero ADec). Qed.
+  #[export] Instance veq_dec : forall {n}, Dec (@eq (vec n)).
+  Proof. intros. apply (veq_dec Azero AeqDec). Qed.
 
   (** Convert between function and vector *)
   Definition f2v {n} (f : nat -> A) : vec n := f2v f.
@@ -209,14 +210,6 @@ Module RingVectorTheory (E : RingElementType).
   Definition vdot {n : nat} (V1 V2 : vec n) : A := @vdot _ Aadd Azero Amul _ V1 V2.
   Notation "< V1 , V2 >" := (vdot V1 V2) : vec_scope.
 
-  (** <0, V> = 0 *)
-  Lemma vdot_0_l : forall {n} (V : vec n), <vzero, V> = Azero.
-  Proof. intros. apply vdot_0_l. Qed.
-
-  (** <V, 0> = 0 *)
-  Lemma vdot_0_r : forall {n} (V : vec n), <V, vzero> = Azero.
-  Proof. intros. apply vdot_0_r. Qed.
-
   (** <V1, V2> = <V2, V1> *)
   Lemma vdot_comm : forall {n} (V1 V2 : vec n), <V1, V2> = <V2, V1>.
   Proof. intros. apply vdot_comm. Qed.
@@ -231,18 +224,47 @@ Module RingVectorTheory (E : RingElementType).
       <V1, V2 + V3> = (<V1, V2> + <V1, V3>)%A.
   Proof. intros. apply vdot_vadd_distr_r. Qed.
 
+  (** <0, V> = 0 *)
+  Lemma vdot_0_l : forall {n} (V : vec n), <vzero, V> = Azero.
+  Proof. intros. apply vdot_0_l. Qed.
+
+  (** <V, 0> = 0 *)
+  Lemma vdot_0_r : forall {n} (V : vec n), <V, vzero> = Azero.
+  Proof. intros. apply vdot_0_r. Qed.
+
+  (** <-V1, V2> = - <V1,V2> *)
+  Lemma vdot_vopp_l : forall {n} (V1 V2 : vec n), < -V1, V2> = (- <V1,V2>)%A.
+  Proof. intros. apply vdot_vopp_l. Qed.
+
+  (** <V1, -V2> = - <V1,V2> *)
+  Lemma vdot_vopp_r : forall {n} (V1 V2 : vec n), <V1, -V2> = (- <V1,V2>)%A.
+  Proof. intros. apply vdot_vopp_r. Qed.
+
   (** <a c* V1, V2> = a * <V1, V2> *)
-  Lemma vdot_vcmul_l : forall {n} (V1 V2 : vec n) (a : A),
-      <a c* V1, V2> = a * <V1, V2>.
+  Lemma vdot_vcmul_l : forall {n} (V1 V2 : vec n) (a : A), <a c* V1, V2> = a * <V1, V2>.
   Proof. intros. apply vdot_vcmul_l. Qed.
 
   (** <V1, a c* V2> = a * <V1, V2> *)
-  Lemma vdot_vcmul_r : forall {n} (V1 V2 : vec n) (a : A),
-      <V1, a c* V2> = a * <V1, V2>.
+  Lemma vdot_vcmul_r : forall {n} (V1 V2 : vec n) (a : A), <V1, a c* V2> = a * <V1, V2>.
   Proof. intros. apply vdot_vcmul_r. Qed.
-
+  
 End RingVectorTheory.
 
+
+(* ######################################################################### *)
+(** * Ordered ring vector theory *)
+Module OrderedRingVectorTheory (E : OrderedRingElementType).
+
+  Include (RingVectorTheory E).
+  
+  (** 0 <= <V,V> *)
+  Lemma vdot_ge0 : forall {n} (V : vec n), Ale Azero (<V,V>).
+  Proof.
+    intros. apply vdot_ge0.
+    apply Ale_refl. apply Azero_le_sqr. apply Aadd_le_compat.
+  Qed.
+
+End OrderedRingVectorTheory.
 
 
 (* ######################################################################### *)
@@ -297,3 +319,33 @@ Module FieldVectorTheory (E : FieldElementType).
   Proof. intros. apply vcmul_sameV_imply_V0 in H; auto. Qed.
 
 End FieldVectorTheory.
+
+
+(* ######################################################################### *)
+(** * Ordered field vector theory *)
+Module OrderedFieldVectorTheory (E : OrderedFieldElementType).
+
+  Include (FieldVectorTheory E).
+  
+  (** 0 <= <V,V> *)
+  Lemma vdot_ge0 : forall {n} (V : vec n), Ale Azero (<V,V>).
+  Proof.
+    intros. apply vdot_ge0.
+    apply Ale_refl. apply Azero_le_sqr. apply Aadd_le_compat.
+  Qed.
+
+  (** <V,V> = 0 <-> V = 0 *)
+  Lemma vdot_eq0_iff_vzero : forall {n} (V : vec n), <V,V> = Azero <-> V = vzero.
+  Proof.
+    intros. apply (vdot_eq0_iff_vzero (Ale:=Ale)).
+    apply Ale_refl. apply Azero_le_sqr.
+    intros. apply field_sqr_eq0_imply_eq0 in H; auto. apply AeqDec.
+    intros. apply Aadd_le_compat; auto.
+    intros. apply Aadd_eq_0_reg_l in H1; auto.
+  Qed.
+
+  (** <V, V> <> 0 <-> V <> vzero *)
+  Lemma vdot_neq0_iff_vnonzero : forall {n} (V : vec n), <V,V> <> Azero <-> V <> vzero.
+  Proof. intros. rewrite vdot_eq0_iff_vzero. easy. Qed.
+
+End OrderedFieldVectorTheory.

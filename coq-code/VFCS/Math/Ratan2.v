@@ -56,31 +56,30 @@ Definition atan2 (y x : R) : R :=
 .
 
 
-(** Automaticaly destruct inequalities on R, such as Rlt_le_dec. *)
-Ltac destruct_rineq :=
+(** Automaticaly destruct `dec` *)
+Ltac destruct_dec :=
   repeat
     match goal with
-    | |- context [Rlt_le_dec _ _] => destruct Rlt_le_dec
-    | |- context [Rle_lt_dec _ _] => destruct Rle_lt_dec
-    end; try lra.
+    | |- context [dec ?cmp _ _] => destruct (dec cmp)
+    end.
 
 Lemma atan2_spec1 : forall y x, x > 0 -> atan2 y x = atan (y/x).
-Proof. intros. cbv. destruct_rineq. Qed.
+Proof. intros. unfold atan2,Rltb,Rleb,Acmpb. destruct_dec; lra. Qed.
 
 Lemma atan2_spec2 : forall y x, x < 0 -> y < 0 -> atan2 y x = (atan (y/x) - PI)%R.
-Proof. intros. cbv. destruct_rineq. Qed.
+Proof. intros. unfold atan2,Rltb,Rleb,Acmpb. destruct_dec; lra. Qed.
 
 Lemma atan2_spec3 : forall y x, x < 0 -> y >= 0 -> atan2 y x = (atan (y/x) + PI)%R.
-Proof. intros. cbv. destruct_rineq. Qed.
+Proof. intros. unfold atan2,Rltb,Rleb,Acmpb. destruct_dec; lra. Qed.
 
 Lemma atan2_spec4 : forall y x, x = 0 -> y > 0 -> atan2 y x = PI/2.
-Proof. intros. cbv. destruct_rineq. Qed.
+Proof. intros. unfold atan2,Rltb,Rleb,Acmpb. destruct_dec; lra. Qed.
 
 Lemma atan2_spec5 : forall y x, x = 0 -> y < 0 -> atan2 y x = - PI/2.
-Proof. intros. cbv. destruct_rineq. Qed.
+Proof. intros. unfold atan2,Rltb,Rleb,Acmpb. destruct_dec; lra. Qed.
 
 Lemma atan2_spec6 : forall y x, x = 0 -> y = 0 -> atan2 y x = 0.
-Proof. intros. cbv. destruct_rineq. Qed.
+Proof. intros. unfold atan2,Rltb,Rleb,Acmpb. destruct_dec; lra. Qed.
 
 (** An equation about atan2 will be used in the later proof *)
 Lemma atan2_sin_cos_eq1 : forall a k : R,

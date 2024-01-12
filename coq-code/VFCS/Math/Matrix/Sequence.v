@@ -14,7 +14,7 @@ Require Export ListExt.
 Require Export Hierarchy.
 Require RExt.
 
-Generalizable Variables A Aadd Azero Aopp Amul Aone Ainv.
+Generalizable Variables A Aadd Azero Aopp Amul Aone Ainv Ale Alt.
 
 (* ######################################################################### *)
 (** * Sequence by function, f : nat -> A  *)
@@ -501,46 +501,65 @@ End seqsumb.
 
 
 (* ======================================================================= *)
-(** ** Sequence on R type *)
-Section Seq_R.
+(** ** More properties of sequence on special structure *)
+Section seqsum_more.
 
-  Import Reals.
-  Open Scope R.
-  
-  Notation seqsum := (@seqsum _ Rplus R0).
+  (** Let's have an monoid structure *)
+  Context `{AMonoid A Aadd Azero}.
+  Infix "+" := Aadd.
+  Notation "0" := Azero.
+  Notation seqsum := (@seqsum _ Aadd 0).
+
+  (** Let's have order structure *)
+  Context `{AleDec : Dec A Ale}.
+  Context `{AltDec : Dec A Alt}.
+
+  Infix "<=" := Ale.
+  Context (Ale_refl : forall a : A, a <= a).
+  Context (Aadd_le_compat : forall a1 b1 a2 b2 : A,
+              a1 <= a2 -> b1 <= b2 -> a1 + b1 <= a2 + b2).
+  Context (Aadd_eq_0_reg_l : forall a b : A,
+              0 <= a -> 0 <= b -> a + b = 0 -> a = 0).
 
   (** If all elements of a sequence are >= 0, then the sum is >= 0 *)
-  Lemma seqsum_ge0 : forall (f : nat -> R) n,
-      (forall i, (i < n)%nat -> 0 <= f i) -> 0 <= seqsum f n.
-  Proof. intros. induction n; simpl. lra. apply Rplus_le_le_0_compat; auto. Qed.
-
+  Lemma seqsum_ge0 : forall (f : nat -> A) n, (forall i, i < n -> 0 <= f i) -> 0 <= seqsum f n.
+  Proof.
+    intros. induction n; simpl.
+    - apply Ale_refl.
+    - replace 0 with (0 + 0); try apply identityLeft.
+      apply Aadd_le_compat; auto.
+      rewrite identityLeft. apply IHn; auto.
+  Qed.
+  
   (** If all elements of a sequence are >= 0, and the sum of top (n+1) elements of
       the sequence is = 0, then the sum of top n elements are 0 *)
-  Lemma seqsum_eq0_less : forall (f : nat -> R) (n : nat), 
-      (forall i, (i < S n)%nat -> 0 <= f i) ->
+  Lemma seqsum_eq0_less : forall (f : nat -> A) (n : nat), 
+      (forall i, i < S n -> 0 <= f i) ->
       seqsum f (S n) = 0 ->
       seqsum f n = 0.
   Proof.
-    intros. rewrite seqsumS_tail in H0.
+    intros. rewrite seqsumS_tail in H1.
     assert (0 <= f n); auto.
-    assert (0 <= seqsum f n). apply seqsum_ge0; auto. lra.
+    assert (0 <= seqsum f n). apply seqsum_ge0; auto.
+    apply Aadd_eq_0_reg_l in H1; auto.
   Qed.
 
   (** If all elements of a sequence are >= 0, and the sum of the sequence is = 0,
       then all elements of the sequence are 0. *)
-  Lemma seqsum_eq0_imply_seq0 : forall (f : nat -> R) (n : nat), 
-      (forall i, (i < n)%nat -> 0 <= f i) -> seqsum f n = 0 -> (forall i, (i < n)%nat -> f i = 0).
+  Lemma seqsum_eq0_imply_seq0 : forall (f : nat -> A) (n : nat), 
+      (forall i, i < n -> 0 <= f i) -> seqsum f n = 0 -> (forall i, i < n -> f i = 0).
   Proof.
     intros f n. induction n. intros H1 H2 i H3; try easy. intros.
-    assert (i < n \/ i = n)%nat by nia. destruct H2.
+    assert (i < n \/ i = n)%nat by nia. destruct H3.
     - apply IHn; auto. apply seqsum_eq0_less; auto.
     - subst.
       assert (0 <= f n); auto.
       assert (0 <= seqsum f n). apply seqsum_ge0; auto.
-      rewrite seqsumS_tail in H0. lra.
+      rewrite seqsumS_tail in H1.
+      rewrite commutative in H1. apply Aadd_eq_0_reg_l in H1; auto.
   Qed.
   
-End Seq_R.
+End seqsum_more.
 
 
 (* ======================================================================= *)

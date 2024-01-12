@@ -70,3 +70,13 @@ Proof.
   destruct a1,a2,b1,b2; intros; auto.
 Qed.
 
+
+(* 解决常见布尔逻辑的证明 *)
+Ltac solve_bool :=
+  let H := fresh "H" in 
+  match goal with
+  (* b = false |- b <> true *)
+  | |- ?b = false -> ?b <> true => intros H; rewrite H; auto
+  (* b <> true |- b = false *)
+  | |- ?b <> true -> ?b = false => intros; apply not_true_is_false; auto
+  end.

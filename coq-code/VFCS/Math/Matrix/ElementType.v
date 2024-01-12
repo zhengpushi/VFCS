@@ -10,9 +10,12 @@
   remark    :
   1. Element type is orgainized to several levels
   * ElementType
+  * OrderedElementType
   * MonoidElementType, based on ElementType.
   * RingElementType, based on MonoidElementType.
+  * OrderedRingElementType, based on RingElementType + OrderedElementType
   * FieldElementType, based on RingElementType.
+  * OrderedFieldElementType, based on FieldElementType + OrderedElementType.
 
   2. Future plan:
   * SemiRingElementType.
@@ -26,15 +29,15 @@ Require Export Hierarchy.
 
 
 (* ######################################################################### *)
-(** * Element with setoid equality *)
+(** * ElementType *)
 
-(** ** Type of element *)
+(** A type with decidable equality and zero element *)
 Module Type ElementType.
   Parameter A : Type.
   Parameter Azero : A.
 
-  Axiom ADec : @Dec A.
-  #[export] Existing Instance ADec.
+  Axiom AeqDec : Dec (@eq A).
+  #[export] Existing Instance AeqDec.
 End ElementType.
 
 
@@ -45,8 +48,8 @@ Module ElementTypeNat <: ElementType.
   Definition Azero : A := 0.
   Hint Unfold A Azero : A.
 
-  Lemma ADec : @Dec nat.
-  Proof. constructor. apply Nat.eq_dec. Qed.
+  Lemma AeqDec : Dec (@eq A).
+  Proof. apply nat_eq_Dec. Qed.
 End ElementTypeNat.
 
 Module ElementTypeZ <: ElementType.
@@ -55,8 +58,8 @@ Module ElementTypeZ <: ElementType.
   Definition Azero : A := 0.
   Hint Unfold A Azero : A.
 
-  Lemma ADec : @Dec Z.
-  Proof. constructor. apply Z.eq_dec. Qed.
+  Lemma AeqDec : Dec (@eq A).
+  Proof. apply Z_eq_Dec. Qed.
 End ElementTypeZ.
 
 Module ElementTypeQ <: ElementType.
@@ -65,8 +68,8 @@ Module ElementTypeQ <: ElementType.
   Definition Azero : A := 0.
   Hint Unfold A Azero : A.
 
-  Lemma ADec : @Dec Q.
-  Proof. constructor. apply Qeqdec. Qed.
+  Lemma AeqDec : Dec (@eq A).
+  Proof. apply Q_eq_Dec. Qed.
 End ElementTypeQ.
 
 Module ElementTypeQc <: ElementType.
@@ -75,8 +78,8 @@ Module ElementTypeQc <: ElementType.
   Definition Azero : A := 0.
   Hint Unfold A Azero : A.
 
-  Lemma ADec : @Dec Qc.
-  Proof. constructor. apply Qc_eq_dec. Qed.
+  Lemma AeqDec : Dec (@eq A).
+  Proof. apply Qc_eq_Dec. Qed.
 End ElementTypeQc.
 
 Module ElementTypeR <: ElementType.
@@ -85,8 +88,8 @@ Module ElementTypeR <: ElementType.
   Definition Azero : A := 0.
   Hint Unfold A Azero : A.
 
-  Lemma ADec : @Dec R.
-  Proof. constructor. apply Req_EM_T. Qed.
+  Lemma AeqDec : Dec (@eq A).
+  Proof. apply R_eq_Dec. Qed.
 End ElementTypeR.
 
 Module ElementTypeC <: ElementType.
@@ -95,8 +98,8 @@ Module ElementTypeC <: ElementType.
   Definition Azero : A := 0.
   Hint Unfold A Azero : A.
 
-  Lemma ADec : @Dec C.
-  Proof. apply Dec_Complex. Qed.
+  Lemma AeqDec : Dec (@eq A).
+  Proof. apply Complex_eq_Dec. Qed.
 End ElementTypeC.
 
 Module ElementTypeRFun <: ElementType.
@@ -105,7 +108,7 @@ Module ElementTypeRFun <: ElementType.
   Definition Azero : A := fzero.
   Hint Unfold A Azero : A.
 
-  Lemma ADec : @Dec tpRFun.
+  Lemma AeqDec : Dec (@eq A).
   Proof. constructor. intros a b. unfold tpRFun in *.
          (* rewrite (functional_extensionality a b). *)
   Admitted.
@@ -116,15 +119,15 @@ Module ElementTypeFun (I O : ElementType) <: ElementType.
   Definition Azero : A := fun _ => O.Azero.
   Hint Unfold A Azero : A.
 
-  Lemma ADec : @Dec A.
+  Lemma AeqDec : Dec (@eq A).
   Proof. constructor. intros a b. unfold A in *.
   Admitted.
 End ElementTypeFun.
 
-
 Module ElementType_Test.
   Import ElementTypeNat ElementTypeR.
-  Module Import ElementTypeFunEx1 := ElementTypeFun ElementTypeNat ElementTypeR.
+  Module Import ElementTypeFunEx1 :=
+    ElementTypeFun ElementTypeNat ElementTypeR.
 
   Definition f : A := fun i => match i with 0%nat => 1 | 1%nat => 2 | _ => 1 end.
   Definition g : A := fun i => match i with 1%nat => 2 | _ => 1 end.
@@ -132,6 +135,113 @@ Module ElementType_Test.
   Goal f = g.
   Proof. cbv. intros. auto. Qed.
 End ElementType_Test.
+
+
+
+(* ######################################################################### *)
+(** * OrderedElementType *)
+
+(** An extended `ElementType` equipped with order relation *)
+Module Type OrderedElementType <: ElementType.
+  Include ElementType.
+  
+  Parameter Ale Alt : A -> A -> Prop.
+
+  Axiom AleDec : Dec Ale.
+  #[export] Existing Instance AleDec.
+  
+  Axiom AltDec : Dec Alt.
+  #[export] Existing Instance AltDec.
+
+  Axiom Ale_refl : forall a : A, Ale a a.
+  
+End OrderedElementType.
+
+(** ** Instances *)
+Module OrderedElementTypeNat <: OrderedElementType.
+  Include ElementTypeNat.
+
+  Definition Ale := Nat.le.
+  Definition Alt := Nat.lt.
+  Hint Unfold Ale Alt : A.
+  
+  Lemma AleDec : Dec Ale.
+  Proof. apply nat_le_Dec. Qed.
+  
+  Lemma AltDec : Dec Alt.
+  Proof. apply nat_lt_Dec. Qed.
+
+  Lemma Ale_refl : forall a : A, Ale a a.
+  Proof. apply nat_le_refl. Qed.
+End OrderedElementTypeNat.
+
+Module OrderedElementTypeZ <: OrderedElementType.
+  Include ElementTypeZ.
+
+  Definition Ale := Z.le.
+  Definition Alt := Z.lt.
+  Hint Unfold Ale Alt : A.
+  
+  Lemma AleDec : Dec Ale.
+  Proof. apply Z_le_Dec. Qed.
+  
+  Lemma AltDec : Dec Alt.
+  Proof. apply Z_lt_Dec. Qed.
+
+  Lemma Ale_refl : forall a : A, Ale a a.
+  Proof. apply Z_le_refl. Qed.
+End OrderedElementTypeZ.
+
+Module OrderedElementTypeQ <: OrderedElementType.
+  Include ElementTypeQ.
+
+  Definition Ale := Qle.
+  Definition Alt := Qlt.
+  Hint Unfold Ale Alt : A.
+  
+  Lemma AleDec : Dec Ale.
+  Proof. apply Q_le_Dec. Qed.
+  
+  Lemma AltDec : Dec Alt.
+  Proof. apply Q_lt_Dec. Qed.
+
+  Lemma Ale_refl : forall a : A, Ale a a.
+  Proof. apply Q_le_refl. Qed.
+End OrderedElementTypeQ.
+
+Module OrderedElementTypeQc <: OrderedElementType.
+  Include ElementTypeQc.
+
+  Definition Ale := Qcle.
+  Definition Alt := Qclt.
+  Hint Unfold Ale Alt : A.
+  
+  Lemma AleDec : Dec Ale.
+  Proof. apply Qc_le_Dec. Qed.
+  
+  Lemma AltDec : Dec Alt.
+  Proof. apply Qc_lt_Dec. Qed.
+
+  Lemma Ale_refl : forall a : A, Ale a a.
+  Proof. apply Qc_le_refl. Qed.
+End OrderedElementTypeQc.
+
+Module OrderedElementTypeR <: OrderedElementType.
+  Include ElementTypeR.
+
+  Definition Ale := Rle.
+  Definition Alt := Rlt.
+  Hint Unfold Ale Alt : A.
+  
+  Lemma AleDec : Dec Ale.
+  Proof. apply R_le_Dec. Qed.
+  
+  Lemma AltDec : Dec Alt.
+  Proof. apply R_lt_Dec. Qed.
+
+  Lemma Ale_refl : forall a : A, Ale a a.
+  Proof. apply R_le_refl. Qed.
+End OrderedElementTypeR.
 
 
 (* ######################################################################### *)
@@ -517,6 +627,119 @@ End RingElementTypeTest.
 
 
 (* ######################################################################### *)
+(** * Element with abelian-ring structure and ordered relation *)
+
+(** ** Type of Element with ordered abelian-ring structure *)
+Module Type OrderedRingElementType <: RingElementType <: OrderedElementType.
+  Include RingElementType.
+
+  Parameter Ale Alt : A -> A -> Prop.
+
+  Axiom AleDec : Dec Ale.
+  #[export] Existing Instance AleDec.
+  
+  Axiom AltDec : Dec Alt.
+  #[export] Existing Instance AltDec.
+
+  Axiom Ale_refl : forall a : A, Ale a a.
+  Axiom Azero_le_sqr : forall a : A, Ale Azero (Amul a a).
+  Axiom Aadd_le_compat : forall a1 b1 a2 b2 : A,
+      Ale a1 a2 -> Ale b1 b2 -> Ale (Aadd a1 b1) (Aadd a2 b2).
+  Axiom Aadd_eq_0_reg_l : forall a b : A,
+      Ale Azero a -> Ale Azero b -> Aadd a b = Azero -> a = Azero.
+End OrderedRingElementType.
+
+
+(** ** Instances *)
+
+Module OrderedRingElementTypeZ <: OrderedRingElementType.
+  Include RingElementTypeZ.
+  
+  (* 注意，多继承时，无法用多个Include语句，需要手动拷贝代码 *)
+  Definition Ale := Z.le.
+  Definition Alt := Z.lt.
+  Hint Unfold Ale Alt : A.
+  
+  Lemma AleDec : Dec Ale.
+  Proof. apply Z_le_Dec. Qed.
+  
+  Lemma AltDec : Dec Alt.
+  Proof. apply Z_lt_Dec. Qed.
+
+  Lemma Ale_refl : forall a : A, Ale a a.
+  Proof. apply Z_le_refl. Qed.
+  
+  Lemma Azero_le_sqr : forall a : A, Ale Azero (Amul a a).
+  Proof. apply Z_zero_le_sqr. Qed.
+  
+  Lemma Aadd_le_compat : forall a1 b1 a2 b2 : A,
+      Ale a1 a2 -> Ale b1 b2 -> Ale (Aadd a1 b1) (Aadd a2 b2).
+  Proof. apply Z_add_le_compat. Qed.
+  
+  Lemma Aadd_eq_0_reg_l : forall a b : A,
+      Ale Azero a -> Ale Azero b -> Aadd a b = Azero -> a = Azero.
+  Proof. intros. apply Z_add_eq_0_reg_l in H1; auto. Qed.
+End OrderedRingElementTypeZ.
+
+Module OrderedRingElementTypeQc <: OrderedRingElementType.
+  Include RingElementTypeQc.
+
+  Definition Ale := Qcle.
+  Definition Alt := Qclt.
+  Hint Unfold Ale Alt : A.
+  
+  Lemma AleDec : Dec Ale.
+  Proof. apply Qc_le_Dec. Qed.
+  
+  Lemma AltDec : Dec Alt.
+  Proof. apply Qc_lt_Dec. Qed.
+
+  Lemma Ale_refl : forall a : A, Ale a a.
+  Proof. apply Qc_le_refl. Qed.
+  
+  Lemma Azero_le_sqr : forall a : A, Ale Azero (Amul a a).
+  Proof. apply Qc_zero_le_sqr. Qed.
+  
+  Lemma Aadd_le_compat : forall a1 b1 a2 b2 : A,
+      Ale a1 a2 -> Ale b1 b2 -> Ale (Aadd a1 b1) (Aadd a2 b2).
+  Proof. apply Qc_add_le_compat. Qed.
+  
+  Lemma Aadd_eq_0_reg_l : forall a b : A,
+      Ale Azero a -> Ale Azero b -> Aadd a b = Azero -> a = Azero.
+  Proof. intros. apply Qc_add_eq_0_reg_l in H1; auto. Qed.
+End OrderedRingElementTypeQc.
+
+Module OrderedRingElementTypeR <: OrderedRingElementType.
+  Include RingElementTypeR.
+  
+  Definition Ale := Rle.
+  Definition Alt := Rlt.
+  Hint Unfold Ale Alt: A.
+  
+  Lemma AleDec : Dec Ale.
+  Proof. apply R_le_Dec. Qed.
+  
+  Lemma AltDec : Dec Alt.
+  Proof. apply R_lt_Dec. Qed.
+
+  Lemma Ale_refl : forall a : A, Ale a a.
+  Proof. apply R_le_refl. Qed.
+  
+  Lemma Azero_le_sqr : forall a : A, Ale Azero (Amul a a).
+  Proof. apply R_zero_le_sqr. Qed.
+  
+  Lemma Aadd_le_compat : forall a1 b1 a2 b2 : A,
+      Ale a1 a2 -> Ale b1 b2 -> Ale (Aadd a1 b1) (Aadd a2 b2).
+  Proof. apply R_add_le_compat. Qed.
+  
+  Lemma Aadd_eq_0_reg_l : forall a b : A,
+      Ale Azero a -> Ale Azero b -> Aadd a b = Azero -> a = Azero.
+  Proof. intros. apply R_add_eq_0_reg_l in H1; auto. Qed.
+End OrderedRingElementTypeR.
+
+
+
+(* ######################################################################### *)
 (** * Element with field structure *)
 
 (** ** Type of Element with field structure *)
@@ -683,3 +906,86 @@ Module FieldElementTypeTest.
 
   (* Include (FieldElementTypeFun FieldElementTypeQ FieldElementTypeR). *)
 End FieldElementTypeTest.
+
+
+(* ######################################################################### *)
+(** * Element with field structure and ordered relation *)
+
+(** ** Type of Element with ordered field structure *)
+Module Type OrderedFieldElementType <: FieldElementType <: OrderedElementType.
+  Include FieldElementType.
+
+  Parameter Ale Alt : A -> A -> Prop.
+
+  Axiom AleDec : Dec Ale.
+  #[export] Existing Instance AleDec.
+  
+  Axiom AltDec : Dec Alt.
+  #[export] Existing Instance AltDec.
+
+  Axiom Ale_refl : forall a : A, Ale a a.
+  Axiom Azero_le_sqr : forall a : A, Ale Azero (Amul a a).
+  Axiom Aadd_le_compat : forall a1 b1 a2 b2 : A,
+      Ale a1 a2 -> Ale b1 b2 -> Ale (Aadd a1 b1) (Aadd a2 b2).
+  Axiom Aadd_eq_0_reg_l : forall a b : A,
+      Ale Azero a -> Ale Azero b -> Aadd a b = Azero -> a = Azero.
+End OrderedFieldElementType.
+
+
+(** ** Instances *)
+
+Module OrderedFieldElementTypeQc <: OrderedFieldElementType.
+  Include FieldElementTypeQc.
+
+  Definition Ale := Qcle.
+  Definition Alt := Qclt.
+  Hint Unfold Ale Alt : A.
+  
+  Lemma AleDec : Dec Ale.
+  Proof. apply Qc_le_Dec. Qed.
+  
+  Lemma AltDec : Dec Alt.
+  Proof. apply Qc_lt_Dec. Qed.
+
+  Lemma Ale_refl : forall a : A, Ale a a.
+  Proof. apply Qc_le_refl. Qed.
+  
+  Lemma Azero_le_sqr : forall a : A, Ale Azero (Amul a a).
+  Proof. apply Qc_zero_le_sqr. Qed.
+  
+  Lemma Aadd_le_compat : forall a1 b1 a2 b2 : A,
+      Ale a1 a2 -> Ale b1 b2 -> Ale (Aadd a1 b1) (Aadd a2 b2).
+  Proof. apply Qc_add_le_compat. Qed.
+  
+  Lemma Aadd_eq_0_reg_l : forall a b : A,
+      Ale Azero a -> Ale Azero b -> Aadd a b = Azero -> a = Azero.
+  Proof. intros. apply Qc_add_eq_0_reg_l in H1; auto. Qed.
+End OrderedFieldElementTypeQc.
+
+Module OrderedFieldElementTypeR <: OrderedFieldElementType.
+  Include FieldElementTypeR.
+  
+  Definition Ale := Rle.
+  Definition Alt := Rlt.
+  Hint Unfold Ale Alt: A.
+  
+  Lemma AleDec : Dec Ale.
+  Proof. apply R_le_Dec. Qed.
+  
+  Lemma AltDec : Dec Alt.
+  Proof. apply R_lt_Dec. Qed.
+
+  Lemma Ale_refl : forall a : A, Ale a a.
+  Proof. apply R_le_refl. Qed.
+  
+  Lemma Azero_le_sqr : forall a : A, Ale Azero (Amul a a).
+  Proof. apply R_zero_le_sqr. Qed.
+  
+  Lemma Aadd_le_compat : forall a1 b1 a2 b2 : A,
+      Ale a1 a2 -> Ale b1 b2 -> Ale (Aadd a1 b1) (Aadd a2 b2).
+  Proof. apply R_add_le_compat. Qed.
+  
+  Lemma Aadd_eq_0_reg_l : forall a b : A,
+      Ale Azero a -> Ale Azero b -> Aadd a b = Azero -> a = Azero.
+  Proof. intros. apply R_add_eq_0_reg_l in H1; auto. Qed.
+End OrderedFieldElementTypeR.

@@ -9,8 +9,8 @@
 *)
 
 
-Require Import Basic.
 Require Export QExt Qcanon.
+Require Export Hierarchy.  
 Open Scope Qc.
 
 
@@ -38,6 +38,49 @@ Section eq.
   Goal Q2Qc (1#2) = Q2Qc (2#4).
   Proof. cbv. f_equal. apply UIP. Qed.
 End eq.
+
+
+(* ######################################################################### *)
+(** * Mathematical Structure *)
+
+#[export] Instance Qc_eq_Dec : Dec (@eq Qc).
+Proof. constructor. apply Qc_eq_dec. Defined.
+
+#[export] Instance Qc_le_Dec : Dec Qcle.
+Proof.
+  constructor. intros. destruct (Qclt_le_dec b a); auto.
+  right. intro. apply Qcle_not_lt in H. easy.
+Defined.
+
+#[export] Instance Qc_lt_Dec : Dec Qclt.
+Proof.
+  constructor. intros. destruct (Qclt_le_dec a b); auto.
+  right. intro. apply Qcle_not_lt in q. easy.
+Defined.
+
+(* n <= n *)
+Lemma Qc_le_refl : forall n : Qc, n <= n.
+Proof. apply Qcle_refl. Qed.
+
+Lemma Qc_zero_le_sqr : forall a : Qc, 0 <= a * a.
+Proof. intros. Admitted.
+
+Lemma Qc_add_le_compat : forall a1 b1 a2 b2 : Qc, a1 <= a2 -> b1 <= b2 -> a1 + b1 <= a2 + b2.
+Proof. intros. apply Qcplus_le_compat; auto. Qed.
+
+Lemma Qc_add_eq_0_reg_l : forall a b : Qc, 0 <= a -> 0 <= b -> a + b = 0 -> a = 0.
+Proof. intros.
+       (* Search (_ + _ = _). *)
+       (* Search ( _ <= _). *)
+       (* Search (_ + _ = Q2Qc 0). *)
+       (* Search (_ + _ = _ + _). *)
+       (* Search (_ = Q2Qc 0). *)
+Admitted.
+
+Section test.
+  Goal forall a b : Qc, {a = b} + {a <> b}.
+  Proof. intros. apply Aeqdec. Abort.
+End test.
 
 
 (* ######################################################################### *)

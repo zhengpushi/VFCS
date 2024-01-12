@@ -30,17 +30,14 @@
      (4) https://math.okstate.edu/people/binegar/3613/3613-l21.pdf
  *)
 
-Require Export Basic.   (* reserved notation *)
 Require Export Coq.Classes.RelationClasses. (* binary_relation *)
 Require Import Coq.Logic.Description. (* constructive_definite_description *)
+Require Export Basic.   (* reserved notation *)
+Require Export BoolExt.
 Require Export List. Import ListNotations.
 Require Export Lia Lra.
 Require Export Ring Field.
-Require Import Arith ZArith QArith
-               Qcanon
-  (* QcExt *)
-  Reals.
-(* RExt. *)
+Require Import Arith ZArith QArith Qcanon Reals.
 
 Open Scope nat_scope.
 
@@ -85,73 +82,74 @@ End test.
 
 
 (* ######################################################################### *)
-(** * A relation is decidable, usually for equality relation *)
+(** * A relation is decidable *)
 
 (** ** Class *)
 
-Class Dec {A:Type} := {
-    dec : forall (a b : A), {a = b} + {a <> b};
+Class Dec {A:Type} (Acmp:A->A->Prop) := {
+    dec : forall (a b : A), {Acmp a b} + {~(Acmp a b)};
   }.
+
+Arguments dec {A} _ {_}.
 (* Global Hint Constructors Dec : core. *)
 
-(** ** Instances *)
+(* equality relation is decidable *)
+Definition Aeqdec {A} {AeqDec:Dec (@eq A)} := @dec _ (@eq A) AeqDec.
 
+
+(** ** Instances *)
 Section Instances.
   Import Arith ZArith Reals.
 
-  (** Note that, the instances of EqDec should be declared transparent to enable
-    calculation. That is, use Defined instead of Qed. *)
-  Global Instance Dec_NatEq : @Dec nat.
-  Proof. constructor. apply Nat.eq_dec. Defined.
+  #[export] Instance Dec_list `{Dec _ (@eq A)} : Dec (@eq (list A)).
+  Proof. constructor. intros. apply list_eq_dec. apply Aeqdec. Defined.
 
-  Global Instance Dec_Z : @Dec Z.
-  Proof. constructor. apply Z.eq_dec. Defined.
+  (** Equality of two pairs, iff their corresponding components are all equal. *)
+  Lemma prod_eq_iff : forall {A B} (z1 z2 : A * B),
+      z1 = z2 <-> fst z1 = fst z2 /\ snd z1 = snd z2.
+  Proof.
+    intros A B (a1,b1) (a2,b2). split; intros H; inv H; auto.
+    simpl in *; subst. auto.
+  Qed.
 
-  Global Instance Dec_Qc : @Dec Qc.
-  Proof. constructor. apply Qc_eq_dec. Defined.
-
-  Global Instance Dec_R : @Dec R.
-  Proof. constructor. apply Req_EM_T. Defined.
-  
-  Global Instance Dec_list `{@Dec A} : @Dec (list A).
-  Proof. constructor. intros. apply list_eq_dec. apply dec. Defined.
+  (** Inequality of two pairs, iff at least one of components are not equal. *)
+  Lemma prod_neq_iff : forall {A B} {AeqDec:Dec (@eq A)} {BeqDec:Dec (@eq B)}
+                         (z1 z2 : A * B),
+      z1 <> z2 <-> fst z1 <> fst z2 \/ snd z1 <> snd z2.
+  Proof.
+    intros. rewrite prod_eq_iff. split; intros.
+    apply not_and_or in H; auto.
+    apply or_not_and in H; auto.
+  Qed.  
 
 End Instances.
 
 (** ** Extra Theories *)
 Section Dec_theory.
 
-  Context `{@Dec A}.
+  Context `(Dec).
 
   (** Tips: these theories are useful for R type *)
   
   (** Calculate equality to boolean, with the help of equality decidability *)
-  Definition Aeqb (a b : A) : bool := if dec a b then true else false.
+  Definition Acmpb (a b : A) : bool := if dec Acmp a b then true else false.
 
-  (** Aeqb is true iff equal. *)
-  Lemma Aeqb_true : forall a b, Aeqb a b = true <-> a = b.
+  (** Acmpb is true iff Acmp hold. *)
+  Lemma Acmpb_true : forall a b, Acmpb a b = true <-> Acmp a b.
   Proof.
-    intros. unfold Aeqb. destruct dec; split; intros; auto;  easy.
+    intros. unfold Acmpb. destruct dec; split; intros; auto. easy.
   Qed.
+  
+  (** Acmpb is false iff Acmp not hold *)
+  Lemma Acmpb_false : forall a b, Acmpb a b = false <-> ~(Acmp a b).
+  Proof. intros. rewrite <- Acmpb_true. split; solve_bool. Qed.
 
-  (** Aeqb is false iff not equal *)
-  Lemma Aeqb_false : forall a b, Aeqb a b = false <-> a <> b.
-  Proof.
-    intros. unfold Aeqb. destruct dec; split; intros; auto; try easy.
-  Qed.
-
-  Lemma Aeq_reflect : forall a b : A, reflect (a = b) (Aeqb a b).
-  Proof.
-    intros. unfold Aeqb. destruct (dec a b); constructor; auto.
-  Qed.
+  Lemma Acmp_reflect : forall a b : A, reflect (Acmp a b) (Acmpb a b).
+  Proof. intros. unfold Acmpb. destruct (dec Acmp a b); constructor; auto. Qed.
 
 End Dec_theory.
 
 (** ** Examples *)
-Goal forall a b : nat, {a = b} + {a <> b}.
-Proof.
-  apply dec.
-Qed.
 
 
 (* ######################################################################### *)
@@ -199,7 +197,7 @@ Class Associative {A} (Aop : A -> A -> A) := {
   }.
 
 (** ** Instances *)
-Global Instance Assoc_NatAdd : Associative Nat.add.
+#[export] Instance Assoc_NatAdd : Associative Nat.add.
 constructor. auto with arith. Defined.
 
 (** ** Extra Theories *)
@@ -221,10 +219,10 @@ Class Commutative {A} (Aop : A -> A -> A) := {
   }.
 
 (** ** Instances *)
-Global Instance Comm_NatAdd : Commutative Nat.add.
+#[export] Instance Comm_NatAdd : Commutative Nat.add.
 constructor. auto with arith. Defined.
 
-Global Instance Comm_NatMul : Commutative Nat.mul.
+#[export] Instance Comm_NatMul : Commutative Nat.mul.
 constructor. auto with arith. Defined.
 
 (** ** Extra Theories *)
@@ -535,10 +533,10 @@ Definition sgroupAadd `{SG:SGroup} : A -> A -> A := Aadd.
 (** ** Instances *)
 Section Instances.
   
-  Global Instance SGroup_NatAdd : SGroup Nat.add.
+  #[export] Instance SGroup_NatAdd : SGroup Nat.add.
   repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
-  Global Instance SGroup_NatMul : SGroup Nat.mul.
+  #[export] Instance SGroup_NatMul : SGroup Nat.mul.
   repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
   
 End Instances.
@@ -563,10 +561,10 @@ Definition asgroupAadd `{ASG : ASGroup} : A -> A -> A := Aadd.
 (** ** Instances *)
 Section Instances.
   
-  Global Instance ASGroup_NatAdd : ASGroup Nat.add.
+  #[export] Instance ASGroup_NatAdd : ASGroup Nat.add.
   repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
 
-  Global Instance ASGroup_NatMul : SGroup Nat.mul.
+  #[export] Instance ASGroup_NatMul : SGroup Nat.mul.
   repeat constructor; auto with wd; try apply eq_equivalence; intros; ring. Qed.
   
 End Instances.
@@ -743,28 +741,28 @@ Section Instances.
 
   Import Arith ZArith Qcanon Reals.
   
-  Global Instance Monoid_NatAdd : Monoid Nat.add 0%nat.
+  #[export] Instance Monoid_NatAdd : Monoid Nat.add 0%nat.
   repeat constructor; intros; ring. Qed.
 
-  Global Instance Monoid_NatMul : Monoid Nat.mul 1%nat.
+  #[export] Instance Monoid_NatMul : Monoid Nat.mul 1%nat.
   repeat constructor; intros; ring. Qed.
 
-  Global Instance Monoid_ZAdd : Monoid Z.add 0%Z.
+  #[export] Instance Monoid_ZAdd : Monoid Z.add 0%Z.
   repeat constructor; intros; ring. Qed.
 
-  Global Instance Monoid_ZMul : Monoid Z.mul 1%Z.
+  #[export] Instance Monoid_ZMul : Monoid Z.mul 1%Z.
   repeat constructor; intros; ring. Qed.
 
-  Global Instance Monoid_QcAdd : Monoid Qcplus 0.
+  #[export] Instance Monoid_QcAdd : Monoid Qcplus 0.
   repeat constructor; intros; ring. Qed.
 
-  Global Instance Monoid_QcMul : Monoid Qcmult 1.
+  #[export] Instance Monoid_QcMul : Monoid Qcmult 1.
   repeat constructor; intros; ring. Qed.
 
-  Global Instance Monoid_RAdd : Monoid Rplus 0%R.
+  #[export] Instance Monoid_RAdd : Monoid Rplus 0%R.
   repeat constructor; intros; ring. Qed.
 
-  Global Instance Monoid_RMul : Monoid Rmult 1%R.
+  #[export] Instance Monoid_RMul : Monoid Rmult 1%R.
   repeat constructor; intros; ring. Qed.
 
 End Instances.
@@ -849,16 +847,16 @@ Section Instances.
 
   Import Qcanon Reals.
   
-  Global Instance AMonoid_QcAdd : AMonoid Qcplus 0.
+  #[export] Instance AMonoid_QcAdd : AMonoid Qcplus 0.
   split_intro; subst; ring. Defined.
 
-  Global Instance AMonoid_QcMul : AMonoid Qcmult 1.
+  #[export] Instance AMonoid_QcMul : AMonoid Qcmult 1.
   split_intro; subst; ring. Defined.
 
-  Global Instance AMonoid_RAdd : AMonoid Rplus 0%R.
+  #[export] Instance AMonoid_RAdd : AMonoid Rplus 0%R.
   split_intro; subst; ring. Defined.
 
-  Global Instance AMonoid_RMul : AMonoid Rmult 1%R.
+  #[export] Instance AMonoid_RMul : AMonoid Rmult 1%R.
   split_intro; subst; ring. Defined.
 
 End Instances.
@@ -913,10 +911,10 @@ Section Instances.
 
   Import Qcanon Reals.
   
-  Global Instance Group_QcAdd : Group Qcplus 0 Qcopp.
+  #[export] Instance Group_QcAdd : Group Qcplus 0 Qcopp.
   split_intro; subst; ring. Defined.
 
-  Global Instance Group_RAdd : Group Rplus 0%R Ropp.
+  #[export] Instance Group_RAdd : Group Rplus 0%R Ropp.
   split_intro; subst; ring. Defined.
 
 End Instances.
@@ -1286,10 +1284,10 @@ Section Instances.
 
   Import Qcanon Reals.
   
-  Global Instance AGroup_QcAdd : AGroup Qcplus 0 Qcopp.
+  #[export] Instance AGroup_QcAdd : AGroup Qcplus 0 Qcopp.
   split_intro; subst; ring. Defined.
 
-  Global Instance AGroup_RAdd : AGroup Rplus 0%R Ropp.
+  #[export] Instance AGroup_RAdd : AGroup Rplus 0%R Ropp.
   split_intro; subst; ring. Defined.
 
   Goal forall a b c : R, ((a - b) - c = a - (b + c))%R.
@@ -1317,16 +1315,16 @@ Section Instances.
 
   Import Nat ZArith Qcanon Reals.
 
-  Global Instance SRing_nat : SemiRing Nat.add 0%nat Nat.mul 1%nat.
+  #[export] Instance SRing_nat : SemiRing Nat.add 0%nat Nat.mul 1%nat.
   repeat constructor; intros; ring. Qed.
   
-  Global Instance SRing_Z : SemiRing Z.add 0%Z Z.mul 1%Z.
+  #[export] Instance SRing_Z : SemiRing Z.add 0%Z Z.mul 1%Z.
   repeat constructor; intros; ring. Qed.
   
-  Global Instance SRing_Qc : SemiRing Qcplus 0 Qcmult 1.
+  #[export] Instance SRing_Qc : SemiRing Qcplus 0 Qcmult 1.
   repeat constructor; intros; ring. Qed.
 
-  Global Instance SRing_R : SemiRing Rplus R0 Rmult R1.
+  #[export] Instance SRing_R : SemiRing Rplus R0 Rmult R1.
   split_intro; subst; ring. Defined.
 
 End Instances.
@@ -1369,13 +1367,13 @@ Section Instances.
 
   Import ZArith Qcanon Reals.
 
-  Global Instance Ring_Z : Ring Z.add 0%Z Z.opp Z.mul 1%Z.
+  #[export] Instance Ring_Z : Ring Z.add 0%Z Z.opp Z.mul 1%Z.
   repeat constructor; intros; ring. Qed.
   
-  Global Instance Ring_Qc : Ring Qcplus 0 Qcopp Qcmult 1.
+  #[export] Instance Ring_Qc : Ring Qcplus 0 Qcopp Qcmult 1.
   repeat constructor; intros; ring. Qed.
 
-  Global Instance Ring_R : Ring Rplus R0 Ropp Rmult R1.
+  #[export] Instance Ring_R : Ring Rplus R0 Ropp Rmult R1.
   repeat constructor; intros; ring. Qed.
 
 End Instances.
@@ -1420,13 +1418,13 @@ Section Instances.
 
   Import ZArith Qcanon Reals.
 
-  Global Instance ARing_Z : ARing Z.add 0%Z Z.opp Z.mul 1%Z.
+  #[export] Instance ARing_Z : ARing Z.add 0%Z Z.opp Z.mul 1%Z.
   repeat constructor; intros; ring. Qed.
   
-  Global Instance ARing_Qc : ARing Qcplus 0 Qcopp Qcmult 1.
+  #[export] Instance ARing_Qc : ARing Qcplus 0 Qcopp Qcmult 1.
   repeat constructor; intros; ring. Qed.
 
-  Global Instance ARing_R : ARing Rplus R0 Ropp Rmult R1.
+  #[export] Instance ARing_R : ARing Rplus R0 Ropp Rmult R1.
   repeat constructor; intros; ring. Qed.
 
 End Instances.
@@ -1576,12 +1574,12 @@ Section Instances.
 
   Import Qcanon Reals.
   
-  Global Instance Field_Qc : Field Qcplus 0 Qcopp Qcmult 1 Qcinv.
+  #[export] Instance Field_Qc : Field Qcplus 0 Qcopp Qcmult 1 Qcinv.
   split_intro; subst; (try (field; reflexivity)); try easy.
   field. auto.
   Defined.
 
-  Global Instance Field_R : Field Rplus R0 Ropp Rmult R1 Rinv.
+  #[export] Instance Field_R : Field Rplus R0 Ropp Rmult R1 Rinv.
   split_intro; subst; try (field; reflexivity); auto.
   field; auto. auto with real.
   Defined.
@@ -1659,11 +1657,11 @@ Section Theory.
   Qed.
 
   (** a * b = 0 -> a = 0 \/ b = 0 *)
-  Lemma field_mul_eq0_imply_a0_or_b0 : forall (a b : A) (HDec:@Dec A),
+  Lemma field_mul_eq0_imply_a0_or_b0 : forall (a b : A) (AeqDec:Dec (@eq A)),
       a * b = 0 -> a = 0 \/ b = 0.
   Proof.
     intros.
-    destruct (dec a 0), (dec b 0);
+    destruct (dec eq a 0), (dec eq b 0);
       try (left; easy); try (right; easy).
     assert (/a * a * b = 0).
     { rewrite associative. rewrite H. field. auto. }
@@ -1671,15 +1669,19 @@ Section Theory.
     rewrite identityLeft in H0. easy.
   Qed.
 
+  (* a * a = 0 -> a = 0 *)
+  Lemma field_sqr_eq0_imply_eq0 : forall (a : A) (AeqDec:Dec (@eq A)),
+      a * a = Azero -> a = Azero.
+  Proof. intros. apply field_mul_eq0_imply_a0_or_b0 in H; auto. destruct H; auto. Qed.
+
   (** a * b = b -> a = 1 \/ b = 0 *)
-  Lemma field_mul_eq_imply_a1_or_b0 : forall (a b : A) (HDec : @Dec A),
+  Lemma field_mul_eq_imply_a1_or_b0 : forall (a b : A) (AeqDec:Dec (@eq A)),
       a * b = b -> (a = 1) \/ (b = 0).
   Proof.
-    intros. destruct (dec a 1), (dec b 0); auto.
+    intros. destruct (dec eq a 1), (dec eq b 0); auto.
     replace b with (1 * b) in H at 2 by group.
     apply field_mul_cancel_r in H; auto.
   Qed.
-  
 
 End Theory.
 
@@ -1721,7 +1723,7 @@ Section Instances.
     Context `{F : Field}.
     Add Field field_inst : (make_field_theory F).
     
-    Global Instance LinearSpace_Field : LinearSpace Aadd Azero Aopp Amul.
+    #[export] Instance LinearSpace_Field : LinearSpace Aadd Azero Aopp Amul.
     split_intro; try field. Qed.
     
   End field_is_linearspace.
@@ -1752,14 +1754,14 @@ Section Theory.
 
 
   (* 0 + v = v  *)
-  Global Instance ls_add_0_l : IdentityLeft Vadd Vzero.
+  #[export] Instance ls_add_0_l : IdentityLeft Vadd Vzero.
   Proof.
     (* 0 + v = v + 0 = v *)
     constructor; intros. rewrite commutative, identityRight; auto.
   Qed.
   
   (* -v + v = 0  *)
-  Global Instance ls_add_inv_l : InverseLeft Vadd Vzero Vopp.
+  #[export] Instance ls_add_inv_l : InverseLeft Vadd Vzero Vopp.
   Proof.
     (* -v + v = v + -v = 0 *)
     constructor; intros. rewrite commutative, inverseRight; auto.

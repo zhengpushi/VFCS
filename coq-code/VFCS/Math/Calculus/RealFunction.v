@@ -166,9 +166,9 @@ Section common_funs.
   Fact Rabs_pos_iff : forall x, Rabs x = x <-> x >= 0.
   Proof.
     intros. split; intros.
-    - destruct (Rgeb_reflect x 0); auto.
+    - bdestruct (x >=? 0). lra. exfalso.
       assert (x <= 0); try lra.
-      apply Rabs_left1 in H0. lra.
+      apply Rabs_left1 in H1. lra.
     - apply Rabs_right. auto.
   Qed.
 

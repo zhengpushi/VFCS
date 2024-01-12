@@ -8,14 +8,15 @@
   date      : 2021.05
  *)
 
+Require Import Basic.
 Require Import Bool.
-Require Export Basic.
 Require Export Init.Nat.
 Require Export Arith.
 Require Export PeanoNat.
 Require Export Nat.
 Require Export Lia.
-  
+Require Export Hierarchy.  
+
 
 (* ######################################################################### *)
 (** * Mathematical Structure *)
@@ -24,6 +25,24 @@ Require Export Lia.
 Hint Resolve
   Nat.add_wd Nat.mul_wd  (* nat *)
   : wd.
+
+#[export] Instance nat_eq_Dec : Dec (@eq nat).
+Proof. constructor. apply Nat.eq_dec. Defined.
+
+#[export] Instance nat_le_Dec : Dec le.
+Proof. constructor. intros. destruct (le_lt_dec a b); auto. right. lia. Defined.
+
+#[export] Instance nat_lt_Dec : Dec lt.
+Proof. constructor. intros. destruct (lt_dec a b); auto. Defined.
+
+(* n <= n *)
+Lemma nat_le_refl : forall n : nat, n <= n.
+Proof. intros. lia. Qed.
+
+Section test.
+  Goal forall a b : nat, {a = b} + {a <> b}.
+  Proof. intros. apply Aeqdec. Abort.
+End test.
 
 
 (* ######################################################################### *)

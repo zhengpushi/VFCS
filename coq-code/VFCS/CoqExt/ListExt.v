@@ -1100,8 +1100,7 @@ Section lcmul_lmulc.
   Add Ring ring_inst : (make_ring_theory HARing).
 
   Infix "*" := Amul.
-  Context `{ADec: Dec A}.
-  
+
   (** a * l *)
   Definition lcmul (a : A) (l : list A) : list A := map (fun x => a * x) l.
   
@@ -1127,13 +1126,14 @@ Section lcmul_lmulc.
   Context `{HField:Field A Aadd Azero Aopp Amul Aone Ainv}.
   Add Field field_inst : (make_field_theory HField).
 
+  Context {AeqDec : Dec (@eq A)}.
+  
   (** mul k x = x -> k = 1 \/ x = 0 *)
   Lemma fcmul_fixpoint_imply_k1_or_zero :
     forall (k x : A), (k * x = x) -> (k = Aone) \/ (x = Azero).
   Proof.
-    intros. destruct (dec x Azero); auto. left.
-    apply symmetry in H.
-    rewrite <- (@identityLeft _ Amul Aone) in H at 1.
+    intros. destruct (Aeqdec x Azero); auto. left.
+    apply symmetry in H. rewrite <- (@identityLeft _ Amul Aone) in H at 1.
     - apply field_mul_cancel_r in H; auto.
     - apply monoidIdL.
   Qed.
@@ -1154,7 +1154,7 @@ Section lcmul_lmulc.
     induction l; intros. subst; auto.
     destruct n. easy. simpl in *. inversion H. inversion Hl. subst.
     apply fcmul_fixpoint_imply_k1_or_zero in H1.
-    destruct (dec k Aone); auto. destruct H1; auto.
+    destruct (Aeqdec k Aone); auto. destruct H1; auto.
     right. f_equal.
     - rewrite H0. ring.
     - rewrite H2.
@@ -1685,9 +1685,9 @@ Section props_dlist.
   Qed.
 
   (** dlist_eq is decidable *)
-  Context `{ADec : Dec A}.
+  Context {AeqDec : Dec (@eq A)}.
   Lemma dlist_eq_dec : forall (dl1 dl2 : dlist A), {dl1 = dl2} + {dl1 <> dl2}.
-  Proof. apply list_eq_dec. apply list_eq_dec. apply dec. Qed.
+  Proof. apply list_eq_dec. apply list_eq_dec. apply Aeqdec. Qed.
 
 End props_dlist.
 
@@ -3377,7 +3377,7 @@ End ldotdl_dldotdl.
 (** ** Properties of dlcmul *)
 Section dlcmul_properties.
   Context `{F:Field}.
-  Context `{ADec:Dec A}.
+  Context {AeqDec: Dec (@eq A)}.
   
   (** Mapping cmul to dlist keep unchanged imply k = 1 or dlist is zero *)
   Lemma dlcmul_fixpoint_imply_k1_or_dlzero : 
@@ -3425,7 +3425,7 @@ Section dlcmul_properties.
       { rewrite H9. rewrite H8. auto. }
       apply IHr in H.
       (*  {k = 0} + {k <> 0} *)
-      destruct (dec k Azero); auto.
+      destruct (Aeqdec k Azero); auto.
       destruct H; auto. right. f_equal.
       + apply lcmul_eq0_imply_k0_or_lzero in H8; auto.
         destruct H8; auto. easy.

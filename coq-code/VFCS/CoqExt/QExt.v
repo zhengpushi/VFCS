@@ -9,7 +9,9 @@
 *)
 
 
+Require Export PositiveExt ZExt.
 Require Export QArith Qround.
+Require Export Hierarchy.  
 Open Scope Q.
 
 
@@ -26,6 +28,34 @@ Open Scope Q.
 Hint Resolve
   Qplus_comp Qopp_comp Qminus_comp Qmult_comp Qinv_comp Qdiv_comp (* Q *)
   : wd.
+
+#[export] Instance Q_eq_Dec : Dec (@eq Q).
+Proof.
+  constructor. intros. destruct a as [p1 q1], b as [p2 q2].
+  destruct (Aeqdec p1 p2), (Aeqdec q1 q2); subst; auto.
+  all: right; intro; inversion H; easy.
+Defined.
+
+#[export] Instance Q_le_Dec : Dec Qle.
+Proof.
+  constructor. intros. destruct (Qlt_le_dec b a); auto.
+  right. intro. apply Qle_not_lt in H. easy.
+Defined.
+
+#[export] Instance Q_lt_Dec : Dec Qlt.
+Proof.
+  constructor. intros. destruct (Qlt_le_dec a b); auto.
+  right. intro. apply Qle_not_lt in q. easy.
+Defined.
+
+(* n <= n *)
+Lemma Q_le_refl : forall n : Q, n <= n.
+Proof. apply Qle_refl. Qed.
+
+Section test.
+  Goal forall a b : Q, {a = b} + {a <> b}.
+  Proof. intros. apply Aeqdec. Abort.
+End test.
 
 
 (* ######################################################################### *)
