@@ -1579,8 +1579,8 @@ Section dlnth.
   Context {A} {Azero : A}.
 
   Definition dlnth dl i j := nth j (nth i dl []) Azero.
-
-  Notation "dl ! i ! j" := (nth j (nth i dl []) Azero).
+  Notation "dl ! i ! j" := (dlnth dl i j)
+                             (at level 25, i,j at next level, left associativity).
 
 End dlnth.
 
@@ -1590,7 +1590,10 @@ End dlnth.
 
 Section dl2elems.
   Context {A} {Azero : A}.
-  Notation "dl ! i ! j" := (nth j (nth i dl []) Azero).
+  
+  Notation "dl ! i ! j" :=
+    (nth j (nth i dl []) Azero)
+      (at level 25, i,j at next level, left associativity).
 
   (* 自动处理前提中含有 width 的简单情形，以自动化 dl2elems 的证明 *)
   Ltac solve_dl2elems :=

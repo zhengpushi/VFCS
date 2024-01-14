@@ -471,6 +471,13 @@ Section ff2f_f2ff.
     f_equal. apply fin_eq_iff; auto. lia.
   Qed.
 
+  
+  (** ff [|i] = ff2f ff i *)
+  Lemma nth_ff_to_nth_f : forall {n} (ff : fin n -> A) (i : nat) (H : i < n),
+      ff (exist _ i H) = ff2f ff i.
+  Proof. intros. rewrite nth_ff2f with (H:=H). f_equal. Qed.
+
+
   (* (ff2f f)[fin2nat i] = f[i] *)
   Lemma ff2f_fin2nat : forall {n} (f : fin n -> A) (i : fin n),
       ff2f f (fin2nat i) = f i.
@@ -522,6 +529,28 @@ Section ff2f_f2ff.
   Qed.
 
 End ff2f_f2ff.
+
+Infix "!" := (ff2f).
+
+(** Convert `nth of ff` to `nth of nat-fun` *)
+Ltac ff2f Azero :=
+  repeat
+    match goal with
+    | [ H : context[?ff (exist _ ?i ?Hi)] |- _ ] =>
+        rewrite (@nth_ff_to_nth_f _ Azero _ ff i) in H
+    | [ |- context [ ?ff (exist _ ?i ?Hi) ]] =>
+        rewrite (@nth_ff_to_nth_f _ Azero _ ff i)
+    end.
+
+Section test.
+
+  Notation "ff $ i" := (ff (nat2finS i)).
+  (* This example shows how to convert `ff` to `f` *)
+  Example ex_ff2f : forall (ff: fin 10 -> nat),
+      ff$0 + ff$1 + ff$2 = ff$2 + ff$0 + ff$1.
+  Proof. intros. cbn. ff2f 0. lia. Qed.
+  
+End test.
 
 
 (** ** Sequence of fin *)

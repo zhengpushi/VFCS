@@ -76,6 +76,16 @@ Proof.
   apply (@fseqeq_dec _ Azero). apply Aeqdec.
 Qed.
 
+Lemma vnth_sameIdx_imply : forall {A n} {V1 V2 : @vec A n} {i} {H1 H2 H3 H4 : i < n},
+    V1 (exist _ i H1) = V2 (exist _ i H2) ->
+    V1 (exist _ i H3) = V2 (exist _ i H4).
+Proof.
+  intros.
+  replace (exist _ i H3:fin n) with (exist _ i H1:fin n).
+  replace (exist _ i H4:fin n) with (exist _ i H2:fin n); auto.
+  apply fin_eq_iff; auto. apply fin_eq_iff; auto.
+Qed.
+
 
 (* ======================================================================= *)
 (** ** Get element of a vector *)
@@ -92,6 +102,9 @@ Notation "V .1" := (V $ nat2finS 0) : vec_scope.
 Notation "V .2" := (V $ nat2finS 1) : vec_scope.
 Notation "V .3" := (V $ nat2finS 2) : vec_scope.
 Notation "V .4" := (V $ nat2finS 3) : vec_scope.
+Notation "V .x" := (V $ nat2finS 0) : vec_scope.
+Notation "V .y" := (V $ nat2finS 1) : vec_scope.
+Notation "V .z" := (V $ nat2finS 2) : vec_scope.
 
 
 (** ** Vector with same elements *)
@@ -134,6 +147,11 @@ Section f2v_v2f.
   Lemma nth_v2f : forall {n} (V : vec n) i (H:i<n), (v2f V) i = V$(nat2fin i H).
   Proof. intros. unfold v2f. erewrite nth_ff2f; auto. Qed.
 
+  (** V [|i] = v2f V i *)
+  Lemma vnth_to_nth : forall {n} (V : vec n) (i : nat) (H : i < n),
+      V (exist _ i H) = v2f V i.
+  Proof. intros. rewrite nth_v2f with (H:=H). f_equal. Qed.
+
   Lemma f2v_v2f_id : forall {n} (V : vec n), (@f2v n (v2f V)) = V.
   Proof. intros. unfold f2v,v2f. apply f2ff_ff2f_id. Qed.
 
@@ -141,6 +159,20 @@ Section f2v_v2f.
   Proof. intros. unfold v2f,f2v; simpl. apply ff2f_f2ff_id; auto. Qed.
 
 End f2v_v2f.
+
+
+(** Convert `vnth of vec` to `nth of nat-fun` *)
+Ltac v2f Azero :=
+  unfold v2f in *;
+  ff2f Azero.
+
+Section test.
+
+  (* This example shows how to convert `vnth` to `nat-fun` *)
+  Example ex_vnth2nth : forall (V : @vec nat 10), V.1 + V.2 + V.3 = V.3 + V.1 + V.2.
+  Proof. intros. cbn. v2f 0. lia. Qed.
+  
+End test.
 
 
 (** ** Convert between list and vector *)
@@ -443,8 +475,9 @@ Section alg.
   (* Let's have an Abelian-Group *)
   Context `{AGroup A Aadd Azero}.
   Notation "- a" := (Aopp a) : A_scope.
-  Notation Asub := (fun a b => a + (- b)).
+  Notation Asub := (fun a b => a + (- b))%A.
   Infix "-" := Asub : A_scope.
+
 
   (** *** Vector opposition *)
   
@@ -485,7 +518,7 @@ Section alg.
   Proof. intros. apply group_inv_id. Qed.
 
   (** - (V1 + V2) = (-V1) + (-V2) *)
-  Lemma mopp_vadd : forall {n} (V1 V2 : vec n), - (V1 + V2) = (-V1) + (-V2).
+  Lemma vopp_vadd : forall {n} (V1 V2 : vec n), - (V1 + V2) = (-V1) + (-V2).
   Proof. intros. rewrite group_inv_distr. apply commutative. Qed.
   
   
@@ -555,15 +588,15 @@ Section alg.
   Lemma vcmul_perm : forall {n} (V : vec n) a1 a2,
       a1 c* (a2 c* V) = a2 c* (a1 c* V).
   Proof. intros. rewrite !vcmul_assoc. f_equal. ring. Qed.
-
-  (** a * (V1 + V2) = (a * V1) + (a * V2) *)
-  Lemma vcmul_vadd_distr : forall {n} a (V1 V2 : vec n),
-      a c* (V1 + V2) = (a c* V1) + (a c* V2).
-  Proof. intros. apply veq_iff_vnth; intros. cbv. ring. Qed.
   
   (** (a1 + a2) * V = (a1 * V) + (a2 * V) *)
-  Lemma vcmul_add_distr : forall {n} a1 a2 (V : vec n),
+  Lemma vcmul_add : forall {n} a1 a2 (V : vec n),
       (a1 + a2)%A c* V = (a1 c* V) + (a2 c* V).
+  Proof. intros. apply veq_iff_vnth; intros. cbv. ring. Qed.
+
+  (** a * (V1 + V2) = (a * V1) + (a * V2) *)
+  Lemma vcmul_vadd : forall {n} a (V1 V2 : vec n),
+      a c* (V1 + V2) = (a c* V1) + (a c* V2).
   Proof. intros. apply veq_iff_vnth; intros. cbv. ring. Qed.
 
   (* 0 c* V = vzero *)
@@ -597,7 +630,7 @@ Section alg.
   Lemma vcmul_vsub : forall {n} a (V1 V2 : vec n),
       a c* (V1 - V2) = (a c* V1) - (a c* V2).
   Proof.
-    intros. unfold vsub. rewrite vcmul_vadd_distr. rewrite vcmul_vopp. auto.
+    intros. unfold vsub. rewrite vcmul_vadd. rewrite vcmul_vopp. auto.
   Qed.
 
   
@@ -607,29 +640,32 @@ Section alg.
   
   Notation "< V1 , V2 >" := (vdot V1 V2) : vec_scope.
 
+  (** <V1, V2> = <V2, V1> *)
   Lemma vdot_comm : forall {n} (V1 V2 : vec n), <V1, V2> = <V2, V1>.
   Proof. intros. apply vsum_eq; intros. rewrite vmap2_comm; auto. Qed.
 
-  Lemma vdot_vadd_distr_l : forall {n} (V1 V2 V3 : vec n),
-      <V1 + V2, V3> = (<V1, V3> + <V2, V3>)%A.
-  Proof. intros. unfold vdot. apply vsum_add; intros. cbv. ring. Qed.
-
-  Lemma vdot_vadd_distr_r : forall {n} (V1 V2 V3 : vec n),
-      <V1, V2 + V3> = (<V1, V2> + <V1, V3>)%A.
-  Proof.
-    intros. rewrite vdot_comm. rewrite vdot_vadd_distr_l. f_equal; apply vdot_comm.
-  Qed.
-
-  (* <0, V> = 0 *)
+  (** <vzero, V> = vzero *)
   Lemma vdot_0_l : forall {n} (V : vec n), <vzero, V> = Azero.
   Proof.
     intros. unfold vdot,vsum. apply fseqsum_eq0; intros.
     rewrite vnth_vmap2, vnth_vzero. ring.
   Qed.
   
-  (* <V, 0> = 0 *)
+  (** <V, vzero> = vzero *)
   Lemma vdot_0_r : forall {n} (V : vec n), <V, vzero> = Azero.
   Proof. intros. rewrite vdot_comm, vdot_0_l; auto. Qed.
+
+  (** <V1 + V2, V3> = <V1, V3> + <V2, V3> *)
+  Lemma vdot_vadd_l : forall {n} (V1 V2 V3 : vec n),
+      <V1 + V2, V3> = (<V1, V3> + <V2, V3>)%A.
+  Proof. intros. unfold vdot. apply vsum_add; intros. cbv. ring. Qed.
+
+  (** <V1, V2 + V3> = <V1, V2> + <V1, V3> *)
+  Lemma vdot_vadd_r : forall {n} (V1 V2 V3 : vec n),
+      <V1, V2 + V3> = (<V1, V2> + <V1, V3>)%A.
+  Proof.
+    intros. rewrite vdot_comm. rewrite vdot_vadd_l. f_equal; apply vdot_comm.
+  Qed.
 
   (** <-V1, V2> = - <V1,V2> *)
   Lemma vdot_vopp_l : forall {n} (V1 V2 : vec n), < -V1, V2> = (- <V1,V2>)%A.
@@ -639,11 +675,25 @@ Section alg.
   Lemma vdot_vopp_r : forall {n} (V1 V2 : vec n), <V1, -V2> = (- <V1,V2>)%A.
   Proof. intros. rewrite vdot_comm, vdot_vopp_l, vdot_comm. auto. Qed.
 
-  (* <k * V1, V2> = k * <V1, V2> *)
+  (** <V1 - V2, V3> = <V1, V3> - <V2, V3> *)
+  Lemma vdot_vsub_l : forall {n} (V1 V2 V3 : vec n),
+      <V1 - V2, V3> = (<V1, V3> - <V2, V3>)%A.
+  Proof.
+    intros. unfold vsub. rewrite vdot_vadd_l. f_equal. apply vdot_vopp_l.
+  Qed.
+
+  (** <V1, V2 - V3> = <V1, V2> - <V1, V3> *)
+  Lemma vdot_vsub_r : forall {n} (V1 V2 V3 : vec n),
+      <V1, V2 - V3> = (<V1, V2> - <V1, V3>)%A.
+  Proof.
+    intros. unfold vsub. rewrite vdot_vadd_r. f_equal. apply vdot_vopp_r.
+  Qed.
+
+  (** <k * V1, V2> = k * <V1, V2> *)
   Lemma vdot_vcmul_l : forall {n} (V1 V2 : vec n) k, <k c* V1, V2> = k * <V1,V2>.
   Proof. intros. unfold vdot. apply vsum_cmul; intros. cbv. ring. Qed.
   
-  (* <V1, k * V2> = k * <V1, V2> *)
+  (** <V1, k * V2> = k * <V1, V2> *)
   Lemma vdot_vcmul_r : forall {n} (V1 V2 : vec n) k, <V1, k c* V2> = k * <V1,V2>.
   Proof.
     intros. rewrite vdot_comm. rewrite vdot_vcmul_l. f_equal; apply vdot_comm.
@@ -743,12 +793,15 @@ Section orderedRing.
   
   Context `{AleDec : Dec A Ale}.
   Infix "<=" := Ale.
+  Context `{AltDec : Dec A Alt}.
+  Infix "<" := Alt.
   
   Context (Ale_refl : forall a : A, a <= a).
   Context (Azero_le_sqr : forall a : A, 0 <= a * a).
   Context (Asqr_eq_0_reg : forall a : A, a * a = 0 -> a = 0).
   Context (Aadd_le_compat : forall a1 b1 a2 b2 : A,
               a1 <= a2 -> b1 <= b2 -> a1 + b1 <= a2 + b2).
+  Context {Alt_le_compat : forall a : A, Ale Azero a <-> Alt Azero a \/ a = Azero}.
   Context (Aadd_eq_0_reg_l : forall a b : A, 0 <= a -> 0 <= b -> a + b = 0 -> a = 0).
   
   (** 0 <= <V,V> *)
@@ -780,5 +833,13 @@ Section orderedRing.
   (** <V, V> <> 0 <-> V <> vzero *)
   Lemma vdot_neq0_iff_vnonzero : forall {n} (V : vec n), <V, V> <> 0 <-> V <> vzero.
   Proof. intros. rewrite vdot_eq0_iff_vzero. easy. Qed.
+  
+  (** 0 < <V,V> *)
+  Lemma vdot_gt0 : forall {n} (V : vec n), V <> vzero -> 0 < (<V,V>).
+  Proof.
+    intros.
+    apply vdot_neq0_iff_vnonzero in H0. pose proof (vdot_ge0 V).
+    apply Alt_le_compat in H1. destruct H1; auto. easy.
+  Qed.
   
 End orderedRing.

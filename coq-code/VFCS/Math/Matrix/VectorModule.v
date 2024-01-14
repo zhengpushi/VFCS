@@ -135,6 +135,22 @@ Module RingVectorTheory (E : RingElementType).
   #[export] Instance vadd_AGroup : forall n, AGroup (@vadd n) vzero vopp.
   Proof. intros. apply vadd_AGroup. Qed.
 
+  (** - (- V) = V *)
+  Lemma vopp_vopp : forall {n} (V : vec n), - (- V) = V.
+  Proof. intros. apply vopp_vopp. Qed.
+
+  (** -V1 = V2 <-> V1 = -V2 *)
+  Lemma vopp_exchange : forall {n} (V1 V2 : vec n), -V1 = V2 <-> V1 = -V2.
+  Proof. intros. apply vopp_exchange. Qed.
+
+  (** - (vzero) = vzero *)
+  Lemma vopp_vzero : forall {n:nat}, - (@vzero n) = vzero.
+  Proof. intros. apply vopp_vzero. Qed.
+
+  (** - (V1 + V2) = (-V1) + (-V2) *)
+  Lemma vopp_vadd : forall {n} (V1 V2 : vec n), - (V1 + V2) = (-V1) + (-V2).
+  Proof. intros. apply vopp_vadd. Qed.
+
 
   (** *** Vector subtraction *)
 
@@ -178,14 +194,14 @@ Module RingVectorTheory (E : RingElementType).
   Proof. intros. apply vcmul_perm. Qed.
 
   (** (k + l) c* V = (k c* V) + (l c* V) *)
-  Lemma vcmul_add_distr : forall {n} k l (V : vec n),
+  Lemma vcmul_add : forall {n} k l (V : vec n),
       (k + l)%A c* V = (k c* V) + (l c* V).
-  Proof. intros. apply vcmul_add_distr. Qed.
+  Proof. intros. apply vcmul_add. Qed.
 
   (** k c* (V1 + V2) = (k c* V1) + (k c* V2) *)
-  Lemma vcmul_vadd_distr : forall {n} k (V1 V2 : vec n),
+  Lemma vcmul_vadd : forall {n} k (V1 V2 : vec n),
       k c* (V1 + V2) = (k c* V1) + (k c* V2).
-  Proof. intros. apply vcmul_vadd_distr. Qed.
+  Proof. intros. apply vcmul_vadd. Qed.
 
   (** 1 c* V = V *)
   Lemma vcmul_1_l : forall {n} (V : vec n), Aone c* V = V.
@@ -198,11 +214,34 @@ Module RingVectorTheory (E : RingElementType).
   (** k c* 0 = 0 *)
   Lemma vcmul_0_r : forall {n} k, k c* (@vzero n) = vzero.
   Proof. intros. apply vcmul_0_r. Qed.
+  
+  (** (-a) * V = - (a * V) *)
+  Lemma vcmul_opp : forall {n} a (V : vec n), (- a)%A c* V = - (a c* V).
+  Proof. intros. apply vcmul_opp. Qed.
+  
+  (** a * (-V) = - (a * V) *)
+  Lemma vcmul_vopp : forall {n} a (V : vec n), a c* (-V) = - (a c* V).
+  Proof. intros. apply vcmul_vopp. Qed.
+
+  (** (-a) * (- V) = a * V *)
+  Lemma vcmul_opp_vopp : forall {n} a (V : vec n), (- a)%A c* (- V) = a c* V.
+  Proof. intros. apply vcmul_opp_vopp. Qed.
+
+  (** a c* (V1 - V2) = (a c* V1) - (a c* V2) *)
+  Lemma vcmul_vsub : forall {n} a (V1 V2 : vec n),
+      a c* (V1 - V2) = (a c* V1) - (a c* V2).
+  Proof. intros. apply vcmul_vsub. Qed.
 
   (** (V1 <> 0 /\ V2 <> 0 /\ k * V1 = V2) -> k <> 0 *)
   Lemma vcmul_eq_imply_k_neq0 : forall {n} (V1 V2 : vec n) k,
       k c* V1 = V2 -> V1 <> vzero -> V2 <> vzero -> k <> Azero.
   Proof. intros. apply vcmul_eq_imply_k_neq0 in H; auto. Qed.
+
+  (*   (* k c* V1 = V2 -> k <> 0 *) *)
+  (* Lemma vnonzero_vcmul_eq_imply_k_neq0 : forall {n} k (V1 V2 : vnonzero n), *)
+  (*     k c* V1 = V2 -> k <> Azero. *)
+  (* Proof. intros. apply (vcmul_eq_imply_k_neq0 V1 V2); auto. apply V1. apply V2. Qed. *)
+
   
 
   (** *** Vector dot product *)
@@ -214,23 +253,23 @@ Module RingVectorTheory (E : RingElementType).
   Lemma vdot_comm : forall {n} (V1 V2 : vec n), <V1, V2> = <V2, V1>.
   Proof. intros. apply vdot_comm. Qed.
 
-  (** <V1 + V2, V3> = <V1, V3> + <V2, V3> *)
-  Lemma vdot_vadd_distr_l : forall {n} (V1 V2 V3 : vec n),
-      <V1 + V2, V3> = (<V1, V3> + <V2, V3>)%A.
-  Proof. intros. apply vdot_vadd_distr_l. Qed.
-
-  (** <V1, V2 + V3> = <V1, V2> + <V1, V3> *)
-  Lemma vdot_vadd_distr_r : forall {n} (V1 V2 V3 : vec n),
-      <V1, V2 + V3> = (<V1, V2> + <V1, V3>)%A.
-  Proof. intros. apply vdot_vadd_distr_r. Qed.
-
-  (** <0, V> = 0 *)
+  (** <vzero, V> = vzero *)
   Lemma vdot_0_l : forall {n} (V : vec n), <vzero, V> = Azero.
   Proof. intros. apply vdot_0_l. Qed.
 
-  (** <V, 0> = 0 *)
+  (** <V, vzero> = vzero *)
   Lemma vdot_0_r : forall {n} (V : vec n), <V, vzero> = Azero.
   Proof. intros. apply vdot_0_r. Qed.
+
+  (** <V1 + V2, V3> = <V1, V3> + <V2, V3> *)
+  Lemma vdot_vadd_l : forall {n} (V1 V2 V3 : vec n),
+      <V1 + V2, V3> = (<V1, V3> + <V2, V3>)%A.
+  Proof. intros. apply vdot_vadd_l. Qed.
+
+  (** <V1, V2 + V3> = <V1, V2> + <V1, V3> *)
+  Lemma vdot_vadd_r : forall {n} (V1 V2 V3 : vec n),
+      <V1, V2 + V3> = (<V1, V2> + <V1, V3>)%A.
+  Proof. intros. apply vdot_vadd_r. Qed.
 
   (** <-V1, V2> = - <V1,V2> *)
   Lemma vdot_vopp_l : forall {n} (V1 V2 : vec n), < -V1, V2> = (- <V1,V2>)%A.
@@ -239,6 +278,16 @@ Module RingVectorTheory (E : RingElementType).
   (** <V1, -V2> = - <V1,V2> *)
   Lemma vdot_vopp_r : forall {n} (V1 V2 : vec n), <V1, -V2> = (- <V1,V2>)%A.
   Proof. intros. apply vdot_vopp_r. Qed.
+
+  (** <V1 - V2, V3> = <V1, V3> - <V2, V3> *)
+  Lemma vdot_vsub_l : forall {n} (V1 V2 V3 : vec n),
+      <V1 - V2, V3> = (<V1, V3> - <V2, V3>)%A.
+  Proof. intros. apply vdot_vsub_l. Qed.
+
+  (** <V1, V2 - V3> = <V1, V2> - <V1, V3> *)
+  Lemma vdot_vsub_r : forall {n} (V1 V2 V3 : vec n),
+      <V1, V2 - V3> = (<V1, V2> - <V1, V3>)%A.
+  Proof. intros. apply vdot_vsub_r. Qed.
 
   (** <a c* V1, V2> = a * <V1, V2> *)
   Lemma vdot_vcmul_l : forall {n} (V1 V2 : vec n) (a : A), <a c* V1, V2> = a * <V1, V2>.
@@ -290,8 +339,15 @@ Module FieldVectorTheory (E : FieldElementType).
   
   (** k * V = V -> k = 1 \/ V = 0 *)
   Lemma vcmul_same_imply_k1_or_V0 : forall {n} k (V : vec n),
-      k c* V = V -> (k = Aone) \/ (V = vzero).
+      k c* V = V -> (k = Aone \/ V = vzero).
   Proof. intros. apply vcmul_same_imply_k1_or_V0; auto. Qed.
+  
+  (** k = 1 \/ V = 0 -> k * V = V *)
+  Lemma vcmul_same_if_k1_or_V0 : forall {n} k (V : vec n),
+      (k = Aone \/ V = vzero) -> k c* V = V.
+  Proof.
+    intros. destruct H; subst. apply vcmul_1_l; auto. apply vcmul_0_r; auto.
+  Qed.
   
   (** k * V = V -> V <> 0 -> k = 1 *)
   Corollary vcmul_same_imply_k1 : forall {n} k (V : vec n),
@@ -347,5 +403,16 @@ Module OrderedFieldVectorTheory (E : OrderedFieldElementType).
   (** <V, V> <> 0 <-> V <> vzero *)
   Lemma vdot_neq0_iff_vnonzero : forall {n} (V : vec n), <V,V> <> Azero <-> V <> vzero.
   Proof. intros. rewrite vdot_eq0_iff_vzero. easy. Qed.
+
+  (** 0 < <V,V> *)
+  Lemma vdot_gt0 : forall {n} (V : vec n), V <> vzero -> Alt Azero (<V,V>).
+  Proof.
+    intros. apply (vdot_gt0 (Ale:=Ale)(Alt:=Alt)); auto.
+    apply Ale_refl. apply Azero_le_sqr.
+    intros. apply field_sqr_eq0_imply_eq0 in H0; auto. apply AeqDec.
+    intros. apply Aadd_le_compat; auto.
+    intros. apply Alt_le_compat; auto.
+    intros. apply Aadd_eq_0_reg_l in H2; auto.
+  Qed.
 
 End OrderedFieldVectorTheory.

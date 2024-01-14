@@ -83,20 +83,31 @@ Reserved Notation "| r |"   (at level 30, r at level 25, format "| r |").  (* Ra
 
 (* this level is consistent with Mathcomp.ssreflect.ssrnotations.v *)
 
-(* get element of list or dlist *)
-(* Reserved Notation "l ! i"      (at level 20, i at next level, format "l ! i" ). *)
-(* Reserved Notation "dl ! i ! j" (at level 20, i, j at next level, format "dl ! i ! j"). *)
-Reserved Notation "l ! i"      (at level 25, left associativity, i at next level, format "l ! i" ).
-Reserved Notation "dl ! i ! j" (at level 25, left associativity, i,j at next level, format "dl ! i ! j").
+(* Get element of a nat-function by index *)
+Reserved Notation "f ! i"
+  (at level 25, left associativity, i at next level, format "f ! i" ).
 
-(* get element of vector or matrix *)
-Reserved Notation "V $ i"      (at level 25, left associativity, i at next level, format "V $ i" ).
-(* Reserved Notation "M $ i $ j"  (at level 20, i, j at next level, format "M $ i $ j"). *)
+(* Get element of vector/matrix by index. *)
+Reserved Notation "V $ i"
+  (at level 25, left associativity, i at next level, format "V $ i" ).
 
-(* index-of-matrix or index-of-nat-nat-function.
- Note, there are two style of start number to count index, 0 or 1.
- Many programming language use 0, but MATLAB and many mathematical textbook use 1.
- Maybe it is a convention problem, we choose 1. *)
+(* Get element of finite vector/matrix by index.
+   Note, there are two style of start number to count index, 0 or 1.
+   Many programming language use 0, but MATLAB and many mathematical textbook use 1.
+   Maybe it is a convention problem, we choose 1. *)
+
+Reserved Notation "V .1"       (at level 25, format "V .1").      (* v[1] *)
+Reserved Notation "V .2"       (at level 25, format "V .2").
+Reserved Notation "V .3"       (at level 25, format "V .3").
+Reserved Notation "V .4"       (at level 25, format "V .4").
+
+(* For 2-/3-/4-D vector *)
+Reserved Notation "V .x"       (at level 25, format "V .x").      (* v[1] *)
+Reserved Notation "V .y"       (at level 25, format "V .y").
+Reserved Notation "V .z"       (at level 25, format "V .z").
+(* the "w" component has two conventions, we won't use it *)
+(* Reserved Notation "V .w"       (at level 25, format "V .w"). *)
+
 Reserved Notation "M .11"      (at level 25, format "M .11").     (* m[1,1] *)
 Reserved Notation "M .12"      (at level 25, format "M .12").
 Reserved Notation "M .13"      (at level 25, format "M .13").
@@ -113,18 +124,6 @@ Reserved Notation "M .41"      (at level 25, format "M .41").
 Reserved Notation "M .42"      (at level 25, format "M .42").
 Reserved Notation "M .43"      (at level 25, format "M .43").
 Reserved Notation "M .44"      (at level 25, format "M .44").
-
-(* index-of-vector or index-of-nat-function. We choose 0 as start number. *)
-Reserved Notation "V .1"       (at level 25, format "V .1").      (* v[1] *)
-Reserved Notation "V .2"       (at level 25, format "V .2").
-Reserved Notation "V .3"       (at level 25, format "V .3").
-Reserved Notation "V .4"       (at level 25, format "V .4").
-
-(* only for 3D vector, the "w" component has two conventions, we won't use it *)
-Reserved Notation "V .x"       (at level 25, format "V .x").      (* v[1] *)
-Reserved Notation "V .y"       (at level 25, format "V .y").
-Reserved Notation "V .z"       (at level 25, format "V .z").
-(* Reserved Notation "V .w"       (at level 25, format "V .w"). *)
 
 
 (* this level is consistent with coq.ssr.ssrbool.v *)

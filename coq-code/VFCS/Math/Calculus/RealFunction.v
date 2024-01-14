@@ -163,7 +163,7 @@ Section common_funs.
   Definition fid : tpRFun := fun x => x.
 
   (** Absolute function *)
-  Fact Rabs_pos_iff : forall x, Rabs x = x <-> x >= 0.
+  Fact Rabs_pos_iff : forall x, |x| = x <-> x >= 0.
   Proof.
     intros. split; intros.
     - bdestruct (x >=? 0). lra. exfalso.
@@ -172,7 +172,7 @@ Section common_funs.
     - apply Rabs_right. auto.
   Qed.
 
-  Fact Rabs_neg_iff : forall x, Rabs x = - x <-> x <= 0.
+  Fact Rabs_neg_iff : forall x, |x| = - x <-> x <= 0.
   Proof.
     intros. split; intros.
     - destruct (Rleb_reflect x 0); auto.
@@ -181,45 +181,50 @@ Section common_funs.
     - apply Rabs_left1. auto.
   Qed.
 
+  Fact Rabs_le_rev : forall a b : R, |a| <= b -> - b <= a <= b.
+  Proof.
+    intros. bdestruct (a <? 0).
+    - assert (|a| = -a). apply Rabs_neg_iff; ra. ra.
+    - assert (|a| = a). apply Rabs_pos_iff; ra. ra.
+  Qed.
+
   (** 取整函数 *)
   (* Check R2Z_floor. *)
   (* Check R2Z_ceiling. *)
   
   (** Sign function *)
-  Definition sgn : tpRFun :=
+  Definition sign : tpRFun :=
     fun x => if x >? 0
              then 1
              else (if x =? 0 then 0 else -1).
 
-  Lemma sgn_1_iff : forall x, sgn x = 1 <-> x > 0.
+  Lemma sign_eq0 : forall x, x = 0 -> sign x = 0.
   Proof.
-    intros. unfold sgn. split; intros.
-    - destruct (Rltb_reflect 0 x); try lra.
-      destruct (Reqb_reflect x 0); try lra.
-    - destruct (Rltb_reflect 0 x); try lra.
-  Qed.    
+    intros. unfold sign. bdestruct (x >? 0); try lra.
+    bdestruct (x =? 0); try lra.
+  Qed.
+  
+  Lemma sign_gt0 : forall x, x > 0 -> sign x = 1.
+  Proof. intros. unfold sign. bdestruct (x >? 0); auto. lra. Qed.
+  
+  Lemma sign_lt0 : forall x, x < 0 -> sign x = -1.
+  Proof.
+    intros. unfold sign. bdestruct (x >? 0); try lra.
+    bdestruct (x =? 0); try lra.
+  Qed.
 
-  Lemma sgn_neg1_iff : forall x, sgn x = -1 <-> x < 0.
+  Lemma sign_mul_eq_abs : forall x, ((sign x) * x)%R = Rabs x.
   Proof.
-    intros. unfold sgn. split; intros.
-    - destruct (Rltb_reflect 0 x); try lra.
-      destruct (Reqb_reflect x 0); try lra.
-    - destruct (Rltb_reflect 0 x); try lra.
-      destruct (Reqb_reflect x 0); try lra.
-  Qed.    
-
-  Lemma sgn_mul_eq_abs : forall x, ((sgn x) * x)%R = Rabs x.
-  Proof.
-    intros. unfold sgn.
+    intros. unfold sign.
     destruct (Rltb_reflect 0 x).
     + rewrite Rabs_right; lra.
     + rewrite Rabs_left1; try lra.
       destruct (Reqb_reflect x 0); try lra.
   Qed.
 
-  Lemma sgn_mul_abs_eq : forall x, ((sgn x) * (Rabs x))%R = x.
+  Lemma sign_mul_abs_eq : forall x, ((sign x) * (Rabs x))%R = x.
   Proof.
-    intros. unfold sgn.
+    intros. unfold sign.
     destruct (Rltb_reflect 0 x).
     + rewrite Rabs_right; lra.
     + rewrite Rabs_left1; try lra.
@@ -463,6 +468,7 @@ Section basic_elementary_fun.
   Fact acos_sqrt2_2 : acos ((sqrt 2) / 2) = PI / 4. Admitted.
   Fact acos_sqrt3_2 : acos ((sqrt 3) / 2) = PI / 2. Admitted.
   Fact acos_1 : acos 1 = 0. Admitted.
+  Fact acos_neg1 : acos (-1) = PI. Admitted.
   (** acos is injective in its domain *)
   Fact acos_inj : forall x1 x2 : R,
       -1 <= x1 <= 1 -> -1 <= x2 <= 1 ->
@@ -472,9 +478,9 @@ Section basic_elementary_fun.
     rewrite <- H1. rewrite cos_acos; auto.
   Qed.
 
-  Fact atan_0 : atan 0 = 0. Admitted.
+  (* Fact atan_0 : atan 0 = 0. Admitted. *)
   Fact atan_sqrt3_3 : atan ((sqrt 3) / 3) = PI / 6. Admitted.
-  Fact atan_1 : atan 1 = PI. Admitted.
+  (* Fact atan_1 : atan 1 = PI. Admitted. *)
   Fact atan_sqrt3 : atan (sqrt 3) = PI / 3. Admitted.
 
   Fact acot_0 : acot 0 = PI / 2. Admitted.

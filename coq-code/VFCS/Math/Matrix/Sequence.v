@@ -563,6 +563,97 @@ End seqsum_more.
 
 
 (* ======================================================================= *)
+(** ** More properties of sequence on R type *)
+Section seq_R.
+  Import RExt.
+  Open Scope R_scope.
+
+  Notation Sum := (@seqsum _ Rplus R0).
+  
+  (** *** 算术-几何平均值不等式，简称 “算几不等式” *)
+  (* 设 x1,x2,...,xn 为 n 个正实数，
+     记算术平均数是 An = (∑xi)/n，
+     记几何平均数是 Gn = n√(∏xi)，
+     则 An >= Gn
+     等号成立，当且仅当 x1 = x2 = ... = xn。
+     
+     展开后的形式
+
+     a1+a2+...+an    n ______________
+     ------------ >=  / a1*a2*...*an
+          n
+   *)
+
+  (** 平均数不等式，或称平均值不等式、均值不等式。是算几不等式的推广 *)
+  (* https://zh.wikipedia.org/wiki/平均数不等式 *)
+
+  (* 在2维和3维的具体形式 *)
+  Lemma Rineq2 : forall a b : R,
+      0 <= a -> 0 <= b ->
+      (a + b) / 2 >= sqrt(a * b).
+  Admitted.
+  
+  Lemma Rineq3 : forall a b c : R,
+      0 <= a -> 0 <= b -> 0 <= c ->
+      (a + b + c) / 3 >= sqrt(a * b).
+  Admitted.
+
+  (** 2 * ∑(f*g) <= ∑(f)² + ∑(g)² *)
+  Lemma seqsum_Mul2_le_PlusSqr : forall (f g : nat -> R) n,
+      2 * Sum (fun i : nat => f i * g i) n <=
+        Sum (fun i : nat => (f i)²) n + Sum (fun i : nat => (g i)²) n.
+  Proof.
+    intros. induction n; simpl. lra.
+    ring_simplify.
+    replace (Sum (fun i : nat => (f i)²) n + (f n)² +
+               Sum (fun i : nat => (g i)²) n + (g n)²)
+      with (Sum (fun i : nat => (f i)²) n + Sum (fun i : nat => (g i)²) n +
+              ((f n)² +(g n)²)) by ring.
+    apply Rplus_le_compat; auto. apply R_neq1.
+  Qed.
+  
+  (** (∑(f*g))² <= ∑(f)² * ∑(g)² *)
+  Lemma seqsum_SqrMul_le_MulSqr : forall (f g : nat -> R) n,
+      (Sum (fun i : nat => f i * g i) n)² <=
+        Sum (fun i : nat => (f i)²) n * Sum (fun i : nat => (g i)²) n.
+  Proof.
+    intros. induction n; simpl. cbv; lra.
+    ring_simplify. rewrite Rsqr_plus.
+    rewrite !associative. apply Rplus_le_compat; auto.
+    remember (f n) as a. remember (g n) as b.
+    rewrite (commutative _ (a * b)).
+    rewrite (commutative _ (b * b)).
+    remember (fun i => f i * b) as F.
+    remember (fun i => g i * a) as G.
+    rewrite <- (seqsum_cmul (a*b) (fun i => F i * G i)).
+    2:{ intros. rewrite ?HeqF,?HeqG; cbv; ring. }
+    rewrite <- (seqsum_cmul (b*b) (fun i => F i * F i)).
+    2:{ intros. rewrite ?HeqF,?HeqG; cbv; ring. }
+    rewrite <- (seqsum_cmul (a*a) (fun i => G i * G i)).
+    2:{ intros. rewrite ?HeqF,?HeqG; cbv; ring. }
+    unfold Rsqr. ring_simplify. rewrite !associative. apply Rplus_le_compat_l.
+    clear.
+    apply seqsum_Mul2_le_PlusSqr.
+  Qed.
+  
+  (* (** (∑(fi*gi) + fn*gn)² <= ∑(fi)² * ∑(gi)² + ∑(fi)² gn² + ∑(gi)² fn² + fn² *gn² *) *)
+  (* Lemma seqsum_dot_sqr_le : forall (f g : nat -> R) n, *)
+  (*     (Sum (fun i => f i * g i) n + f n * g n)² <= *)
+  (*       Sum (fun i => f i * f i) n * Sum (fun i => g i * g i) n + *)
+  (*         Sum (fun i => f i * f i) n * (g n)² + *)
+  (*         (f n)² * Sum (fun i : nat => g i * g i) n + *)
+  (*         (f n)² * (g n)². *)
+  (* Proof. *)
+  (*   intros. *)
+  (*   pose proof (seqsum_SqrMul_le_MulSqr f g (S n)). simpl in H. *)
+  (*   ring_simplify in H. auto. *)
+  (* Qed. *)
+
+End seq_R.
+
+
+
+(* ======================================================================= *)
 (** ** Usage demo *)
 Section test.
   Import RExt.

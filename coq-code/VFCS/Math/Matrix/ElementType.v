@@ -727,10 +727,10 @@ Module OrderedRingElementTypeR <: OrderedRingElementType.
   
   Lemma Azero_le_sqr : forall a : A, Ale Azero (Amul a a).
   Proof. apply R_zero_le_sqr. Qed.
-  
+
   Lemma Aadd_le_compat : forall a1 b1 a2 b2 : A,
       Ale a1 a2 -> Ale b1 b2 -> Ale (Aadd a1 b1) (Aadd a2 b2).
-  Proof. apply R_add_le_compat. Qed.
+  Proof. intros. autounfold with A in *. lra. Qed.
   
   Lemma Aadd_eq_0_reg_l : forall a b : A,
       Ale Azero a -> Ale Azero b -> Aadd a b = Azero -> a = Azero.
@@ -927,6 +927,8 @@ Module Type OrderedFieldElementType <: FieldElementType <: OrderedElementType.
   Axiom Azero_le_sqr : forall a : A, Ale Azero (Amul a a).
   Axiom Aadd_le_compat : forall a1 b1 a2 b2 : A,
       Ale a1 a2 -> Ale b1 b2 -> Ale (Aadd a1 b1) (Aadd a2 b2).
+  Axiom Alt_le_compat : forall a : A,
+      Ale Azero a <-> Alt Azero a \/ a = Azero.
   Axiom Aadd_eq_0_reg_l : forall a b : A,
       Ale Azero a -> Ale Azero b -> Aadd a b = Azero -> a = Azero.
 End OrderedFieldElementType.
@@ -957,6 +959,10 @@ Module OrderedFieldElementTypeQc <: OrderedFieldElementType.
       Ale a1 a2 -> Ale b1 b2 -> Ale (Aadd a1 b1) (Aadd a2 b2).
   Proof. apply Qc_add_le_compat. Qed.
   
+  Lemma Alt_le_compat : forall a : A,
+      Ale Azero a <-> Alt Azero a \/ a = Azero.
+  Proof. intros. apply Qc_lt_le_compat. Qed.
+  
   Lemma Aadd_eq_0_reg_l : forall a b : A,
       Ale Azero a -> Ale Azero b -> Aadd a b = Azero -> a = Azero.
   Proof. intros. apply Qc_add_eq_0_reg_l in H1; auto. Qed.
@@ -983,7 +989,11 @@ Module OrderedFieldElementTypeR <: OrderedFieldElementType.
   
   Lemma Aadd_le_compat : forall a1 b1 a2 b2 : A,
       Ale a1 a2 -> Ale b1 b2 -> Ale (Aadd a1 b1) (Aadd a2 b2).
-  Proof. apply R_add_le_compat. Qed.
+  Proof. intros. autounfold with A in *. lra. Qed.
+  
+  Lemma Alt_le_compat : forall a : A,
+      Ale Azero a <-> Alt Azero a \/ a = Azero.
+  Proof. intros. autounfold with A in *. lra. Qed.
   
   Lemma Aadd_eq_0_reg_l : forall a b : A,
       Ale Azero a -> Ale Azero b -> Aadd a b = Azero -> a = Azero.

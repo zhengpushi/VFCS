@@ -85,10 +85,12 @@ Section fseqsum.
   (** Let's have an monoid structure *)
   Context `{M : Monoid}.
   Infix "+" := Aadd : A_scope.
+  Notation seqsum := (@seqsum _ Aadd Azero).
 
   (** Sum of a sequence *)
   Definition fseqsum {n} (f : fin n -> A) :=
-    @seqsum _ Aadd Azero (@ff2f _ Azero _ f) n.
+    (* @seqsum _ Aadd Azero (@ff2f _ Azero _ f) n. *)
+    seqsum (@ff2f _ Azero _ f) n.
     
   (** Sum of a sequence which every element is zero get zero. *)
   Lemma fseqsum_eq0 : forall {n} (f : fin n -> A),
@@ -106,6 +108,35 @@ Section fseqsum.
     intros. unfold ff2f. destruct (_??<_); auto.
   Qed.
 
+  (** Convert `fseqsum` to `seqsum`  *)
+  Lemma fseqsum_to_seqsum : forall {n} (f : fin n -> A) (g : nat -> A),
+      (forall i, f i = g (fin2nat i)) -> fseqsum f = seqsum g n.
+  Proof.
+    intros. unfold fseqsum. apply seqsum_eq; intros.
+    specialize (H (nat2fin i H0)). simpl in *.
+    unfold ff2f. destruct (_??<_); try lia.
+    rewrite <- H. f_equal. apply fin_eq_iff; auto.
+  Qed.
+
+  (** Convert `fseqsum` to `seqsum` (direct form) *)
+  Lemma fseqsum_to_seqsum_form2 : forall {n} (f : fin n -> A),
+      let g : nat -> A :=
+        fun i => match (i??<n) with left H => f (nat2fin i H) | _ => Azero end in
+      fseqsum f = seqsum g n.
+  Proof.
+    intros. unfold fseqsum. apply seqsum_eq; intros. unfold g.
+    unfold ff2f. destruct (_??<_); auto.
+  Qed.
+
+  (** Convert `fseqsum` to `seqsum` (succ form) *)
+  Lemma fseqsum_to_seqsum_form3 : forall {n} (f : fin (S n) -> A),
+      fseqsum f = seqsum (fun i => f (nat2finS i)) n + f (nat2finS n).
+  Proof.
+    intros. unfold fseqsum. simpl. f_equal.
+    - apply seqsum_eq; intros. unfold ff2f,nat2finS. destruct (_??<_); auto. lia.
+    - unfold ff2f,nat2finS. destruct (_??<_); auto. lia.
+  Qed.
+  
   
   (** Let's have an abelian monoid structure *)
   Context {AM : AMonoid Aadd Azero}.

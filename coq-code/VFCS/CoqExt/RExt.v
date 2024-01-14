@@ -177,6 +177,8 @@ Global Hint Resolve
   Rsqr_sqrt           (* 0 <= x -> (sqrt x)² = x *)
   sqrt_Rsqr           (* 0 <= x -> sqrt x² = x *)
   sin2_cos2           (* (sin x)² + (cos x)² = 1 *)
+  acos_0              (* acos 0 = PI/2 *)
+  acos_1              (* acos 1 = 0 *)
 
   (* general inequalities *)
   Rlt_0_1             (* 0 < 1 *)
@@ -187,6 +189,7 @@ Global Hint Resolve
   Rle_0_sqr           (* 0 <= r² *)
 (*   Rsqr_inj            (* 0 <= x -> 0 <= y -> x² = y² -> x = y *) *)
   Rinv_0_lt_compat    (* 0 < r -> 0 < / r *)
+  Rinv_lt_0_compat    (* r < 0 -> / r < 0 *)
   
   (* inequalities such as "0 <= r1 + r2" *)
   Rplus_le_le_0_compat  (* 0 <= r1 -> 0 <= r2 -> 0 <= r1 + r2 *)
@@ -265,8 +268,8 @@ Proof. intros. lra. Qed.
 Lemma R_zero_le_sqr : forall a : R, 0 <= a * a.
 Proof. intros. nra. Qed.
 
-Lemma R_add_le_compat : forall a1 b1 a2 b2 : R, a1 <= a2 -> b1 <= b2 -> a1 + b1 <= a2 + b2.
-Proof. intros. lra. Qed.
+(* Lemma R_add_le_compat : forall a1 b1 a2 b2 : R, a1 <= a2 -> b1 <= b2 -> a1 + b1 <= a2 + b2. *)
+(* Proof. intros. lra. Qed. *)
 
 Lemma R_add_eq_0_reg_l : forall a b : R, 0 <= a -> 0 <= b -> a + b = 0 -> a = 0.
 Proof. intros. lra. Qed.
@@ -319,7 +322,7 @@ Lemma Rminus_gtb0_comm : forall a b : R, (a - b >? 0) = (0 >? b - a).
 Proof. intros. unfold Rltb,Acmpb. destruct dec,dec; auto; lra. Qed.
 
 (** These theorems are automatic used. *)
-Global Hint Resolve
+#[export] Hint Resolve
   Reqb_reflect
   Rltb_reflect
   Rleb_reflect
@@ -1037,6 +1040,22 @@ Section TEST_zero_le.
   Goal forall r, 0 <= r -> 0 <= r * (/5) * 10. ra. Qed.
 End TEST_zero_le.
 
+(** a >= 0 -> b < 0 -> a / b <= 0 *)
+Lemma Rdiv_ge0_lt0_le0 : forall a b : R, a >= 0 -> b < 0 -> a / b <= 0.
+Proof. intros. unfold Rdiv. assert (/b<0); ra. Qed.
+
+Lemma Rdiv_gt_0_compat_neg: forall a b : R, a < 0 -> b < 0 -> 0 < a / b.
+Proof. intros. unfold Rdiv. assert (/b < 0); ra. Qed.
+
+Lemma Rdiv_ge_0_compat: forall a b : R, 0 <= a -> 0 < b -> 0 <= a / b.
+Proof. intros. unfold Rdiv. assert (0 < /b); ra. Qed.
+
+Hint Resolve
+  Rdiv_ge0_lt0_le0
+  Rdiv_gt_0_compat_neg
+  Rdiv_ge_0_compat
+  : R.
+
 
 (* ======================================================================= *)
 (** ** 0 < x *)
@@ -1084,6 +1103,15 @@ End TEST_zero_lt.
     special lemma name combined with the match machanism could speed up the proof. *)
 Lemma Rneq_le_lt : forall a b, a <> b -> a <= b -> a < b.
 Proof. ra. Qed.
+
+Lemma Rinv1_gt0 : forall r : R, 0 < r -> 0 < 1 / r.
+Proof. cbv. ra. Qed.
+
+#[export] Hint Resolve
+  Rneq_le_lt
+  Rinv1_gt0
+  : R.
+
 
 
 (* ======================================================================= *)
@@ -1404,20 +1432,20 @@ End compare_with_PI.
 (* ######################################################################### *)
 (** ** Split a large range to small pieces *)
 
-(** Split the range of (-π,π) to several small ranges *)
+(** Split the range of (-π,π] to several small ranges *)
 Section a_strange_problem.
 
-  (** A strange problem about "lra":
+  (** Tips: A strange problem about "lra":
       If I declare a condition here, the next proof will be finished by lra,
       otherwise, the next proof will not be done. *)
   Variable b: R.
   Hypotheses Hb : - PI < b < PI.
 
   Lemma Rsplit_neg_pi_to_pi' : forall a : R,
-      -PI < a < PI <->
+      -PI < a <= PI <->
         a = -PI/2 \/ a = 0 \/ a = PI/2 \/
           (-PI < a < -PI/2) \/ (-PI/2 < a < 0) \/
-          (0 < a < PI/2) \/ (PI/2 < a < PI).
+          (0 < a < PI/2) \/ (PI/2 < a <= PI).
   Proof.
     intros.
     (* Here, the automatic process is determined by the existence of "Hb", Why ?
@@ -1426,16 +1454,18 @@ Section a_strange_problem.
        
        同时，也发现了一个技巧，虽然 PI 不能被 lra 证明，但可以设定一个近似表示，比如
        “3.14 < PI < 3.15”，然后 lra 就能用了。
+
+       主要原因还是关于 PI 的自动化程度优点低，可能需要某个触发条件。
      *)
     lra.
   Qed.
 End a_strange_problem.
 
 Lemma Rsplit_neg_pi_to_pi : forall a : R,
-    -PI < a < PI <->
+    -PI < a <= PI <->
       a = -PI/2 \/ a = 0 \/ a = PI/2 \/
         (-PI < a < -PI/2) \/ (-PI/2 < a < 0) \/
-        (0 < a < PI/2) \/ (PI/2 < a < PI).
+        (0 < a < PI/2) \/ (PI/2 < a <= PI).
 Proof.
   intros.
   (* 引入 PI 的不等式，以便 lra 能够使用 *)
@@ -1459,6 +1489,39 @@ Proof. intros. f_equal. field. ra. Qed.
 Lemma atan_ak_bk : forall a b k : R,
     b <> 0 -> k <> 0 -> atan ((a * k) /(b * k)) = atan (a/b).
 Proof. intros. f_equal. field. ra. Qed.
+
+
+(** 0 < atan x < π/2 *)
+Lemma atan_bound_gt0 : forall x, x > 0 -> 0 < atan x < PI/2.
+Proof.
+  intros. split.
+  - rewrite <- atan_0. apply atan_increasing; ra.
+  - pose proof (atan_bound x); ra.
+Qed.
+
+(** -π/2 < atan x < 0 *)
+Lemma atan_bound_lt0 : forall x, x < 0 -> - PI / 2 < atan x < 0.
+Proof.
+  intros. split.
+  - pose proof (atan_bound x); ra.
+  - rewrite <- atan_0. apply atan_increasing; ra.
+Qed.
+
+(** 0 <= atan x < π/2 *)
+Lemma atan_bound_ge0 : forall x, x >= 0 -> 0 <= atan x < PI/2.
+Proof.
+  intros. bdestruct (x =? 0).
+  - subst. rewrite atan_0; cbv; ra.
+  - assert (x > 0); ra. pose proof (atan_bound_gt0 x H1); ra.
+Qed.
+
+(** -π/2 < atan x <= 0 *)
+Lemma atan_bound_le0 : forall x, x <= 0 -> - PI / 2 < atan x <= 0.
+Proof.
+  intros. bdestruct (x =? 0).
+  - subst. rewrite atan_0; cbv; ra. split; ra. assert (PI > 0); ra.
+  - assert (x < 0); ra. pose proof (atan_bound_lt0 x H1); ra.
+Qed.
 
 
 (* ######################################################################### *)
@@ -1642,7 +1705,36 @@ Qed.
 
 
 (* ######################################################################### *)
+(** * Additional properties *)
+
+(** (a * c + b * d)² <= (a² + b²) * (c² + d²) *)
+Lemma Rsqr_mult_le : forall a b c d : R, (a * c + b * d)² <= (a² + b²) * (c² + d²).
+Proof.
+  intros. unfold Rsqr. ring_simplify.
+  rewrite !associative. apply Rplus_le_compat_l.
+  rewrite <- !associative. apply Rplus_le_compat_r.
+  autorewrite with R.
+  replace (a² * d²) with (a * d)²; [|ra].
+  replace (c² * b²) with (c * b)²; [|ra].
+  replace (2 * a * c * b * d) with (2 * (a * d) * (c * b)); [|ra].
+  apply R_neq1.
+Qed.
+
+Lemma Rdiv_le_1 : forall x y : R, 0 <= x -> 0 < y -> x <= y -> x / y <= 1.
+Proof.
+  intros. unfold Rdiv. replace 1 with (y * / y); ra.
+  apply Rmult_le_compat_r; ra. apply Rinv_r; ra.
+Qed.
+
+#[export] Hint Resolve
+  Rdiv_le_1
+  : R.
+
+
+(* ######################################################################### *)
 (** * Temporarily added lemmas, need to be arranged to proper places *)
 
 Lemma mult_PI_gt0 : forall r, 0 < r -> 0 < r * PI.
 Proof. ra. Qed.  
+
+                
