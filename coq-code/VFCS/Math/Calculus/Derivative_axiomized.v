@@ -74,7 +74,7 @@ End practice_models_using_derivative.
 (** ** 基本初等函数的导数公式 *)
 Section deriv_basic_funcs.
   Axiom deriv_C : forall (C : R), (fun _ => C)' = fun _ => 0.
-  Axiom deriv_fpower : forall a, (fpower a)' = a c* (fpower (a-1)).
+  Axiom deriv_fpower : forall a, (fpower a)' = a \.* (fpower (a-1)).
 
   Fact deriv_id : fid ' = fone.
   Proof.
@@ -108,9 +108,9 @@ Section deriv_basic_funcs.
   Fact deriv_sec : sec ' = (sec * tan). Admitted.
   Fact deriv_csc : csc ' = - (csc * cot). Admitted.
 
-  Fact deriv_fexp : forall a, (fexp a) ' = (ln a) c* (fexp a). Admitted.
+  Fact deriv_fexp : forall a, (fexp a) ' = (ln a) \.* (fexp a). Admitted.
   Fact deriv_exp : exp ' = exp. Admitted.
-  Fact deriv_flog : forall a, (flog a) ' = / ((ln a) c* fid). Admitted.
+  Fact deriv_flog : forall a, (flog a) ' = / ((ln a) \.* fid). Admitted.
   Fact deriv_fln : ln ' = finv fid. Admitted.
   Fact deriv_asin : asin ' = (fun x => / (sqrt (1 - x * x)))%R. Admitted.
   Fact deriv_acos : acos ' = (fun x => - / (sqrt (1 - x * x)))%R. Admitted.
@@ -126,7 +126,7 @@ End deriv_basic_funcs.
 Section deriv_rules.
   Axiom deriv_fadd : forall (u v : tpRFun), (u + v)' = u ' + v '.
   Axiom deriv_fsub : forall (u v : tpRFun), (u - v)' = u ' - v '.
-  Axiom deriv_fcmul : forall (c : R) (u : tpRFun), (c c* u)' = c c* u '.
+  Axiom deriv_fcmul : forall (c : R) (u : tpRFun), (c \.* u)' = c \.* u '.
   Axiom deriv_fmul : forall (u v : tpRFun), (u * v)' = u ' * v + u * v '.
   Axiom deriv_fdiv : forall (u v : tpRFun),
       v <> (fun x => 0) -> (u / v)' = (u ' * v - u * v ') / (v * v).
@@ -134,7 +134,7 @@ Section deriv_rules.
   Fact deriv_finv : forall (v : tpRFun), (/v) ' = - ((v ') / (v * v)). Admitted.
 
   (** 导数的线性性质 *)
-  Fact deriv_linear : forall c1 c2 u1 u2, (c1 c* u1 + c2 c* u2)' = c1 c* u1 ' + c2 c* u2 '.
+  Fact deriv_linear : forall c1 c2 u1 u2, (c1 \.* u1 + c2 \.* u2)' = c1 \.* u1 ' + c2 \.* u2 '.
   Proof. intros. rewrite ?deriv_fadd, ?deriv_fcmul. auto. Qed.
 
   (** 乘法求导推广 *)
@@ -189,11 +189,11 @@ Section example_LCR_Problem.
   Variables i uc ur : tpRFun.
 
   (* 克希霍夫定律 *)
-  Axiom kxmf1 : L c* i ' + uc + (R1 c* i) = ur.
-  Axiom kxmf2 : i = C c* uc '.
+  Axiom kxmf1 : L \.* i ' + uc + (R1 \.* i) = ur.
+  Axiom kxmf2 : i = C \.* uc '.
 
   (** 待证命题（消去 i，对等式变形即可）  *)
-  Let main_thm : Prop := (L * C)%R c* uc ' ' + (R1 * C)%R c* uc ' + uc = ur.
+  Let main_thm : Prop := (L * C)%R \.* uc ' ' + (R1 * C)%R \.* uc ' + uc = ur.
 
   (* 方法1：在高阶上直接利用引理证明 *)
   Goal main_thm.
@@ -244,7 +244,7 @@ Section deriv_equations.
   Theorem deriv_inv'' : forall (v : tpRFun),
       (* Here, different with "v <> fzero" *)
       (forall x, v x <> 0) ->
-      (fone / v)' = (-1) c* (v ') / (v * v).
+      (fone / v)' = (-1) \.* (v ') / (v * v).
   Proof.
     intros. apply fun_eq. intros.
     unfold fone.

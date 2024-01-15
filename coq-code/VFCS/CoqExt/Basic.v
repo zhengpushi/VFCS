@@ -8,6 +8,12 @@
   date      : 2022.06
   
   remark    :
+  0. Naming style
+     A,B,C  --- type
+     M,N,O  --- matrix
+     u,v,w  --- vector
+     a,b,c,k  -- scalar
+
   1. Basic libraries in whole project
   3. Reserved notations for consistence.
      https://coq.inria.fr/distrib/V8.13.2/refman/language/coq-library.html 
@@ -56,8 +62,7 @@ Reserved Infix    "-"       (at level 50, left associativity).    (* sub *)
 Reserved Infix    "*"       (at level 40, left associativity).    (* mul *)
 Reserved Infix    "/"       (at level 40, left associativity).    (* div *)
 Reserved Infix    "n*"      (at level 40, no associativity).      (* n-times *)
-Reserved Infix    "c*"      (at level 40, left associativity).    (* scal left mul *)
-Reserved Infix    "*c"      (at level 40, left associativity).    (* scal right mul *)
+Reserved Infix    "\.*"     (at level 40, left associativity).    (* scal left mul *)
 Reserved Infix    "⦿"      (at level 40, left associativity).    (* hardmard prod *)
 Reserved Infix    "\o"      (at level 50, no associativity).
 Reserved Infix    "⋅"       (at level 40, no associativity).      (* dot prod *)
@@ -70,7 +75,7 @@ Reserved Notation "/ a"     (at level 35, right associativity).   (* inv *)
 Reserved Notation "M \T"    (at level 32, left associativity).    (* transpose *)
 (* Reserved Notation "M ⁻¹"    (at level 20, format "M ⁻¹").         (* minv *) *)
 Reserved Notation "M \-1"    (at level 20, format "M \-1").         (* minv *)
-Reserved Notation "M1 @ M2" (at level 30, no associativity).      (* cons by col *)
+Reserved Notation "M @ N"   (at level 30, no associativity).      (* cons by col *)
 Reserved Notation "'tr' M"  (at level 33, no associativity).
 
 Reserved Notation "'\sum' f" (at level 10).       (* sum of a fin-function *)

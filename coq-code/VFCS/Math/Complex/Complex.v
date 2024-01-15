@@ -566,24 +566,24 @@ Section Ccmul.
 
   (** scalar multiplication *)
   Definition Ccmul (k : R) (z : C) : C := (k * z.a) +i (k * z.b).
-  Infix "c*" := Ccmul: C_scope.
+  Infix "\.*" := Ccmul: C_scope.
 
-  Lemma Cre_cmul : forall z k, (Cre (k c* z) = k * Cre z)%R.
+  Lemma Cre_cmul : forall z k, (Cre (k \.* z) = k * Cre z)%R.
   Proof. intros (a,b) k; auto. Qed.
 
-  Lemma Cim_cmul : forall z k, (Cim (k c* z) = k * Cim z)%R.
+  Lemma Cim_cmul : forall z k, (Cim (k \.* z) = k * Cim z)%R.
   Proof. intros (a,b) k; auto. Qed.
 
-  Lemma Ccmul_1 : forall z : C, 1 c* z = z.
+  Lemma Ccmul_1 : forall z : C, 1 \.* z = z.
   Proof. Ceq. Qed.
 
-  Lemma Ccmul_add_distr_l : forall k z1 z2, k c* (z1 + z2) = k c* z1 + k c* z2.
+  Lemma Ccmul_add_distr_l : forall k z1 z2, k \.* (z1 + z2) = k \.* z1 + k \.* z2.
   Proof. Ceq. Qed.
 
-  Lemma Ccmul_add_distr_r : forall k1 k2 z, (k1 + k2)%R c* z = k1 c* z + k2 c* z.
+  Lemma Ccmul_add_distr_r : forall k1 k2 z, (k1 + k2)%R \.* z = k1 \.* z + k2 \.* z.
   Proof. Ceq. Qed.
 
-  Lemma Ccmul_mul_swap_l : forall k1 k2 z, (k1 * k2)%R c* z = k1 c* (k2 c* z).
+  Lemma Ccmul_mul_swap_l : forall k1 k2 z, (k1 * k2)%R \.* z = k1 \.* (k2 \.* z).
   Proof. Ceq. Qed.
 
   (** |k * z| = |k| * |z| *)
@@ -592,7 +592,7 @@ Section Ccmul.
     <== \sqrt((ka)^2 + (kb)^2) = |k| * \sqrt(a^2 + b^2)
     <== (ka)^2 + (kb)^2 = k^2 * (a^2 +b^2)
    *)
-  Lemma Cnorm_cmul : forall k z, C|k c* z| = (R|k| * (C|z|))%R.
+  Lemma Cnorm_cmul : forall k z, C|k \.* z| = (R|k| * (C|z|))%R.
   Proof.
     intros k (a,b). unfold Cnorm; unfold Cnorm2; simpl.
     rewrite <- sqrt_Rsqr_abs. rewrite <- sqrt_mult; ra.
@@ -600,7 +600,7 @@ Section Ccmul.
   Qed.
 
 End Ccmul.
-Infix "c*" := Ccmul: C_scope.
+Infix "\.*" := Ccmul: C_scope.
 
 
 (** *** Multiplication of complex numbers *)
@@ -741,7 +741,7 @@ Section Cinv.
   Notation "/ z" := (Cinv z) : C_scope.
 
   Lemma Cinv_rew : forall a b : R,
-      (a +i b) <> 0 -> /(a +i b) = (/ (a*a + b*b)) c* (a +i - b)%R.
+      (a +i b) <> 0 -> /(a +i b) = (/ (a*a + b*b)) \.* (a +i - b)%R.
   Proof. Ceq. cbv; lra. cbv; lra. Qed.
 
   Lemma Cmul_inv_l : forall z : C, z <> 0 -> / z * z = 1.

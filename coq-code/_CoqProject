@@ -55,7 +55,7 @@ VFCS/Math/Matrix/VectorQc.v
 VFCS/Math/Matrix/VectorC.v
 # VFCS/Math/Matrix/VectorRFun.v
 VFCS/Math/Matrix/VectorR.v
-# VFCS/Math/Matrix/VectorR2.v
+VFCS/Math/Matrix/VectorR2.v
 # VFCS/Math/Matrix/VectorR3.v
 # VFCS/Math/Matrix/VectorR4.v
 VFCS/Math/Matrix/Matrix.v

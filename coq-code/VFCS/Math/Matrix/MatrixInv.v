@@ -81,9 +81,9 @@ Section minvertible.
   Proof.
   Admitted.
 
-  (** invertible M1 -> invertible M2 -> invertible (M1 * M2) *)
-  Lemma minvertible_mmul : forall n (M1 M2 : smat A n),
-      minvertible M1 -> minvertible M2 -> minvertible (M1 * M2).
+  (** invertible M -> invertible N -> invertible (M * N) *)
+  Lemma minvertible_mmul : forall n (M N : smat A n),
+      minvertible M -> minvertible N -> minvertible (M * N).
   Proof.
   Admitted.
 
@@ -93,10 +93,12 @@ End minvertible.
 (* ======================================================================= *)
 (** ** Inverse Matrix by Gauss Elimination *)
 Section minvGE.
-  Context `{HField : Field} `{HDec : @Dec A}.
+  Context `{HField : Field} {AeqDec : Dec (@eq A)}.
 
-  Notation rowEchelon := (@rowEchelon _ Aadd Azero Aopp Amul Ainv HDec).
-  Notation minRowEchelon := (@minRowEchelon _ Aadd Azero Aopp Amul Aone Ainv HDec).
+  Notation rowEchelon := (@rowEchelon _ Aadd Azero Aopp Amul Ainv AeqDec).
+  Notation minRowEchelon :=
+    (@minRowEchelon _ Aadd Azero Aopp Amul Aone Ainv AeqDec).
+  Notation Aeqb := (Acmpb AeqDec).
   Notation listFirstNonZero := (@listFirstNonZero _ Azero Aeqb).
   Notation rowOpList2mat := (@rowOpList2mat _ Aadd Azero Amul Aone).
 
@@ -129,9 +131,9 @@ Section minvGE.
     | _ => (@mat1 _ Azero Aone n)
     end.
 
-  (* (* 要证明 Some M1 = Some M2 时，不知为何 f_equal 会卡住，所以设计了这个引理 *) *)
-  (* Lemma Some_mat_eq_if_dlist_eq : forall {A n} (M1 M2 : @smat A n), *)
-  (*     mdata M1 = mdata M2 -> Some M1 = Some M2. *)
+  (* (* 要证明 Some M = Some N 时，不知为何 f_equal 会卡住，所以设计了这个引理 *) *)
+  (* Lemma Some_mat_eq_if_dlist_eq : forall {A n} (M N : @smat A n), *)
+  (*     mdata M = mdata N -> Some M = Some N. *)
   (* Proof. intros. f_equal. apply meq_if_mdata. auto. Qed. *)
   
    *)
@@ -164,7 +166,7 @@ Section minvAM.
   Infix "/" := (fun x y => x * (/ y)) : A_scope.
 
   Infix "*" := (@mmul A Aadd Azero Amul _ _ _) : mat_scope.
-  Infix "c*" := (@mcmul A Amul _ _) : mat_scope.
+  Infix "\.*" := (@mcmul A Amul _ _) : mat_scope.
   
   Notation mat1 := (@mat1 _ Azero Aone).
   Notation l2m := (@l2m A Azero _ _).
@@ -211,19 +213,19 @@ Section minvAM.
   (** *** Matrix Inversion *)
 
   (** Inverse matrix by adjoint matrix method *)
-  Definition minvAM {n} (M : smat n) := (Aone / mdet M) c* (madj M).
+  Definition minvAM {n} (M : smat n) := (Aone / mdet M) \.* (madj M).
   Notation "M \-1" := (minvAM M) : mat_scope.
 
 
-  (** M1 * M2 = mat1 -> M1 \-1 = M2 *)
-  Lemma AM_mmul_eq1_iff_minv_l : forall {n} (M1 M2 : smat n),
-      M1 * M2 = mat1 <-> minvAM M1 = M2.
+  (** M * N = mat1 -> M \-1 = N *)
+  Lemma AM_mmul_eq1_iff_minv_l : forall {n} (M N : smat n),
+      M * N = mat1 <-> minvAM M = N.
   Proof.
   Admitted.
 
-  (** M1 * M2 = mat1 <-> M2 \-1 = M1 *)
-  Lemma AM_mmul_eq1_iff_minv_r : forall {n} (M1 M2 : smat n),
-      M1 * M2 = mat1 <-> minvAM M2 = M1.
+  (** M * N = mat1 <-> N \-1 = M *)
+  Lemma AM_mmul_eq1_iff_minv_r : forall {n} (M N : smat n),
+      M * N = mat1 <-> minvAM N = M.
   Proof.
   Admitted.
 
@@ -253,9 +255,9 @@ Section minvAM.
   Proof.
   Admitted.
 
-  (** (M1 * M2) \-1 = M2\-1 * M1\-1 *)
-  Lemma AM_minv_mmul : forall {n} (M1 M2 : smat n),
-      minvertible M1 -> minvertible M2 -> (M1 * M2)\-1 = M2 \-1 * M1 \-1.
+  (** (M * N) \-1 = N\-1 * M\-1 *)
+  Lemma AM_minv_mmul : forall {n} (M N : smat n),
+      minvertible M -> minvertible N -> (M * N)\-1 = N \-1 * M \-1.
   Proof.
   Admitted.
 
@@ -535,441 +537,3 @@ Section test.
   
 *)
 End test.
-
-(*
-
-(* ==================================== *)
-(** ** Orthogonal matrix *)
-Section OrthogonalMatrix.
-
-  (*
-  Ref: 
-  1. https://en.wikipedia.org/wiki/Orthogonal_group#Special_orthogonal_group
-  2. https://en.wikipedia.org/wiki/Orthogonal_matrix
-
-  -------------------------- O(n) -----------------------------------
-  In mathematics, the orthogonal group in dimension n, denoted O(n), is the 
-  group of distance-preserving transformations of a Euclidean space of dimension
-  n that preserve a fixed point, where the group operation is given by composing
-  transformations. 
-
-  The orthogonal group is sometimes called the general orthogonal group, by 
-  analogy with the general linear group. Equivalently, it is the group of 
-  n × n matrices, where the group operation is given by matrix multiplication 
-  (an orthogonal matrix is a real matrix whose inverse equals its transpose). 
-
-  By extension, for any field F, an n × n matrix with entries in F such that its 
-  inverse equals its transpose is called an orthogonal matrix over F. 
-  The n × n orthogonal matrices form a subgroup, denoted O(n,F), of the general 
-  linear group GL(n,F); that is 
-         O(n,F) = {Q ∈ GL(n,F) ∣ Q\T * Q = Q * Q\T = I}.
-  
-  -------------------------- O(3) -----------------------------------
-  Every rotation maps an orthonormal basis of R^3 to another orthonormal basis.
-  Like any linear transformation of finite-dimensional vector spaces, a rotation 
-  can always be represented by a matrix.
-
-  Let R be a given rotation. With respect to the standard basis e1, e2, e3 of R^3 
-  the columns of R are given by (Re1, Re2, Re3). Since the standard basis is 
-  orthonormal, and since R preserves angles and length, the columns of R form 
-  another orthonormal basis. This orthonormality condition can be expressed in 
-  the form 
-     R\T * R = R * R\T = I,
-  where R\T denotes the transpose of R and I is the 3 × 3 identity matrix. 
-  Matrices for which this property holds are called orthogonal matrices.
-
-  The group of all 3 × 3 orthogonal matrices is denoted O(3), and consists of all 
-  proper and improper rotations.
-
-  In addition to preserving length, proper rotations must also preserve 
-  orientation. 
-  A matrix will preserve or reverse orientation according to whether the 
-  determinant of the matrix is positive or negative. 
-  For an orthogonal matrix R, note that "det R\T = det R" implies 
-  "(det R)^2 = 1", so that "det R = ±1".
-
-  The subgroup of orthogonal matrices with determinant +1 is called the special 
-  orthogonal group, denoted SO(3). 
-  Thus every rotation can be represented uniquely by an orthogonal matrix with unit 
-  determinant. Moreover, since composition of rotations corresponds to matrix 
-  multiplication, the rotation group is isomorphic to the special orthogonal group 
-  SO(3).
-
-  Improper rotations correspond to orthogonal matrices with determinant −1, and 
-  they do not form a group because the product of two improper rotations is a 
-  proper rotation. 
-
-  ----------- 中文笔记 ---------------
-  Orthogonal: 正交的，一般用于描述一组基是相互正交的（垂直的）
-  Orthonormal Basic: 标准正交基，两两正交，并且单个向量具有单位长度。
-  Gram-Schmidt: 施密特正交化。以2维为例，该算法保持r1不变，r3的改变最多。
-  有一种无偏差的递增正交化算法，不偏向特定轴，需要多次迭代（比如10次），然后用1次
-    标准的Gram-Schmidt算法来保证完全正交。
-  O(n): Orthogonal Group 正交群（保距，行列式为±1）
-  SO(n): Special Orthogonal Group 特殊正交群（保持手性，行列式为1）
-    Proper rotation: 正确的旋转 (行列式为1)
-    Improper rotation: 错误的旋转（行列式为-1）, rotation-reflect, 旋转反射，瑕旋转
-  ----------------------
-  补充一些理论：
-  1. 特殊矩阵：对称（自伴）、斜对称（斜伴）、正交（酉）、正规矩阵
-      实矩阵                      复矩阵
-      条件           名称         条件            名称
-  (1) A = A\T        对称阵       A = A\H         自伴阵
-  (2) A = -A\T       斜称阵       A = -A\H        斜伴阵
-  (3) AA\T = E       正交阵       AA\H = E        酉矩阵
-  (4)                            A A\H=A\H A      正规矩阵
-  其中，(1),(2),(3)都是正规矩阵
-
-  正规矩阵的一个定理：每个 n*n 正规矩阵A，都有一个由对应于特征值λ1,...,λn的特征向量
-  组成的完全正交基 x1,...,xn。
-  若设 U = (x1,...,xn)，则 U 是酉矩阵，并且有
-  U^{-1} A U = 对角阵 {λ1,...,λn}
-
-  正交矩阵的应用（旋转）：若一个 n*n 实矩阵A是正交的，则其特征值等于
-  ±1 或 e^{±iϕ}成对出现（ϕ是实数）。
-  
-  2. 特征值、特征向量、矩阵的谱
-  (1) 方阵A，使方程 A x = λ x 有非零解时，λ(复数)称一个特征值，x称对应的特征向量
-  (2) A的所有特征值的集合称为A的谱 σ(A)，A的特征值的绝对值的最大值称为A的谱半径，记做 r(A)
-  (3) 特征方程：det(A-λE)=0，其解是A的特征值λ，λ的重数称为代数重数。
-  (4) 设矩阵U是正交的（酉的），U的谱由数 e^{±iϕ} 组成，
-      变换 x' = U x 对应于笛卡尔坐标系中的正向旋转，旋转角ϕ
-      x1' = x1 * cos ϕ + x2 * sin ϕ
-      y1' = - x1 * sin ϕ + x2 * cos ϕ
-  (5) 谱定理
-  (i) 自伴矩阵的谱在实直线上
-  (ii) 斜伴矩阵的谱在虚轴上
-  (iii) 酉矩阵的谱在单位圆上
-
-  3. 正交性
-
-   *)
-
-  Context `{F : Field}.
-  Add Field field_inst : (make_field_theory F).
-  Notation "1" := Aone : A_scope.
-  Notation "0" := Azero : A_scope.
-  Notation "- a" := (Aopp a) : A_scope.
-  Infix "=" := Teq : A_scope.
-  Infix "=" := (@meq _ Teq _ _) : mat_scope.
-  Infix "*" := (@mmul _ Aadd Azero Amul _ _ _) : mat_scope.
-  Notation "m \-1" := (@minvAM _ Aadd Azero Aopp Amul Aone Ainv _ m) : mat_scope.
-  Notation smat n := (smat A n).
-  Notation mat1 n := (@mat1 _ Azero Aone n).
-  Notation minvertible := (@minvertible _ Aadd Azero Amul Aone Teq _).
-  Notation mdet := (@mdet _ Aadd Azero Aopp Amul Aone _).
-
-  (* ================== *)
-  (** *** Orthogonal matrix *)
-
-  (** A square matrix m is an orthogonal matrix *)
-  Definition morth {n} (m : smat n) : Prop := m\T * m = mat1 n.
-
-  (** orthogonal m -> invertible m *)
-  Lemma morth_invertible : forall {n} (m : smat n),
-      morth m -> minvertible m.
-  Proof. intros. hnf in *. exists (m\T). auto. Qed.
-
-  (** orthogonal m -> m\-1 = m\T *)
-  Lemma morth_imply_inv_eq_trans : forall {n} (m : smat n),
-      morth m -> m\-1 = m\T.
-  Proof. intros. red in H. apply mmul_eq1_iff_AM_minv_r in H. auto. Qed.
-
-  (** m\-1 = m\T -> orthogonal m*)
-  Lemma AM_minv_eq_trans_imply_morth : forall {n} (m : smat n),
-      m\-1 = m\T -> morth m.
-  Proof. intros. apply mmul_eq1_iff_AM_minv_r in H. auto. Qed.
-
-  (** orthogonal m <-> m\T * m = mat1 *)
-  Lemma morth_iff_mul_trans_l : forall {n} (m : smat n),
-      morth m <-> m\T * m = mat1 n.
-  Proof. intros. red. auto. Qed.
-
-  (** orthogonal m <-> m * m\T = mat1 *)
-  Lemma morth_iff_mul_trans_r : forall {n} (m : smat n),
-      morth m <-> m * m\T = mat1 n.
-  Proof.
-    intros. split; intros H.
-    - apply mmul_eq1_iff_AM_minv_r in H. rewrite <- H. apply mmul_AM_minv_r.
-    - red. apply mmul_eq1_iff_AM_minv_l in H. rewrite <- H. apply mmul_AM_minv_l.
-  Qed.
-
-  (** orthogonal mat1 *)
-  Lemma morth_1 : forall {n}, morth (mat1 n).
-  Proof. intros. red. rewrite mtrans_1, mmul_1_r. easy. Qed.
-
-  (** orthogonal m -> orthogonal p -> orthogonal (m * p) *)
-  Lemma morth_mul : forall {n} (m p : smat n),
-      morth m -> morth p -> morth (m * p).
-  Proof.
-    intros. red. red in H, H0. rewrite mtrans_mmul.
-    rewrite mmul_assoc. rewrite <- (mmul_assoc _ m).
-    rewrite H. rewrite mmul_1_l. rewrite H0. easy.
-  Qed.
-
-  (** orthogonal m -> orthogonal m\T *)
-  Lemma morth_mtrans : forall {n} (m : smat n), morth m -> morth (m\T).
-  Proof.
-    intros. red. rewrite mtrans_mtrans.
-    apply morth_iff_mul_trans_r in H. auto.
-  Qed.
-
-  (** orthogonal m -> orthogonal m\-1 *)
-  Lemma morth_minvAM : forall {n} (m : smat n), morth m -> morth (m\-1).
-  Proof.
-    intros. red.
-    rewrite morth_imply_inv_eq_trans; auto. rewrite mtrans_mtrans.
-    apply morth_iff_mul_trans_r; auto.
-  Qed.
-  
-  (* ================== *)
-  (** *** O(n): General Orthogonal Group, General Linear Group *)
-  (* https://en.wikipedia.org/wiki/Orthogonal_group#Special_orthogonal_group *)
-  Section GOn.
-    
-    (** The set of GOn *)
-    Record GOn (n: nat) := {
-        GOn_mat :> smat n;
-        GOn_props : morth GOn_mat
-      }.
-
-    (** Equality of elements in GOn *)
-    Definition GOn_eq {n} (s1 s2 : GOn n) : Prop := GOn_mat _ s1 = GOn_mat _ s2.
-
-    (** GOn_eq is equivalence relation *)
-    Lemma GOn_eq_equiv : forall n, Equivalence (@GOn_eq n).
-    Proof.
-      intros. unfold GOn_eq. constructor; hnf; intros; try easy.
-      rewrite H; easy.
-    Qed.
-
-    (** Multiplication of elements in GOn *)
-    Definition GOn_mul {n} (s1 s2 : GOn n) : GOn n.
-      refine (Build_GOn n (s1 * s2) _).
-      destruct s1 as [s1 H1], s2 as [s2 H2]. simpl.
-      apply morth_mul; auto.
-    Defined.
-
-    (** Identity element in GOn *)
-    Definition GOn_1 {n} : GOn n.
-      refine (Build_GOn n (mat1 n) _).
-      apply morth_1.
-    Defined.
-
-    (** GOn_mul is a proper morphism respect to GOn_eq *)
-    Lemma GOn_mul_proper : forall n, Proper (GOn_eq => GOn_eq => GOn_eq) (@GOn_mul n).
-    Proof. unfold GOn_eq in *. simp_proper. intros. simpl. rewrite H,H0. easy. Qed.
-
-    (** GOn_mul is associative *)
-    Lemma GOn_mul_assoc : forall n, Associative GOn_mul (@GOn_eq n).
-    Proof. unfold GOn_eq. intros. constructor. intros; simpl. apply mmul_assoc. Qed.
-
-    (** GOn_1 is left-identity-element of GOn_mul operation *)
-    Lemma GOn_mul_id_l : forall n, IdentityLeft GOn_mul GOn_1 (@GOn_eq n).
-    Proof. unfold GOn_eq. intros. constructor. intros; simpl. apply mmul_1_l. Qed.
-    
-    (** GOn_1 is right-identity-element of GOn_mul operation *)
-    Lemma GOn_mul_id_r : forall n, IdentityRight GOn_mul GOn_1 (@GOn_eq n).
-    Proof. unfold GOn_eq. intros. constructor. intros; simpl. apply mmul_1_r. Qed.
-
-    (** <GOn, +, 1> is a monoid *)
-    Lemma Monoid_GOn : forall n, Monoid (@GOn_mul n) GOn_1 GOn_eq.
-    Proof.
-      intros. constructor.
-      - apply GOn_mul_proper.
-      - apply GOn_eq_equiv.
-      - apply GOn_mul_assoc.
-      - apply GOn_mul_id_l.
-      - apply GOn_mul_id_r.
-    Qed.
-
-    (** Inverse operation of multiplication in GOn *)
-    Definition GOn_inv {n} (s : GOn n) : GOn n.
-      refine (Build_GOn n (s\T) _). destruct s as [s H1]. simpl.
-      apply morth_mtrans; auto.
-    Defined.
-
-    (** GOn_inv is a proper morphism respect to GOn_eq *)
-    Lemma GOn_inv_proper : forall n, Proper (GOn_eq => GOn_eq) (@GOn_inv n).
-    Proof. unfold GOn_eq in *. simp_proper. intros. simpl. rewrite H. easy. Qed.
-
-    (** GOn_inv is left-inversion of <GOn_mul,GOn_1> *)
-    Lemma GOn_mul_inv_l : forall n, InverseLeft GOn_mul GOn_1 GOn_inv (@GOn_eq n).
-    Proof. unfold GOn_eq. intros. constructor. intros; simpl. apply a. Qed.
-
-    (** GOn_inv is right-inversion of <GOn_mul,GOn_1> *)
-    Lemma GOn_mul_inv_r : forall n, InverseRight GOn_mul GOn_1 GOn_inv (@GOn_eq n).
-    Proof.
-      unfold GOn_eq. intros. constructor. intros; simpl.
-      apply morth_iff_mul_trans_r. apply a.
-    Qed.
-
-    (** <GOn, +, 1, /s> is a group *)
-    Theorem Group_GOn : forall n, Group (@GOn_mul n) GOn_1 GOn_inv GOn_eq.
-    Proof.
-      intros. constructor.
-      - apply Monoid_GOn.
-      - apply GOn_mul_inv_l.
-      - apply GOn_mul_inv_r.
-      - apply GOn_mul_proper.
-      - apply GOn_inv_proper.
-    Qed.
-    
-    (** *** Extract the properties of GOn to its carrier *)
-
-    (** m\-1 = m\T *)
-    Lemma GOn_imply_inv_eq_trans : forall {n} (s : GOn n),
-        let m := GOn_mat n s in
-        m\-1 = m\T.
-    Proof.
-      intros. unfold m. destruct s as [m' H]. simpl in *.
-      rewrite morth_imply_inv_eq_trans; auto. easy.
-    Qed.
-
-  End GOn.
-
-  
-  (* ================== *)
-  (** ** SO(n): Special Orthogonal Group, Rotation Group *)
-  (* https://en.wikipedia.org/wiki/Orthogonal_group#Special_orthogonal_group *)
-  Section SOn.
-
-    (** The set of SOn *)
-    Record SOn (n: nat) := {
-        SOn_mat :> smat n;
-        SOn_props : (morth SOn_mat) /\ (mdet SOn_mat = 1)%A
-      }.
-
-    Definition SOn_eq {n} (s1 s2 : SOn n) : Prop := SOn_mat _ s1 = SOn_mat _ s2.
-
-    Definition SOn_mul {n} (s1 s2 : SOn n) : SOn n.
-      refine (Build_SOn n (s1 * s2) _).
-      destruct s1 as [s1 [H1 H1']], s2 as [s2 [H2 H2']]. simpl. split.
-      - apply morth_mul; auto.
-      - rewrite mdet_mmul. rewrite H1', H2'. ring.
-    Defined.
-
-    Definition SOn_1 {n} : SOn n.
-      refine (Build_SOn n (mat1 n) _). split.
-      apply morth_1. apply mdet_1.
-    Defined.
-
-    (** SOn_eq is equivalence relation *)
-    Lemma SOn_eq_equiv : forall n, Equivalence (@SOn_eq n).
-    Proof.
-      intros. unfold SOn_eq. constructor; hnf; intros; try easy.
-      rewrite H; easy.
-    Qed.
-
-    (** SOn_mul is a proper morphism respect to SOn_eq *)
-    Lemma SOn_mul_proper : forall n, Proper (SOn_eq => SOn_eq => SOn_eq) (@SOn_mul n).
-    Proof. unfold SOn_eq in *. simp_proper. intros. simpl. rewrite H,H0. easy. Qed.
-
-    (** SOn_mul is associative *)
-    Lemma SOn_mul_assoc : forall n, Associative SOn_mul (@SOn_eq n).
-    Proof. unfold SOn_eq. intros. constructor. intros; simpl. apply mmul_assoc. Qed.
-
-    (** SOn_1 is left-identity-element of SOn_mul operation *)
-    Lemma SOn_mul_id_l : forall n, IdentityLeft SOn_mul SOn_1 (@SOn_eq n).
-    Proof. unfold SOn_eq. intros. constructor. intros; simpl. apply mmul_1_l. Qed.
-    
-    (** SOn_1 is right-identity-element of SOn_mul operation *)
-    Lemma SOn_mul_id_r : forall n, IdentityRight SOn_mul SOn_1 (@SOn_eq n).
-    Proof. unfold SOn_eq. intros. constructor. intros; simpl. apply mmul_1_r. Qed.
-    
-    (** <SOn, +, 1> is a monoid *)
-    Lemma Monoid_SOn : forall n, Monoid (@SOn_mul n) SOn_1 SOn_eq.
-    Proof.
-      intros. constructor.
-      - apply SOn_mul_proper.
-      - apply SOn_eq_equiv.
-      - apply SOn_mul_assoc.
-      - apply SOn_mul_id_l.
-      - apply SOn_mul_id_r.
-    Qed.
-
-    Definition SOn_inv {n} (s : SOn n) : SOn n.
-      refine (Build_SOn n (s\T) _).
-      destruct s as [s [H1 H2]]; simpl. split.
-      apply morth_mtrans; auto. rewrite mdet_mtrans. auto.
-    Defined.
-
-    (** SOn_inv is a proper morphism respect to SOn_eq *)
-    Lemma SOn_inv_proper : forall n, Proper (SOn_eq => SOn_eq) (@SOn_inv n).
-    Proof. unfold SOn_eq in *. simp_proper. intros. simpl. rewrite H. easy. Qed.
-
-    (** SOn_inv is left-inversion of <SOn_mul,SOn_1> *)
-    Lemma SOn_mul_inv_l : forall n, InverseLeft SOn_mul SOn_1 SOn_inv (@SOn_eq n).
-    Proof. unfold SOn_eq. intros. constructor. intros; simpl. apply a. Qed.
-
-    (** SOn_inv is right-inversion of <SOn_mul,SOn_1> *)
-    Lemma SOn_mul_inv_r : forall n, InverseRight SOn_mul SOn_1 SOn_inv (@SOn_eq n).
-    Proof.
-      unfold SOn_eq. intros. constructor. intros; simpl.
-      apply morth_iff_mul_trans_r. apply a.
-    Qed.
-
-    (** <SOn, +, 1, /s> is a group *)
-    Theorem Group_SOn : forall n, Group (@SOn_mul n) SOn_1 SOn_inv SOn_eq.
-    Proof.
-      intros. constructor.
-      - apply Monoid_SOn.
-      - apply SOn_mul_inv_l.
-      - apply SOn_mul_inv_r.
-      - apply SOn_mul_proper.
-      - apply SOn_inv_proper.
-    Qed.
-
-    (** *** Extract the properties of SOn to its carrier *)
-
-    (** m\-1 = m\T *)
-    Lemma SOn_imply_inv_eq_trans : forall {n} (s : SOn n),
-        let m := SOn_mat n s in
-        m\-1 = m\T.
-    Proof.
-      intros. unfold m. destruct s as [m' [H1 H2]]. simpl in *.
-      rewrite morth_imply_inv_eq_trans; auto. easy.
-    Qed.
-
-  End SOn.
-
-End OrthogonalMatrix.
-
-
-(* ======================================================================= *)
-(** ** test *)
-Section test.
-  Import QArith Qcanon.
-  Open Scope Q.
-  Open Scope Qc_scope.
-  Open Scope mat_scope.
-
-  Infix "=" := (meq (Teq:=eq)) : mat_scope.
-
-
-  Coercion Q2Qc : Q >-> Qc.
-
-  Definition m1 := (mk_mat_3_3 (Azero:=0) 1 2 3 4 5 6 7 8 9)%Qc.
-  (* Compute mtrace (Aadd:=Qcplus)(Azero:=0)(n:=3) m1. *)
-
-  Variable a11 a12 a13 a21 a22 a23 a31 a32 a33 : Qc.
-  Definition m2 := mk_mat_3_3 (Azero:=0) a11 a12 a13 a21 a22 a23 a31 a32 a33.
-  (* Compute mrow 1 m2. *)
-
-  (** *** rewrite support test *)
-  Notation mcmul := (mcmul (Amul:=Qcmult)).
-  Infix "c*" := mcmul : mat_scope.
-
-  Goal forall r c (m1 m2 : mat r c) (x : Qc), m1 = m2 -> x c* m1 = x c* m2.
-  Proof. intros. f_equiv. easy. Qed.
-
-  (** *** rewrite support test (cont.) *)
-  Notation msub := (msub (Aadd:=Qcplus)(Aopp:=Qcopp)).
-  Infix "-" := msub : mat_scope.
-
-  Goal forall r c (m1 m2 m3 m4 : mat r c), m1 = m2 -> m3 = m4 -> m1 - m3 = m2 - m4.
-  Proof. clear. intros. rewrite H,H0. easy. Qed.
-
-End test.
-
-*)

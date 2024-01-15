@@ -469,14 +469,6 @@ Section basic_elementary_fun.
   Fact acos_sqrt3_2 : acos ((sqrt 3) / 2) = PI / 2. Admitted.
   Fact acos_1 : acos 1 = 0. Admitted.
   Fact acos_neg1 : acos (-1) = PI. Admitted.
-  (** acos is injective in its domain *)
-  Fact acos_inj : forall x1 x2 : R,
-      -1 <= x1 <= 1 -> -1 <= x2 <= 1 ->
-      acos x1 = acos x2 -> x1 = x2.
-  Proof.
-    intros. rewrite <- cos_acos; auto.
-    rewrite <- H1. rewrite cos_acos; auto.
-  Qed.
 
   (* Fact atan_0 : atan 0 = 0. Admitted. *)
   Fact atan_sqrt3_3 : atan ((sqrt 3) / 3) = PI / 6. Admitted.
@@ -488,6 +480,24 @@ Section basic_elementary_fun.
   Fact acot_1 : acot 1 = PI. Admitted.
   Fact acot_sqrt3 : acot (sqrt 3) = PI / 3. Admitted.
 
+  (** 补充引理  *)
+
+  (** acos is injective in its domain *)
+  Lemma acos_inj : forall x1 x2 : R,
+      -1 <= x1 <= 1 -> -1 <= x2 <= 1 -> acos x1 = acos x2 -> x1 = x2.
+  Proof.
+    intros. rewrite <- cos_acos; auto.
+    rewrite <- H1. rewrite cos_acos; auto.
+  Qed.
+  
+  (* x < 0 -> acos x = atan ((sqrt (1-x²) / x) + PI *)
+  Lemma acos_atan_neg: forall x : R,
+      x < 0 -> acos x = atan (sqrt (1 - x²) / x) + PI.
+  Proof.
+    intros. replace x with (- (-x))%R; ra.
+    rewrite acos_opp. rewrite Rmult_opp_opp.
+    rewrite Rdiv_opp_r. rewrite atan_opp. rewrite acos_atan; ra.
+  Qed.
 
 End basic_elementary_fun.
 
@@ -532,8 +542,7 @@ Infix "-" := fsub : fun_scope.
 Infix "*" := fmul : fun_scope.
 Notation "/ f" := (finv f) : fun_scope.
 Infix "/" := fdiv : fun_scope.
-Infix "c*" := fcmul : fun_scope.
-Infix "n*" := fnmul : fun_scope.
+Infix "\.*" := fcmul : fun_scope.
 
 
 (** ** 有界函数 *)
@@ -599,7 +608,7 @@ Section fun_op_props.
   Lemma fdiv_ok : forall (u v : tpRFun) (x : R), (u / v) x = (u x / v x)%R.
   Proof. auto. Qed.
 
-  Lemma fcmul_ok : forall (c : R) (u : tpRFun) (x : R), (c c* u) x = (c * u x)%R.
+  Lemma fcmul_ok : forall (c : R) (u : tpRFun) (x : R), (c \.* u) x = (c * u x)%R.
   Proof. auto. Qed.
 
   (** These functions all are proper relation respect to eq *)
@@ -653,10 +662,10 @@ Section fun_op_props.
   Proof. intros. apply fun_eq. intros. rewrite !fmul_ok. unfold fone,fconst. ring. Qed.
 
   (** Properties for real function scalar multiplication *)
-  Lemma fcmul_assoc1 : forall (c d : R) (u : tpRFun), c c* (d c* u) = (c * d) c* u.
+  Lemma fcmul_assoc1 : forall (c d : R) (u : tpRFun), c \.* (d \.* u) = (c * d) \.* u.
   Proof. intros. apply fun_eq. intros. rewrite !fcmul_ok. ring. Qed.
 
-  Lemma fcmul_assoc2 : forall (c : R) (u v : tpRFun), c c* (u * v) = (c c* u) * v.
+  Lemma fcmul_assoc2 : forall (c : R) (u v : tpRFun), c \.* (u * v) = (c \.* u) * v.
   Proof. intros. apply fun_eq. intros. rewrite ?fmul_ok, ?fcmul_ok, ?fmul_ok. ring. Qed.
 
   Lemma fmul_add_distr_l : forall u v w, u * (v + w) = u * v + u * w.

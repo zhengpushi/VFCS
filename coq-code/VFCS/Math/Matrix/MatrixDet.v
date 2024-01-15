@@ -69,7 +69,7 @@ Generalizable Variable A Aadd Azero Aopp Amul Aone Ainv.
 (* 列表的全排列 *)
 
 Section perm.
-  Context {A : Type} {Azero : A} {Altb:A->A->bool}.
+  Context {A : Type} {Azero : A} {Altb : A -> A -> bool}.
 
   (** Get k-th element and remaining elements from a list *)
   Fixpoint pick (l : list A) (k : nat) : A * list A :=
@@ -304,8 +304,8 @@ Section mdet.
          M.12 * M.21 * M.33 + M.12 * M.23 * M.31 + 
          M.13 * M.21 * M.32 - M.13 * M.22 * M.31)%A.
 
-    (** mdet m = mdet3 m *)
-    Lemma mdet_eq_mdet3 : forall m, (mdet m = mdet3 m).
+    (** mdet M = mdet3 M *)
+    Lemma mdet_eq_mdet3 : forall M, (mdet M = mdet3 M).
     Proof. intros. cbv. ring. Qed.
     
     (** |M| <> 0 <-> mdet_exp <> 0 *)
@@ -458,11 +458,11 @@ Section mdetEXPD.
     end.
 (* End mdetEXPD. *)
 
-  Lemma mdetEXPD_eq_mdet_1 : forall (m : @smat A 1), mdetEXPD m = mdet m.
+  Lemma mdetEXPD_eq_mdet_1 : forall (M : @smat A 1), mdetEXPD M = mdet M.
   Proof. intros. cbv. ring. Qed.
 
-  Lemma mdetEXPD_eq_mdet_2 : forall (m : @smat A 2), mdetEXPD m = mdet m.
-  Proof. intros. cbv. rewrite !(mnth_eq_nth_m2f Azero m). ring. Qed.
+  Lemma mdetEXPD_eq_mdet_2 : forall (M : @smat A 2), mdetEXPD M = mdet M.
+  Proof. intros. cbv. rewrite !(mnth_eq_nth_m2f Azero M). ring. Qed.
 
   
   (* M[i,j] = m2f M i j *)
@@ -476,18 +476,18 @@ Section mdetEXPD.
     rewrite !fin_fin2nat in H. auto.
   Qed.
   
-  Lemma mdetEXPD_eq_mdet_3 : forall (m : @smat A 3), mdetEXPD m = mdet m.
-  Proof. intros. cbv. rewrite !(mnth_eq_nth_m2f Azero m). ring. Qed.
+  Lemma mdetEXPD_eq_mdet_3 : forall (M : @smat A 3), mdetEXPD M = mdet M.
+  Proof. intros. cbv. rewrite !(mnth_eq_nth_m2f Azero M). ring. Qed.
 
-  Lemma mdetEXPD_eq_mdet_4 : forall (m : @smat A 4), mdetEXPD m = mdet m.
+  Lemma mdetEXPD_eq_mdet_4 : forall (M : @smat A 4), mdetEXPD M = mdet M.
   Proof.
     intros. cbv.
     (* To speed up the compilation *)
     Admitted.
-    (* rewrite !(mnth_eq_nth_m2f Azero m). ring. *)
+    (* rewrite !(mnth_eq_nth_m2f Azero M). ring. *)
   (* Qed. *)
   
-  Theorem mdetEXPD_eq_mdet : forall {n} (m : @smat A (S n)), mdetEXPD m = mdet m.
+  Theorem mdetEXPD_eq_mdet : forall {n} (M : @smat A (S n)), mdetEXPD M = mdet M.
   Proof.
     intros.
     unfold mdet. unfold mdetEXPD.
@@ -518,13 +518,13 @@ Section mdet_props.
   Notation mat1 := (mat1 (Azero:=Azero) (Aone:=Aone)).
   Notation mdet := (@mdet A Aadd Azero Aopp Amul Aone).
   
-  (* |m\T| = |m| *)
-  Lemma mdet_mtrans : forall {n} (m : smat A n), mdet (m\T) = mdet m.
+  (* |M\T| = |M| *)
+  Lemma mdet_mtrans : forall {n} (M : smat A n), mdet (M\T) = mdet M.
   Proof.
   Admitted.
 
-  (* |m*p| = |m| * |p| *)
-  Lemma mdet_mmul : forall {n} (m p : smat A n), mdet (m * p) = (mdet m * mdet p)%A.
+  (* |M*N| = |M| * |N| *)
+  Lemma mdet_mmul : forall {n} (M N : smat A n), mdet (M * N) = (mdet M * mdet N)%A.
   Proof.
   Admitted.
 

@@ -1750,7 +1750,7 @@ Section Theory.
   Notation "- a" := (Vopp a) : LinearSpace_scope.
   Notation Vsub := (fun a b => a + -b).
   Infix "-" := Vsub : LinearSpace_scope.
-  Infix "c*" := Vcmul : LinearSpace_scope.
+  Infix "\.*" := Vcmul : LinearSpace_scope.
 
 
   (* 0 + v = v  *)
@@ -1790,18 +1790,18 @@ Section Theory.
   Qed.
 
   (* (-1) v = -v *)
-  Theorem LS_cmul_opp1 : forall v : V, (-Aone)%A c* v = (-v)%LS.
+  Theorem LS_cmul_opp1 : forall v : V, (-Aone)%A \.* v = (-v)%LS.
   Proof.
     (* -v is unique *)
     intros.
-    rewrite <- (ls_vopp_uniq_r (v':=(- Aone)%A c* v)); auto.
+    rewrite <- (ls_vopp_uniq_r (v':=(- Aone)%A \.* v)); auto.
     rewrite <- (ls_cmul_1_l v) at 1. rewrite <- ls_cmul_aadd_distr.
     rewrite inverseRight.
     (* 用到下面的定理 *)
   Admitted.
   
   (** 0 * v = 0 *)
-  Theorem LS_cmul_0_l : forall v : V, Azero c* v = Vzero.
+  Theorem LS_cmul_0_l : forall v : V, Azero \.* v = Vzero.
   Proof.
     (* 0 * v = (1 - 1) * v = v + (-v) = 0 *)
     intros. replace Azero with (Aone + (-Aone))%A.
@@ -1811,12 +1811,12 @@ Section Theory.
   Qed.
 
   (* a 0 = 0 *)
-  Theorem LS_cmul_0_r : forall a : A, a c* Vzero = Vzero.
+  Theorem LS_cmul_0_r : forall a : A, a \.* Vzero = Vzero.
   Proof.
   Abort.
 
   (* a<>0 -> v<>0 -> a v <> 0 *)
-  Theorem LS_cmul_neq0 : forall (a : A) (v : V), a <> Azero -> v <> Vzero -> a c* v <> Vzero.
+  Theorem LS_cmul_neq0 : forall (a : A) (v : V), a <> Azero -> v <> Vzero -> a \.* v <> Vzero.
   Proof.
   Abort.
   

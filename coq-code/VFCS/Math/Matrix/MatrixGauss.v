@@ -46,10 +46,10 @@ End LDictNat.
 (* ======================================================================= *)
 (** ** Gauss elimination. *)
 Section GaussElim.
-  Context `{Field} `{@Dec A}.
+  Context `{Field} `{Dec _ (@eq A)}.
 
   (** 初等行变换的操作 *)
-  Inductive RowOp {A:Type} {r:nat} :=
+  Inductive RowOp {A} {r:nat} :=
   | RowOp_Swap (i j : fin r)          (* 交换 i, j 两行，记作 <i,j> *)
   | RowOp_K (i : fin r) (k : A)       (* 用非零数 k 乘以第 i 行，记作 k * i *)
   | RowOp_KAdd (i j : fin r) (k : A)  (* 第 i 行的 k 倍加到第 j 行，记作 j + k * i *)
@@ -66,6 +66,7 @@ Section GaussElim.
   Notation mrowK := (@mrowK _ Amul).
   Notation mrowKAdd := (@mrowKAdd _ Aadd Amul).
   Notation mrow := (@mrow _ Azero).
+  Notation Aeqb := (@Acmpb _ (@eq A) _).
   Notation listFirstNonZero := (@listFirstNonZero A Azero Aeqb).
 
   (* 行变换操作转为矩阵 *)
@@ -88,16 +89,16 @@ Section GaussElim.
          if (fin2nat k) ??<= (fin2nat i)
          then true
          else Aeqb (M $ k $ j) Azero).
-  (* forallb (fun k => Aeqb (m $ k $ j) Azero) (seq (S i) (r - (S i))). *)
+  (* forallb (fun k => Aeqb (M $ k $ j) Azero) (seq (S i) (r - (S i))). *)
 
   (* 第j列的第i行开始往下，第1个不为0的行号 *)
-  Definition firstNonZeroRowIdx {r c} (m:mat A r c) (i:fin r) (j:fin c)
+  Definition firstNonZeroRowIdx {r c} (M : mat A r c) (i : fin r) (j : fin c)
     : option (fin r) :=
     let fix F (fuel:nat) (i0 : fin r) : option (fin r) :=
       match fuel with
       | O => None
       | S fuel' =>
-          if negb (Aeqb (m$i0$j) Azero)
+          if negb (Aeqb (M $ i0 $ j) Azero)
           then Some i0
           else F fuel' (fin2SameRangeSucc i0)
       end in
@@ -127,7 +128,7 @@ Section GaussElim.
                 (* 第j列的第i行以下所有行做 KAdd 变换 *)
                 let params2 : list RowOp * mat r c :=
                   fold_left (fun (p:list RowOp*mat r c) (k:nat) =>
-                               let coef : A := (- (snd p)$k$j / (snd p)$i$j)%A in
+                               let coef : A := (- (snd p) $ k $ j / (snd p) $ i $ j)%A in
                                (* 若元素为0，则不需要变换 *)
                                if (Aeqb coef Azero)
                                then p
@@ -153,7 +154,7 @@ Section GaussElim.
           | None => F params pivots i
           | Some j =>
               let pivotsNew : LDict := ldictAdd (j,i) pivots in
-              let pivot : A := m$i$j in
+              let pivot : A := m $ i $ j in
               (* 若主元不是i，则做一次 rowK 变换 *)
               let params1 : list RowOp * mat r c :=
                 match Aeqb pivot Aone with
@@ -166,7 +167,7 @@ Section GaussElim.
               let params2 : list RowOp * mat r c :=
                 fold_left (
                     fun (p:list RowOp*mat r c) (j':nat) =>
-                      let ele : A := (snd p)$i$j' in
+                      let ele : A := (snd p) $ i $ j' in
                       match Aeqb ele Azero with
                       | true => p
                       | _ =>
@@ -189,7 +190,7 @@ Section GaussElim.
   (* 高斯消元法：计算阶梯形矩阵 *)
 (*  Definition rowEchelon {r c} (m : mat A r c) : (list RowOp * mat A r c) :=
     let fix F (fuel:nat) (params : list RowOp * mat A r c)
-          (i:fin r)(j:fin c) {struct fuel} : list RowOp * mat A r c :=
+          (i : fin r)(j : fin c) {struct fuel} : list RowOp * mat A r c :=
       match fuel with
       | O => params
       | S fuel' =>
@@ -207,8 +208,8 @@ Section GaussElim.
                          mrowSwap (snd params) i i') in
                 (* 第j列的第i行以下所有行做 KAdd 变换 *)
                 let params2 : list RowOp * mat A r c :=
-                  fold_left (fun (p:list RowOp*mat A r c) (k:fin r) =>
-                               let coef : A := (- (snd p)$k$j / (snd p)$i$j)%A in
+                  fold_left (fun (p:list RowOp*mat A r c) (k : fin r) =>
+                               let coef : A := (- (snd p) $ k $ j / (snd p) $ i $ j)%A in
                                (* 若元素为0，则不需要变换 *)
                                if (Aeqb coef Azero)
                                then p
@@ -227,13 +228,17 @@ Section GaussElim.
     F r ([], m) fin0 fin0.
  *)
   Parameter rowEchelon :
-    forall (Aadd:A->A->A)(Azero:A)(Aopp:A->A)(Amul:A->A->A)(Ainv:A->A)(H:@Dec A)
-      {r c} (m : mat A r c), (list (@RowOp A r) * mat A r c).
+    forall (Aadd:A->A->A)(Azero:A)(Aopp:A->A)
+      (Amul:A->A->A)(Ainv:A->A)
+      (H:Dec (@eq A))
+      {r c} (M : mat A r c), (list (@RowOp A r) * mat A r c).
   
   (* 高斯消元法：从阶梯形矩阵计算行最简阶梯形矩阵 *)
   Parameter minRowEchelon :
-    forall (Aadd:A->A->A)(Azero:A)(Aopp:A->A)(Amul:A->A->A)(Aone:A)(Ainv:A->A)(H:@Dec A)
-      {r c} (m : mat A r c), (list (@RowOp A r) * mat A r c).
+    forall (Aadd:A->A->A)(Azero:A)(Aopp:A->A)
+      (Amul:A->A->A)(Aone:A)(Ainv:A->A)
+      (H:Dec (@eq A))
+      {r c} (M : mat A r c), (list (@RowOp A r) * mat A r c).
 
 End GaussElim.
 
@@ -243,8 +248,10 @@ Section test.
   Notation mat1 := (@mat1 Qc 0 1).
   Notation mrowKAdd := (mrowKAdd (Aadd:=Qcplus) (Amul:=Qcmult)).
   Notation firstNonZeroRowIdx := (firstNonZeroRowIdx (Azero:=0)).
-  Notation rowEchelon := (@rowEchelon _ Qcplus 0 Qcopp Qcmult Qcinv Dec_Qc).
-  Notation minRowEchelon := (@minRowEchelon _ Qcplus 0 Qcopp Qcmult 1 Qcinv Dec_Qc).
+  Notation rowEchelon :=
+    (@rowEchelon _ Qcplus 0 Qcopp Qcmult Qcinv Qc_eq_Dec).
+  Notation minRowEchelon :=
+    (@minRowEchelon _ Qcplus 0 Qcopp Qcmult 1 Qcinv Qc_eq_Dec).
 
   (* 测试：将第j列的第i行以下全部化为0 *)
   Section ex1.
@@ -266,14 +273,14 @@ Section test.
      *)
     Let r : nat := 4. Let c : nat := 5.
     Let i : nat := 0. Let j : nat := 0.
-    Let m1 : mat Qc r c :=
+    Let M1 : mat Qc r c :=
         l2m 0
           (Q2Qc_dlist
              [[1;  1; -2;  1;  4];
               [2; -1; -1;  1;  2];
               [2; -3;  1; -1;  2];
               [3;  6; -9;  7;  9]]%Q).
-    Let m2 : mat Qc r c :=
+    Let M2 : mat Qc r c :=
         l2m 0
           (Q2Qc_dlist
              [[1;  1; -2;  1;  4];
@@ -282,11 +289,11 @@ Section test.
               [0;  3; -3;  4; -3]]%Q).
     (* Goal m2l (fold_left *)
     (*             (fun (m:mat _ r c) (k:nat) => *)
-    (*                let coef : Qc := (- m$k$j / m$i$j) in *)
+    (*                let coef : Qc := (- m $ k $ j / m $ i $ j) in *)
     (*                if (Aeqb coef 0) *)
     (*                then m *)
     (*                else mrowKAdd m i k coef) *)
-    (*             (seq (S i) (r-S i)) m1) = m2l m2. *)
+    (*             (seq (S i) (r-S i)) M1) = m2l M2. *)
     (* Proof. cbv. auto. Qed. *)
   End ex1.
 
@@ -304,29 +311,29 @@ Section test.
     
      *)
     Let r : nat := 3. Let c : nat := 3.
-    Let m1 : mat Qc r c :=
+    Let M1 : mat Qc r c :=
         l2m 0
           (Q2Qc_dlist
              [[  2; -1; -1];
               [  1;  1; -2];
               [  4; -6;  2]]%Q).
-    Let m2 : mat Qc r c :=
+    Let M2 : mat Qc r c :=
         l2m 0
           (Q2Qc_dlist
              [[  2;  -1;   -1];
               [  0; 3/2; -3/2];
               [  0;   0;    0]]%Q).
-    Goal m2l (snd (rowEchelon m1)) = m2l m2.
+    Goal m2l (snd (rowEchelon M1)) = m2l M2.
     (* Proof. cbv. auto. Qed. *)
     Abort.
 
-    Let m3 : mat _ r c :=
+    Let M3 : mat _ r c :=
         l2m 0
           (Q2Qc_dlist
              [[  1;  0; -1];
               [  0;  1; -1];
               [  0;  0;  0]]%Q).
-    Goal m2l (snd (minRowEchelon m2)) = m2l m3.
+    Goal m2l (snd (minRowEchelon M2)) = m2l M3.
       (* Proof. cbv. lma; f_equal; apply UIP. Qed. *)
     Abort.
   End ex2.
@@ -344,29 +351,29 @@ Section test.
        [  0;  0; 1/6]]
      *)
     Let r : nat := 3. Let c : nat := 3.
-    Let m1 : mat _ r c :=
+    Let M1 : mat _ r c :=
         l2m 0
           (Q2Qc_dlist
              [[  0; -2;  1];
               [  3;  0; -2];
               [ -2;  3;  0]]%Q).
-    Let m2 : mat _ r c :=
+    Let M2 : mat _ r c :=
         l2m 0
           (Q2Qc_dlist
              [[  3;  0;  -2];
               [  0; -2;   1];
               [  0;  0; 1/6]]%Q).
-    Goal m2l (snd (rowEchelon m1)) = m2l m2.
+    Goal m2l (snd (rowEchelon M1)) = m2l M2.
     (* Proof. cbv. auto. Qed. *)
     Abort.
 
-    Let m3 : mat _ r c :=
+    Let M3 : mat _ r c :=
         l2m 0
           (Q2Qc_dlist
              [[  1;  0; 0];
               [  0;  1; 0];
               [  0;  0; 1]]%Q).
-    Goal m2l (snd (minRowEchelon m2)) = m2l m3.
+    Goal m2l (snd (minRowEchelon M2)) = m2l M3.
       (* Proof. cbv. lma; f_equal; apply UIP. Qed. *)
     Abort.
     
@@ -384,7 +391,7 @@ Section test.
     Goal rowEchelon (@mat1 3) = ([], mat1).
     Proof. cbv. auto. Qed.
 
-    Example m : mat 10 10 :=
+    Example M : mat 10 10 :=
           l2m 0 _ _
             (Q2Qc_dlist
                [[0.1622; 0.4505; 0.1067; 0.4314; 0.853; 0.4173; 0.7803; 0.2348; 0.547; 0.9294];
@@ -399,22 +406,22 @@ Section test.
                 [0.7482; 0.4427; 0.8001; 0.145; 0.24; 0.1112; 0.0598; 0.4509; 0.0811; 0.7948];
                 [0.7482; 0.4427; 0.8001; 0.145; 0.24; 0.1112; 0.0598; 0.4509; 0.0811; 0.7948]]%Q).
     (* time: 0.8s *)
-    (* Time Compute (m2l (snd (rowEchelon(m)))). *)
+    (* Time Compute (m2l (snd (rowEchelon(M)))). *)
 
     (* time: 0.36s *)
-    Time Compute (m2l (snd (minRowEchelon(snd (rowEchelon(m)))))).
+    Time Compute (m2l (snd (minRowEchelon(snd (rowEchelon(M)))))).
   End ex4.
 
   (* 这个例子说明了“阶梯形矩阵的台阶并非一样长”，需要特别考虑 *)
   Section ex5.
     Let r : nat := 3. Let c : nat := 4.
-    Let m1 : mat r c :=
+    Let M1 : mat r c :=
         l2m 0 _ _
           (Q2Qc_dlist
              [[1;1;1;1];
               [0;0;1;1];
               [0;0;0;1]]%Q).
-    Goal m2l (snd (rowEchelon (m1))) = m2l m1.
+    Goal m2l (snd (rowEchelon (M1))) = m2l M1.
     Proof. cbv. auto. Qed.
   End ex5.
   *)

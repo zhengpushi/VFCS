@@ -28,19 +28,19 @@ Open Scope vec_scope.
 (* ######################################################################### *)
 (** * Usage demo *)
 Section test.
-  Let V1 := @l2v 3 (Q2Qc_list [1.5;3#2;(-6/4)%Q]).
-  Let V2 := @f2v 3 (fun i => (Q2Qc 1.5) + nat2Qc i)%Qc.
+  Let u := @l2v 3 (Q2Qc_list [1.5;3#2;(-6/4)%Q]).
+  Let v := @f2v 3 (fun i => (Q2Qc 1.5) + nat2Qc i)%Qc.
   
-  (* Compute v2l V1. *)
-  (* Compute v2l V2. *)
-  (* Compute V1$fin0. *)
-  (* Compute v2l (vmap V1 Qcopp). *)
-  (* Compute v2l (vmap2 V1 V2 Qcplus). *)
-  (* Compute @Vector.v2l _ _ (@Vector.vmap2 _ _ _ pair _ V1 V2). *)
-  (* Compute vsum V1 Qcplus 0. *)
-  (* Compute v2l (V1 + V2). *)
+  (* Compute vl u. *)
+  (* Compute vl v. *)
+  (* Compute u$fin0. *)
+  (* Compute vl (vmap u Qcopp). *)
+  (* Compute vl (vmap2 u v Qcplus). *)
+  (* Compute @Vector.vl _ _ (@Vector.vmap2 _ _ _ pair _ u v). *)
+  (* Compute vsum u Qcplus 0. *)
+  (* Compute vl (u + v). *)
 
-  (* Compute v2l (V1 - V2). *)
-  (* Compute v2l ((Q2Qc 3) c* V1). *)
-  (* Compute <V1,V2>. *)
+  (* Compute vl (u - v). *)
+  (* Compute vl ((Q2Qc 3) c* u). *)
+  (* Compute <u,v>. *)
 End test.

@@ -186,10 +186,6 @@ Global Hint Resolve
   Rabs_pos            (* 0 <= |x| *)
   Rabs_no_R0          (* r <> 0 -> |r| <> 0 *)
   sqrt_pos            (* 0 <= sqrt x *)
-  Rle_0_sqr           (* 0 <= r² *)
-(*   Rsqr_inj            (* 0 <= x -> 0 <= y -> x² = y² -> x = y *) *)
-  Rinv_0_lt_compat    (* 0 < r -> 0 < / r *)
-  Rinv_lt_0_compat    (* r < 0 -> / r < 0 *)
   
   (* inequalities such as "0 <= r1 + r2" *)
   Rplus_le_le_0_compat  (* 0 <= r1 -> 0 <= r2 -> 0 <= r1 + r2 *)
@@ -197,10 +193,15 @@ Global Hint Resolve
   Rplus_le_lt_0_compat  (* 0 <= r1 -> 0 < r2 -> 0 < r1 + r2 *)
   Rplus_lt_0_compat   (* 0 < r1 -> 0 < r2 -> 0 < r1 + r2 *)
 
-  (* inequalities such as "0 <= r1 * r2" *)
-  Rmult_lt_0_compat   (* 0 < r1 -> 0 < r2 -> 0 < r1 * r2 *)
-  Rle_0_sqr           (* 0 <= x² *)
+  (* inequalities such as {0 <= r1*r2, 0 <= /r, 0 <= r1/r2} *)
+  Rle_0_sqr           (* 0 <= r² *)
+(*   Rsqr_inj            (* 0 <= x -> 0 <= y -> x² = y² -> x = y *) *)
   Rsqr_pos_lt         (* x <> 0 -> 0 < x² *)
+  Rmult_lt_0_compat   (* 0 < r1 -> 0 < r2 -> 0 < r1 * r2 *)
+  Rinv_0_lt_compat    (* 0 < r -> 0 < / r *)
+  Rinv_lt_0_compat    (* r < 0 -> / r < 0 *)
+  Rdiv_lt_0_compat    (* 0 < a -> 0 < b -> 0 < a / b *)
+
 
   (* inequalities such as "r1 <= r2" *)
   Rlt_gt              (* r1 < r2 -> r2 > r1 *)  (* THIS IS ALWAYS NEED! *)
@@ -394,6 +395,10 @@ Proof.
   - apply Rabs_left in H0. lra.
   - rewrite Rabs_right in H; auto. lra.
 Qed.
+
+(** x <= 0 -> y <= 0 -> x² = y² -> x = y *)
+Lemma Rsqr_inj_neg : forall x y : R, x <= 0 -> y <= 0 -> x² = y² -> x = y.
+Proof. intros. replace x with (- -x)%R; ra. Qed.
 
 
 (* ======================================================================= *)
@@ -1101,17 +1106,30 @@ End TEST_zero_lt.
 
 (** This property is used in in Complex. Although lra can solve it, but using a 
     special lemma name combined with the match machanism could speed up the proof. *)
+
+
+(** a <> b -> a <= b -> a < b *)
 Lemma Rneq_le_lt : forall a b, a <> b -> a <= b -> a < b.
 Proof. ra. Qed.
 
+(** 0 < r -> 0 < 1 / r *)
 Lemma Rinv1_gt0 : forall r : R, 0 < r -> 0 < 1 / r.
 Proof. cbv. ra. Qed.
 
+(** 0 < a -> b < 0 -> a / b < 0 *)
+Lemma Rdiv_lt_0_compat_l: forall a b : R, 0 < a -> b < 0 -> a / b < 0.
+Proof. intros. unfold Rdiv. assert (/b < 0); ra. Qed.
+
+(** a < 0 -> 0 < b -> a / b < 0 *)
+Lemma Rdiv_lt_0_compat_r: forall a b : R, a < 0 -> 0 < b -> a / b < 0.
+Proof. intros. unfold Rdiv. assert (/b > 0); ra. Qed.
+
 #[export] Hint Resolve
+  Rdiv_lt_0_compat_l
+  Rdiv_lt_0_compat_r
   Rneq_le_lt
   Rinv1_gt0
   : R.
-
 
 
 (* ======================================================================= *)

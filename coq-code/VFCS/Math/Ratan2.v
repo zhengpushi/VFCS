@@ -24,8 +24,7 @@
       atan (y/x) - pi,  x < 0, y < 0
       +pi/2,            x = 0, y > 0
       -pi/2,            x = 0, y < 0
-      undefined,        x = 0, y = 0
-    注意，当 x = 0, y = 0 时，为了某种一致性，定义 undefined 值为 pi/2。
+      undefined,        x = 0, y = 0  (我定义为 +pi/2，所以简化为 x = 0, y >= 0)
     详见 vangle2C 与 vangle2A 的等价性证明。
   * 该定义的值域是(-π,π]，可通过对负数结果加2π的方法，将结果映射到[0,2π)范围。
 
@@ -53,12 +52,9 @@ Definition atan2 (y x : R) : R :=
       then atan (y/x) + PI      (* x < 0, y >= 0 *)
       else atan (y/x) - PI      (* x < 0, y < 0 *)
     else
-      if y >? 0
-      then PI / 2               (* x = 0, y > 0 *)
-      else
-        if y <? 0
-        then - PI / 2           (* x = 0, y < 0 *)
-        else PI/2               (* x = 0, y = 0 *) (* mostly, it is undefined *)
+      if y >=? 0
+      then PI / 2               (* x = 0, y >= 0 *)
+      else - PI / 2             (* x = 0, y < 0 *)
 .
 
 
@@ -78,13 +74,10 @@ Proof. intros. unfold atan2,Rltb,Rleb,Acmpb. destruct_dec; lra. Qed.
 Fact atan2_Xlt0_Ylt0 : forall y x, x < 0 -> y < 0 -> atan2 y x = (atan (y/x) - PI)%R.
 Proof. intros. unfold atan2,Rltb,Rleb,Acmpb. destruct_dec; lra. Qed.
 
-Fact atan2_X0_Ygt0 : forall y x, x = 0 -> y > 0 -> atan2 y x = PI/2.
+Fact atan2_X0_Yge0 : forall y x, x = 0 -> y >= 0 -> atan2 y x = PI/2.
 Proof. intros. unfold atan2,Rltb,Rleb,Acmpb. destruct_dec; lra. Qed.
 
 Fact atan2_X0_Ylt0 : forall y x, x = 0 -> y < 0 -> atan2 y x = - PI/2.
-Proof. intros. unfold atan2,Rltb,Rleb,Acmpb. destruct_dec; lra. Qed.
-
-Fact atan2_X0_Y0 : forall y x, x = 0 -> y = 0 -> atan2 y x = PI/2.
 Proof. intros. unfold atan2,Rltb,Rleb,Acmpb. destruct_dec; lra. Qed.
 
 (** - PI < atan2 y x <= PI *)
@@ -100,11 +93,9 @@ Proof.
       * rewrite atan2_Xlt0_Ylt0; ra.
         assert (y < 0); ra. assert (0 < y/x); ra.
         pose proof (atan_bound_gt0 (y/x)); ra.
-    + assert (x = 0); ra. bdestruct (y >? 0).
-      * rewrite atan2_X0_Ygt0; ra.
-      * bdestruct (y <? 0).
-        ** rewrite atan2_X0_Ylt0; ra.
-        ** rewrite atan2_X0_Y0; ra.
+    + assert (x = 0); ra. bdestruct (0 <=? y).
+      * rewrite atan2_X0_Yge0; ra.
+      * rewrite atan2_X0_Ylt0; ra.
 Qed.
 
 (** An equation about atan2 will be used in the later proof *)
@@ -117,7 +108,7 @@ Proof.
     subst; autorewrite with R.
   - rewrite atan2_X0_Ylt0; ra.
   - rewrite atan2_Xgt0; ra. replace (0/k) with 0; ra. apply atan_0.
-  - rewrite atan2_X0_Ygt0; ra.
+  - rewrite atan2_X0_Yge0; ra.
   - assert (sin a < 0). { apply sin_lt_0_var; lra. }
     assert (cos a < 0).
     { rewrite <- RealFunction.cos_2PI_add. apply cos_lt_0; ra. }
@@ -158,17 +149,12 @@ Lemma atan2_minus_eq : forall x1 y1 x2 y2 : R,
 Admitted.
 
 
-(** 0 < x \/ y <> 0 -> atan2 (- y) x = - atan2 y x *)
-(* Lemma atan2_y_neg : forall x y : R, atan2 (- y) x = (2 * PI - atan2 y x). *)
+(** 0 < x -> y <> 0 -> atan2 (- y) x = - atan2 y x *)
 Lemma atan2_y_neg : forall x y : R,
-    0 < x \/ y <> 0 -> atan2 (- y) x = - atan2 y x.
+    0 < x -> y <> 0 -> atan2 (- y) x = - atan2 y x.
 Proof.
-  intros. unfold atan2. rewrite Ropp_div,atan_opp. bdestruct (x >? 0); ra.
+  intros. unfold atan2. rewrite Ropp_div,atan_opp. bdestruct (0 <? x); auto.
   bdestruct (x <? 0); ra.
-  - bdestruct (0 <=? - y); bdestruct (0 <=? y); ra.
-  - bdestruct (0 <? - y); bdestruct (0 <? y); ra.
-    + bdestruct (y <? 0); ra.
-    + bdestruct (- y <? 0); ra.
 Qed.
   
 

@@ -24,15 +24,15 @@ Module Export VectorTheoryNat := MonoidVectorTheory MonoidElementTypeNat.
 (* ######################################################################### *)
 (** * Usage demo *)
 Section test.
-  Let V1 := @l2v 3 [1;2;3].
-  Let V2 := @f2v 3 (fun i => 5 + i)%nat.
+  Let u := @l2v 3 [1;2;3].
+  Let v := @f2v 3 (fun i => 5 + i)%nat.
   
-  (* Compute v2l V1. *)
-  (* Compute v2l V2. *)
-  (* Compute V1$fin0. *)
-  (* Compute v2l (vmap V1 S). *)
-  (* Compute v2l (vmap2 V1 V2 Nat.add). *)
-  (* Compute @Vector.v2l _ _ (@Vector.vmap2 _ _ _ pair _ V1 V2). *)
-  (* Compute vsum V1 Nat.add 0.  *)
-  (* Compute v2l (V1 + V2). *)
+  (* Compute vl u. *)
+  (* Compute vl v. *)
+  (* Compute u$fin0. *)
+  (* Compute vl (vmap u S). *)
+  (* Compute vl (vmap2 u v Nat.add). *)
+  (* Compute @Vector.vl _ _ (@Vector.vmap2 _ _ _ pair _ u v). *)
+  (* Compute vsum u Nat.add 0.  *)
+  (* Compute vl (u + v). *)
 End test.

@@ -60,8 +60,8 @@ Module BasicMatrixTheory (E : ElementType).
   (* M $ i $ j *)
 
   (** meq and mnth should satisfy this constraint *)
-  Lemma meq_iff_mnth : forall {r c : nat} (M1 M2 : mat r c),
-      M1 = M2 <-> (forall i j, M1 $ i $ j = M2 $ i $ j).
+  Lemma meq_iff_mnth : forall {r c : nat} (M N : mat r c),
+      M = N <-> (forall i j, M $ i $ j = N $ i $ j).
   Proof. intros. apply meq_iff_mnth. Qed.
 
 
@@ -104,24 +104,24 @@ Module BasicMatrixTheory (E : ElementType).
   (** ** Construct matrix with vector and matrix *)
 
   (** Construct a matrix by rows *)
-  Definition mconsr {r c} (V : vec c) (M : mat r c) : mat (S r) c :=
-    mconsr Azero V M.
+  Definition mconsr {r c} (v : vec c) (M : mat r c) : mat (S r) c :=
+    mconsr Azero v M.
 
   (** Construct a matrix by columns *)
-  Definition mconsc {r c} (V : vec r) (M : mat r c) : mat r (S c) :=
-    mconsc Azero V M.
+  Definition mconsc {r c} (v : vec r) (M : mat r c) : mat r (S c) :=
+    mconsc Azero v M.
 
   
   (* ======================================================================= *)
   (** ** Construct matrix with two matrices *)
   
   (** Append matrix by row *)
-  Definition mappr {r1 r2 c} (M1 : mat r1 c) (M2 : mat r2 c) : mat (r1 + r2) c :=
-    mappr (Azero:=Azero) M1 M2.
+  Definition mappr {r1 r2 c} (M : mat r1 c) (N : mat r2 c) : mat (r1 + r2) c :=
+    mappr (Azero:=Azero) M N.
   
   (** Append matrix by column *)
-  Definition mappc {r c1 c2} (M1 : mat r c1) (M2 : mat r c2) : mat r (c1 + c2) :=
-    mappc (Azero:=Azero) M1 M2.
+  Definition mappc {r c1 c2} (M : mat r c1) (N : mat r c2) : mat r (c1 + c2) :=
+    mappc (Azero:=Azero) M N.
 
   
   (* ======================================================================= *)
@@ -163,17 +163,17 @@ Module BasicMatrixTheory (E : ElementType).
   (** ** Mapping of matrix *)
 
   Definition mmap {r c} (f : A -> A) (M : mat r c) : mat r c := mmap f M.
-  Definition mmap2 {r c} (f : A -> A -> A) (M1 M2 : mat r c) : mat r c :=
-    mmap2 f M1 M2.
+  Definition mmap2 {r c} (f : A -> A -> A) (M N : mat r c) : mat r c :=
+    mmap2 f M N.
 
-  Lemma mmap2_comm : forall {r c} (f : A -> A -> A) (M1 M2 : mat r c)
+  Lemma mmap2_comm : forall {r c} (f : A -> A -> A) (M N : mat r c)
                        {Comm : Commutative f}, 
-      mmap2 f M1 M2 = mmap2 f M2 M1.
+      mmap2 f M N = mmap2 f N M.
   Proof. intros. apply mmap2_comm; auto. Qed.
   
-  Lemma mmap2_assoc : forall {r c} (f : A -> A -> A) (M1 M2 M3 : mat r c)
+  Lemma mmap2_assoc : forall {r c} (f : A -> A -> A) (M N O : mat r c)
                         {Assoc : Associative f}, 
-      mmap2 f (mmap2 f M1 M2) M3 = mmap2 f M1 (mmap2 f M2 M3).
+      mmap2 f (mmap2 f M N) O = mmap2 f M (mmap2 f N O).
   Proof. intros. apply mmap2_assoc; auto. Qed.
 
   
@@ -210,7 +210,7 @@ Module BasicMatrixTheory (E : ElementType).
   Proof. intros. apply mtrans_mtrans. Qed.
 
   (** Transpose of a diagonal matrix keep unchanged *)
-  Lemma mtrans_diag : forall {n} (M : smat n), mdiag M -> M\T = M.
+  Lemma mtrans_diag : forall {n} (M : smat n), mdiag M -> M \T = M.
   Proof. intros. apply (mtrans_diag Azero); auto. Qed.
 
 End BasicMatrixTheory.
@@ -234,12 +234,12 @@ Module RingMatrixTheory (E : RingElementType).
   Lemma mat1_diag : forall {n : nat}, mdiag (@mat1 n).
   Proof. intros. apply mat1_diag. Qed.
   
-  (** mat0\T = mat0 *)
-  Lemma mtrans_mat0 : forall {r c : nat}, (@mat0 r c)\T = mat0.
+  (** mat0 \T = mat0 *)
+  Lemma mtrans_mat0 : forall {r c : nat}, (@mat0 r c) \T = mat0.
   Proof. intros. apply mtrans_mat0. Qed.
   
-  (** mat1\T = mat1 *)
-  Lemma mtrans_mat1 : forall {n : nat}, (@mat1 n)\T = mat1.
+  (** mat1 \T = mat1 *)
+  Lemma mtrans_mat1 : forall {n : nat}, (@mat1 n) \T = mat1.
   Proof. intros. apply mtrans_mat1. Qed.
 
   (** mat1[i,i] = 1 *)
@@ -258,27 +258,27 @@ Module RingMatrixTheory (E : RingElementType).
     mtrace M (Aadd:=Aadd) (Azero:=Azero).
   Notation "'tr' M" := (mtrace M) : mat_scope.
 
-  (** tr(m\T) = tr(m) *)
-  Lemma mtrace_mtrans : forall {n} (m : smat n), tr (m\T) = tr(m).
+  (** tr(M \T) = tr(M) *)
+  Lemma mtrace_mtrans : forall {n} (M : smat n), tr (M \T) = tr(M).
   Proof. intros. apply mtrace_mtrans. Qed.
 
 
   (* ======================================================================= *)
   (** ** Matrix addition *)
   
-  Definition madd {r c} (M1 M2 : mat r c) : mat r c := madd M1 M2 (Aadd:=Aadd).
+  Definition madd {r c} (M N : mat r c) : mat r c := madd M N (Aadd:=Aadd).
   Infix "+" := madd : mat_scope.
 
-  (** M1 + M2 = M2 + M1 *)
-  Lemma madd_comm : forall {r c} (M1 M2 : mat r c), M1 + M2 = (M2 + M1).
+  (** M + N = N + M *)
+  Lemma madd_comm : forall {r c} (M N : mat r c), M + N = (N + M).
   Proof. intros. apply madd_comm. Qed.
 
-  (** (M1 + M2) + M3 = M1 + (M2 + M3) *)
-  Lemma madd_assoc : forall {r c} (M1 M2 M3 : mat r c), (M1 + M2) + M3 = M1 + (M2 + M3).
+  (** (M + N) + O = M + (N + O) *)
+  Lemma madd_assoc : forall {r c} (M N O : mat r c), (M + N) + O = M + (N + O).
   Proof. intros. apply madd_assoc. Qed.
 
-  (** (M1 + M2) + M3 = (M1 + M3) + M2 *)
-  Lemma madd_perm : forall {r c} (M1 M2 M3 : mat r c), (M1 + M2) + M3 = (M1 + M3) + M2.
+  (** (M + N) + O = (M + O) + N *)
+  Lemma madd_perm : forall {r c} (M N O : mat r c), (M + N) + O = (M + O) + N.
   Proof. intros. apply madd_perm. Qed.
 
   (** mat0 + M = M *)
@@ -291,16 +291,16 @@ Module RingMatrixTheory (E : RingElementType).
   
   (** Get element of addition with two matrics equal to additon of corresponded 
       elements. *)
-  Lemma mnth_madd : forall {r c} (M1 M2 : mat r c) i j,
-      (M1 + M2)%M $ i $ j = (M1$i$j + M2$i$j)%A.
+  Lemma mnth_madd : forall {r c} (M N : mat r c) i j,
+      (M + N)%M $ i $ j = (M$i$j + N$i$j)%A.
   Proof. intros. unfold madd. apply mnth_madd. Qed.
 
-  (** (M1 + M2)\T = M1\T + M2\T *)
-  Lemma mtrans_madd : forall {r c} (M1 M2 : mat r c), (M1 + M2)\T = M1\T + M2\T.
+  (** (M + N) \T = M \T + N \T *)
+  Lemma mtrans_madd : forall {r c} (M N : mat r c), (M + N) \T = M \T + N \T.
   Proof. intros. apply mtrans_madd. Qed.
 
-  (** tr(M1 + M2) = tr(M1) + tr(M2) *)
-  Lemma mtrace_madd : forall {n} (M1 M2 : smat n), (tr (M1 + M2)%M = tr(M1) + tr(M2))%A.
+  (** tr(M + N) = tr(M) + tr(N) *)
+  Lemma mtrace_madd : forall {n} (M N : smat n), (tr (M + N)%M = tr(M) + tr(N))%A.
   Proof. intros. apply mtrace_madd. Qed.
 
   
@@ -310,7 +310,7 @@ Module RingMatrixTheory (E : RingElementType).
   Proof. apply Monoid_madd. Qed.
 
   Section test.
-    Goal forall r c (M1 M2 : mat r c), mat0 + M1 + M2 + mat0 = M1 + mat0 + M2.
+    Goal forall r c (M N : mat r c), mat0 + M + N + mat0 = M + mat0 + N.
     Proof. monoid. Qed.
   End test.
 
@@ -321,16 +321,16 @@ Module RingMatrixTheory (E : RingElementType).
   Definition mopp {r c} (M : mat r c) : mat r c := mopp M (Aopp:=Aopp).
   Notation "- a" := (mopp a) : mat_scope.
 
-  (** - (M1 + M2) = (-M1) + (-M2) *)
-  Lemma mopp_madd : forall {r c : nat} (M1 M2 : mat r c), - (M1 + M2) = (-M1) + (-M2).
+  (** - (M + N) = (- M) + (- N) *)
+  Lemma mopp_madd : forall {r c : nat} (M N : mat r c), - (M + N) = (- M) + (- N).
   Proof. intros. apply mopp_madd. Qed.
 
-  (** (-M) + M = mat0 *)
-  Lemma madd_mopp_l : forall r c (M : mat r c), (-M) + M = mat0.
+  (** (- M) + M = mat0 *)
+  Lemma madd_mopp_l : forall r c (M : mat r c), (- M) + M = mat0.
   Proof. intros. apply madd_opp_l. Qed.
 
-  (** m + (-m) = mat0 *)
-  Lemma madd_mopp_r : forall r c (M : mat r c), M + (-M) = mat0.
+  (** M + (-M) = mat0 *)
+  Lemma madd_mopp_r : forall r c (M : mat r c), M + (- M) = mat0.
   Proof. intros. apply madd_opp_r. Qed.
 
   (** - (- M) = m *)
@@ -341,40 +341,40 @@ Module RingMatrixTheory (E : RingElementType).
   Lemma mopp_0 : forall {r c}, - (@mat0 r c) = mat0.
   Proof. intros. apply mopp_mat0. Qed.
 
-  (** (- M)\T = - (M\T) *)
-  Lemma mtrans_mopp : forall {r c} (M : mat r c), (- M)\T = - (M\T).
+  (** (- M) \T = - (M \T) *)
+  Lemma mtrans_mopp : forall {r c} (M : mat r c), (- M) \T = - (M \T).
   Proof. intros. apply mtrans_mopp. Qed.
 
   (** tr(- M) = - (tr(m)) *)
-  Lemma mtrace_mopp : forall {n} (M : smat n), mtrace (-M) = (- (mtrace M))%A.
+  Lemma mtrace_mopp : forall {n} (M : smat n), mtrace (- M) = (- (mtrace M))%A.
   Proof. intros. apply mtrace_mopp. Qed.
 
   
   (* ======================================================================= *)
   (** ** Matrix subtraction *)
   
-  Definition msub {r c} (M1 M2 : mat r c) : mat r c :=
-    msub M1 M2 (Aadd:=Aadd)(Aopp:=Aopp).
+  Definition msub {r c} (M N : mat r c) : mat r c :=
+    msub M N (Aadd:=Aadd)(Aopp:=Aopp).
   Infix "-" := msub : mat_scope.
 
-  (** M1 - M2 = M1 + (-M2) *)
-  Lemma msub_rw : forall {r c} (M1 M2 : mat r c), M1 - M2 = M1 + (-M2).
+  (** M - N = M + (- N) *)
+  Lemma msub_rw : forall {r c} (M N : mat r c), M - N = M + (- N).
   Proof. intros. reflexivity. Qed.
 
-  (** M1 - M2 = -(M2 - M1) *)
-  Lemma msub_comm : forall {r c} (M1 M2 : mat r c), M1 - M2 = - (M2 - M1).
+  (** M - N = - (N - M) *)
+  Lemma msub_comm : forall {r c} (M N : mat r c), M - N = - (N - M).
   Proof. intros. apply msub_comm. Qed.
 
-  (** (M1 - M2) - M3 = M1 - (M2 + M3) *)
-  Lemma msub_assoc : forall {r c} (M1 M2 M3 : mat r c), (M1 - M2) - M3 = M1 - (M2 + M3).
+  (** (M - N) - O = M - (N + O) *)
+  Lemma msub_assoc : forall {r c} (M N O : mat r c), (M - N) - O = M - (N + O).
   Proof. intros. apply msub_assoc. Qed.
 
-  (** (M1 + M2) - M3 = M1 + (M2 - M3) *)
-  Lemma msub_assoc1 : forall {r c} (M1 M2 M3 : mat r c), (M1 + M2) - M3 = M1 + (M2 - M3).
+  (** (M + N) - O = M + (N - O) *)
+  Lemma msub_assoc1 : forall {r c} (M N O : mat r c), (M + N) - O = M + (N - O).
   Proof. intros. apply msub_assoc1. Qed.
 
-  (** (M1 - M2) - M3 = M1 - (M3 - M2) *)
-  Lemma msub_assoc2 : forall {r c} (M1 M2 M3 : mat r c), (M1 - M2) - M3 = (M1 - M3) - M2.
+  (** (M - N) - O = M - (O - N) *)
+  Lemma msub_assoc2 : forall {r c} (M N O : mat r c), (M - N) - O = (M - O) - N.
   Proof. intros. apply msub_assoc2. Qed.
 
   (** mat0 - M = - M *)
@@ -389,13 +389,13 @@ Module RingMatrixTheory (E : RingElementType).
   Lemma msub_self : forall {r c} (M : mat r c), M - M = mat0.
   Proof. intros. apply msub_self. Qed.
 
-  (** (M1 - M2)\T = M1\T - M2\T *)
-  Lemma mtrans_msub : forall {r c} (M1 M2 : mat r c), (M1 - M2)\T = M1\T - M2\T.
+  (** (M - N) \T = M \T - N \T *)
+  Lemma mtrans_msub : forall {r c} (M N : mat r c), (M - N) \T = M \T - N \T.
   Proof. intros. apply mtrans_msub. Qed.
 
-  (** tr(M1 - M2) = tr(M1) - tr(M2) *)
-  Lemma mtrace_msub : forall {n} (M1 M2 : smat n),
-      (tr ((M1 - M2)%M) = tr(M1) - tr(M2))%A.
+  (** tr(M - N) = tr(M) - tr(N) *)
+  Lemma mtrace_msub : forall {n} (M N : smat n),
+      (tr ((M - N)%M) = tr(M) - tr(N))%A.
   Proof. intros. apply mtrace_msub. Qed.
 
   
@@ -405,7 +405,7 @@ Module RingMatrixTheory (E : RingElementType).
   Proof. apply AGroup_madd. Qed.
 
   Section test.
-    Goal forall r c (M1 M2 : mat r c), mat0 + M1 + (-M2) + M2 = M1.
+    Goal forall r c (M N : mat r c), mat0 + M + (- N) + N = M.
     Proof.
       intros.
       (* rewrite associative. *)
@@ -422,108 +422,110 @@ Module RingMatrixTheory (E : RingElementType).
 
   (** Scalar multiplication of matrix *)
   Definition mcmul {r c} (a : A) (M : mat r c) : mat r c := mcmul a M (Amul:=Amul).
-  Infix "c*" := mcmul : mat_scope.
+  Infix "\.*" := mcmul : mat_scope.
 
-  (** 0 c* m = mat0 *)
-  Lemma mcmul_0_l : forall {r c} (M : mat r c), Azero c* M = mat0.
+  (** 0 \.* m = mat0 *)
+  Lemma mcmul_0_l : forall {r c} (M : mat r c), Azero \.* M = mat0.
   Proof. intros. apply mcmul_0_l. Qed.
 
-  (** a c* mat0 = mat0 *)
-  Lemma mcmul_0_r : forall {r c} a, a c* (@mat0 r c) = mat0.
+  (** a \.* mat0 = mat0 *)
+  Lemma mcmul_0_r : forall {r c} a, a \.* (@mat0 r c) = mat0.
   Proof. intros. apply mcmul_0_r. Qed.
 
-  (** 1 c* m = m *)
-  Lemma mcmul_1_l : forall {r c} (M : mat r c), Aone c* M = M.
+  (** 1 \.* m = m *)
+  Lemma mcmul_1_l : forall {r c} (M : mat r c), Aone \.* M = M.
   Proof. intros. apply mcmul_1_l. Qed.
 
-  (** a c* mat1 = mdiag([a,a,...]) *)
-  Lemma mcmul_1_r : forall {n} a, a c* (@mat1 n) = mdiagMk (vrepeat a).
+  (** a \.* mat1 = mdiag([a,a,...]) *)
+  Lemma mcmul_1_r : forall {n} a, a \.* (@mat1 n) = mdiagMk (vrepeat a).
   Proof. intros. apply mcmul_1_r. Qed.
 
-  (** a c* (b c* M) = (a * b) c* m *)
-  Lemma mcmul_assoc : forall {r c} (a b : A) (M : mat r c), a c* (b c* M) = (a * b) c* M.
+  (** a \.* (b \.* M) = (a * b) \.* m *)
+  Lemma mcmul_assoc : forall {r c} (a b : A) (M : mat r c),
+      a \.* (b \.* M) = (a * b) \.* M.
   Proof. intros. apply mcmul_assoc. Qed.
 
-  (** a c* (b c* M) = b c* (a c* M) *)
-  Lemma mcmul_perm : forall {r c} (a b : A) (M : mat r c), a c* (b c* M) = b c* (a c* M).
+  (** a \.* (b \.* M) = b \.* (a \.* M) *)
+  Lemma mcmul_perm : forall {r c} (a b : A) (M : mat r c),
+      a \.* (b \.* M) = b \.* (a \.* M).
   Proof. intros. apply mcmul_perm. Qed.
 
-  (** (a + b) c* M = (a c* M) + (b c* M) *)
+  (** (a + b) \.* M = (a \.* M) + (b \.* M) *)
   Lemma mcmul_add_distr : forall {r c} (a b : A) (M : mat r c), 
-      (a + b)%A c* M = (a c* M) + (b c* M).
+      (a + b)%A \.* M = (a \.* M) + (b \.* M).
   Proof. intros. apply mcmul_add_distr. Qed.
 
-  (** a c* (M1 + M2) = (a c* M1) + (a c* M2) *)
-  Lemma mcmul_madd_distr : forall {r c} (a : A) (M1 M2 : mat r c), 
-      a c* (M1 + M2) = (a c* M1) + (a c* M2).
+  (** a \.* (M + N) = (a \.* M) + (a \.* N) *)
+  Lemma mcmul_madd_distr : forall {r c} (a : A) (M N : mat r c), 
+      a \.* (M + N) = (a \.* M) + (a \.* N).
   Proof. intros. apply mcmul_madd_distr. Qed.
   
-  (** (-a) c* M  = - (a c* M) *)
-  Lemma mcmul_opp : forall {r c} a (M : mat r c), (-a)%A c* M = - (a c* M).
+  (** (-a) \.* M  = - (a \.* M) *)
+  Lemma mcmul_opp : forall {r c} a (M : mat r c), (-a)%A \.* M = - (a \.* M).
   Proof. intros. apply mcmul_opp. Qed.
   
-  (** a c* (-M)  = - (a c* M) *)
-  Lemma mcmul_mopp : forall {r c} a (M : mat r c), a c* (-M) = - (a c* M).
+  (** a \.* (- M)  = - (a \.* M) *)
+  Lemma mcmul_mopp : forall {r c} a (M : mat r c), a \.* (- M) = - (a \.* M).
   Proof. intros. apply mcmul_mopp. Qed.
 
-  (** a c* (m1 - m2) = (a c* m1) - (a c* m2) *)
-  Lemma mcmul_msub : forall {r c} a (M1 M2 : mat r c),
-      a c* (M1 - M2) = (a c* M1) - (a c* M2).
+  (** a \.* (M - N) = (a \.* M) - (a \.* N) *)
+  Lemma mcmul_msub : forall {r c} a (M N : mat r c),
+      a \.* (M - N) = (a \.* M) - (a \.* N).
   Proof. intros. apply mcmul_msub. Qed.
 
-  (** (a c* M)\T = a c* (m\T) *)
-  Lemma mtrans_mcmul : forall {r c} (a : A) (M : mat r c), (a c* M)\T = a c* (M\T).
+  (** (a \.* M) \T = a \.* (M \T) *)
+  Lemma mtrans_mcmul : forall {r c} (a : A) (M : mat r c), (a \.* M) \T = a \.* (M \T).
   Proof. intros. apply mtrans_mcmul. Qed.
 
-  (** tr (a c* M) = a * tr (m) *)
-  Lemma mtrace_mcmul : forall {n} (a : A) (M : smat n), (tr (a c* M) = a * tr (M))%A.
+  (** tr (a \.* M) = a * tr (m) *)
+  Lemma mtrace_mcmul : forall {n} (a : A) (M : smat n), (tr (a \.* M) = a * tr (M))%A.
   Proof. intros. apply mtrace_mcmul. Qed.
 
-  (** (M1 <> 0 /\ M2 <> 0 /\ k * M1 = M2) -> k <> 0 *)
-  Lemma mcmul_eq_implfy_not_k0 : forall {r c} (M1 M2 : mat r c) k,
-      M1 <> mat0 -> M2 <> mat0 -> k c* M1 = M2 -> k <> Azero.
+  (** (M <> 0 /\ N <> 0 /\ k * M = N) -> k <> 0 *)
+  Lemma mcmul_eq_implfy_not_k0 : forall {r c} (M N : mat r c) k,
+      M <> mat0 -> N <> mat0 -> k \.* M = N -> k <> Azero.
   Proof. intros. apply mcmul_eq_implfy_not_k0 in H1; auto. Qed.
 
   
   (* ======================================================================= *)
   (** ** Matrix multiplication *)
-  Definition mmul {r c s : nat} (M1 : mat r c) (M2 : mat c s) : mat r s :=
-    mmul M1 M2 (Amul:=Amul)(Azero:=Azero)(Aadd:=Aadd).
+  Definition mmul {r c s : nat} (M : mat r c) (N : mat c s) : mat r s :=
+    mmul M N (Amul:=Amul)(Azero:=Azero)(Aadd:=Aadd).
   Infix "*" := mmul : mat_scope.
 
-  (** (M1 * M2) * M3 = M1 * (M2 * M3) *)
-  Lemma mmul_assoc : forall {r c s t : nat} (M1 : mat r c) (M2 : mat c s) (M3 : mat s t), 
-      (M1 * M2) * M3 = M1 * (M2 * M3).
+  (** (M * N) * O = M * (N * O) *)
+  Lemma mmul_assoc : forall {r c s t : nat} (M : mat r c) (N : mat c s) (O : mat s t), 
+      (M * N) * O = M * (N * O).
   Proof. intros. apply mmul_assoc. Qed.
 
-  (** M1 * (M2 + M3) = M1 * M2 + M1 * M3 *)
-  Lemma mmul_madd_distr_l : forall {r c s : nat} (M1 : mat r c) (M2 M3 : mat c s), 
-      M1 * (M2 + M3) = M1 * M2 + M1 * M3.
+  (** M * (N + O) = M * N + M * O *)
+  Lemma mmul_madd_distr_l : forall {r c s : nat} (M : mat r c) (N O : mat c s), 
+      M * (N + O) = M * N + M * O.
   Proof. intros. apply mmul_madd_distr_l. Qed.
   
-  (** (M1 + M2) * M3 = M1 * M3 + M2 * M3 *)
-  Lemma mmul_madd_distr_r : forall {r c s : nat} (M1 M2 : mat r c) (M3 : mat c s),
-      (M1 + M2) * M3 = M1 * M3 + M2 * M3.
+  (** (M + N) * O = M * O + N * O *)
+  Lemma mmul_madd_distr_r : forall {r c s : nat} (M N : mat r c) (O : mat c s),
+      (M + N) * O = M * O + N * O.
   Proof. intros. apply mmul_madd_distr_r. Qed.
 
-  (** M1 * (M2 - M3) = M1 * M2 - M1 * M3 *)
-  Lemma mmul_msub_distr_l : forall {r c s : nat} (M1 : mat r c) (M2 M3 : mat c s), 
-      M1 * (M2 - M3) = M1 * M2 - M1 * M3.
+  (** M * (N - O) = M * N - M * O *)
+  Lemma mmul_msub_distr_l : forall {r c s : nat} (M : mat r c) (N O : mat c s), 
+      M * (N - O) = M * N - M * O.
   Proof. intros. apply mmul_msub_distr_l. Qed.
   
-  (** (M1 - M2) * M3 = M1 * M3 - M2 * M3 *)
-  Lemma mmul_msub_distr_r : forall {r c s : nat} (M1 M2 : mat r c) (M3 : mat c s),
-      (M1 - M2) * M3 = M1 * M3 - M2 * M3.
+  (** (M - N) * O = M * O - N * O *)
+  Lemma mmul_msub_distr_r : forall {r c s : nat} (M N : mat r c) (O : mat c s),
+      (M - N) * O = M * O - N * O.
   Proof. intros. apply mmul_msub_distr_r. Qed.
 
-  (** (-M1) * M2 = - (M1 * M2) *)
-  Lemma mmul_mopp_l : forall {r c s : nat} (M1 : mat r c) (M2 : mat c s),
-      (-M1) * M2 = - (M1 * M2).
+  (** (- M) * N = - (M * N) *)
+  Lemma mmul_mopp_l : forall {r c s : nat} (M : mat r c) (N : mat c s),
+      (- M) * N = - (M * N).
   Proof. intros. apply mmul_mopp_l. Qed.
 
-  (** M1 * (-M2) = - (M1 * M2) *)
-  Lemma mmul_mopp_r : forall {r c s : nat} (M1 : mat r c) (M2 : mat c s),
-      M1 * (-M2) = - (M1 * M2).
+  (** M * (- N) = - (M * N) *)
+  Lemma mmul_mopp_r : forall {r c s : nat} (M : mat r c) (N : mat c s),
+      M * (- N) = - (M * N).
   Proof. intros. apply mmul_mopp_r. Qed.
 
   (** mat0 * M = mat0 *)
@@ -542,24 +544,24 @@ Module RingMatrixTheory (E : RingElementType).
   Lemma mmul_1_r : forall {r c : nat} (M : mat r c), M * mat1 = M.
   Proof. intros. apply mmul_1_r. Qed.
 
-  (** a c* (M1 * M2) = (a c* M1) * M2. *)
-  Lemma mmul_mcmul_l : forall {r c s} (a : A) (M1 : mat r c) (M2 : mat c s), 
-      (a c* M1) * M2 = a c* (M1 * M2).
+  (** a \.* (M * N) = (a \.* M) * N. *)
+  Lemma mmul_mcmul_l : forall {r c s} (a : A) (M : mat r c) (N : mat c s), 
+      (a \.* M) * N = a \.* (M * N).
   Proof. intros. apply mmul_mcmul_l. Qed.
   
-  (** a c* (M1 * M2) = M1 * (a c* M2) *)
-  Lemma mmul_mcmul_r : forall {r c s} (a : A) (M1 : mat r c) (M2 : mat c s), 
-      M1 * (a c* M2) = a c* (M1 * M2).
+  (** a \.* (M * N) = M * (a \.* N) *)
+  Lemma mmul_mcmul_r : forall {r c s} (a : A) (M : mat r c) (N : mat c s), 
+      M * (a \.* N) = a \.* (M * N).
   Proof. intros. apply mmul_mcmul_r. Qed.
   
-  (** (M1 * M2)\T = M2\T * M1\T *)
-  Lemma mtrans_mmul : forall {r c s} (M1 : mat r c) (M2 : mat c s),
-      (M1 * M2)\T = M2\T * M1\T.
+  (** (M * N) \T = N \T * M \T *)
+  Lemma mtrans_mmul : forall {r c s} (M : mat r c) (N : mat c s),
+      (M * N) \T = N \T * M \T.
   Proof. intros. apply mtrans_mmul. Qed.
 
-  (** tr (M1 * M2) = tr (M2 * M1) *)
-  Lemma mtrace_mmul : forall {r c} (M1 : mat r c) (M2 : mat c r),
-      tr (M1 * M2) = tr (M2 * M1).
+  (** tr (M * N) = tr (N * M) *)
+  Lemma mtrace_mmul : forall {r c} (M : mat r c) (N : mat c r),
+      tr (M * N) = tr (N * M).
   Proof. intros. apply mtrace_mmul. Qed.
 
   
@@ -573,7 +575,7 @@ Module RingMatrixTheory (E : RingElementType).
       element i,j is the product of elements i,j of the original two matrices.
 
       The hardmard product is associative, distribute and commutative *)
-  (* Definition mhp {n : nat} (M1 M2 : smat n) : smat n := mhp m1 m2 (Amul:=Amul). *)
+  (* Definition mhp {n : nat} (M N : smat n) : smat n := mhp m1 m2 (Amul:=Amul). *)
   (* Infix "⦿" := mhp : mat_scope. *)
 
   
@@ -583,13 +585,13 @@ Module RingMatrixTheory (E : RingElementType).
   (** Determinant of a square matrix *)
   Definition mdet {n} (M : smat n) : A := @mdet _ Aadd Azero Aopp Amul Aone _ M.
 
-  (* |M\T| = |M| *)
-  Lemma mdet_mtrans : forall {n} (M : smat n), (mdet (M\T) = mdet M)%A.
+  (* |M \T| = |M| *)
+  Lemma mdet_mtrans : forall {n} (M : smat n), (mdet (M \T) = mdet M)%A.
   Proof. intros. apply mdet_mtrans. Qed.
 
-  (* |M1*M2| = |M1| * |M2| *)
-  Lemma mdet_mmul : forall {n} (M1 M2 : smat n),
-      (mdet (M1 * M2)%M = mdet M1 * mdet M2)%A.
+  (* |M*N| = |M| * |N| *)
+  Lemma mdet_mmul : forall {n} (M N : smat n),
+      (mdet (M * N)%M = mdet M * mdet N)%A.
   Proof. intros. apply mdet_mmul. Qed.
 
   (* |mat1| = 1 *)
@@ -639,7 +641,8 @@ Module RingMatrixTheory (E : RingElementType).
   (** ** Adjoint matrix (Adjugate matrix, adj(A), A* ) *)
   
   (** Adjoint matrix: adj(A)[i,j] = algebraic remainder of A[i,j]. *)
-  Definition madj {n} (M : smat n) : smat n := @madj _ Aadd Azero Aopp Amul Aone _ M.
+  Definition madj {n} (M : smat n) : smat n :=
+    @madj _ Aadd Azero Aopp Amul Aone _ M.
 
 
   (* ======================================================================= *)
@@ -658,9 +661,9 @@ Module RingMatrixTheory (E : RingElementType).
       minvertible M <-> mdet M <> Azero.
   Proof. intros. apply minvertible_iff_mdet_neq0. Qed.
 
-  (** invertible M -> invertible (M\T) *)
+  (** invertible M -> invertible (M \T) *)
   Lemma minvertible_mtrans : forall n (M : smat n),
-      minvertible M -> minvertible (M\T).
+      minvertible M -> minvertible (M \T).
   Proof. intros. apply minvertible_mtrans; auto. Qed.
 
   (** invertible M -> invertible N -> invertible (M * N) *)
@@ -683,17 +686,17 @@ Module FieldMatrixTheory (E : FieldElementType).
 
   (** k * M = 0 -> (k = 0) \/ (M = 0) *)
   Lemma mcmul_eq0_imply_m0_or_k0 : forall {r c} (M : mat r c) k,
-      k c* M = mat0 -> (k = Azero)%A \/ (M = mat0).
+      k \.* M = mat0 -> (k = Azero)%A \/ (M = mat0).
   Proof. intros. apply mcmul_eq0_imply_m0_or_k0; auto. Qed.
 
   (** (M <> 0 /\ k * M = 0) -> M = 0 *)
   Lemma mcmul_mnonzero_eq0_imply_k0 : forall {r c} (M : mat r c) k,
-      M <> mat0 -> k c* M = mat0 -> (k = Azero)%A.
+      M <> mat0 -> k \.* M = mat0 -> (k = Azero)%A.
   Proof. intros. apply mcmul_mnonzero_eq0_imply_k0 with (M:=M); auto. Qed.
 
   (** k * M = M -> k = 1 \/ M = 0 *)
   Lemma mcmul_same_imply_coef1_or_mzero : forall {r c} k (M : mat r c),
-      k c* M = M -> (k = Aone)%A \/ (M = mat0).
+      k \.* M = M -> (k = Aone)%A \/ (M = mat0).
   Proof. intros. apply mcmul_same_imply_coef1_or_mzero; auto. Qed.
 
 
@@ -720,47 +723,48 @@ Module FieldMatrixTheory (E : FieldElementType).
   Definition minv {n} (M : smat n) := @minvAM _ Aadd Azero Aopp Amul Aone Ainv _ M.
   Notation "M \-1" := (minv M) : mat_scope.
 
-  (** M * N = mat1 <-> M\-1 = N *)
+  (** M * N = mat1 <-> M \-1 = N *)
   Lemma mmul_eq1_iff_minv_l : forall {n} (M N : smat n),
       M * N = mat1 <-> minv M = N.
   Proof. intros. apply AM_mmul_eq1_iff_minv_l; auto. Qed.
 
-  (** M * N = mat1 <-> M\-1 = M *)
+  (** M * N = mat1 <-> M \-1 = M *)
   Lemma mmul_eq1_iff_minv_r : forall {n} (M N : smat n),
       M * N = mat1 <-> minv N = M.
   Proof. intros. apply AM_mmul_eq1_iff_minv_r; auto. Qed.
 
-  (** invertible M -> invertible (M\-1) *)
-  Lemma minvertible_inv : forall {n} (M : smat n), minvertible M -> minvertible (M\-1).
+  (** invertible M -> invertible (M \-1) *)
+  Lemma minvertible_inv : forall {n} (M : smat n),
+      minvertible M -> minvertible (M \-1).
   Proof. intros. apply AM_minv_invertible; auto. Qed.
 
-  (** M\-1 * M = mat1 *)
+  (** M \-1 * M = mat1 *)
   Lemma mmul_minv_l : forall n (M : smat n), (minv M) * M = mat1.
   Proof. intros. apply AM_mmul_minv_l. Qed.
   
-  (** M * M\-1 = mat1 *)
-  Lemma mmul_minv_r : forall n (M : smat n), M * M\-1 = mat1.
+  (** M * M \-1 = mat1 *)
+  Lemma mmul_minv_r : forall n (M : smat n), M * M \-1 = mat1.
   Proof. intros. apply AM_mmul_minv_r. Qed.
 
-  (** mat1\-1 = mat1 *)
+  (** mat1 \-1 = mat1 *)
   Lemma minv_1 : forall n, @minv n mat1 = mat1.
   Proof. intros. apply AM_minv_mat1. Qed.
 
-  (** M\-1\-1 = M *)
-  Lemma minv_minv : forall n (M : smat n), minvertible M -> M\-1\-1 = M.
+  (** M \-1 \-1 = M *)
+  Lemma minv_minv : forall n (M : smat n), minvertible M -> M \-1 \-1 = M.
   Proof. intros. apply AM_minv_minv; auto. Qed.
 
-  (** (M * N)\-1 = N\-1 * M\-1 *)
+  (** (M * N) \-1 = N \-1 * M \-1 *)
   Lemma minv_mmul : forall n (M N : smat n),
-      minvertible M -> minvertible N -> (M * N)\-1 = N\-1 * M\-1.
+      minvertible M -> minvertible N -> (M * N) \-1 = N \-1 * M \-1.
   Proof. intros. apply AM_minv_mmul; auto. Qed.
 
-  (** (M\T)\-1 = (M\-1)\T *)
-  Lemma minv_mtrans : forall n (M : smat n), minvertible M -> (M\T)\-1 = (M\-1)\T.
+  (** (M \T) \-1 = (M \-1) \T *)
+  Lemma minv_mtrans : forall n (M : smat n), minvertible M -> (M \T) \-1 = (M \-1) \T.
   Proof. intros. apply AM_minv_mtrans; auto. Qed.
   
-  (** mdet (M\-1) = 1 / (|M|) *)
-  Lemma mdet_minv : forall {n} (M : smat n), (mdet (M\-1) = Aone / (mdet M))%A.
+  (** mdet (M \-1) = 1 / (|M|) *)
+  Lemma mdet_minv : forall {n} (M : smat n), (mdet (M \-1) = Aone / (mdet M))%A.
   Proof. intros. apply AM_mdet_minv; auto. Qed.
   
 
@@ -801,31 +805,31 @@ Module FieldMatrixTheory (E : FieldElementType).
 
   (** An orthogonal matrix *)
   Definition morth {n} (M : smat n) : Prop :=
-   (@morth _ Aadd Azero Amul Aone _ M).
+    (@morth _ Aadd Azero Amul Aone _ M).
 
   (** orthogonal M -> invertible M *)
   Lemma morth_invertible : forall {n} (M : smat n),
       morth M -> minvertible M.
   Proof. intros. apply morth_invertible; auto. Qed.
 
-  (** orthogonal M -> M\-1 = M\T *)
+  (** orthogonal M -> M \-1 = M \T *)
   Lemma morth_imply_inv_eq_trans : forall {n} (M : smat n),
-      morth M -> M\-1 = M\T.
+      morth M -> M \-1 = M \T.
   Proof. intros. apply morth_imply_inv_eq_trans; auto. Qed.
 
-  (** M\-1 = M\T -> orthogonal M *)
+  (** M \-1 = M \T -> orthogonal M *)
   Lemma minv_eq_trans_imply_morth : forall {n} (M : smat n),
-      M\-1 = M\T -> morth M.
+      M \-1 = M \T -> morth M.
   Proof. intros. apply minv_eq_trans_imply_morth; auto. Qed.
 
-  (** orthogonal M <-> M\T * M = mat1 *)
+  (** orthogonal M <-> M \T * M = mat1 *)
   Lemma morth_iff_mul_trans_l : forall {n} (M : smat n),
-      morth M <-> M\T * M = mat1.
+      morth M <-> M \T * M = mat1.
   Proof. intros. apply morth_iff_mul_trans_l; auto. Qed.
 
-  (** orthogonal M <-> M * M\T = mat1 *)
+  (** orthogonal M <-> M * M \T = mat1 *)
   Lemma morth_iff_mul_trans_r : forall {n} (M : smat n),
-      morth M <-> M * M\T = mat1.
+      morth M <-> M * M \T = mat1.
   Proof. intros. apply morth_iff_mul_trans_r; auto. Qed.
 
   (** orthogonal mat1 *)
@@ -837,12 +841,12 @@ Module FieldMatrixTheory (E : FieldElementType).
       morth M -> morth N -> morth (M * N).
   Proof. intros. apply morth_mul; auto. Qed.
 
-  (** orthogonal M -> orthogonal M\T *)
-  Lemma morth_mtrans : forall {n} (M : smat n), morth M -> morth (M\T).
+  (** orthogonal M -> orthogonal M \T *)
+  Lemma morth_mtrans : forall {n} (M : smat n), morth M -> morth (M \T).
   Proof. intros. apply morth_mtrans; auto. Qed.
 
-  (** orthogonal M -> orthogonal M\-1 *)
-  Lemma morth_minv : forall {n} (M : smat n), morth M -> morth (M\-1).
+  (** orthogonal M -> orthogonal M \-1 *)
+  Lemma morth_minv : forall {n} (M : smat n), morth M -> morth (M \-1).
   Proof. intros. apply morth_minv; auto. Qed.
 
   (** orthogonal M -> |M| = ± 1 *)
@@ -894,10 +898,10 @@ Module FieldMatrixTheory (E : FieldElementType).
   Theorem Group_GOn : forall n, Group (@GOn_mul n) GOn_1 GOn_inv.
   Proof. intros. apply Group_GOn. Qed.
 
-  (** M\-1 = M\T *)
+  (** M \-1 = M \T *)
   Lemma GOn_imply_inv_eq_trans : forall {n} (x : GOn n),
       let M := GOn_mat n x in
-      M\-1 = M\T.
+      M \-1 = M \T.
   Proof. intros. apply GOn_imply_inv_eq_trans. Qed.
 
   
@@ -941,10 +945,10 @@ Module FieldMatrixTheory (E : FieldElementType).
   Theorem Group_SOn : forall n, Group (@SOn_mul n) SOn_1 SOn_inv.
   Proof. intros. apply Group_SOn. Qed.
 
-  (** M\-1 = M\T *)
+  (** M \-1 = M \T *)
   Lemma SOn_imply_inv_eq_trans : forall {n} (x : SOn n),
       let M := GOn_mat n x in
-      M\-1 = M\T.
+      M \-1 = M \T.
   Proof. intros. apply SOn_imply_inv_eq_trans. Qed.
   
 End FieldMatrixTheory.

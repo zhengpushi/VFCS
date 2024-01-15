@@ -27,14 +27,14 @@ Open Scope vec_scope.
 (* ######################################################################### *)
 (** * Usage demo *)
 Section test.
-  Let V1 := @l2v 3 [1.5;3/2;6/4].
-  Let V2 := @f2v 3 (fun i => -1 + nat2Q i)%Q.
+  Let u := @l2v 3 [1.5;3/2;6/4].
+  Let v := @f2v 3 (fun i => -1 + nat2Q i)%Q.
   
-  (* Compute v2l V1. *)
-  (* Compute v2l V2. *)
-  (* Compute V1$fin0. *)
-  (* Compute v2l (vmap V1 Qopp). *)
-  (* Compute v2l (vmap2 V1 V2 Qplus). *)
-  (* Compute @Vector.v2l _ _ (@Vector.vmap2 _ _ _ pair _ V1 V2). *)
-  (* Compute vsum V1 Qplus 0. *)
+  (* Compute vl u. *)
+  (* Compute vl v. *)
+  (* Compute u$fin0. *)
+  (* Compute vl (vmap u Qopp). *)
+  (* Compute vl (vmap2 u v Qplus). *)
+  (* Compute @Vector.vl _ _ (@Vector.vmap2 _ _ _ pair _ u v). *)
+  (* Compute vsum u Qplus 0. *)
 End test.
