@@ -153,8 +153,8 @@ Admitted.
 Lemma atan2_y_neg : forall x y : R,
     0 < x -> y <> 0 -> atan2 (- y) x = - atan2 y x.
 Proof.
-  intros. unfold atan2. rewrite Ropp_div,atan_opp. bdestruct (0 <? x); auto.
-  bdestruct (x <? 0); ra.
+  intros. unfold atan2. rewrite Rdiv_opp_l. rewrite atan_opp.
+  bdestruct (0 <? x); auto. bdestruct (x <? 0); ra.
 Qed.
   
 

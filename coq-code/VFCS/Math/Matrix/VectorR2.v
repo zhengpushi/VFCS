@@ -283,7 +283,7 @@ Section vangle2.
             rewrite vcross2_ge0_eq; ra.
           * (* u × v < 0*)
             rewrite vcross2_lt0_eq; ra.
-            rewrite Ropp_div. rewrite atan_opp. auto.
+            rewrite Rdiv_opp_l. rewrite atan_opp. auto.
         + (* <u, v> < 0 *)
           rewrite acos_div_dot_lt0_eq; ra.
           bdestruct (0 <=? vcross2 u v).
@@ -291,7 +291,7 @@ Section vangle2.
             rewrite atan2_Xlt0_Yge0; ra. rewrite vcross2_ge0_eq; ra.
           * (* u × v < 0*)
             rewrite atan2_Xlt0_Ylt0; ra. rewrite vcross2_lt0_eq; ra.
-            rewrite Ropp_div. rewrite atan_opp. ring.
+            rewrite Rdiv_opp_l. rewrite atan_opp. ring.
     Qed.
 
     ?

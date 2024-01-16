@@ -93,16 +93,20 @@ Section deriv_rules.
   Lemma deriv_fdiv : forall (u v : tpRFun),
       (forall t, v t <> 0) -> derivable u -> derivable v ->
       (u / v)' = (u ' * v - u * v ') / (v * v).
-  Proof. intros. apply fun_eq. intros. repeat rewrite ?fdiv_ok, ?fmul_ok, ?fsub_ok.
-         unfold fdiv. replace (u * / v) with (fun x => u x / v x)%R; auto.
-         rewrite Derive_div; auto. f_equal. ra. Qed.
+  Proof.
+    intros. apply fun_eq. intros. repeat rewrite ?fdiv_ok, ?fmul_ok, ?fsub_ok.
+    unfold fdiv. replace (u * / v) with (fun x => u x / v x)%R; auto.
+    rewrite Derive_div; auto. f_equal. ra.
+  Qed.
 
   Lemma deriv_finv : forall (v : tpRFun),
       (forall t, v t <> 0) -> derivable v ->
       (/v) ' = - ((v ') / (v * v)).
-  Proof. intros. apply fun_eq. intros. rewrite fopp_ok,fdiv_ok,fmul_ok.
-         unfold finv. rewrite Derive_inv; auto.
-         rewrite Ropp_div. repeat f_equal; try easy. ra. Qed.
+  Proof.
+    intros. apply fun_eq. intros. rewrite fopp_ok,fdiv_ok,fmul_ok.
+    unfold finv. rewrite Derive_inv; auto.
+    rewrite Rdiv_opp_l. repeat f_equal; try easy. ra.
+  Qed.
   
 End deriv_rules.
 

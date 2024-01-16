@@ -252,6 +252,6 @@ Qed.
 (* i < n -> (m * n + i) % n = i *)
 Lemma add_mul_mod : forall m n i, n <> 0 -> i < n -> (m * n + i) mod n = i.
 Proof.
-  intros. rewrite Nat.add_mod; auto. rewrite Nat.mod_mul; auto.
+  intros. rewrite Nat.Div0.add_mod; auto. rewrite Nat.Div0.mod_mul; auto.
   repeat rewrite Nat.mod_small; auto.
 Qed.

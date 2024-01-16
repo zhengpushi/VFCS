@@ -121,32 +121,32 @@ not_all_not_ex: forall (U : Type) (P : U -> Prop), ~ (forall n : U, ~ P n) -> ex
 
   (** These lemmas needn't axiom *)
 
-  Let all_not_not_ex:
-    forall (U : Type) (P : U -> Prop), (forall n : U, ~ P n) -> ~ (exists n : U, P n).
+  Lemma my_all_not_not_ex : forall (U : Type) (P : U -> Prop),
+      (forall n : U, ~ P n) -> ~ (exists n : U, P n).
   Proof. intros. intro. destruct H0. specialize (H x). easy. Qed.
   
-  Let ex_not_not_all: forall (U : Type) (P : U -> Prop),
+  Lemma my_ex_not_not_all : forall (U : Type) (P : U -> Prop),
       (exists n : U, ~ P n) -> ~ (forall n : U, P n).
   Proof. intros. intro. destruct H. specialize (H0 x). easy. Qed.
 
   (** These lemmas need axiom in Classic Logic *)
 
-  Let reverse_proof : forall P Q : Prop, (~Q -> ~P) -> (P -> Q).
+  Lemma my_reverse_proof : forall P Q : Prop, (~Q -> ~P) -> (P -> Q).
   Proof. Abort.
   
-  Let not_ex_not_all:
+  Lemma my_not_ex_not_all:
     forall (U : Type) (P : U -> Prop), ~ (exists n : U, ~ P n) -> forall n : U, P n.
   Proof. Abort.
 
-  Let not_ex_all_not:
+  Lemma my_not_ex_all_not:
     forall (U : Type) (P : U -> Prop), ~ (exists n : U, P n) -> forall n : U, ~ P n.
   Proof. Abort.
   
-  Let not_all_ex_not: forall (U : Type) (P : U -> Prop),
+  Lemma my_not_all_ex_not: forall (U : Type) (P : U -> Prop),
       ~ (forall n : U, P n) -> exists n : U, ~ P n.
   Proof. Abort.
 
-  Let not_all_not_ex: forall (U : Type) (P : U -> Prop),
+  Lemma my_not_all_not_ex: forall (U : Type) (P : U -> Prop),
       ~ (forall n : U, ~ P n) -> exists n : U, P n.
   Proof. Abort.
   

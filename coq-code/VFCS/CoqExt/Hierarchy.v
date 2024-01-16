@@ -387,8 +387,8 @@ Class Surjective {A B} (phi: A -> B) := {
 (** ** Class *)
 
 Class Bijective {A B} (phi: A -> B) := {
-    bijInjective :> Injective phi;
-    bijSurjective :> Surjective phi
+    bijInjective :: Injective phi;
+    bijSurjective :: Surjective phi
   }.
 
 (** ** Instances *)
@@ -524,7 +524,7 @@ Class Isomorphism2 {A B} (fa ga : A -> A -> A) (fb gb : B -> B -> B) := {
 
 (** ** Class *)
 Class SGroup {A} (Aadd : A -> A -> A) := {
-    sgroupAssoc :> Associative Aadd;
+    sgroupAssoc :: Associative Aadd;
   }.
 
 (** Get parameter of this structure *)
@@ -551,8 +551,8 @@ End Instances.
 
 (** ** Class *)
 Class ASGroup {A} (Aadd : A -> A -> A) := {
-    asgroupSGroup :> SGroup Aadd;
-    asgroupComm :> Commutative Aadd
+    asgroupSGroup :: SGroup Aadd;
+    asgroupComm :: Commutative Aadd
   }.
 
 (** Get parameter of this structure *)
@@ -726,10 +726,10 @@ End test.
 
 (** ** Class *)
 Class Monoid {A} (Aadd : A -> A -> A) (Azero : A) := {
-    monoidAssoc :> Associative Aadd;
-    monoidIdL :> IdentityLeft Aadd Azero;
-    monoidIdR :> IdentityRight Aadd Azero;
-    monoidSGroup :> SGroup Aadd
+    monoidAssoc :: Associative Aadd;
+    monoidIdL :: IdentityLeft Aadd Azero;
+    monoidIdR :: IdentityRight Aadd Azero;
+    monoidSGroup :: SGroup Aadd
   }.
 
 (** Get parameter of a monoid *)
@@ -837,9 +837,9 @@ End Examples.
 
 (** ** Class *)
 Class AMonoid {A} Aadd Azero := {
-    amonoidMonoid :> @Monoid A Aadd Azero;
-    amonoidComm :> Commutative Aadd;
-    amonoidASGroup :> ASGroup Aadd
+    amonoidMonoid :: @Monoid A Aadd Azero;
+    amonoidComm :: Commutative Aadd;
+    amonoidASGroup :: ASGroup Aadd
   }.
 
 (** ** Instances *)
@@ -901,9 +901,9 @@ End Examples.
 (** ** Class *)
 (* Notice that, this is a one-sided definition, it is equivalence to double-sided *)
 Class Group {A} Aadd Azero (Aopp : A -> A) := {
-    groupMonoid :> Monoid Aadd Azero;
-    groupInvL :> InverseLeft Aadd Azero Aopp;
-    groupInvR :> InverseRight Aadd Azero Aopp;
+    groupMonoid :: Monoid Aadd Azero;
+    groupInvL :: InverseLeft Aadd Azero Aopp;
+    groupInvR :: InverseRight Aadd Azero Aopp;
   }.
 
 (** ** Instances *)
@@ -1242,9 +1242,9 @@ End Examples.
 (** ** Definition and theory *)
 
 Class AGroup {A} Aadd (Azero:A) Aopp := {
-    agroupGroup :> Group Aadd Azero Aopp;
-    agroupAM :> AMonoid Aadd Azero;
-    agroupComm :> Commutative Aadd;
+    agroupGroup :: Group Aadd Azero Aopp;
+    agroupAM :: AMonoid Aadd Azero;
+    agroupComm :: Commutative Aadd;
   }.
 
 Section Theory.
@@ -1304,10 +1304,10 @@ End Instances.
 (** ** Class *)
 
 Class SemiRing {A} Aadd (Azero:A) Amul Aone := {
-    sringAddAM :> AMonoid Aadd Azero; (* 不确定交换性是否必要，姑且先留下 *)
-    sringMulAM :> AMonoid Amul Aone; (* 不确定交换性是否必要，姑且先留下 *)
-    sringDistrL :> DistributiveLeft Aadd Amul;
-    sringDistrR :> DistributiveRight Aadd Amul;
+    sringAddAM :: AMonoid Aadd Azero; (* 不确定交换性是否必要，姑且先留下 *)
+    sringMulAM :: AMonoid Amul Aone; (* 不确定交换性是否必要，姑且先留下 *)
+    sringDistrL :: DistributiveLeft Aadd Amul;
+    sringDistrR :: DistributiveRight Aadd Amul;
   }.
 
 (** ** Instances *)
@@ -1356,10 +1356,10 @@ End Examples.
    We will distinguish ring and abelian ring with class name Ring and ARing.  *)
 
 Class Ring {A} Aadd (Azero:A) Aopp Amul Aone := {
-    ringAddAG :> AGroup Aadd Azero Aopp;
-    ringMulM :> Monoid Amul Aone;
-    ringDistrL :> DistributiveLeft Aadd Amul;
-    ringDistrR :> DistributiveRight Aadd Amul;
+    ringAddAG :: AGroup Aadd Azero Aopp;
+    ringMulM :: Monoid Amul Aone;
+    ringDistrL :: DistributiveLeft Aadd Amul;
+    ringDistrR :: DistributiveRight Aadd Amul;
   }.
 
 (** ** Instances *)
@@ -1408,9 +1408,9 @@ End Examples.
 (** ** Class *)
 
 Class ARing {A} Aadd Azero Aopp Amul Aone := {
-    aringRing :> @Ring A Aadd Azero Aopp Amul Aone;
-    aringMulComm :> Commutative Amul;
-    aringASGroup :> ASGroup Amul
+    aringRing :: @Ring A Aadd Azero Aopp Amul Aone;
+    aringMulComm :: Commutative Amul;
+    aringASGroup :: ASGroup Amul
   }.
 
 (** ** Instances *)
@@ -1564,7 +1564,7 @@ End Demo_ConcrateRing.
 (** ** Class *)
 Class Field {A} Aadd (Azero:A) Aopp Amul Aone Ainv := {
     (** Field: ARing + mult inversion + (1≠0) *)
-    fieldRing :> ARing Aadd Azero Aopp Amul Aone;
+    fieldRing :: ARing Aadd Azero Aopp Amul Aone;
     field_mulInvL : forall a, a <> Azero -> Amul (Ainv a) a = Aone;
     field_1_neq_0 : Aone <> Azero;
   }.
@@ -1703,10 +1703,10 @@ End Examples.
 (** ** Class *)
 Class LinearSpace `{F : Field} {V : Type}
   (Vadd : V -> V -> V) (Vzero : V) (Vopp : V -> V) (Vcmul : A -> V -> V) := {
-    ls_addC :> Commutative Vadd;
-    ls_addA :> Associative Vadd;
-    ls_add_0_r :> IdentityRight Vadd Vzero;
-    ls_add_inv_r :> InverseRight Vadd Vzero Vopp;
+    ls_addC :: Commutative Vadd;
+    ls_addA :: Associative Vadd;
+    ls_add_0_r :: IdentityRight Vadd Vzero;
+    ls_add_inv_r :: InverseRight Vadd Vzero Vopp;
     ls_cmul_1_l : forall u : V, Vcmul Aone u = u;
     ls_cmul_assoc : forall a b u, Vcmul (Amul a b) u = Vcmul a (Vcmul b u);
     ls_cmul_aadd_distr : forall a b u,

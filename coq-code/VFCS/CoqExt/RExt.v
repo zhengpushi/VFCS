@@ -127,7 +127,7 @@ Global Hint Unfold
   Ropp_involutive     (* - - r = r *)
   Rplus_opp_r         (* r + - r = 0 *)
   Rplus_opp_l         (* - r + r = 0 *)
-  Rminus_eq_0         (* r - r = 0 *)
+  Rminus_diag         (* r - r = 0 *)
 
   (* x *)
   Rsqr_0              (* 0² = 0 *)
@@ -512,7 +512,7 @@ Proof. intros. lra. Qed.
   Rsqr_opp                    (* (-r)² = r² *)
   Ropp_mult_distr_l_reverse   (* - r1 * r2 = - (r1 * r2) *)
   Ropp_mult_distr_r_reverse   (* r1 * - r2 = - (r1 * r2) *)
-  Ropp_div                    (* - x / y = - (x / y) *)
+  Rdiv_opp_l                  (* - x / y = - (x / y) *)
   Rdiv_opp_r                  (* x / - y = - (x / y) *)
   Rmult_neg1_l                (* (-1) * r = -r *)
   Rmult_neg1_r                (* r * (-1) = -r *)
@@ -1195,7 +1195,12 @@ Proof.
   replace (/b * (b * c)) with c in *; try field; auto with R.
 Qed.
 Global Hint Resolve Rmul_gt_imply_Rdiv_le : R.
-  
+
+
+(* Note, Rlt_Rminus is deprecated since 8.19 *)
+Lemma Rlt_Rminus : forall a b : R, a < b -> 0 < b - a.
+Proof. intros. apply (proj2 (Rlt_0_minus a b)); auto. Qed.
+
 (* Global Hint Resolve  *)
 (*     Rminus_gt_0_lt  (* 0 < b - a -> a < b *) *)
 (*     Rlt_Rminus      (* a < b -> 0 < b - a *) *)
