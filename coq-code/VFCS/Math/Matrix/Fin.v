@@ -59,8 +59,8 @@
 
 Require Export PropExtensionality.
 Require Export Arith Lia.
-Require Export NatExt.
 Require Export ListExt.
+Require Export NatExt.
 Require Import Extraction.
 
 Ltac inv H := inversion H; subst; clear H.
@@ -73,11 +73,6 @@ Proof. intros. lia. Qed.
 
 Lemma lt_ge_dec : forall x y : nat, {x < y} + {x >= y}.
 Proof. intros. destruct (le_gt_dec y x); auto. Defined.
-
-Infix "??=" := (Nat.eq_dec) (at level 70).
-Infix "??<" := (lt_ge_dec) (at level 70).
-Infix "??<=" := (le_gt_dec) (at level 70).
-
 
 #[export] Hint Rewrite
   map_length
@@ -112,7 +107,7 @@ Proof. intros. simpl. auto. Qed.
 (** Equality of `fin` is decidable *)
 Definition finEqdec : forall {n} (i j : fin n), {i = j} + {i <> j}.
 Proof.
-  intros. destruct i as [i Hi], j as [j Hj]. destruct (i??=j).
+  intros. destruct i as [i Hi], j as [j Hj]. destruct (i ??= j).
   - subst. left. f_equal. apply proof_irrelevance.
   - right. intro. inversion H. easy.
 Defined.
@@ -174,7 +169,7 @@ Qed.
 
 Lemma fin2nat_nat2finS_id : forall n i, i < (S n) -> fin2nat (@nat2finS n i) = i.
 Proof.
-  intros. unfold fin2nat, nat2finS. destruct (_??<_); simpl; auto. lia.
+  intros. unfold fin2nat, nat2finS. destruct (_??<_); auto. lia.
 Qed.
 
 (** ** [nat] to [fin n] (option version) *)
@@ -182,14 +177,12 @@ Qed.
 (** Convert from [nat] to [fin] *)
 Definition nat2finOpt {n} (i : nat) : option (fin n).
   destruct (i ??< n).
-  - refine (Some (exist _ i _)). auto.
+  - refine (Some (exist _ i l)).
   - exact None.
 Defined.
 
 Lemma nat2finOpt_overflow : forall n i, i >= n -> @nat2finOpt n i = None.
-Proof.
-  intros. unfold nat2finOpt. destruct (_??<_); auto. lia.
-Qed.
+Proof. intros. unfold nat2finOpt. destruct (_??<_); auto. lia. Qed.
 
 Lemma nat2finOpt_Some n i (H: i < n) : @nat2finOpt n i = Some (exist _ i H).
 Proof.
@@ -199,9 +192,7 @@ Qed.
 
 Lemma nat2finOpt_None_imply_nat2finOptS : forall n i,
     @nat2finOpt (S n) i = None -> @nat2finS n i = fin0.
-Proof.
-  intros. unfold nat2finOpt, nat2finS in *. destruct (_??<_); auto. easy.
-Qed.
+Proof. intros. unfold nat2finOpt, nat2finS in *. destruct (_??<_); auto. easy. Qed.
 
 Lemma nat2finOpt_Some_imply_nat2finOptS : forall n i f,
     @nat2finOpt (S n) i = Some f -> @nat2finS n i = f.
@@ -212,14 +203,14 @@ Qed.
 
 Lemma nat2finOpt_fin2nat_id : forall n (f : fin n), nat2finOpt (fin2nat f) = Some f.
 Proof.
-  intros. unfold nat2finOpt,fin2nat. destruct f; simpl. destruct (_??<_); auto.
-  f_equal; apply fin_eq_iff; auto. lia.
+  intros. unfold nat2finOpt,fin2nat. destruct f; simpl.
+  destruct (_??<_); auto. f_equal; apply fin_eq_iff; auto. lia.
 Qed.
 
 Lemma fin2nat_nat2finOpt_id : forall n i,
     i < n -> exists f, @nat2finOpt n i = Some f /\ fin2nat f = i.
 Proof.
-  intros. unfold nat2finOpt, fin2nat. destruct (_??<_).
+  intros. unfold nat2finOpt, fin2nat. destruct (_??<_); auto.
   exists (exist _ i l). split; auto. lia.
 Qed.
 
@@ -252,8 +243,7 @@ Qed.
 
 (** Convert from [fin n] to [fin m] (option version) *)
 Definition fin2finOpt n m (f : fin n) : option (fin m).
-  destruct f as [i p].
-  destruct (i ??< m).
+  destruct f as [i p]. destruct (i ??< m).
   - refine (Some (exist _ i _)). auto.
   - exact None.
 Defined.
@@ -285,8 +275,8 @@ Definition fin2SameRangeAdd {m : nat} (i k:fin m) : fin (m).
   pose (if fin2nat i + fin2nat k ??< m then fin2nat i + fin2nat k else 0)%nat as x.
   refine (nat2fin x _).
   unfold x. destruct (_??<_); auto.
-  destruct (0??=m).
-  - exfalso. clear g. rewrite <- e in i. apply (fin0_False i).
+  destruct (m ??= 0).
+  - exfalso. subst. apply (fin0_False i).
   - apply Arith_prebase.neq_0_lt_stt; auto.
 Defined.
 
@@ -309,10 +299,9 @@ Proof. intros. unfold fin2SameRangeSub. simpl. auto. Qed.
 (** {i<m} -> (S i<m) ? {S i<m} : {0<m} *)
 Definition fin2SameRangeSucc {m : nat} (i:fin m) : fin (m).
   pose (if S (fin2nat i) ??< m then S (fin2nat i) else 0)%nat as x.
-  refine (nat2fin x _).
-  unfold x. destruct (_??<_); auto.
-  destruct (0??=m).
-  - exfalso. clear g. rewrite <- e in i. apply (fin0_False i).
+  refine (nat2fin x _). unfold x. destruct (_??<_); auto.
+  destruct (m ??= 0).
+  - clear n. rewrite e in *. exfalso. apply (fin0_False i).
   - apply Arith_prebase.neq_0_lt_stt; auto.
 Defined.
 
@@ -333,7 +322,7 @@ Defined.
 Lemma fin2SameRangeLSL_spec : forall {m} (i k : fin m),
     fin2nat (fin2SameRangeLSL i k) = (m + fin2nat i + fin2nat k) mod m.
 Proof.
-  intros. unfold fin2SameRangeLSL. destruct (_??=_); simpl; auto.
+  intros. unfold fin2SameRangeLSL. destruct (_??=_); auto.
   exfalso. apply fin0_False. subst. auto.
 Qed.
 
@@ -348,7 +337,7 @@ Defined.
 Lemma fin2SameRangeLSR_spec : forall {m} (i k : fin m),
     fin2nat (fin2SameRangeLSR i k) = (m + fin2nat i - fin2nat k) mod m.
 Proof.
-  intros. unfold fin2SameRangeLSR. destruct (_??=_); simpl; auto.
+  intros. unfold fin2SameRangeLSR. destruct (_??=_); auto.
   exfalso. apply fin0_False. subst. auto.
 Qed.
 
@@ -458,11 +447,11 @@ Section ff2f_f2ff.
   Context {A} {Azero : A}.
 
   (** `ff` to `f` *)
-  Definition ff2f {n} (ff : fin n -> A) : nat -> A :=
-    fun i => match (i ??< n) with
-           | left H => ff (nat2fin i H)
-           | _ => Azero
-           end.
+  Definition ff2f {n} (ff : fin n -> A) : nat -> A.
+    intros i. destruct (i ??< n).
+    - apply (ff (nat2fin i l)).
+    - apply Azero.
+  Defined.
 
   Lemma nth_ff2f : forall {n} (ff : fin n -> A) i (H : i < n),
       (ff2f ff) i = ff (nat2fin i H).
@@ -470,7 +459,6 @@ Section ff2f_f2ff.
     intros. unfold ff2f. unfold nat2fin. destruct (_??<_).
     f_equal. apply fin_eq_iff; auto. lia.
   Qed.
-
   
   (** ff [|i] = ff2f ff i *)
   Lemma nth_ff_to_nth_f : forall {n} (ff : fin n -> A) (i : nat) (H : i < n),
@@ -528,9 +516,14 @@ Section ff2f_f2ff.
     - rewrite fin2nat_fin2fin. apply fin2nat_lt.
   Qed.
 
+  (* `ff` of (S n) to `ff` of n *)
+  Definition ffS2ff {n} (ff : fin (S n) -> A) : fin n -> A :=
+    fun i => ff (nat2finS (fin2nat i)).
+
 End ff2f_f2ff.
 
 Infix "!" := (ff2f).
+
 
 (** Convert `nth of ff` to `nth of nat-fun` *)
 Ltac ff2f Azero :=
@@ -570,8 +563,8 @@ Section finseq.
   Lemma finseq_eq_seq : forall n, map fin2nat (finseq n) = seq 0 n.
   Proof.
     destruct n; simpl; auto. f_equal.
-    rewrite map_map. apply map_id_In. intros.
-    rewrite fin2nat_nat2finS_id; auto. apply in_seq in H. lia.
+    rewrite map_map. apply map_id_In. intros. rewrite fin2nat_nat2finS_id; auto.
+    apply in_seq in H. lia.
   Qed.
 
   Lemma nth_finseq : forall (n : nat) i (H: i < n) i0,

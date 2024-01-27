@@ -9,14 +9,13 @@
  *)
 
 Require Import Basic.
+Require Export Hierarchy.  
 Require Import Bool.
 Require Export Init.Nat.
 Require Export Arith.
 Require Export PeanoNat.
-Require Export Nat.
 Require Export Lia.
-Require Export Hierarchy.  
-
+Open Scope nat_scope.
 
 (* ######################################################################### *)
 (** * Mathematical Structure *)
@@ -29,20 +28,45 @@ Hint Resolve
 #[export] Instance nat_eq_Dec : Dec (@eq nat).
 Proof. constructor. apply Nat.eq_dec. Defined.
 
+#[export] Instance nat_lt_Dec : Dec lt.
+Proof. constructor. intros. destruct (Compare_dec.lt_dec a b); auto. Defined.
+
 #[export] Instance nat_le_Dec : Dec le.
 Proof. constructor. intros. destruct (le_lt_dec a b); auto. right. lia. Defined.
 
-#[export] Instance nat_lt_Dec : Dec lt.
-Proof. constructor. intros. destruct (lt_dec a b); auto. Defined.
+Infix "??=" := (@dec _ _ nat_eq_Dec) : nat_scope.
+Infix "??<" := (@dec _ _ nat_lt_Dec) : nat_scope.
+Infix "??<=" := (@dec _ _ nat_le_Dec) : nat_scope.
 
 (* n <= n *)
 Lemma nat_le_refl : forall n : nat, n <= n.
 Proof. intros. lia. Qed.
 
+(* a <= b <-> "Ale" (derived from lt) *)
+Lemma nat_le_iff_Ale : forall (a b : nat), a <= b <-> (a < b \/ a = b).
+Proof. intros. lia. Qed.
+
 Section test.
   Goal forall a b : nat, {a = b} + {a <> b}.
   Proof. intros. apply Aeqdec. Abort.
+  
 End test.
+
+
+#[export] Instance nat_Order : Order lt le ltb leb.
+Proof.
+  constructor; intros; try lia.
+  destruct (lt_eq_lt_dec a b) as [[H|H]|H]; auto.
+  apply Nat.ltb_spec0. apply Nat.leb_spec0.
+Qed.
+
+Section test.
+
+  Goal forall a b : nat, a <= b \/ b < a.
+  Proof. intros. apply le_connected. Qed.
+
+End test.
+
 
 
 (* ######################################################################### *)
@@ -163,8 +187,8 @@ Ltac is_nat_equality :=
 
 (** There havn't GT and GE in standard library. *)
 
-Notation  "a >=? b" := (Nat.leb b a) (at level 70) : nat_scope.
-Notation  "a >? b"  := (Nat.ltb b a) (at level 70) : nat_scope.
+Notation  "a >=? b" := (b <=? a) (at level 70) : nat_scope.
+Notation  "a >? b"  := (b <? a) (at level 70) : nat_scope.
 
 (* 证明自然数不等式 *)
 Ltac solve_nat_ineq :=
@@ -180,26 +204,28 @@ Ltac solve_nat_ineq :=
 
 (** Proposition and boolean are reflected. *)
 
-Lemma eqb_reflect : forall x y, reflect (x = y) (x =? y).
-Proof.
-  intros x y. apply iff_reflect. symmetry.
-  apply Nat.eqb_eq.
-Qed.
+(* Lemma nat_eqb_reflect : forall x y, reflect (x = y) (x =? y). *)
+(* Proof. *)
+(*   intros x y. apply iff_reflect. symmetry. *)
+(*   apply Nat.eqb_eq. *)
+(* Defined. *)
 
-Lemma ltb_reflect : forall x y, reflect (x < y) (x <? y).
-Proof.
-  intros x y. apply iff_reflect. symmetry.
-  apply Nat.ltb_lt.
-Qed.
+Lemma nat_eqb_reflect : forall x y, reflect (x = y) (x =? y).
+Proof. intros x y. apply Nat.eqb_spec. Qed.
 
-Lemma leb_reflect : forall x y, reflect (x <= y) (x <=? y).
-Proof.
-  intros x y. apply iff_reflect. symmetry.
-  apply Nat.leb_le.
-Qed.
+(* Compute Nat.eqb_spec 0 3. *)
+(* Compute nat_eqb_reflect 0 3. *)
+
+Lemma nat_ltb_reflect : forall x y, reflect (x < y) (x <? y).
+Proof. intros x y. apply iff_reflect. symmetry. apply Nat.ltb_lt. Qed.
+
+Lemma nat_leb_reflect : forall x y, reflect (x <= y) (x <=? y).
+Proof. intros x y. apply iff_reflect. symmetry. apply Nat.leb_le. Qed.
+
+#[export] Hint Resolve nat_eqb_reflect nat_ltb_reflect nat_leb_reflect : bdestruct.
+(* #[export] Hint Resolve nat_eqb_reflect Nat.ltb_spec0 Nat.leb_spec0 : bdestruct. *)
 
 (** These theorems are automatic used. *)
-Global Hint Resolve ltb_reflect leb_reflect eqb_reflect : bdestruct.
 
 (** This tactic makes quick, easy-to-read work of our running example. *)
 Example reflect_example2: forall a, (if a <? 5 then a else 2) < 6.

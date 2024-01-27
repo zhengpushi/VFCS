@@ -43,6 +43,12 @@ Proof. intros. lia. Qed.
 Lemma Z_add_eq_0_reg_l : forall a b : Z, 0 <= a -> 0 <= b -> a + b = 0 -> a = 0.
 Proof. intros. lia. Qed.
 
+#[export] Instance Z_Order : Order Z.lt Z.le Z.ltb Z.leb.
+Proof.
+  constructor; intros; try lia. apply Z_dec'.
+  apply Z.ltb_spec0. apply Z.leb_spec0.
+Qed.
+
 
 Section test.
   Goal forall a b : Z, {a = b} + {a <> b}.

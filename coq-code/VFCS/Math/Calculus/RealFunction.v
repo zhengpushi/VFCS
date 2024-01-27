@@ -447,6 +447,20 @@ Section basic_elementary_fun.
   Fact sin_sub_sin : forall x y, sin x - sin y = 2 * sin ((x-y)/2) * cos ((x+y)/2). Admitted.
   Fact cos_add_cos : forall x y, cos x + cos y = 2 * cos ((x+y)/2) * cos ((x-y)/2). Admitted.
   Fact cos_sub_cos : forall x y, cos x - cos y = -2 * sin ((x+y)/2) * sin ((x-y)/2). Admitted.
+
+  (* 周期公式 *)
+  
+  (* cos x = 1 -> x = 2kπ *)
+  Lemma cos_1_period : forall (x : R) (k : Z), cos x = 1 -> x = 2 * IZR k * PI.
+  Admitted.
+  
+  (* cos x = -1 -> x = 2kπ + π *)
+  Lemma cos_neg1_period : forall (x : R) (k : Z), cos x = -1 -> x = 2 * IZR k * PI + PI.
+  Admitted.
+  
+  (* cos x = 0 -> x = kπ + π/2 *)
+  Lemma cos_0_period : forall (x : R) (k : Z), cos x = 0 -> x = IZR k * PI + PI/2.
+  Admitted.
   
 
   (** *** 5. 反三角函数 *)
@@ -457,17 +471,17 @@ Section basic_elementary_fun.
   Parameter acot : tpRFun.
 
   (** 特殊函数值 *)
-  Fact asin_0 : asin 0 = 0. Admitted.
+  (* Fact asin_0 : asin 0 = 0. Admitted. *)
   Fact asin_1_2 : asin (1 / 2) = PI / 6. Admitted.
   Fact asin_sqrt2_2 : asin ((sqrt 2) / 2) = PI / 4. Admitted.
   Fact asin_sqrt3_2 : asin ((sqrt 3) / 2) = PI / 3. Admitted.
-  Fact asin_1 : asin 1 = PI / 2. Admitted.
+  (* Fact asin_1 : asin 1 = PI / 2. Admitted. *)
 
-  Fact acos_0 : acos 0 = (PI / 2). Admitted.
+  (* Fact acos_0 : acos 0 = (PI / 2). Admitted. *)
   Fact acos_1_2 : acos (1 / 2) = PI / 3. Admitted.
   Fact acos_sqrt2_2 : acos ((sqrt 2) / 2) = PI / 4. Admitted.
   Fact acos_sqrt3_2 : acos ((sqrt 3) / 2) = PI / 2. Admitted.
-  Fact acos_1 : acos 1 = 0. Admitted.
+  (* Fact acos_1 : acos 1 = 0. Admitted. *)
   Fact acos_neg1 : acos (-1) = PI. Admitted.
 
   (* Fact atan_0 : atan 0 = 0. Admitted. *)

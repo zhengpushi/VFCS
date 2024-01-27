@@ -9,9 +9,9 @@
  *)
 
 Require Export Basic.
-Require Export NatExt.
 Require Export ListExt.
 Require Export Hierarchy.
+Require Export NatExt.
 Require Export Fin Sequence.
 Require RExt.
 
@@ -28,30 +28,32 @@ Open Scope A_scope.
 (* ======================================================================= *)
 (** ** Equality of sequence *)
 Section fseqeq.
-  Context {A} {Azero : A}.
+  Context {A : Type}.
 
-  (** seqeq is decidable  *)
-  Lemma fseqeq_dec : forall {n} (f g : fin n -> A),
+  (** seqeq is decidable *)
+  Lemma fseq_eqdec : forall {n} (f g : fin n -> A),
       (forall a b : A, {a = b} + {a <> b}) -> {f = g} + {f <> g}.
   Proof.
     intros n f g H. induction n.
-    left. extensionality i. destruct fin0_False; auto.
-    destruct (IHn (@ff2ff _ Azero _ _ f) (@ff2ff _ Azero _ _ g)); auto.
-    - destruct (H (f (nat2finS n)) (g (nat2finS n))).
-      + left. extensionality i. destruct (fin2nat i ??< n).
-        * pose proof (equal_f e). specialize (H0 (fin2fin _ _ i l)).
-          unfold ff2ff,f2ff,ff2f in H0. rewrite fin2nat_fin2fin in H0.
-          destruct (_??<_); try lia.
-          rewrite nat2fin_fin2nat_id in H0. auto.
-        * assert (fin2nat i = n). { pose proof (fin2nat_lt i). lia. }
-          replace (@nat2finS n n) with i in e0; auto.
-          rewrite <- (nat2fin_fin2nat_id (S n) i (fin2nat_lt _)).
-          rewrite (nat2finS_eq n n (Nat.lt_succ_diag_r _)).
-          apply fin_eq_iff; auto.
-      + right. intro. destruct n0. subst. auto.
-    - right. intro. destruct n0. subst. auto.
+    - left. extensionality i. exfalso. apply fin0_False; auto.
+    - destruct (IHn (ffS2ff f) (ffS2ff g)) as [H1|H1].
+      + destruct (H (f (nat2finS n)) (g (nat2finS n))) as [H2|H2].
+        * left. extensionality i. destruct (fin2nat i ??< n).
+          ** pose proof (equal_f H1) as H3. specialize (H3 (fin2PredRange i l)).
+             unfold ffS2ff in H3. rewrite fin2PredRange_spec in H3.
+             rewrite nat2finS_fin2nat_id in H3. auto.
+          ** assert (fin2nat i = n). pose proof (fin2nat_lt i). lia.
+             replace (@nat2finS n n) with i in H2; auto.
+             rewrite <- (nat2fin_fin2nat_id (S n) i (fin2nat_lt _)).
+             rewrite (nat2finS_eq n n (Nat.lt_succ_diag_r _)).
+             apply fin_eq_iff; auto.
+        * right. intro. destruct H2. subst. auto.
+      + right. intro. destruct H1. subst. auto.
   Qed.
   
+  #[export] Instance fseq_eqDec : forall {n} (AeqDec: Dec (@eq A)), Dec (@eq (fin n -> A)).
+  Proof. intros. constructor. intros. apply fseq_eqdec. apply AeqDec. Qed.
+
 End fseqeq.
 
 
@@ -118,18 +120,8 @@ Section fseqsum.
     rewrite <- H. f_equal. apply fin_eq_iff; auto.
   Qed.
 
-  (** Convert `fseqsum` to `seqsum` (direct form) *)
-  Lemma fseqsum_to_seqsum_form2 : forall {n} (f : fin n -> A),
-      let g : nat -> A :=
-        fun i => match (i??<n) with left H => f (nat2fin i H) | _ => Azero end in
-      fseqsum f = seqsum g n.
-  Proof.
-    intros. unfold fseqsum. apply seqsum_eq; intros. unfold g.
-    unfold ff2f. destruct (_??<_); auto.
-  Qed.
-
   (** Convert `fseqsum` to `seqsum` (succ form) *)
-  Lemma fseqsum_to_seqsum_form3 : forall {n} (f : fin (S n) -> A),
+  Lemma fseqsum_to_seqsum_succ : forall {n} (f : fin (S n) -> A),
       fseqsum f = seqsum (fun i => f (nat2finS i)) n + f (nat2finS n).
   Proof.
     intros. unfold fseqsum. simpl. f_equal.
@@ -160,7 +152,7 @@ Section fseqsum.
       (forall i, f i = - g i) -> fseqsum f = - fseqsum g.
   Proof.
     intros. unfold fseqsum. apply seqsum_opp.
-    intros. unfold ff2f. destruct (_??<_); auto. rewrite group_inv_id; auto.
+    intros. unfold ff2f. destruct (_??<_); auto. rewrite group_opp_0; auto.
   Qed.
 
   
@@ -206,9 +198,9 @@ Section fseqsum.
       fseqsum f = fseqsum g + fseqsum h.
   Proof.
     intros. unfold fseqsum. apply seqsum_plusIdx_ext.
-    - intros. unfold ff2f. destruct (_??<_),(_??<_); try lia.
+    - intros. unfold ff2f. destruct (_??<_), (_??<_); try lia.
       rewrite <- H. f_equal. apply fin_eq_iff. rewrite fin2nat_nat2fin_id; auto.
-    - intros. unfold ff2f. destruct (_??<_),(_??<_); try lia.
+    - intros. unfold ff2f. destruct (_??<_), (_??<_); try lia.
       rewrite <- H0. f_equal. apply fin_eq_iff. rewrite fin2nat_nat2fin_id; auto.
   Qed.
 
@@ -245,7 +237,7 @@ Section fseqsum.
     - simpl. rewrite seqsum_eq0. unfold ff2f. destruct (_??<_); ring.
       intros. unfold ff2f. destruct (_??<_); auto.
     - simpl. rewrite seqsum_eq0. unfold ff2f. destruct (_??<_); ring.
-      intros. unfold ff2f. destruct (_??<_); ring.
+      intros. unfold ff2f. destruct (_??<_); auto.
     - pose proof (seqsum_seqsum_exchg).
       specialize (H (fun i j => f (nat2finS i) (nat2finS j)) (S r) (S c)).
       match goal with

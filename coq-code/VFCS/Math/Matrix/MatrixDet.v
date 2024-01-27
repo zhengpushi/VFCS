@@ -434,10 +434,10 @@ Section mdetEXPD.
   (** Get the sub square matrix by remove i-th row and j-th column. *)
   Definition msubmat {n} (M : @smat A (S n)) (i0 j0 : fin (S n)) : @smat A n :=
     fun i j =>
-      let i1 := if fin2nat i ??< fin2nat i0
+      let i1 := if fin2nat i <? fin2nat i0
                 then fin2SuccRange i
                 else fin2SuccRangeSucc i in
-      let j1 := if fin2nat j ??< fin2nat j0
+      let j1 := if fin2nat j <? fin2nat j0
                 then fin2SuccRange j
                 else fin2SuccRangeSucc j in
       M $ i1 $ j1.
@@ -463,7 +463,6 @@ Section mdetEXPD.
 
   Lemma mdetEXPD_eq_mdet_2 : forall (M : @smat A 2), mdetEXPD M = mdet M.
   Proof. intros. cbv. rewrite !(mnth_eq_nth_m2f Azero M). ring. Qed.
-
   
   (* M[i,j] = m2f M i j *)
   Lemma mnth_eq_nth_m2f2 : forall {r c} (M : @mat A r c) i j,

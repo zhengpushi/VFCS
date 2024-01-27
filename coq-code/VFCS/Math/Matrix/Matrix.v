@@ -82,8 +82,8 @@ Section f2m_m2f.
       M (exist _ i Hi) (exist _ j Hj) = m2f M i j.
   Proof.
     intros. unfold m2f,v2f,ff2f.
-    destruct (_??<_); try lia.
-    destruct (_??<_); try lia. f_equal; apply fin_eq_iff; auto.
+    destruct (_??<_)%nat; try lia.
+    destruct (_??<_)%nat; try lia. f_equal; apply fin_eq_iff; auto.
   Qed.
 
   Lemma meq_iff_nth_m2f : forall {r c} (M N : mat A r c),
@@ -677,19 +677,19 @@ Section malg.
   
   (** - (- M) = M *)
   Lemma mopp_mopp : forall {r c} (M : mat r c), - (- M) = M.
-  Proof. intros. apply group_inv_inv. Qed.
+  Proof. intros. apply group_opp_opp. Qed.
 
   (** - M = N <-> M = - N *)
   Lemma mopp_exchange : forall {r c} (M N : mat r c), - M = N <-> M = - N.
-  Proof. intros. split; intros; subst; rewrite group_inv_inv; auto. Qed.
+  Proof. intros. split; intros; subst; rewrite group_opp_opp; auto. Qed.
 
   (** - (mat0) = mat0 *)
   Lemma mopp_mat0 : forall {r c:nat}, - (@mat0 r c) = mat0.
-  Proof. intros. apply group_inv_id. Qed.
+  Proof. intros. apply group_opp_0. Qed.
 
   (** - (m1 + m2) = (-m1) + (-m2) *)
   Lemma mopp_madd : forall {r c : nat} (M N : mat r c), - (M + N) = (- M) + (- N).
-  Proof. intros. rewrite group_inv_distr. apply commutative. Qed.
+  Proof. intros. rewrite group_opp_distr. apply commutative. Qed.
 
   (** (- M)\T = - (M\T) *)
   Lemma mtrans_mopp : forall {r c} (M : mat r c), (- M)\T = - (M\T).
@@ -712,13 +712,13 @@ Section malg.
   (** M - N = - (N - M) *)
   Lemma msub_comm : forall {r c} (M N : mat r c), M - N = - (N - M).
   Proof.
-    intros. unfold msub. rewrite group_inv_distr. rewrite group_inv_inv; auto.
+    intros. unfold msub. rewrite group_opp_distr. rewrite group_opp_opp; auto.
   Qed.
 
   (** (M - N) - O = M - (N + O) *)
   Lemma msub_assoc : forall {r c} (M N O : mat r c),
       (M - N) - O = M - (N + O).
-  Proof. intros. unfold msub. rewrite group_inv_distr. asemigroup. Qed.
+  Proof. intros. unfold msub. rewrite group_opp_distr. asemigroup. Qed.
 
   (** (M + N) - O = M + (N - O) *)
   Lemma msub_assoc1 : forall {r c} (M N O : mat r c), (M + N) - O = M + (N - O).
@@ -734,10 +734,7 @@ Section malg.
   
   (** M - 0 = M *)
   Lemma msub_0_r : forall {r c} (M : mat r c), M - mat0 = M.
-  Proof.
-    intros. unfold msub. rewrite (@group_inv_id _ madd mat0); auto. monoid.
-    apply AGroup_madd.
-  Qed.
+  Proof. intros. unfold msub. rewrite group_opp_0 at 1. monoid. Qed.
   
   (** M - M = 0 *)
   Lemma msub_self : forall {r c} (M : mat r c), M - M = mat0.
@@ -846,7 +843,7 @@ Section malg.
   (* (-a) * (- M) = a * M *)
   Lemma mcmul_opp_mopp : forall {r c} a (M : mat r c),
       (- a)%A \.* (- M) = a \.* M.
-  Proof. intros. rewrite mcmul_mopp, mcmul_opp. apply group_inv_inv. Qed.
+  Proof. intros. rewrite mcmul_mopp, mcmul_opp. apply group_opp_opp. Qed.
 
   (** a \.* (M - N) = (a \.* M) - (a \.* N) *)
   Lemma mcmul_msub : forall {r c} a (M N : mat r c),
@@ -1081,7 +1078,7 @@ Section malg.
   Proof.
     intros. destruct (Aeqdec k Azero); auto. right.
     apply meq_iff_mnth; intros. rewrite meq_iff_mnth in H0. specialize (H0 i j).
-    cbv in H0. cbv. apply field_mul_eq0_imply_a0_or_b0 in H0; auto. tauto.
+    cbv in H0. cbv. apply field_mul_eq0_reg in H0. tauto.
   Qed.
 
   (** (M <> 0 /\ k * M = 0) -> M = 0 *)

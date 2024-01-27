@@ -49,11 +49,25 @@ Require Arith ZArith QArith Qcanon Reals List SetoidList.
 
 (* ****************************************************** *)
 (* The precedence ∈ [60,100) are logic operations *)
-(* Reserved Infix    "==?"     (at level 65, no associativity).      (* decidable *) *)
-(* Reserved Infix    "<>?"     (at level 65, no associativity).      (* decidable right *) *)
+
+(* These are truely boolean value, but not friendly for "computation". 
+   That means, the computation result is a complex expression instead of a value *)
+Reserved Infix    "=?"     (at level 70).           (* bool compare for "=" *)
+Reserved Infix    "<?"     (at level 70).           (* bool compare for "<" *)
+Reserved Infix    ">?"     (at level 70).           (* bool compare for ">" *)
+Reserved Infix    "<=?"    (at level 70).           (* bool compare for "<=" *)
+Reserved Infix    ">=?"    (at level 70).           (* bool compare for ">=" *)
+
+(* The decidable procedure is friendly for "computation", and also could obtain a 
+   proof for this property. But not a truely boolean value *)
+Reserved Infix    "??="    (at level 70).           (* decidable procedure for "=" *)
+Reserved Infix    "??<"    (at level 70).           (* decidable procedure for "<" *)
+Reserved Infix    "??>"    (at level 70).           (* decidable procedure for ">" *)
+Reserved Infix    "??<="   (at level 70).           (* decidable procedure for "<=" *)
+Reserved Infix    "??>="   (at level 70).           (* decidable procedure for ">=" *)
+
 (* Reserved Infix    "=="      (at level 70, no associativity).      (* equiv *) *)
 (* Reserved Notation "a != b"  (at level 70, no associativity).      (* not equiv *) *)
-Reserved Infix    "=?"      (at level 70, no associativity).      (* bool equal *)
 
 (* ****************************************************** *)
 (* The precedence ∈ [30,60) are vector/matrix operations *)
@@ -61,24 +75,32 @@ Reserved Infix    "+"       (at level 50, left associativity).    (* add *)
 Reserved Infix    "-"       (at level 50, left associativity).    (* sub *)
 Reserved Infix    "*"       (at level 40, left associativity).    (* mul *)
 Reserved Infix    "/"       (at level 40, left associativity).    (* div *)
-Reserved Infix    "n*"      (at level 40, no associativity).      (* n-times *)
-Reserved Infix    "\.*"     (at level 40, left associativity).    (* scal left mul *)
+Reserved Notation "a ²"     (at level 1).                         (* sqr *)
+Reserved Infix    "\.*"     (at level 40, no associativity).      (* scal left mul *)
 Reserved Infix    "⦿"      (at level 40, left associativity).    (* hardmard prod *)
 Reserved Infix    "\o"      (at level 50, no associativity).
 Reserved Infix    "⋅"       (at level 40, no associativity).      (* dot prod *)
-Reserved Notation "< a , b >" (at level 60, b at level 55, format "< a , b >"). (* dot prod *)
+Reserved Notation "< a , b >" (at level 60, a, b at level 55, format "< a , b >"). (* dot prod *)
 Reserved Notation "|| v ||"   (at level 60, v at level 45, format "|| v ||").  (* vlen *)
-Reserved Infix    "×"       (at level 40, no associativity).      (* cross prod *)
+(* Reserved Infix    "×"       (at level 40, no associativity).      (* cross prod *) *)
+Reserved Infix    "\x"      (at level 40, no associativity).      (* cross prod *)
 Reserved Infix    "∘"       (at level 40, left associativity).    (* compose *)
 Reserved Notation "- a"     (at level 35, right associativity).   (* opp *)
 Reserved Notation "/ a"     (at level 35, right associativity).   (* inv *)
 Reserved Notation "M \T"    (at level 32, left associativity).    (* transpose *)
 (* Reserved Notation "M ⁻¹"    (at level 20, format "M ⁻¹").         (* minv *) *)
-Reserved Notation "M \-1"    (at level 20, format "M \-1").         (* minv *)
+Reserved Notation "M \-1"   (at level 20, format "M \-1").         (* minv *)
 Reserved Notation "M @ N"   (at level 30, no associativity).      (* cons by col *)
 Reserved Notation "'tr' M"  (at level 33, no associativity).
 
 Reserved Notation "'\sum' f" (at level 10).       (* sum of a fin-function *)
+
+Reserved Infix "/_"         (at level 60).       (* angle of two vectors *)
+Reserved Infix "/2_"        (at level 60).       (* angle of two vectors in 2D *)
+
+Reserved Infix "_|_"        (at level 50).       (* Two vectors are orthogonal *)
+Reserved Infix "//"         (at level 50).       (* Two vectors are parallel *)
+
 
 
 (* ****************************************************** *)

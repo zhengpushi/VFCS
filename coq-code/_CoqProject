@@ -12,6 +12,7 @@
 -arg -w -arg -ambiguous-paths
 -arg -w -arg -local-declaration
 -arg -w -arg -hiding-delimiting-key
+# -arg -w -arg -future-coercion-class-field
 
 # ====== CoqExt ======================================================
 VFCS/CoqExt/Basic.v

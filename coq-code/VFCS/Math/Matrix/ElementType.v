@@ -16,6 +16,7 @@
   * OrderedRingElementType, based on RingElementType + OrderedElementType
   * FieldElementType, based on RingElementType.
   * OrderedFieldElementType, based on FieldElementType + OrderedElementType.
+  * NormedOrderedFieldElementType, based on OrderedFieldElementType + Normed.
 
   2. Future plan:
   * SemiRingElementType.
@@ -35,6 +36,7 @@ Require Export Hierarchy.
 Module Type ElementType.
   Parameter A : Type.
   Parameter Azero : A.
+  Notation "0" := Azero : A_scope.
 
   Axiom AeqDec : Dec (@eq A).
   #[export] Existing Instance AeqDec.
@@ -80,10 +82,12 @@ Module ElementTypeQc <: ElementType.
 
   Lemma AeqDec : Dec (@eq A).
   Proof. apply Qc_eq_Dec. Qed.
+
 End ElementTypeQc.
 
 Module ElementTypeR <: ElementType.
   Export RExt.
+
   Definition A : Type := R.
   Definition Azero : A := 0.
   Hint Unfold A Azero : A.
@@ -145,102 +149,83 @@ End ElementType_Test.
 Module Type OrderedElementType <: ElementType.
   Include ElementType.
   
-  Parameter Ale Alt : A -> A -> Prop.
+  Parameter Alt Ale : A -> A -> Prop.
+  Parameter Altb Aleb : A -> A -> bool.
 
-  Axiom AleDec : Dec Ale.
-  #[export] Existing Instance AleDec.
+  Infix "<" := Alt : A_scope.
+  Infix "<=" := Ale : A_scope.
+  Infix "<?" := Altb : A_scope.
+  Infix "<=?" := Aleb : A_scope.
   
-  Axiom AltDec : Dec Alt.
-  #[export] Existing Instance AltDec.
-
-  Axiom Ale_refl : forall a : A, Ale a a.
-  
+  Axiom Order : Order Alt Ale Altb Aleb.
 End OrderedElementType.
 
 (** ** Instances *)
 Module OrderedElementTypeNat <: OrderedElementType.
   Include ElementTypeNat.
 
-  Definition Ale := Nat.le.
   Definition Alt := Nat.lt.
-  Hint Unfold Ale Alt : A.
-  
-  Lemma AleDec : Dec Ale.
-  Proof. apply nat_le_Dec. Qed.
-  
-  Lemma AltDec : Dec Alt.
-  Proof. apply nat_lt_Dec. Qed.
+  Definition Ale := Nat.le.
+  Definition Altb := Nat.ltb.
+  Definition Aleb := Nat.leb.
+  Hint Unfold Ale Alt Altb Aleb : A.
 
-  Lemma Ale_refl : forall a : A, Ale a a.
-  Proof. apply nat_le_refl. Qed.
+  #[export] Instance Order : Order Alt Ale Altb Aleb.
+  Proof. apply nat_Order. Qed.
 End OrderedElementTypeNat.
 
 Module OrderedElementTypeZ <: OrderedElementType.
   Include ElementTypeZ.
 
-  Definition Ale := Z.le.
   Definition Alt := Z.lt.
-  Hint Unfold Ale Alt : A.
-  
-  Lemma AleDec : Dec Ale.
-  Proof. apply Z_le_Dec. Qed.
-  
-  Lemma AltDec : Dec Alt.
-  Proof. apply Z_lt_Dec. Qed.
+  Definition Ale := Z.le.
+  Definition Altb := Z.ltb.
+  Definition Aleb := Z.leb.
+  Hint Unfold Ale Alt Altb Aleb : A.
 
-  Lemma Ale_refl : forall a : A, Ale a a.
-  Proof. apply Z_le_refl. Qed.
+  #[export] Instance Order : Order Alt Ale Altb Aleb.
+  Proof. apply Z_Order. Qed.
 End OrderedElementTypeZ.
 
+(*
 Module OrderedElementTypeQ <: OrderedElementType.
   Include ElementTypeQ.
 
-  Definition Ale := Qle.
   Definition Alt := Qlt.
+  Definition Ale := Qle.
   Hint Unfold Ale Alt : A.
-  
-  Lemma AleDec : Dec Ale.
-  Proof. apply Q_le_Dec. Qed.
-  
-  Lemma AltDec : Dec Alt.
-  Proof. apply Q_lt_Dec. Qed.
 
-  Lemma Ale_refl : forall a : A, Ale a a.
-  Proof. apply Q_le_refl. Qed.
+  #[export] Instance Order : Order Alt Ale.
+  Proof.
+    constructor; intros; autounfold with A in *; try lia.
+  Abort.
 End OrderedElementTypeQ.
+*)
 
 Module OrderedElementTypeQc <: OrderedElementType.
   Include ElementTypeQc.
 
-  Definition Ale := Qcle.
   Definition Alt := Qclt.
-  Hint Unfold Ale Alt : A.
-  
-  Lemma AleDec : Dec Ale.
-  Proof. apply Qc_le_Dec. Qed.
-  
-  Lemma AltDec : Dec Alt.
-  Proof. apply Qc_lt_Dec. Qed.
+  Definition Ale := Qcle.
+  Definition Altb := Qcltb.
+  Definition Aleb := Qcleb.
+  Hint Unfold Ale Alt Altb Aleb : A.
 
-  Lemma Ale_refl : forall a : A, Ale a a.
-  Proof. apply Qc_le_refl. Qed.
+  #[export] Instance Order : Order Alt Ale Altb Aleb.
+  Proof. apply Qc_Order. Qed.
 End OrderedElementTypeQc.
 
 Module OrderedElementTypeR <: OrderedElementType.
   Include ElementTypeR.
 
-  Definition Ale := Rle.
   Definition Alt := Rlt.
-  Hint Unfold Ale Alt : A.
-  
-  Lemma AleDec : Dec Ale.
-  Proof. apply R_le_Dec. Qed.
-  
-  Lemma AltDec : Dec Alt.
-  Proof. apply R_lt_Dec. Qed.
+  Definition Ale := Rle.
+  Definition Altb := Rltb.
+  Definition Aleb := Rleb.
+  Hint Unfold Ale Alt Altb Aleb : A.
 
-  Lemma Ale_refl : forall a : A, Ale a a.
-  Proof. apply R_le_refl. Qed.
+  #[export] Instance Order : Order Alt Ale Altb Aleb.
+  Proof. apply R_Order. Qed.
 End OrderedElementTypeR.
 
 
@@ -299,7 +284,7 @@ Module MonoidElementTypeQc <: MonoidElementType.
 End MonoidElementTypeQc.
 
 Module MonoidElementTypeR <: MonoidElementType.
-  Include ElementTypeR.
+  Include ElementTypeR.  
   
   Definition Aadd := Rplus.
   Hint Unfold Aadd : A.
@@ -420,18 +405,17 @@ Module Type RingElementType <: MonoidElementType.
 
   Notation Asub := (fun x y => Aadd x (Aopp y)).
   Infix "*" := Amul : A_scope.
+  Notation "1" := Aone : A_scope.
+  Notation "a ²" := (a * a) : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
   Infix "-" := Asub : A_scope.
 
-  Axiom Ring_thy : ring_theory Azero Aone Aadd Amul Asub Aopp eq.
-
-  (* (** A Abelian-Group structure can be derived from the context *) *)
-  (* Axiom AGroup_inst : AGroup Aadd Azero Aopp. *)
-  (* #[export] Existing Instance AGroup_inst. *)
-
   (** A Ring structure can be derived from the context *)
-  Axiom ARing_inst : ARing Aadd Azero Aopp Amul Aone.
-  #[export] Existing Instance ARing_inst.
+  Axiom ARing : ARing Aadd 0 Aopp Amul 1.
+  
+  #[export] Existing Instance ARing.
+
+  (* Add Ring Ring_inst : (make_ring_theory ARing). *)
 End RingElementType.
 
 (** ** Instances *)
@@ -448,17 +432,11 @@ Module RingElementTypeZ <: RingElementType.
   Infix "*" := Amul : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
   Infix "-" := Asub : A_scope.
-  
-  Lemma Ring_thy : ring_theory Azero Aone Aadd Amul Asub Aopp eq.
+
+  #[export] Instance ARing : ARing Aadd Azero Aopp Amul Aone.
   Proof. repeat constructor; autounfold with A; intros; ring. Qed.
 
-  Add Ring Ring_thy_inst : Ring_thy.
-
-  (* #[export] Instance AGroup_inst : AGroup Aadd Azero Aopp. *)
-  (* Proof. repeat constructor; autounfold with A; intros; ring. Qed. *)
-
-  #[export] Instance ARing_inst : ARing Aadd Azero Aopp Amul Aone.
-  Proof. repeat constructor; autounfold with A; intros; ring. Qed.
+  (* Add Ring Ring_inst : (make_ring_theory ARing). *)
 End RingElementTypeZ.
 
 Module RingElementTypeQc <: RingElementType.
@@ -474,16 +452,10 @@ Module RingElementTypeQc <: RingElementType.
   Notation "- a" := (Aopp a) : A_scope.
   Infix "-" := Asub : A_scope.
   
-  Lemma Ring_thy : ring_theory Azero Aone Aadd Amul Asub Aopp eq.
+  #[export] Instance ARing : ARing Aadd Azero Aopp Amul Aone.
   Proof. repeat constructor; autounfold with A; intros; ring. Qed.
-
-  Add Ring Ring_thy_inst : Ring_thy.
-
-  (* #[export] Instance AGroup_inst : AGroup Aadd Azero Aopp. *)
-  (* Proof. repeat constructor; autounfold with A; intros; ring. Qed. *)
-
-  #[export] Instance ARing_inst : ARing Aadd Azero Aopp Amul Aone.
-  Proof. repeat constructor; autounfold with A; intros; ring. Qed.
+  
+  Add Ring Ring_inst : (make_ring_theory ARing).
 End RingElementTypeQc.
 
 Module RingElementTypeR <: RingElementType.
@@ -499,16 +471,10 @@ Module RingElementTypeR <: RingElementType.
   Notation "- a" := (Aopp a) : A_scope.
   Infix "-" := Asub : A_scope.
 
-  Lemma Ring_thy : ring_theory Azero Aone Aadd Amul Asub Aopp eq.
+  #[export] Instance ARing : ARing Aadd Azero Aopp Amul Aone.
   Proof. repeat constructor; autounfold with A; intros; ring. Qed.
   
-  Add Ring Ring_thy_inst : Ring_thy.
-  
-  (* #[export] Instance AGroup_inst : AGroup Aadd Azero Aopp. *)
-  (* Proof. repeat constructor; autounfold with A; intros; ring. Qed. *)
-
-  #[export] Instance ARing_inst : ARing Aadd Azero Aopp Amul Aone.
-  Proof. repeat constructor; autounfold with A; intros; ring. Qed.
+  (* Add Ring Ring_inst : (make_ring_theory ARing). *)
 End RingElementTypeR.
 
 Module RingElementTypeC <: RingElementType.
@@ -517,12 +483,6 @@ Module RingElementTypeC <: RingElementType.
   Definition Aone : A := 1.
   Definition Aopp := Copp.
   Definition Amul := Cmul.
-  
-  (** Note that, this explicit annotation is must, 
-      otherwise, the ring has no effect. (because C and T are different) *)
-  (* Definition Aadd : A -> A -> A := fun a b => Cadd a b. *)
-  (* Definition Aopp : A -> A := fun a => Copp a. *)
-  (* Definition Amul : A -> A -> A := fun a b => Cmul a b. *)
   Hint Unfold Aone Aadd Aopp Amul : A.
   
   Notation Asub := (fun x y => Aadd x (Aopp y)).
@@ -530,16 +490,10 @@ Module RingElementTypeC <: RingElementType.
   Notation "- a" := (Aopp a) : A_scope.
   Infix "-" := Asub : A_scope.
 
-  Lemma Ring_thy : ring_theory Azero Aone Aadd Amul Asub Aopp eq.
+  #[export] Instance ARing : ARing Aadd Azero Aopp Amul Aone.
   Proof. repeat constructor; autounfold with A; intros; ring. Qed.
   
-  Add Ring Ring_thy_inst : Ring_thy.
-
-  (* #[export] Instance AGroup_inst : AGroup Aadd Azero Aopp. *)
-  (* Proof. repeat constructor; autounfold with A; intros; ring. Qed. *)
-
-  #[export] Instance ARing_inst : ARing Aadd Azero Aopp Amul Aone.
-  Proof. repeat constructor; autounfold with A; intros; ring. Qed.
+  Add Ring Ring_inst : (make_ring_theory ARing).
 End RingElementTypeC.
 
 
@@ -555,33 +509,21 @@ Module RingElementTypeRFun <: RingElementType.
   Infix "*" := Amul : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
   Infix "-" := Asub : A_scope.
-
-  Lemma Ring_thy : ring_theory Azero Aone Aadd Amul Asub Aopp eq.
+  
+  #[export] Instance ARing : ARing Aadd Azero Aopp Amul Aone.
   Proof.
     repeat constructor; intros;  autounfold with A;
       apply functional_extensionality; intros; cbv; ring.
   Qed.
   
-  Add Ring Ring_thy_inst : Ring_thy.
-  
-  (* #[export] Instance AGroup_inst : AGroup Aadd Azero Aopp. *)
-  (* Proof. *)
-  (*   repeat constructor; intros;  autounfold with A; *)
-  (*     apply functional_extensionality; intros; cbv; ring. *)
-  (* Qed. *)
-
-  #[export] Instance ARing_inst : ARing Aadd Azero Aopp Amul Aone.
-  Proof.
-    repeat constructor; intros;  autounfold with A;
-      apply functional_extensionality; intros; cbv; ring.
-  Qed.
+  Add Ring Ring_inst : (make_ring_theory ARing).
 End RingElementTypeRFun.
 
 
 Module RingElementTypeFun (I O : RingElementType) <: RingElementType.
   (* Export I O. *)
-  (* Add Ring Ring_thy_inst_i : I.Ring_thy. *)
-  Add Ring Ring_thy_inst_o : O.Ring_thy.
+  (* Add Ring Ring_thy_inst_i : (make_ring_theory I.ARing). *)
+  Add Ring Ring_thy_inst_o : (make_ring_theory O.ARing).
   
   Include (MonoidElementTypeFun I O).
 
@@ -590,23 +532,13 @@ Module RingElementTypeFun (I O : RingElementType) <: RingElementType.
   Definition Amul (f g : A) : A := fun x : I.A => O.Amul (f x) (g x).
   Notation Asub := (fun x y => Aadd x (Aopp y)).
 
-  Lemma Ring_thy : ring_theory Azero Aone Aadd Amul Asub Aopp eq.
+  #[export] Instance ARing : ARing Aadd Azero Aopp Amul Aone.
   Proof.
     repeat constructor; autounfold with A; intros;
       apply functional_extensionality; intros; cbv; ring.
   Qed.
-
-  (* #[export] Instance AGroup_inst : AGroup Aadd Azero Aopp. *)
-  (* Proof. *)
-  (*   repeat constructor; autounfold with A; intros; *)
-  (*     apply functional_extensionality; intros; cbv; ring. *)
-  (* Qed. *)
-
-  #[export] Instance ARing_inst : ARing Aadd Azero Aopp Amul Aone.
-  Proof.
-    repeat constructor; autounfold with A; intros;
-      apply functional_extensionality; intros; cbv; ring.
-  Qed.
+  
+  Add Ring Ring_inst : (make_ring_theory ARing).
 End RingElementTypeFun.
 
 
@@ -633,20 +565,20 @@ End RingElementTypeTest.
 Module Type OrderedRingElementType <: RingElementType <: OrderedElementType.
   Include RingElementType.
 
-  Parameter Ale Alt : A -> A -> Prop.
+  Parameter Alt Ale : A -> A -> Prop.
+  Parameter Altb Aleb : A -> A -> bool.
 
-  Axiom AleDec : Dec Ale.
-  #[export] Existing Instance AleDec.
+  Infix "<" := Alt : A_scope.
+  Infix "<=" := Ale : A_scope.
+  Infix "<?" := Altb : A_scope.
+  Infix "<=?" := Aleb : A_scope.
+
+  Axiom Order : Order Alt Ale Altb Aleb.
+  Axiom OrderedARing : OrderedARing Aadd Azero Aopp Amul Aone Alt Ale Altb Aleb.
+  #[export] Existing Instance OrderedARing.
+
+  Notation "| a |" := (@Aabs _ 0 Aopp Aleb a) : A_scope.
   
-  Axiom AltDec : Dec Alt.
-  #[export] Existing Instance AltDec.
-
-  Axiom Ale_refl : forall a : A, Ale a a.
-  Axiom Azero_le_sqr : forall a : A, Ale Azero (Amul a a).
-  Axiom Aadd_le_compat : forall a1 b1 a2 b2 : A,
-      Ale a1 a2 -> Ale b1 b2 -> Ale (Aadd a1 b1) (Aadd a2 b2).
-  Axiom Aadd_eq_0_reg_l : forall a b : A,
-      Ale Azero a -> Ale Azero b -> Aadd a b = Azero -> a = Azero.
 End OrderedRingElementType.
 
 
@@ -655,30 +587,22 @@ End OrderedRingElementType.
 Module OrderedRingElementTypeZ <: OrderedRingElementType.
   Include RingElementTypeZ.
   
-  (* 注意，多继承时，无法用多个Include语句，需要手动拷贝代码 *)
   Definition Ale := Z.le.
   Definition Alt := Z.lt.
-  Hint Unfold Ale Alt : A.
-  
-  Lemma AleDec : Dec Ale.
-  Proof. apply Z_le_Dec. Qed.
-  
-  Lemma AltDec : Dec Alt.
-  Proof. apply Z_lt_Dec. Qed.
+  Definition Altb := Z.ltb.
+  Definition Aleb := Z.leb.
+  Hint Unfold Ale Alt Altb Aleb : A.
 
-  Lemma Ale_refl : forall a : A, Ale a a.
-  Proof. apply Z_le_refl. Qed.
+  #[export] Instance Order : Order Alt Ale Altb Aleb.
+  Proof. apply OrderedElementTypeZ.Order. Qed.
   
-  Lemma Azero_le_sqr : forall a : A, Ale Azero (Amul a a).
-  Proof. apply Z_zero_le_sqr. Qed.
-  
-  Lemma Aadd_le_compat : forall a1 b1 a2 b2 : A,
-      Ale a1 a2 -> Ale b1 b2 -> Ale (Aadd a1 b1) (Aadd a2 b2).
-  Proof. apply Z_add_le_compat. Qed.
-  
-  Lemma Aadd_eq_0_reg_l : forall a b : A,
-      Ale Azero a -> Ale Azero b -> Aadd a b = Azero -> a = Azero.
-  Proof. intros. apply Z_add_eq_0_reg_l in H1; auto. Qed.
+  #[export] Instance OrderedARing
+    : OrderedARing Aadd Azero Aopp Amul Aone Alt Ale Altb Aleb.
+  Proof.
+    constructor. apply ARing. apply Order.
+    - intros; autounfold with A in *. lia.
+    - intros; autounfold with A in *. apply Zmult_lt_compat_r; auto.
+  Qed.
 End OrderedRingElementTypeZ.
 
 Module OrderedRingElementTypeQc <: OrderedRingElementType.
@@ -686,27 +610,20 @@ Module OrderedRingElementTypeQc <: OrderedRingElementType.
 
   Definition Ale := Qcle.
   Definition Alt := Qclt.
-  Hint Unfold Ale Alt : A.
+  Definition Altb := Qcltb.
+  Definition Aleb := Qcleb.
+  Hint Unfold Ale Alt Altb Aleb : A.
   
-  Lemma AleDec : Dec Ale.
-  Proof. apply Qc_le_Dec. Qed.
+  #[export] Instance Order : Order Alt Ale Altb Aleb.
+  Proof. apply OrderedElementTypeQc.Order. Qed.
   
-  Lemma AltDec : Dec Alt.
-  Proof. apply Qc_lt_Dec. Qed.
-
-  Lemma Ale_refl : forall a : A, Ale a a.
-  Proof. apply Qc_le_refl. Qed.
-  
-  Lemma Azero_le_sqr : forall a : A, Ale Azero (Amul a a).
-  Proof. apply Qc_zero_le_sqr. Qed.
-  
-  Lemma Aadd_le_compat : forall a1 b1 a2 b2 : A,
-      Ale a1 a2 -> Ale b1 b2 -> Ale (Aadd a1 b1) (Aadd a2 b2).
-  Proof. apply Qc_add_le_compat. Qed.
-  
-  Lemma Aadd_eq_0_reg_l : forall a b : A,
-      Ale Azero a -> Ale Azero b -> Aadd a b = Azero -> a = Azero.
-  Proof. intros. apply Qc_add_eq_0_reg_l in H1; auto. Qed.
+  #[export] Instance OrderedARing
+    : OrderedARing Aadd Azero Aopp Amul Aone Alt Ale Altb Aleb.
+  Proof.
+    constructor. apply ARing. apply Order.
+    - intros; autounfold with A in *. apply Qc_lt_add_compat_r; auto.
+    - intros; autounfold with A in *. apply Qc_lt_mul_compat_r; auto.
+  Qed.
 End OrderedRingElementTypeQc.
 
 Module OrderedRingElementTypeR <: OrderedRingElementType.
@@ -714,27 +631,23 @@ Module OrderedRingElementTypeR <: OrderedRingElementType.
   
   Definition Ale := Rle.
   Definition Alt := Rlt.
-  Hint Unfold Ale Alt: A.
-  
-  Lemma AleDec : Dec Ale.
-  Proof. apply R_le_Dec. Qed.
-  
-  Lemma AltDec : Dec Alt.
-  Proof. apply R_lt_Dec. Qed.
+  Definition Altb := Rltb.
+  Definition Aleb := Rleb.
+  Hint Unfold Ale Alt Altb Aleb : A.
 
-  Lemma Ale_refl : forall a : A, Ale a a.
-  Proof. apply R_le_refl. Qed.
+  #[export] Instance Order : Order Alt Ale Altb Aleb.
+  Proof. apply OrderedElementTypeR.Order. Qed.
   
-  Lemma Azero_le_sqr : forall a : A, Ale Azero (Amul a a).
-  Proof. apply R_zero_le_sqr. Qed.
+  #[export] Instance OrderedARing
+    : OrderedARing Aadd Azero Aopp Amul Aone Alt Ale Altb Aleb.
+  Proof.
+    constructor. apply ARing. apply Order.
+    - intros; autounfold with A in *. lra.
+    - intros; autounfold with A in *. apply Rmult_lt_compat_r; auto.
+  Qed.
 
-  Lemma Aadd_le_compat : forall a1 b1 a2 b2 : A,
-      Ale a1 a2 -> Ale b1 b2 -> Ale (Aadd a1 b1) (Aadd a2 b2).
-  Proof. intros. autounfold with A in *. lra. Qed.
+  Notation "| a |" := (@Aabs _ 0 Aopp Aleb a) : A_scope.
   
-  Lemma Aadd_eq_0_reg_l : forall a b : A,
-      Ale Azero a -> Ale Azero b -> Aadd a b = Azero -> a = Azero.
-  Proof. intros. apply R_add_eq_0_reg_l in H1; auto. Qed.
 End OrderedRingElementTypeR.
 
 
@@ -756,14 +669,11 @@ Module Type FieldElementType <: RingElementType.
 
   (** 1 <> 0. *)
   Axiom Aone_neq_Azero : Aone <> Azero.
-  
-  Axiom Field_thy: field_theory Azero Aone Aadd Amul Asub Aopp Adiv Ainv eq.
-  Add Field Field_thy_inst : Field_thy.
 
-  (** A Field structure can be derived from the context *)
+  Axiom Field : Field Aadd Azero Aopp Amul Aone Ainv.
 
-  Axiom Field_inst : Field Aadd Azero Aopp Amul Aone Ainv.
-  #[export] Existing Instance Field_inst.
+  #[export] Existing Instance Field.
+  (* Add Field Field_inst : (make_field_theory Field). *)
 End FieldElementType.
 
 
@@ -780,21 +690,14 @@ Module FieldElementTypeQc <: FieldElementType.
   Lemma Aone_neq_Azero : Aone <> Azero.
   Proof. intro. cbv in *. inv H. Qed.
   
-  Lemma Field_thy: field_theory Azero Aone Aadd Amul Asub Aopp Adiv Ainv eq.
+  #[export] Instance Field : Field Aadd Azero Aopp Amul Aone Ainv.
   Proof.
-    constructor; intros; try easy.
-    apply Ring_thy.
-    unfold Amul,Ainv,Aone. unfold ElementTypeQc.A. field. auto.
-  Qed.
-    
-  Add Field Field_thy_inst : Field_thy.
-  
-  #[export] Instance Field_inst : Field Aadd Azero Aopp Amul Aone Ainv.
-  Proof.
-    constructor. apply ARing_inst.
+    constructor. apply ARing.
     intros. autounfold with A. field. auto.
     apply Aone_neq_Azero.
   Qed.
+
+  Add Field Field_inst : (make_field_theory Field).
 End FieldElementTypeQc.
 
 Module FieldElementTypeR <: FieldElementType.
@@ -808,21 +711,14 @@ Module FieldElementTypeR <: FieldElementType.
   Lemma Aone_neq_Azero : Aone <> Azero.
   Proof. cbv in *. auto with real. Qed.
 
-  Lemma Field_thy: field_theory Azero Aone Aadd Amul Asub Aopp Adiv Ainv eq.
+  #[export] Instance Field : Field Aadd Azero Aopp Amul Aone Ainv.
   Proof.
-    constructor; intros; try easy.
-    apply Ring_thy. apply Aone_neq_Azero.
-    autounfold with A. field. auto.
-  Qed.
-
-  Add Field Field_thy_inst : Field_thy.
-  
-  #[export] Instance Field_inst : Field Aadd Azero Aopp Amul Aone Ainv.
-  Proof.
-    constructor. apply ARing_inst. intros.
+    constructor. apply ARing. intros.
     autounfold with A. field. auto.
     apply Aone_neq_Azero.
   Qed.
+
+  (* Add Field Field_inst : (make_field_theory Field). *)
 End FieldElementTypeR.
 
 Module FieldElementTypeC <: FieldElementType.
@@ -835,21 +731,15 @@ Module FieldElementTypeC <: FieldElementType.
 
   Lemma Aone_neq_Azero : Aone <> Azero.
   Proof. cbv in *. auto with complex. Qed.
-
-  Lemma Field_thy: field_theory Azero Aone Aadd Amul Asub Aopp Adiv Ainv eq.
-  Proof.
-    constructor; intros; auto with complex; try easy.
-    apply Ring_thy.
-  Qed.
-
-  Add Field Field_thy_inst : Field_thy.
   
-  #[export] Instance Field_inst : Field Aadd Azero Aopp Amul Aone Ainv.
+  #[export] Instance Field : Field Aadd Azero Aopp Amul Aone Ainv.
   Proof.
-    constructor. apply ARing_inst. intros.
+    constructor. apply ARing. intros.
     autounfold with A. field. auto.
     apply Aone_neq_Azero.
   Qed.
+
+  Add Field Field_inst : (make_field_theory Field).
 End FieldElementTypeC.
 
 (* Module FieldElementTypeFun (I O : FieldElementType) <: FieldElementType. *)
@@ -912,25 +802,26 @@ End FieldElementTypeTest.
 (** * Element with field structure and ordered relation *)
 
 (** ** Type of Element with ordered field structure *)
-Module Type OrderedFieldElementType <: FieldElementType <: OrderedElementType.
+Module Type OrderedFieldElementType <: FieldElementType <: OrderedRingElementType.
   Include FieldElementType.
 
-  Parameter Ale Alt : A -> A -> Prop.
+  Parameter Alt Ale : A -> A -> Prop.
+  Parameter Altb Aleb : A -> A -> bool.
 
-  Axiom AleDec : Dec Ale.
-  #[export] Existing Instance AleDec.
+  Infix "<" := Alt : A_scope.
+  Infix "<=" := Ale : A_scope.
+  Infix "<?" := Altb : A_scope.
+  Infix "<=?" := Aleb : A_scope.
   
-  Axiom AltDec : Dec Alt.
-  #[export] Existing Instance AltDec.
+  Axiom Order : Order Alt Ale Altb Aleb.
 
-  Axiom Ale_refl : forall a : A, Ale a a.
-  Axiom Azero_le_sqr : forall a : A, Ale Azero (Amul a a).
-  Axiom Aadd_le_compat : forall a1 b1 a2 b2 : A,
-      Ale a1 a2 -> Ale b1 b2 -> Ale (Aadd a1 b1) (Aadd a2 b2).
-  Axiom Alt_le_compat : forall a : A,
-      Ale Azero a <-> Alt Azero a \/ a = Azero.
-  Axiom Aadd_eq_0_reg_l : forall a b : A,
-      Ale Azero a -> Ale Azero b -> Aadd a b = Azero -> a = Azero.
+  Axiom OrderedARing : OrderedARing Aadd Azero Aopp Amul Aone Alt Ale Altb Aleb.
+  #[export] Existing Instance OrderedARing.
+
+  Axiom OrderedAField : OrderedField Aadd Azero Aopp Amul Aone Ainv Alt Ale Altb Aleb.
+  #[export] Existing Instance OrderedAField.
+
+  Notation "| a |" := (@Aabs _ 0 Aopp Aleb a) : A_scope.
 End OrderedFieldElementType.
 
 
@@ -941,31 +832,21 @@ Module OrderedFieldElementTypeQc <: OrderedFieldElementType.
 
   Definition Ale := Qcle.
   Definition Alt := Qclt.
-  Hint Unfold Ale Alt : A.
-  
-  Lemma AleDec : Dec Ale.
-  Proof. apply Qc_le_Dec. Qed.
-  
-  Lemma AltDec : Dec Alt.
-  Proof. apply Qc_lt_Dec. Qed.
+  Definition Altb := Qcltb.
+  Definition Aleb := Qcleb.
+  Hint Unfold Ale Alt Altb Aleb : A.
 
-  Lemma Ale_refl : forall a : A, Ale a a.
-  Proof. apply Qc_le_refl. Qed.
+  #[export] Instance Order : Order Alt Ale Altb Aleb.
+  Proof. apply OrderedElementTypeQc.Order. Qed.
   
-  Lemma Azero_le_sqr : forall a : A, Ale Azero (Amul a a).
-  Proof. apply Qc_zero_le_sqr. Qed.
+  #[export] Instance OrderedARing
+    : OrderedARing Aadd Azero Aopp Amul Aone Alt Ale Altb Aleb.
+  Proof. apply OrderedRingElementTypeQc.OrderedARing. Qed.
   
-  Lemma Aadd_le_compat : forall a1 b1 a2 b2 : A,
-      Ale a1 a2 -> Ale b1 b2 -> Ale (Aadd a1 b1) (Aadd a2 b2).
-  Proof. apply Qc_add_le_compat. Qed.
+  #[export] Instance OrderedAField
+    : OrderedField Aadd Azero Aopp Amul Aone Ainv Alt Ale Altb Aleb.
+  Proof. constructor. apply Field. apply OrderedRingElementTypeQc.OrderedARing. Qed.
   
-  Lemma Alt_le_compat : forall a : A,
-      Ale Azero a <-> Alt Azero a \/ a = Azero.
-  Proof. intros. apply Qc_lt_le_compat. Qed.
-  
-  Lemma Aadd_eq_0_reg_l : forall a b : A,
-      Ale Azero a -> Ale Azero b -> Aadd a b = Azero -> a = Azero.
-  Proof. intros. apply Qc_add_eq_0_reg_l in H1; auto. Qed.
 End OrderedFieldElementTypeQc.
 
 Module OrderedFieldElementTypeR <: OrderedFieldElementType.
@@ -973,29 +854,60 @@ Module OrderedFieldElementTypeR <: OrderedFieldElementType.
   
   Definition Ale := Rle.
   Definition Alt := Rlt.
-  Hint Unfold Ale Alt: A.
-  
-  Lemma AleDec : Dec Ale.
-  Proof. apply R_le_Dec. Qed.
-  
-  Lemma AltDec : Dec Alt.
-  Proof. apply R_lt_Dec. Qed.
+  Definition Altb := Rltb.
+  Definition Aleb := Rleb.
+  Hint Unfold Ale Alt Altb Aleb : A.
 
-  Lemma Ale_refl : forall a : A, Ale a a.
-  Proof. apply R_le_refl. Qed.
+  #[export] Instance Order : Order Alt Ale Altb Aleb.
+  Proof. apply OrderedElementTypeR.Order. Qed.
   
-  Lemma Azero_le_sqr : forall a : A, Ale Azero (Amul a a).
-  Proof. apply R_zero_le_sqr. Qed.
+  #[export] Instance OrderedARing
+    : OrderedARing Aadd Azero Aopp Amul Aone Alt Ale Altb Aleb.
+  Proof. apply OrderedRingElementTypeR.OrderedARing. Qed.
   
-  Lemma Aadd_le_compat : forall a1 b1 a2 b2 : A,
-      Ale a1 a2 -> Ale b1 b2 -> Ale (Aadd a1 b1) (Aadd a2 b2).
-  Proof. intros. autounfold with A in *. lra. Qed.
-  
-  Lemma Alt_le_compat : forall a : A,
-      Ale Azero a <-> Alt Azero a \/ a = Azero.
-  Proof. intros. autounfold with A in *. lra. Qed.
-  
-  Lemma Aadd_eq_0_reg_l : forall a b : A,
-      Ale Azero a -> Ale Azero b -> Aadd a b = Azero -> a = Azero.
-  Proof. intros. apply R_add_eq_0_reg_l in H1; auto. Qed.
+  #[export] Instance OrderedAField
+    : OrderedField Aadd Azero Aopp Amul Aone Ainv Alt Ale Altb Aleb.
+  Proof. constructor. apply Field. apply OrderedRingElementTypeR.OrderedARing. Qed.
+
+  Notation "| a |" := (@Aabs _ 0 Aopp Aleb a) : A_scope.
+
 End OrderedFieldElementTypeR.
+
+
+
+(* ######################################################################### *)
+(** * Element with field structure and ordered relation and normed *)
+
+(** ** Type of Element with normed ordered field structure *)
+Module Type NormedOrderedFieldElementType <: OrderedFieldElementType.
+  Include OrderedFieldElementType.
+  Export RExt RealFunction.
+
+  Parameter a2r : A -> R.
+  Axiom ConvertToR : ConvertToR Aadd Azero Aopp Amul Aone Ainv Alt Ale Altb Aleb a2r.
+  #[export] Existing Instance ConvertToR.
+End NormedOrderedFieldElementType.
+
+
+(** ** Instances *)
+
+Module NormedOrderedFieldElementTypeQc <: NormedOrderedFieldElementType.
+  Include OrderedFieldElementTypeQc.
+  Export RExt RealFunction.
+
+  Definition a2r := Qc2R.
+  
+  #[export] Instance ConvertToR
+    : ConvertToR Aadd Azero Aopp Amul Aone Ainv Alt Ale Altb Aleb a2r.
+  Proof. apply Qc_ConvertToR. Qed.
+End NormedOrderedFieldElementTypeQc.
+
+Module NormedOrderedFieldElementTypeR <: NormedOrderedFieldElementType.
+  Include OrderedFieldElementTypeR.
+  
+  Definition a2r := id.
+  
+  #[export] Instance ConvertToR
+    : ConvertToR Aadd Azero Aopp Amul Aone Ainv Alt Ale Altb Aleb a2r.
+  Proof. apply R_ConvertToR. Qed.
+End NormedOrderedFieldElementTypeR.

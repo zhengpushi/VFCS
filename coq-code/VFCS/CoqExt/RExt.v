@@ -64,7 +64,7 @@
 Require Export Lia Lra Reals.
 Require Import ZExt QExt QcExt.
 Require Export Basic.
-Require Import Hierarchy.
+Require Export Hierarchy.
 
 Open Scope R_scope.
 
@@ -249,6 +249,59 @@ Ltac ra :=
   intros; unfold Rsqr in *; try lra; try nra; auto with R.
 
 
+
+
+(* ######################################################################### *)
+(** * Decidable procedure for comparison of R *)
+
+(** ** Notations for comparison with decidable procedure *)
+Infix "??=" := (Req_EM_T) : R_scope.
+
+(* For all four cases of comparison, we allow all these notations, but the `Display`
+   will be only two cases, in order to simplify the cases of proof *)
+
+(* These two notations will be covered by next two notations *)
+Notation "x ??>= y" := (Rle_lt_dec y x) : R_scope.
+Notation "x ??> y" := (Rlt_le_dec y x) : R_scope.
+
+(* These two notations have higher priority *)
+Infix "??<=" := (Rle_lt_dec) : R_scope.
+Infix "??<" := (Rlt_le_dec) : R_scope.
+
+
+(** ** Verify above notations are reasonable *)
+
+(* a = b, iff, a ??= b *)
+Lemma ReqDec_spec : forall a b : R, a = b <-> if a ??= b then true else false.
+Proof. intros. destruct (_??=_); split; intros; try congruence. Qed.
+
+(* a ??>= b, iff, b ??<= a *)
+Lemma RgeDec_spec : forall a b : R,
+    (if a ??>= b then true else false) = (if b ??<= a then true else false).
+Proof. intros. auto. Qed.
+
+(* a ??> b, iff, b ??< a *)
+Lemma RgtDec_spec : forall a b : R,
+    (if a ??> b then true else false) = (if b ??< a then true else false).
+Proof. intros. auto. Qed.
+
+(* a <= b, iff, a ??<= b *)
+Lemma RleDec_spec : forall a b : R, a <= b <-> if a ??<= b then true else false.
+Proof. intros. destruct (_??<=_); split; intros; try congruence. lra. Qed.
+
+(* a < b, iff, a ??< b *)
+Lemma RltDec_spec : forall a b : R, a < b <-> if a ??< b then true else false.
+Proof. intros. destruct (_??<_); split; intros; try congruence. lra. Qed.
+
+
+(** ** Aditional properties about RxxDec *)
+
+(* if x ??<= x then b1 else b2 = b1 *)
+Lemma RleDec_refl : forall {B} (x : R) (b1 b2 : B),
+    (if x ??<= x then b1 else b2) = b1.
+Proof. intros. destruct (_??<= _); ra. Qed.
+
+
 (* ######################################################################### *)
 (** * Reqb,Rleb,Rltb: Boolean comparison of R *)
 
@@ -262,20 +315,6 @@ Proof. constructor. intros. destruct (Rle_lt_dec a b); auto. right; lra. Qed.
 #[export] Instance R_lt_Dec : Dec Rlt.
 Proof. constructor. intros. destruct (Rlt_le_dec a b); auto. right; lra. Qed.
 
-(* n <= n *)
-Lemma R_le_refl : forall n : R, n <= n.
-Proof. intros. lra. Qed.
-
-Lemma R_zero_le_sqr : forall a : R, 0 <= a * a.
-Proof. intros. nra. Qed.
-
-(* Lemma R_add_le_compat : forall a1 b1 a2 b2 : R, a1 <= a2 -> b1 <= b2 -> a1 + b1 <= a2 + b2. *)
-(* Proof. intros. lra. Qed. *)
-
-Lemma R_add_eq_0_reg_l : forall a b : R, 0 <= a -> 0 <= b -> a + b = 0 -> a = 0.
-Proof. intros. lra. Qed.
-
-
 Definition Reqb (r1 r2 : R) : bool := Acmpb R_eq_Dec r1 r2.
 Definition Rleb (r1 r2 : R) : bool := Acmpb R_le_Dec r1 r2.
 Definition Rltb (r1 r2 : R) : bool := Acmpb R_lt_Dec r1 r2.
@@ -285,8 +324,6 @@ Infix "<?"  := Rltb : R_scope.
 Infix ">?"  := (fun x y => y <? x) : R_scope.
 Infix ">=?" := (fun x y => y <=? x) : R_scope.
 
-(** Reflection of (=) and (=?) *)
-Hint Resolve eq_refl : bdestruct.
 Lemma Reqb_true : forall x y, x =? y = true <-> x = y.
 Proof. apply Acmpb_true. Qed.
 
@@ -297,6 +334,7 @@ Lemma Reqb_reflect : forall x y, reflect (x = y) (x =? y).
 Proof.
   intros. unfold Reqb,Acmpb. destruct dec; constructor; auto.
 Qed.
+#[export] Hint Resolve Reqb_reflect : bdestruct.
 
 Lemma Reqb_refl : forall r, r =? r = true.
 Proof. intros. unfold Reqb,Acmpb. destruct dec; auto. Qed.
@@ -310,9 +348,23 @@ Proof. intros. unfold Reqb,Acmpb in *. destruct dec,dec,dec; auto. lra. Qed.
 
 Lemma Rltb_reflect : forall x y, reflect (x < y) (x <? y).
 Proof. intros. unfold Rltb,Acmpb in *. destruct dec; auto; constructor; lra. Qed.
+#[export] Hint Resolve Rltb_reflect : bdestruct.
 
 Lemma Rleb_reflect : forall x y, reflect (x <= y) (x <=? y).
 Proof. intros. unfold Rleb,Acmpb in *. destruct dec; auto; constructor; lra. Qed.
+#[export] Hint Resolve Rleb_reflect : bdestruct.
+
+(* x <=? x = true *)
+Lemma Rleb_refl : forall x : R, x <=? x = true.
+Proof. intros. bdestruct (x <=? x); ra. Qed.
+
+(* (x <=? - y) = (-x >=? y) *)
+Lemma Rleb_opp_r : forall x y : R, (x <=? - y) = (- x >=? y).
+Proof. intros. bdestruct (x <=? -y); bdestruct (-x >=? y); ra. Qed.
+
+(* (- x <=? y) = (x >=? - y) *)
+Lemma Rleb_opp_l : forall x y : R, (- x <=? y) = (x >=? - y).
+Proof. intros. bdestruct (- x <=? y); bdestruct (x >=? -y); ra. Qed.
 
 (** (a - b <? 0) = (0 <? b - a) *)
 Lemma Rminus_ltb0_comm : forall a b : R, (a - b <? 0) = (0 <? b - a).
@@ -321,13 +373,6 @@ Proof. intros. unfold Rltb,Acmpb. destruct dec,dec; auto; lra. Qed.
 (** (a - b >? 0) = (0 >? b - a) *)
 Lemma Rminus_gtb0_comm : forall a b : R, (a - b >? 0) = (0 >? b - a).
 Proof. intros. unfold Rltb,Acmpb. destruct dec,dec; auto; lra. Qed.
-
-(** These theorems are automatic used. *)
-#[export] Hint Resolve
-  Reqb_reflect
-  Rltb_reflect
-  Rleb_reflect
-  : bdestruct.
 
 
 (* ######################################################################### *)
@@ -530,6 +575,9 @@ Lemma Rinv_ab_simpl_b : forall r1 r2 r3,
     r2 <> 0 -> r3 <> 0 -> (r1 * r2) * / (r3 * r2) = r1 * / r3.
 Proof. intros. field; auto. Qed.
 
+Lemma Rdiv_1_neq_0_compat : forall r : R, r <> 0 -> 1 / r <> 0.
+Proof. intros. pose proof (Rinv_neq_0_compat r H). ra. Qed.
+
 #[export] Hint Rewrite
   Rinv_ab_simpl_a       (* (r1 * r2) * / (r1 * r3) = r2 * / r3 *)
   Rinv_ab_simpl_b       (* (r1 * r2) * / (r3 * r2) = r1 * / r3 *)
@@ -675,6 +723,7 @@ Global Hint Resolve
   : R.
 
 
+
 (* ======================================================================= *)
 (** ** About "sqrt" *)
 
@@ -726,9 +775,11 @@ Proof.
   apply sqrt_gt0_imply_gt0 in H1. auto with R.
 Qed.
 
-Lemma sqrt_eq1_imply_eq1_rev : forall (x : R), x = 1 -> sqrt x = 1.
+Lemma sqrt_eq1_iff : forall (x : R), sqrt x = 1 <-> x = 1.
 Proof.
-  intros. rewrite H. rewrite sqrt_1. auto.
+  intros. split; intros.
+  - apply sqrt_eq1_imply_eq1; auto.
+  - subst. rewrite sqrt_1; auto.
 Qed.
 
 (** sqrt x = 0 <-> x <= 0 *)
@@ -960,6 +1011,8 @@ Proof. intros. assert (0 < cos r). { apply cos_gt_0; ra. } ra. Qed.
 #[export] Hint Resolve
   sin_0         (* sin 0 = 0 *)
   cos_0         (* cos 0 = 1 *)
+  sin_PI        (* sin PI = 0 *)
+  cos_PI        (* cos PI = -1 *)
   sin_PI2       (* sin (PI / 2) = 1 *)
   cos_PI2       (* cos (PI / 2) = 0 *)
   sin_PI2_neg   (* sin (- (PI/2)) = -1 *)
@@ -970,6 +1023,8 @@ Proof. intros. assert (0 < cos r). { apply cos_gt_0; ra. } ra. Qed.
   cos_sub_PI    (* cos (r - PI) = - (cos r) *)
   sin2_cos2     (* (sin x)² + (cos x)² = 1 *)
   cos2_sin2     (* (cos x)² + (sin x)² = 1 *)
+  cos_neg       (* cos (- x) = cos x *)
+  sin_neg       (* sin (- x) = - sin x *)
   cos_neg0      (* - PI / 2 < r < PI / 2 -> cos r <> 0 *)
   : R.
 
@@ -1054,6 +1109,15 @@ Proof. intros. unfold Rdiv. assert (/b < 0); ra. Qed.
 
 Lemma Rdiv_ge_0_compat: forall a b : R, 0 <= a -> 0 < b -> 0 <= a / b.
 Proof. intros. unfold Rdiv. assert (0 < /b); ra. Qed.
+
+(* 0 <= a * a *)
+Lemma Rsqr_gt0 : forall a : R, 0 <= a * a.
+Proof. intros. nra. Qed.
+
+(** 0 <= a -> 0 <= b -> a + b = 0 -> b = 0 *)
+Lemma Rplus_eq_0_r : forall a b : R, 0 <= a -> 0 <= b -> a + b = 0 -> b = 0.
+Proof. intros. lra. Qed.
+                                                    
 
 Hint Resolve
   Rdiv_ge0_lt0_le0
@@ -1279,18 +1343,28 @@ Section compare_with_PI.
   Proof.
   Abort.
 
-  (** One method: give the upper and lower bound of PI with concrete value by axiom, 
-      then use transitivity to solve it by lra. *)
-  Definition PI_ub : R := 3.14159266.
-  Definition PI_lb : R := 3.14159265.
-  Axiom PI_lt : PI < PI_ub.
-  Axiom PI_gt : PI_lb < PI.
-  Axiom PI_lt_gt : PI_lb < PI < PI_ub.
+  (** One method: give the upper and lower bound of PI with concrete
+      value by axiom, then use transitivity to solve it by lra. *)
+  Notation PI_ub := 3.14159266.
+  Notation PI_lb := 3.14159265.
+  
+  Axiom PI_upper_bound : PI < PI_ub.
+  Axiom PI_lower_bound : PI_lb < PI.
+  
+  Lemma PI_bound : PI_lb < PI < PI_ub.
+  Proof. split. apply PI_lower_bound. apply PI_upper_bound. Qed.
 
+  (* method 1: by transitivity *)
   Goal 2 < PI.
   Proof.
-    apply Rlt_trans with PI_lb; unfold PI_lb. lra. apply PI_gt.
-  Qed.
+    apply Rlt_trans with PI_lb. lra. apply PI_bound.
+  Abort.
+  
+  (* method 2: by lra directly *)
+  Goal 2 < PI.
+  Proof.
+    pose proof PI_bound. lra.
+  Abort.
   
 End compare_with_PI.
 
@@ -1492,8 +1566,7 @@ Lemma Rsplit_neg_pi_to_pi : forall a : R,
 Proof.
   intros.
   (* 引入 PI 的不等式，以便 lra 能够使用 *)
-  pose proof (PI_lt_gt) as H; unfold PI_lb,PI_ub in H.
-  ra.
+  pose proof PI_bound. lra.
 Qed.
 
 
@@ -1685,9 +1758,97 @@ Definition nat2R (n : nat) : R := Z2R (nat2Z n).
 Definition R2nat_floor (r : R) : nat := Z2nat (R2Z_floor r).
 Definition R2nat_ceiling (r : R) : nat := Z2nat (R2Z_ceiling r).
 
-(** *** Conversion from Q or Qc to R *)
-Definition Q2R (x : Q) : R := Q2R x.
-Definition Qc2R (x : Qc) : R := Q2R (Qc2Q x).
+(** *** Conversion from Q to R *)
+Section Q2R.
+  Import Rdefinitions.
+  Import Qreals.
+  Import QExt.
+  
+  (* Definition Q2R (x : Q) : R := Q2R x. *)
+
+  Lemma Q2R_eq_iff : forall a b : Q, Q2R a = Q2R b <-> Qeq a b.
+  Proof. intros. split; intros. apply eqR_Qeq; auto. apply Qeq_eqR; auto. Qed.
+
+  Lemma Q2R_add : forall a b : Q, Q2R (a + b) = (Q2R a + Q2R b)%R.
+  Proof. intros. apply Qreals.Q2R_plus. Qed.
+
+End Q2R.
+
+
+(** *** Conversion from Qc to R *)
+Section Qc2R.
+  Import Rdefinitions.
+  Import Qreals.
+  Import QcExt.
+
+  Section QcExt_additional.
+    
+    Lemma this_Q2Qc_eq_Qred : forall a : Q, this (Q2Qc a) = Qred a.
+    Proof. auto. Qed.
+
+  End QcExt_additional.
+  
+  Definition Qc2R (x : Qc) : R := Q2R (Qc2Q x).
+
+  Lemma Qc2R_add : forall a b : Qc, Qc2R (a + b) = (Qc2R a + Qc2R b)%R.
+  Proof.
+    intros. unfold Qc2R,Qc2Q. rewrite <- Q2R_add. apply Q2R_eq_iff.
+    unfold Qcplus. rewrite this_Q2Qc_eq_Qred. apply Qred_correct.
+  Qed.
+  
+  Lemma Qc2R_0 : Qc2R 0 = 0%R.
+  Proof. intros. cbv. ring. Qed.
+  
+  Lemma Qc2R_opp : forall a : Qc, Qc2R (- a) = (- (Qc2R a))%R.
+  Proof.
+    intros. unfold Qc2R,Qc2Q. rewrite <- Q2R_opp. apply Q2R_eq_iff.
+    unfold Qcopp. rewrite this_Q2Qc_eq_Qred. apply Qred_correct.
+  Qed.
+  
+  Lemma Qc2R_mul : forall a b : Qc, Qc2R (a * b) = (Qc2R a * Qc2R b)%R.
+  Proof.
+    intros. unfold Qc2R,Qc2Q. rewrite <- Q2R_mult. apply Q2R_eq_iff.
+    unfold Qcmult. rewrite this_Q2Qc_eq_Qred. apply Qred_correct.
+  Qed.
+  
+  Lemma Qc2R_1 : Qc2R 1 = (1)%R.
+  Proof. intros. cbv. field. Qed.
+  
+  Lemma Qc2R_inv : forall a : Qc, a <> 0 -> Qc2R (/ a) = (/ (Qc2R a))%R.
+  Proof.
+    intros. unfold Qc2R,Qc2Q. rewrite <- Q2R_inv. apply Q2R_eq_iff.
+    unfold Qcinv. rewrite this_Q2Qc_eq_Qred. apply Qred_correct.
+    intro. destruct H. apply Qc_is_canon. simpl. auto.
+  Qed.
+  
+  Lemma Qc2R_eq_iff : forall a b : Qc, Qc2R a = Qc2R b <-> a = b.
+  Proof.
+    split; intros; subst; auto. unfold Qc2R, Qc2Q in H.
+    apply Qc_is_canon. apply eqR_Qeq; auto.
+  Qed.
+  
+  Lemma Qc2R_lt_iff : forall a b : Qc, (Qc2R a < Qc2R b)%R <-> a < b.
+  Proof.
+    intros. unfold Qc2R, Qc2Q,Qclt in *. split; intros.
+    apply Rlt_Qlt; auto. apply Qlt_Rlt; auto.
+  Qed.
+  
+  Lemma Qc2R_le_iff : forall a b : Qc, (Qc2R a <= Qc2R b)%R <-> a <= b.
+  Proof.
+    intros. unfold Qc2R, Qc2Q,Qclt in *. split; intros.
+    apply Rle_Qle; auto. apply Qle_Rle; auto.
+  Qed.
+
+  #[export] Instance Qc_ConvertToR
+    : ConvertToR Qcplus (0%Qc) Qcopp Qcmult (1%Qc) Qcinv Qclt Qcle Qcltb Qcleb Qc2R.
+  Proof.
+    constructor; intros.
+    apply Qc2R_add. apply Qc2R_0. apply Qc2R_opp. apply Qc2R_mul. apply Qc2R_1.
+    apply Qc2R_inv; auto. apply Qc_Order. apply Qc2R_eq_iff.
+    apply Qc2R_lt_iff. apply Qc2R_le_iff.
+  Qed.
+  
+End Qc2R.
 
 
 (* ######################################################################### *)
@@ -1704,13 +1865,36 @@ Definition Rapproxb (r1 r2 diff : R) : bool := |r1 - r2| <=? diff.
 (* ######################################################################### *)
 (** * Mathematical Hierarchy *)
 
-(* Global Instance EqReflect_R : EqReflect Reqb. *)
-(* Proof. *)
-(*   constructor. intros. *)
-(*   destruct (a =? b) eqn:E1. *)
-(*   - apply Reqb_eq in E1. constructor. auto. *)
-(*   - apply Reqb_neq in E1. constructor. auto. *)
-(* Defined. *)
+#[export] Instance R_Order : Order Rlt Rle Rltb Rleb.
+Proof.
+  constructor; intros; try lra.
+  destruct (total_order_T a b) as [[H|H]|H]; auto.
+  apply Rltb_reflect. apply Rleb_reflect.
+Qed.
+
+#[export] Instance R_ARing : ARing Rplus R0 Ropp Rmult R1.
+Proof.
+  repeat constructor; intros; ring.
+Qed.
+
+#[export] Instance R_OrderedARing
+  : OrderedARing Rplus 0 Ropp Rmult 1 Rlt Rle Rltb Rleb.
+Proof.
+  constructor. apply R_ARing. apply R_Order.
+  - intros. lra.
+  - intros. apply Rmult_lt_compat_r; auto.
+Qed.
+
+#[export] Instance R_Field : Field Rplus R0 Ropp Rmult R1 Rinv.
+Proof.
+  constructor. apply R_ARing. intros. field; auto. lra.
+Qed.
+
+#[export] Instance R_OrderedField
+  : OrderedField Rplus 0 Ropp Rmult 1 Rinv Rlt Rle Rltb Rleb.
+Proof.
+  constructor. apply R_Field. apply R_OrderedARing.
+Qed.
 
 
 (* ######################################################################### *)
@@ -1749,9 +1933,20 @@ Proof.
   apply Rmult_le_compat_r; ra. apply Rinv_r; ra.
 Qed.
 
+(* b <> 0 -> |a| <= |b| -> |a/b| <= 1 *)
+Lemma Rdiv_abs_le_1 : forall a b : R, b <> 0 -> |a| <= |b| -> | a / b | <= 1.
+Proof.
+  intros. unfold Rdiv. rewrite Rabs_mult. rewrite Rabs_inv.
+  apply Rdiv_le_1; auto; ra. apply Rabs_pos_lt; auto.
+Qed.
+
 #[export] Hint Resolve
   Rdiv_le_1
   : R.
+
+#[export] Instance R_ConvertToR
+  : ConvertToR Rplus 0 Ropp Rmult 1 Rinv Rlt Rle Rltb Rleb id.
+Proof. constructor; intros; unfold id; auto; try easy. apply R_Order. Qed.
 
 
 (* ######################################################################### *)
@@ -1759,5 +1954,3 @@ Qed.
 
 Lemma mult_PI_gt0 : forall r, 0 < r -> 0 < r * PI.
 Proof. ra. Qed.  
-
-                

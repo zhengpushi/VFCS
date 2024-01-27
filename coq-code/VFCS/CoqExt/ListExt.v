@@ -204,12 +204,12 @@ Section fold_left.
       fold_left Aadd l1 Azero = Aopp (fold_left Aadd l2 Azero).
   Proof.
     induction l1,l2; intros; simpl in *; try lia.
-    - rewrite group_inv_zero; auto.
+    - rewrite group_opp_0; auto.
     - destruct n. lia.
       inversion H; clear H. inversion H0; clear H0.
       rewrite !fold_left_rebase_l.
       rewrite (IHl1 l2 n); auto.
-      + rewrite group_inv_distr. asemigroup.
+      + rewrite group_opp_distr. asemigroup.
         specialize (H1 0). simpl in H1. rewrite H1; auto. lia.
       + intros. specialize (H1 (S i)). simpl in H1. apply H1. lia.
   Qed.
@@ -284,10 +284,10 @@ Section fold_right.
       fold_right Aadd Azero l1 = Aopp (fold_right Aadd Azero l2).
   Proof.
     induction l1,l2; intros; simpl in *; try lia.
-    - rewrite group_inv_zero; auto.
+    - rewrite group_opp_0; auto.
     - destruct n. lia. rewrite (IHl1 l2 n); auto.
       + specialize (H1 0); simpl in H1.
-        rewrite H1; try lia. rewrite group_inv_distr. asemigroup.
+        rewrite H1; try lia. rewrite group_opp_distr. asemigroup.
       + intros. specialize (H1 (S i)); simpl in H1. rewrite H1; auto. lia.
   Qed.
 
@@ -861,8 +861,7 @@ Section map2_sametype.
       map2 Asub l1 l2 = map Aopp (map2 Asub l2 l1).
   Proof.
     induction l1; destruct l2; intros; simpl in *; auto.
-    f_equal; auto.
-    rewrite group_inv_distr. rewrite group_inv_inv. easy.
+    f_equal; auto. rewrite group_opp_distr. rewrite group_opp_opp. easy.
   Qed.
 
   (** (l1 - l2) - l3 = (l1 - l3) - l2 *)
@@ -879,7 +878,7 @@ Section map2_sametype.
   Proof.
     induction l1,l2,l3; simpl; auto. f_equal; auto.
     rewrite associative. f_equal.
-    rewrite group_inv_distr. apply commutative.
+    rewrite group_opp_distr. apply commutative.
   Qed.
 
   (** 0 - l = - l *)
@@ -895,7 +894,7 @@ Section map2_sametype.
       length l = n -> map2 Asub l (lzero Azero n) = l.
   Proof.
     induction l; simpl; intros; auto. destruct n; simpl. lia.
-    f_equal; auto. rewrite group_inv_id at 1. group.
+    f_equal; auto. rewrite group_opp_0 at 1. group.
   Qed.
   
   (** l - l = 0 *)
@@ -1183,7 +1182,7 @@ Section lcmul_lmulc.
     specialize (IHl H2).
     destruct IHl; auto.
     - subst. left. ring.
-    - apply field_mul_eq0_imply_a0_or_b0 in H1; auto. destruct H1.
+    - apply field_mul_eq0_reg in H1; auto. destruct H1.
       + left. subst. ring.
       + right. subst. f_equal; try ring.
         rewrite <- H0 in H2. auto.

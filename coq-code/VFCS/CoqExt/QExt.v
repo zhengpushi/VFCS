@@ -82,22 +82,22 @@ Definition Q2Z_floor (q : Q) : Z := Qfloor q.
   
   Be careful for use of any axiom!!
 *)
-Axiom Qeq_iff_eq : forall (a b : Q), Qeq a b <-> a = b.
+(* Axiom Qeq_iff_eq : forall (a b : Q), Qeq a b <-> a = b. *)
 
-Lemma Qneq_iff_neq : forall (a b : Q), ~(Qeq a b) <-> a <> b.
-Proof.
-  intros. split; intros.
-  - intro. apply Qeq_iff_eq in H0. easy.
-  - intro. apply Qeq_iff_eq in H0. easy.
-Qed.
+(* Lemma Qneq_iff_neq : forall (a b : Q), ~(Qeq a b) <-> a <> b. *)
+(* Proof. *)
+(*   intros. split; intros. *)
+(*   - intro. apply Qeq_iff_eq in H0. easy. *)
+(*   - intro. apply Qeq_iff_eq in H0. easy. *)
+(* Qed. *)
 
-Lemma Qeqdec : forall q1 q2 : Q, {q1 = q2} + {q1 <> q2}.
-Proof.
-  intros a b.
-  destruct (Qeq_dec a b) as [H|H] eqn : E1.
-  - left. apply Qeq_iff_eq. auto.
-  - right. intro. apply Qeq_iff_eq in H0. auto.
-Defined.
+(* Lemma Qeqdec : forall q1 q2 : Q, {q1 = q2} + {q1 <> q2}. *)
+(* Proof. *)
+(*   intros a b. *)
+(*   destruct (Qeq_dec a b) as [H|H] eqn : E1. *)
+(*   - left. apply Qeq_iff_eq. auto. *)
+(*   - right. intro. apply Qeq_iff_eq in H0. auto. *)
+(* Defined. *)
 
 Definition Qeqb := Qeq_bool.
 
@@ -118,19 +118,19 @@ Proof.
   - destruct (Qeqb x y) eqn:E1; auto. apply Qeqb_true_iff_equiv in E1. easy.
 Qed.
 
-Lemma Qeqb_true_iff : forall x y, x =? y = true <-> x = y.
-Proof.
-  intros; split; intros.
-  - apply Qeq_iff_eq. apply Qeqb_true_iff_equiv. auto.
-  - apply Qeq_iff_eq in H. apply Qeqb_true_iff_equiv. auto.
-Qed.
+(* Lemma Qeqb_true_iff : forall x y, x =? y = true <-> x = y. *)
+(* Proof. *)
+(*   intros; split; intros. *)
+(*   - apply Qeq_iff_eq. apply Qeqb_true_iff_equiv. auto. *)
+(*   - apply Qeq_iff_eq in H. apply Qeqb_true_iff_equiv. auto. *)
+(* Qed. *)
 
-Lemma Qeqb_false_iff : forall x y, x =? y = false <-> x <> y.
-Proof. 
-  intros; split; intros.
-  - intro. apply Qeq_iff_eq in H0. apply Qeqb_false_iff_equiv in H. easy.
-  - apply Qeqb_false_iff_equiv. apply Qneq_iff_neq. auto.
-Qed.
+(* Lemma Qeqb_false_iff : forall x y, x =? y = false <-> x <> y. *)
+(* Proof.  *)
+(*   intros; split; intros. *)
+(*   - intro. apply Qeq_iff_eq in H0. apply Qeqb_false_iff_equiv in H. easy. *)
+(*   - apply Qeqb_false_iff_equiv. apply Qneq_iff_neq. auto. *)
+(* Qed. *)
 
 (** (==) is equivalence relation *)
 Lemma Qeq_equiv : equivalence _ Qeq.
@@ -167,11 +167,11 @@ Qed.
 (** ** Others *)
 
 (** This is needed by field_theory (EQ version, original is equiv version) *)
-Lemma Qmult_inv_l_EQ : forall p : Q, p <> 0 -> /p * p = 1.
-Proof.
-  intros. apply Qeq_iff_eq. rewrite Qmult_comm.
-  apply Qmult_inv_r. apply Qneq_iff_neq. auto.
-Qed.
+(* Lemma Qmult_inv_l_EQ : forall p : Q, p <> 0 -> /p * p = 1. *)
+(* Proof. *)
+(*   intros. apply Qeq_iff_eq. rewrite Qmult_comm. *)
+(*   apply Qmult_inv_r. apply Qneq_iff_neq. auto. *)
+(* Qed. *)
  
 
 (** ** sqrt of Q *)

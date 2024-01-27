@@ -58,34 +58,123 @@ Proof.
   right. intro. apply Qcle_not_lt in q. easy.
 Defined.
 
+(* ~ (a < a) *)
+Lemma Qc_lt_irrefl : forall a : Qc, ~ (a < a).
+Proof.
+  intros. intro. apply Qclt_not_eq in H. easy.
+Qed.
+
+(* a <> b -> a <= b -> a < b *)
+Lemma Qcle_lt_strong : forall a b : Qc, a <> b -> a <= b -> a < b.
+Proof.
+  intros.
+  destruct (Qc_dec a b) as [[H1|H1]|H1]; auto.
+  - apply Qcle_not_lt in H0. easy.
+  - subst. easy.
+Qed.
+
+(* -q + q = 0 *)
+Lemma Qcplus_opp_l : forall q : Qc, -q + q = Q2Qc 0.
+Proof. intros. rewrite commutative, Qcplus_opp_r; auto. Qed. 
+
+(* c + a = c + b -> a = b *)
+Lemma Qc_add_reg_l : forall a b c : Qc, c + a = c + b -> a = b.
+Proof.
+  intros.
+  assert (-c + c + a = -c + c + b). { rewrite !associative. rewrite H. auto. }
+  rewrite Qcplus_opp_l in H0. rewrite !Qcplus_0_l in H0. auto.
+Qed.
+
+(* a + c = b + c -> a = b *)
+Lemma Qc_add_reg_r : forall a b c : Qc, a + c = b + c -> a = b.
+Proof.
+  intros.
+  assert (a + c + -c = b + c + -c). { rewrite H. auto. }
+  rewrite !associative in H0. rewrite Qcplus_opp_r in H0.
+  rewrite !Qcplus_0_r in H0. auto.
+Qed.
+
+(* a < b -> a + c < b + c *)
+Lemma Qc_lt_add_compat_r : forall a b c : Qc, a < b -> a + c < b + c.
+Proof.
+  intros. pose proof (Qcplus_le_compat a b c c). destruct (Aeqdec a b).
+  - subst. apply Qc_lt_irrefl in H. easy.
+  - apply Qcle_lt_strong; auto.
+    + intro. apply Qc_add_reg_r in H1. easy.
+    + apply H0. apply Qclt_le_weak; auto. apply Qcle_refl.
+Qed.
+
+(* a < b -> c + a < c + b *)
+Lemma Qc_lt_add_compat_l : forall a b c : Qc, a < b -> c + a < c + b.
+Proof. intros. rewrite !(commutative c _). apply Qc_lt_add_compat_r; auto. Qed.
+
+(* a < b -> 0 < c -> a * c < b * c *)
+Lemma Qc_lt_mul_compat_r : forall a b c : Qc, a < b -> 0 < c -> a * c < b * c.
+Proof. intros. apply Qcmult_lt_compat_r; auto. Qed.
+
+(* a < b -> 0 < c -> c * a < c * b *)
+Lemma Qc_lt_mul_compat_l : forall a b c : Qc, a < b -> 0 < c -> c * a < c * b.
+Proof. intros. rewrite !(commutative c _). apply Qc_lt_mul_compat_r; auto. Qed.
+
 (* n <= n *)
 Lemma Qc_le_refl : forall n : Qc, n <= n.
 Proof. apply Qcle_refl. Qed.
 
-Lemma Qc_zero_le_sqr : forall a : Qc, 0 <= a * a.
-Proof. intros. Admitted.
+(* Lemma Qc_zero_le_sqr : forall a : Qc, 0 <= a * a. *)
+(* Proof. intros. Admitted. *)
 
-Lemma Qc_add_le_compat : forall a1 b1 a2 b2 : Qc,
-    a1 <= a2 -> b1 <= b2 -> a1 + b1 <= a2 + b2.
-Proof. intros. apply Qcplus_le_compat; auto. Qed.
+(* Lemma Qc_add_le_compat : forall a1 b1 a2 b2 : Qc, *)
+(*     a1 <= a2 -> b1 <= b2 -> a1 + b1 <= a2 + b2. *)
+(* Proof. intros. apply Qcplus_le_compat; auto. Qed. *)
 
-Lemma Qc_lt_le_compat : forall a : Qc, 0 <= a <-> 0 < a \/ a = 0.
+(* Lemma Qc_lt_le_compat : forall a : Qc, 0 <= a <-> 0 < a \/ a = 0. *)
+(* Proof. *)
+(*   intros. split; intros. *)
+(*   - apply Qcle_lt_or_eq in H. destruct H; auto. *)
+(*   - destruct H. *)
+(*     + apply Qclt_le_weak; auto. *)
+(*     + subst. apply Qcle_refl. *)
+(* Qed. *)
+
+(* Lemma Qc_add_eq_0_reg_l : forall a b : Qc, 0 <= a -> 0 <= b -> a + b = 0 -> a = 0. *)
+(* Proof. intros. *)
+(*        (* Search (_ + _ = _). *) *)
+(*        (* Search ( _ <= _). *) *)
+(*        (* Search (_ + _ = Q2Qc 0). *) *)
+(*        (* Search (_ + _ = _ + _). *) *)
+(*        (* Search (_ = Q2Qc 0). *) *)
+(* Admitted. *)
+
+(** Bool version of "<" and "<=" for Qc *)
+Definition Qcltb (a b : Qc) : bool := if Qclt_le_dec a b then true else false.
+Definition Qcleb (a b : Qc) : bool := if Qclt_le_dec b a then false else true.
+Infix "<?" := Qcltb : Qc_scope.
+Infix "<=?" := Qcleb : Qc_scope.
+
+Lemma Qcltb_reflect : forall a b : Qc, reflect (a < b) (a <? b).
 Proof.
-  intros. split; intros.
-  - apply Qcle_lt_or_eq in H. destruct H; auto.
-  - destruct H.
-    + apply Qclt_le_weak; auto.
-    + subst. apply Qcle_refl.
+  intros. unfold Qcltb. destruct Qclt_le_dec; constructor; auto.
+  apply Qcle_not_lt; auto.
 Qed.
 
-Lemma Qc_add_eq_0_reg_l : forall a b : Qc, 0 <= a -> 0 <= b -> a + b = 0 -> a = 0.
-Proof. intros.
-       (* Search (_ + _ = _). *)
-       (* Search ( _ <= _). *)
-       (* Search (_ + _ = Q2Qc 0). *)
-       (* Search (_ + _ = _ + _). *)
-       (* Search (_ = Q2Qc 0). *)
-Admitted.
+Lemma Qcleb_reflect : forall a b : Qc, reflect (a <= b) (a <=? b).
+Proof.
+  intros. unfold Qcleb. destruct Qclt_le_dec; constructor; auto.
+  apply Qclt_not_le; auto.
+Qed.
+
+#[export] Instance Qc_Order : Order Qclt Qcle Qcltb Qcleb.
+Proof.
+  constructor; intros.
+  - split; intros. apply Qcle_lt_or_eq; auto. destruct H.
+    apply Qclt_le_weak; auto. subst. apply Qcle_refl.
+  - apply Qc_lt_irrefl.
+  - pose proof (Qclt_trans a b a H H0). apply Qc_lt_irrefl in H1. easy.
+  - apply Qclt_trans with b; auto.
+  - apply Qc_dec.
+  - apply Qcltb_reflect.
+  - apply Qcleb_reflect.
+Qed.
 
 Section test.
   Goal forall a b : Qc, {a = b} + {a <> b}.
@@ -114,6 +203,7 @@ Definition Q2Qc_list l := List.map (fun q => Q2Qc q) l.
 
 (** list (list Q) to list (list Qc) *)
 Definition Q2Qc_dlist dl := List.map Q2Qc_list dl.
+
 
 
 (* ######################################################################### *)
