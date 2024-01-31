@@ -230,7 +230,7 @@ Section vnorm.
       with (((<u, u> * <v, v>) - <u,v>²) / (||u|| * ||v||)²); auto.
     rewrite !Rsqr_mult, !Rsqr_div'. rewrite <- !vdot_same. field_simplify_eq.
     - autorewrite with R. auto.
-    - split; apply vdot_same_neq0_iff_vnonzero; auto.
+    - split; apply vdot_same_neq0_if_vnonzero; auto.
   Qed.
   
 End vnorm.
@@ -481,6 +481,16 @@ Section vangle.
   Axiom vdot_eq_mul_vlen_imply_vnorm_eq_neg : forall {n} (u v : vec n),
       <u,v> = (- (||u|| * ||v||))%R -> vnorm u = - vnorm v.
 
+  (* u // v -> (u /_ v = 0 \/ u /_ v = π) *)
+  Lemma vpara_imply_vangle_0_or_PI : forall {n} (u v : vec n),
+      u <> vzero -> v <> vzero -> u // v -> (u /_ v = 0 \/ u /_ v = PI).
+  Proof.
+    intros. apply vdot_sqr_eq_iff_vangle_0_or_PI; auto.
+    apply vpara_imply_uniqueK in H1. destruct H1 as [k [H1 _]]. rewrite <- H1.
+    unfold Rsqr. rewrite vdot_vcmul_l, vdot_vcmul_r.
+    autounfold with A. ring.
+  Qed.
+
   (* u /_ v = 0 -> u // v *)
   Lemma vangle_0_imply_vpara : forall {n} (u v : vec n),
       u <> vzero -> v <> vzero -> u /_ v = 0 -> u // v.
@@ -505,7 +515,25 @@ Section vangle.
     rewrite <- Rinv_opp. rewrite Rinv_r. apply vcmul_1_l.
     apply Ropp_neq_0_compat. apply vlen_neq0_iff_neq0; auto.
   Qed.
+
+  (* (u /_ v = 0 \/ u /_ v = π) -> u // v *)
+  Lemma vangle_0_or_PI_imply_vpara : forall {n} (u v : vec n),
+      u <> vzero -> v <> vzero -> (u /_ v = 0 \/ u /_ v = PI -> u // v).
+  Proof.
+    intros. destruct H1.
+    apply vangle_0_imply_vpara; auto. apply vangle_PI_imply_vpara; auto.
+  Qed.
+
   
+  (* u // v <-> (u /_ v = 0 \/ u /_ v = π) *)
+  Lemma vpara_iff_vangle_0_or_PI : forall {n} (u v : vec n),
+      u <> vzero -> v <> vzero -> (u // v <-> u /_ v = 0 \/ u /_ v = PI).
+  Proof.
+    intros. split; intros.
+    apply vpara_imply_vangle_0_or_PI; auto.
+    apply vangle_0_or_PI_imply_vpara; auto.
+  Qed.
+
   (** u /_ v = 0 <-> u and v 同向平行 *)
   Lemma vangle_eq0_sameDir : forall {n} (u v : vec n),
       u <> vzero -> v <> vzero ->

@@ -112,6 +112,12 @@ Proof.
   - right. intro. inversion H. easy.
 Defined.
 
+(** (if i =? j then a1 else a2) = (if j =? i then a1 else a2) *)
+Lemma finEqdec_comm : forall {A} {n} (i j : fin n) (a1 a2 : A),
+    (if finEqdec i j then a1 else a2) =
+      (if finEqdec j i then a1 else a2).
+Proof. intros. destruct (finEqdec i j), (finEqdec j i); subst; try easy. Qed.
+
 
 (** A default entry of `fin` *)
 Definition fin0 {n : nat} : fin (S n) := exist _ 0 (Nat.lt_0_succ _).
@@ -236,6 +242,13 @@ Qed.
 Lemma fin2nat_nat2fin_id : forall n i (H: i < n), (fin2nat (nat2fin i H)) = i.
 Proof.
   intros. unfold nat2fin, fin2nat. apply proj1_fin_eq.
+Qed.
+
+Lemma fin2nat_iff_nat2fin : forall {n} (i : fin n) j (H: j < n),
+    nat2fin j H = i <-> fin2nat i = j.
+Proof.
+  intros. unfold nat2fin, fin2nat. destruct i; simpl. split; intros.
+  inversion H0; auto. apply fin_eq_iff; auto.
 Qed.
 
 

@@ -68,6 +68,26 @@ Section test.
 End test.
 
 
+
+(* ######################################################################### *)
+(** * <TEMPLATE structures> *)
+
+(** ** Class *)
+
+(** ** Instances *)
+Section Instances.
+End Instances.
+
+(** ** Extra Theories *)
+Section Theory.
+End Theory.
+
+(** ** Examples *)
+Section Examples.
+End Examples.
+
+
+
 (* ######################################################################### *)
 (** * A relation is equivalence relation *)
 
@@ -188,137 +208,6 @@ Hint Resolve
 (* (** ** Extra Theories *) *)
 
 (* (** ** Examples *) *)
-
-
-(* ######################################################################### *)
-(** * Associative *)
-
-(** ** Class *)
-Class Associative {A} (Aop : A -> A -> A) := {
-    associative : forall a b c, Aop (Aop a b) c = Aop a (Aop b c);
-  }.
-
-(** ** Instances *)
-#[export] Instance Assoc_NatAdd : Associative Nat.add.
-constructor. auto with arith. Defined.
-
-(** ** Extra Theories *)
-
-(** ** Examples *)
-Goal forall a b c : nat, (a + (b + c) = (a + b) + c).
-  intros. rewrite associative; auto. Qed.
-
-Goal forall a b c : nat, ((a + b) + c = a + (b + c)).
-  apply associative. Qed.
-
-
-(* ######################################################################### *)
-(** * Commutative *)
-
-(** ** Class *)
-Class Commutative {A} (Aop : A -> A -> A) := {
-    commutative : forall a b, Aop a b = Aop b a
-  }.
-
-(** ** Instances *)
-#[export] Instance Comm_NatAdd : Commutative Nat.add.
-constructor. auto with arith. Defined.
-
-#[export] Instance Comm_NatMul : Commutative Nat.mul.
-constructor. auto with arith. Defined.
-
-(** ** Extra Theories *)
-
-(** ** Examples *)
-Goal forall a b : nat, (a + b = b + a)%nat.
-  apply commutative. Qed.
-
-Goal forall a b : nat, (a * b = b * a)%nat.
-  apply commutative. Qed.
-
-
-(* ######################################################################### *)
-(** * Identity Left/Right *)
-
-(** ** Class *)
-Class IdentityLeft {A} (Aop : A -> A -> A) (Ae : A) := {
-    identityLeft : forall a, Aop Ae a = a
-  }.
-
-Class IdentityRight {A} (Aop : A -> A -> A) (Ae : A) := {
-    identityRight : forall a, Aop a Ae = a
-  }.
-
-(** ** Instances *)
-
-(** ** Extra Theories *)
-
-(** ** Examples *)
-
-
-(* ######################################################################### *)
-(** * Inverse Left/Right *)
-
-(** ** Class *)
-Class InverseLeft {A} (Aop : A -> A -> A) (Ae : A) (Aopinv : A -> A)
-  := {
-    inverseLeft : forall a, Aop (Aopinv a) a = Ae
-  }.
-
-Class InverseRight {A} (Aop : A -> A -> A) (Ae : A) (Aopinv : A -> A)
-  := {
-    inverseRight : forall a, Aop a (Aopinv a) = Ae
-  }.
-
-(** ** Instances *)
-
-(** ** Extra Theories *)
-
-(** ** Examples *)
-
-
-(* ######################################################################### *)
-(** * Distributive *)
-
-(** ** Class *)
-
-(* Class DistributiveUnary {A} (Tadd:A -> A -> A) (Aopp : A -> A) := { *)
-(*     distributiveUnary : forall a b, *)
-(*       Aopp (Tadd a b) = Tadd (Aopp a) (Aopp b) *)
-(*   }. *)
-
-Class DistributiveLeft {A} (Aadd Amul : A -> A -> A) := {
-    distributiveLeft : forall a b c,
-      Amul a (Aadd b c) = Aadd (Amul a b) (Amul a c)
-  }.
-
-Class DistributiveRight {A} (Aadd Amul : A -> A -> A) := {
-    distributiveRight : forall a b c,
-      Amul (Aadd a b) c = Aadd (Amul a c) (Amul b c)
-  }.
-
-(** ** Instances *)
-
-(** ** Extra Theories *)
-
-(** ** Examples *)
-
-
-
-(* ######################################################################### *)
-(** * Involution Law *)
-
-(** ** Class *)
-
-(* Class Involution {A : Type} (Aopp : A -> A) := { *)
-(*     involution : forall a, Aopp (Aopp a) = a *)
-(*   }. *)
-
-(** ** Instances *)
-
-(** ** Extra Theories *)
-
-(** ** Examples *)
 
 
 
@@ -524,6 +413,168 @@ Class Isomorphism2 {A B} (fa ga : A -> A -> A) (fb gb : B -> B -> B) := {
 
 
 (* ######################################################################### *)
+(** * Subset *)
+
+(** ** Class *)
+(* C is subset of P *)
+Class Subset (C P : Type) := {
+    sub_phi : C -> P;
+    sub_phi_inj : Injective sub_phi
+  }.
+
+(** ** Instances *)
+Section Instances.
+
+  Instance nat_Z_Subset : Subset nat Z.
+  Proof.
+    refine (@Build_Subset _ _ Z.of_nat _).
+    rewrite injective_eq_injective_form2. hnf. apply Nat2Z.inj.
+  Qed.
+    
+End Instances.
+
+(** ** Extra Theories *)
+Section Theory.
+End Theory.
+
+(** ** Examples *)
+Section Examples.
+End Examples.
+
+
+(* ######################################################################### *)
+(** * Associative *)
+
+(** ** Class *)
+Class Associative {A} (Aop : A -> A -> A) := {
+    associative : forall a b c, Aop (Aop a b) c = Aop a (Aop b c);
+  }.
+
+(** ** Instances *)
+#[export] Instance Assoc_NatAdd : Associative Nat.add.
+constructor. auto with arith. Defined.
+
+(** ** Extra Theories *)
+
+(** ** Examples *)
+Goal forall a b c : nat, (a + (b + c) = (a + b) + c).
+  intros. rewrite associative; auto. Qed.
+
+Goal forall a b c : nat, ((a + b) + c = a + (b + c)).
+  apply associative. Qed.
+
+
+(* ######################################################################### *)
+(** * Commutative *)
+
+(** ** Class *)
+Class Commutative {A} (Aop : A -> A -> A) := {
+    commutative : forall a b, Aop a b = Aop b a
+  }.
+
+(** ** Instances *)
+#[export] Instance Comm_NatAdd : Commutative Nat.add.
+constructor. auto with arith. Defined.
+
+#[export] Instance Comm_NatMul : Commutative Nat.mul.
+constructor. auto with arith. Defined.
+
+(** ** Extra Theories *)
+
+(** ** Examples *)
+Goal forall a b : nat, (a + b = b + a)%nat.
+  apply commutative. Qed.
+
+Goal forall a b : nat, (a * b = b * a)%nat.
+  apply commutative. Qed.
+
+
+(* ######################################################################### *)
+(** * Identity Left/Right *)
+
+(** ** Class *)
+Class IdentityLeft {A} (Aop : A -> A -> A) (Ae : A) := {
+    identityLeft : forall a, Aop Ae a = a
+  }.
+
+Class IdentityRight {A} (Aop : A -> A -> A) (Ae : A) := {
+    identityRight : forall a, Aop a Ae = a
+  }.
+
+(** ** Instances *)
+
+(** ** Extra Theories *)
+
+(** ** Examples *)
+
+
+(* ######################################################################### *)
+(** * Inverse Left/Right *)
+
+(** ** Class *)
+Class InverseLeft {A} (Aop : A -> A -> A) (Ae : A) (Aopinv : A -> A)
+  := {
+    inverseLeft : forall a, Aop (Aopinv a) a = Ae
+  }.
+
+Class InverseRight {A} (Aop : A -> A -> A) (Ae : A) (Aopinv : A -> A)
+  := {
+    inverseRight : forall a, Aop a (Aopinv a) = Ae
+  }.
+
+(** ** Instances *)
+
+(** ** Extra Theories *)
+
+(** ** Examples *)
+
+
+(* ######################################################################### *)
+(** * Distributive *)
+
+(** ** Class *)
+
+(* Class DistributiveUnary {A} (Tadd:A -> A -> A) (Aopp : A -> A) := { *)
+(*     distributiveUnary : forall a b, *)
+(*       Aopp (Tadd a b) = Tadd (Aopp a) (Aopp b) *)
+(*   }. *)
+
+Class DistributiveLeft {A} (Aadd Amul : A -> A -> A) := {
+    distributiveLeft : forall a b c,
+      Amul a (Aadd b c) = Aadd (Amul a b) (Amul a c)
+  }.
+
+Class DistributiveRight {A} (Aadd Amul : A -> A -> A) := {
+    distributiveRight : forall a b c,
+      Amul (Aadd a b) c = Aadd (Amul a c) (Amul b c)
+  }.
+
+(** ** Instances *)
+
+(** ** Extra Theories *)
+
+(** ** Examples *)
+
+
+
+(* ######################################################################### *)
+(** * Involution Law *)
+
+(** ** Class *)
+
+(* Class Involution {A : Type} (Aopp : A -> A) := { *)
+(*     involution : forall a, Aopp (Aopp a) = a *)
+(*   }. *)
+
+(** ** Instances *)
+
+(** ** Extra Theories *)
+
+(** ** Examples *)
+
+
+
+(* ######################################################################### *)
 (** * Total order relations *)
 
 (* ref : 
@@ -624,6 +675,22 @@ Section theories.
   Proof.
     intros. apply lt_le_cong in H, H0. apply lt_le_cong.
     destruct H, H0; subst; auto. left. apply lt_trans with b; auto.
+  Qed.
+  
+  (** a < b -> b <= c -> a < c *)
+  Lemma lt_trans_lt_le : forall a b c : A, a < b -> b <= c -> a < c.
+  Proof.
+    intros. pose proof (le_if_lt H). pose proof (le_trans H1 H0).
+    apply lt_if_le_and_neq; auto.
+    intro. subst. pose proof (le_antisym H0 H1). subst. apply lt_irrefl in H; auto.
+  Qed.
+  
+  (** a <= b -> b < c -> a < c *)
+  Lemma lt_trans_le_lt : forall a b c : A, a <= b -> b < c -> a < c.
+  Proof.
+    intros. pose proof (le_if_lt H0). pose proof (le_trans H H1).
+    apply lt_if_le_and_neq; auto.
+    intro. subst. pose proof (le_antisym H H1). subst. apply lt_irrefl in H0; auto.
   Qed.
 
   (** a < b -> b < a -> False *)
@@ -1155,7 +1222,9 @@ Section GroupTheory.
     pose proof (inverseLeft 0). rewrite identityRight in H. auto.
   Qed.
   
-  (** Theorem 5.1 *)
+  (* Theorem 5.1 *)
+  
+  (** left identity element is unique  *)
   Theorem group_id_uniq_l : forall e',
       (forall a, e' + a = a) -> e' = 0.
   Proof.
@@ -1163,53 +1232,35 @@ Section GroupTheory.
     intros. rewrite <- H. rewrite identityRight; auto.
   Qed.
 
+  (** right identity element is unique  *)
   Theorem group_id_uniq_r : forall e', (forall a, a + e' = a) -> e' = 0.
   Proof.
     (* e = e + e' = e' *)
     intros. rewrite <- H. rewrite identityLeft; auto.
   Qed.
 
-  Theorem group_opp_uniq_l : forall x1 x2 y,
-      x1 + y = 0 /\ y + x2 = 0 -> x1 = x2.
-  Proof.
-    intros. destruct H as [Ha Hb].
-    (* x1 = x1+e = x1+(y+x2) = (x1+y)+x2 = e+x2 = x2 *)
-    assert (x1 = x1 + 0) by group.
-    rewrite H. rewrite <- Hb. rewrite <- associative.
-    rewrite Ha. group.
-  Qed.
-
-  Theorem group_opp_uniq_r :
-    (forall x y1 y2, x + y1 = 0 /\ y2 + x = 0 -> y1 = y2).
-  Proof.
-    intros. destruct H as [Ha Hb].
-    (* y1 = e+y1 = (y2+x)+y1 = y2+(x+y1) = y2+e = y2 *)
-    assert (y1 = 0 + y1). group.
-    rewrite H. rewrite <- Hb. rewrite associative.
-    rewrite Ha. group.
-  Qed.
-
-  (* 2023.12 单边表述，可用于验证逆元 *)
-  Theorem group_opp_l : forall x y : A, x + y = 0 -> -x = y.
+  (** left inverse element is unique *)
+  Theorem group_opp_uniq_l : forall x y : A, x + y = 0 -> -x = y.
   Proof.
     (* -x = -x + 0 = -x + x + y = 0 + y = y *)
     intros.
-    replace (-x) with (-x + 0); try apply G.
-    replace 0 with (x + y); try apply G.
+    replace (-x) with (-x + 0) by apply G.
+    replace 0 with (x + y) by apply G.
     rewrite <- associative. rewrite inverseLeft. amonoid.
   Qed.
   
-  Theorem group_opp_r : forall x y : A, x + y = 0 -> -y = x.
+  (** right inverse element is unique *)
+  Theorem group_opp_uniq_r : forall x y : A, x + y = 0 -> -y = x.
   Proof.
     (* -y = 0 + -y = x + y + y = x + 0 = x *)
     intros.
-    replace (-y) with (0 + -y); try apply G.
-    replace 0 with (x + y); try apply G.
+    replace (-y) with (0 + -y) by apply G.
+    replace 0 with (x + y) by apply G.
     rewrite associative. rewrite inverseRight. amonoid.
   Qed.
 
-  (** Theorem 14.1 *)
-  (* x + y1 = x + y2 -> y1 = y2 *)
+  (* Theorem 14.1 *)
+  (** x + y1 = x + y2 -> y1 = y2 *)
   Theorem group_cancel_l : forall x y1 y2, x + y1 = x + y2 -> y1 = y2.
   Proof.
     intros.
@@ -1221,7 +1272,7 @@ Section GroupTheory.
     rewrite <- associative. group.
   Qed.
 
-  (* x1 + y = x2 + y -> x1 = x2 *)
+  (** x1 + y = x2 + y -> x1 = x2 *)
   Theorem group_cancel_r : forall x1 x2 y, x1 + y = x2 + y -> x1 = x2.
   Proof.
     intros.
@@ -1233,17 +1284,16 @@ Section GroupTheory.
     rewrite associative. group.
   Qed.
 
-  (* - - x = x *)
+  (** - - x = x *)
   Theorem group_opp_opp : forall x,  - - x = x.
   Proof.
     intros. apply group_cancel_l with (- x). group.
   Qed.
-
-  (** a <> 0 -> - a <> 0 *)
-  Lemma group_opp_neq0 : forall a : A, a <> 0 -> - a <> 0.
+    
+  (** - x = - y -> x = y *)
+  Lemma group_opp_inj : forall x y : A, - x = - y -> x = y.
   Proof.
-    intros. intro. destruct H.
-    rewrite <- group_opp_opp at 1. rewrite H0. apply group_opp_0.
+    intros. rewrite <- group_opp_opp. rewrite <- H. rewrite group_opp_opp. auto.
   Qed.
 
   (** - (x + y) = (- y) + (- x) *)
@@ -1256,48 +1306,22 @@ Section GroupTheory.
     rewrite inverseRight. rewrite <- associative. rewrite (associative x y).
     group.
   Qed.
+
+  (** a <> 0 -> - a <> 0 *)
+  Lemma group_opp_neq0 : forall a : A, a <> 0 -> - a <> 0.
+  Proof.
+    intros. intro. destruct H.
+    rewrite <- group_opp_opp at 1. rewrite H0. apply group_opp_0.
+  Qed.
     
-  (** - x = - y -> x = y *)
-  Lemma group_opp_inj : forall x y : A, - x = - y -> x = y.
-  Proof.
-    intros. rewrite <- group_opp_opp. rewrite <- H. rewrite group_opp_opp. auto.
-  Qed.
-    
-  (** Theorem 14.2 *)
-  (* a + x = b -> x = (-a) + b *)
-  Theorem group_equation_sol_l : forall a b x, a + x = b -> x = (- a) + b.
-  Proof.
-    intros.
-    (* left mult a *)
-    apply group_cancel_l with (a).
-    rewrite <- associative. group.
-  Qed.
+  (* Theorem 14.2 *)
+  (** x + a = b -> x = b + (-a) *)
+  Theorem group_sol_l : forall a b x, x + a = b -> x = b + (- a).
+  Proof. intros. apply group_cancel_r with (a). group. Qed.
 
-  (* a + x = b /\ a + y = b -> x = -a + b /\ y = -a + b *)
-  Theorem group_equation_sol_l_uniq : 
-    forall a b x y, (a + x = b /\ a + y = b) -> (x = -a + b /\ y = -a + b).
-  Proof.
-    intros. destruct H. split.
-    apply group_equation_sol_l; auto.
-    apply group_equation_sol_l; auto.
-  Qed.
-
-  (* x + a = b -> x = b + (-a) *)
-  Theorem group_equation_sol_r : forall a b x, x + a = b -> x = b + (- a).
-  Proof.
-    intros.
-    (* right mult a *)
-    apply group_cancel_r with (a). group.
-  Qed.
-
-  (* (x + a = b /\ y + a = b) -> (x = b + -a /\ y = b + -a) *)
-  Theorem group_equation_sol_r_uniq : 
-    forall a b x y, (x + a = b /\ y + a = b) -> (x = b + (- a) /\ y = b + (- a)).
-  Proof.
-    intros; destruct H. split.
-    apply group_equation_sol_r; auto.
-    apply group_equation_sol_r; auto.
-  Qed.
+  (** a + x = b -> x = (-a) + b *)
+  Theorem group_sol_r : forall a b x, a + x = b -> x = (- a) + b.
+  Proof. intros. apply group_cancel_l with (a). rewrite <- associative. group. Qed.
 
   (** Definition 14.1 (multiple operations) *)
   (* batch : list A -> A
@@ -1416,7 +1440,12 @@ Section Examples.
   Import Reals.
   
   Goal forall x1 x2 y : R, (x1 + y = 0 /\ y + x2 = 0 -> x1 = x2)%R.
-    apply group_opp_uniq_l. Qed.
+  Proof.
+    intros. destruct H.
+    apply group_opp_uniq_r in H.
+    apply group_opp_uniq_l in H0.
+    rewrite <- H, <- H0. auto.
+  Qed.
 
 End Examples.
 
@@ -1572,10 +1601,11 @@ Section Theory.
 
   Context `{R:Ring}.
 
-  Infix "+" := Aadd.
-  Notation "- a" := (Aopp a).
+  Infix "+" := Aadd : A_scope.
+  Notation "1" := Aone : A_scope.
+  Notation "- a" := (Aopp a) : A_scope.
   Notation Asub := (fun a b => a + -b).
-  Infix "*" := Amul.
+  Infix "*" := Amul : A_scope.
 
 End Theory.
 
@@ -1658,7 +1688,7 @@ Section Theory.
     intros.
     assert (x * y + (-x) * y = 0).
     - rewrite <- distributiveRight. rewrite inverseRight. apply ring_mul_0_l.
-    - symmetry. apply group_opp_l. auto.
+    - symmetry. apply group_opp_uniq_l. auto.
   Qed.
 
   (** x * (- y) = - (x * y) *)
@@ -1790,19 +1820,22 @@ Section theories.
   Context `{HOrderedARing : OrderedARing}.
   Add Ring ring_inst : (make_ring_theory HOrderedARing).
 
-  Infix "+" := Aadd.
-  Notation "- a" := (Aopp a).
-  Infix "-" := (fun a b => a + - b).
-  Notation "0" := Azero.
-  Infix "*" := Amul.
-  Notation "1" := Aone.
+  Infix "+" := Aadd : A_scope.
+  Notation "- a" := (Aopp a) : A_scope.
+  Infix "-" := (fun a b => a + - b) : A_scope.
+  Notation "0" := Azero : A_scope.
+  Infix "*" := Amul : A_scope.
+  Notation "1" := Aone : A_scope.
+  Notation "2" := (1 + 1) : A_scope.
+  Notation "a ²" := (a * a) : A_scope.
   
-  Notation "a > b" := (Alt b a).
-  Notation "a >= b" := (Ale b a).
-  Infix "<" := Alt.
-  Infix "<=" := Ale.
-  Infix "<?" := Altb.
-  Infix "<=?" := Aleb.
+  Notation "a > b" := (Alt b a) : A_scope.
+  Notation "a >= b" := (Ale b a) : A_scope.
+  Infix "<" := Alt : A_scope.
+  Infix "<=" := Ale : A_scope.
+  Infix "<?" := Altb : A_scope.
+  Infix "<=?" := Aleb : A_scope.
+  
 
   (** *** Properties for "lt" *)
 
@@ -2184,6 +2217,17 @@ Section theories.
   Lemma sub_ge0_imply_ge : forall a b : A, 0 <= a - b -> a >= b.
   Proof.
     intros. apply le_add_compat_r with (c:= b) in H. ring_simplify in H. auto.
+  Qed.
+
+  (** 2 * a * b <= a² + b² *)
+  Lemma mul_le_add_sqr : forall a b : A, 2 * a * b <= a² + b².
+  Proof.
+    intros.
+    assert (0 <= (a - b)²). apply sqr_ge0.
+    ring_simplify in H.
+    replace (a ² + - (2 * a * b) + b ²)
+      with (a ² + b ² - (2 * a * b)) in H by ring.
+    apply sub_ge0_imply_ge in H. auto.
   Qed.
 
 
@@ -2612,135 +2656,3 @@ Section Theory.
   End OrderedARing.
   
 End Theory.
-
-
-(* ######################################################################### *)
-(** * Linear Space *)
-
-(** ** Class *)
-Class LinearSpace `{F : Field} {V : Type}
-  (Vadd : V -> V -> V) (Vzero : V) (Vopp : V -> V) (Vcmul : A -> V -> V) := {
-    ls_addC :: Commutative Vadd;
-    ls_addA :: Associative Vadd;
-    ls_add_0_r :: IdentityRight Vadd Vzero;
-    ls_add_inv_r :: InverseRight Vadd Vzero Vopp;
-    ls_cmul_1_l : forall u : V, Vcmul Aone u = u;
-    ls_cmul_assoc : forall a b u, Vcmul (Amul a b) u = Vcmul a (Vcmul b u);
-    ls_cmul_aadd_distr : forall a b u,
-      Vcmul (Aadd a b) u = Vadd (Vcmul a u) (Vcmul b u);
-    ls_cmul_vadd_distr : forall a u v,
-      Vcmul a (Vadd u v) = Vadd (Vcmul a u) (Vcmul a v);
-  }.
-
-(** ** Instances *)
-Section Instances.
-
-  (** A field itself is a liner space *)
-  Section field_is_linearspace.
-    Context `{F : Field}.
-    Add Field field_inst : (make_field_theory F).
-    
-    #[export] Instance LinearSpace_Field : LinearSpace Aadd Azero Aopp Amul.
-    split_intro; try field. Qed.
-    
-  End field_is_linearspace.
-
-End Instances.
-
-
-(** ** Extra Theories *)
-
-Section Theory.
-  (* Open Scope A_scope. *)
-  
-  Context `{LS : LinearSpace}.
-  Infix "+" := Aadd : A_scope.
-  Notation "- a" := (Aopp a) : A_scope.
-  Notation Asub := (fun a b => a + -b).
-  Infix "-" := Asub : A_scope.
-  Infix "*" := Amul : A_scope.
-  Notation "/ a" := (Ainv a) : A_scope.
-  Notation Adiv := (fun a b => a * (/b)).
-  Infix "/" := Adiv : A_scope.
-
-  Infix "+" := Vadd : LinearSpace_scope.
-  Notation "- a" := (Vopp a) : LinearSpace_scope.
-  Notation Vsub := (fun a b => a + -b).
-  Infix "-" := Vsub : LinearSpace_scope.
-  Infix "\.*" := Vcmul : LinearSpace_scope.
-
-
-  (* 0 + v = v  *)
-  #[export] Instance ls_add_0_l : IdentityLeft Vadd Vzero.
-  Proof.
-    (* 0 + v = v + 0 = v *)
-    constructor; intros. rewrite commutative, identityRight; auto.
-  Qed.
-  
-  (* -v + v = 0  *)
-  #[export] Instance ls_add_inv_l : InverseLeft Vadd Vzero Vopp.
-  Proof.
-    (* -v + v = v + -v = 0 *)
-    constructor; intros. rewrite commutative, inverseRight; auto.
-  Qed.
-  
-  (** Vzero is unique *)
-  Theorem ls_vzero_uniq_l : forall v0, (forall v, (v0 + v)%LS = v) -> v0 = Vzero.
-  Proof. intros. rewrite <- H. rewrite identityRight; auto. Qed.
-  
-  Theorem ls_vzero_uniq_r : forall v0, (forall v, (v + v0)%LS = v) -> v0 = Vzero.
-  Proof. intros. rewrite <- H. rewrite identityLeft; auto. Qed.
-
-  (** (-v) is unique *)
-  Theorem ls_vopp_uniq_l : forall v, (forall v', (v' + v)%LS = Vzero -> v' = Vopp v).
-  Proof.
-    (* v' = v' + 0 = v' + v + -v = 0 + -v = -v *)
-    intros. rewrite <- identityRight at 1. rewrite <- (inverseRight v) at 1.
-    rewrite <- associative. rewrite H. apply identityLeft.
-  Qed.
-
-  Theorem ls_vopp_uniq_r : forall v, (forall v', v + v' = Vzero -> v' = -v)%LS.
-  Proof.
-    (* v' = 0 + v' = -v + v + v' = -v + 0 = -v *)
-    intros. rewrite <- identityLeft at 1. rewrite <- (inverseLeft v) at 1.
-    rewrite associative. rewrite H. apply identityRight.
-  Qed.
-
-  (* (-1) v = -v *)
-  Theorem ls_cmul_opp1 : forall v : V, (-Aone)%A \.* v = (-v)%LS.
-  Proof.
-    (* -v is unique *)
-    intros.
-    rewrite <- (ls_vopp_uniq_r (v':=(- Aone)%A \.* v)); auto.
-    rewrite <- (ls_cmul_1_l v) at 1. rewrite <- ls_cmul_aadd_distr.
-    rewrite inverseRight.
-    (* 用到下面的定理 *)
-  Admitted.
-  
-  (** 0 .* v = 0 *)
-  Theorem ls_cmul_0_l : forall v : V, Azero \.* v = Vzero.
-  Proof.
-    (* 0 * v = (1 - 1) * v = v + (-v) = 0 *)
-    intros. replace Azero with (Aone + (-Aone))%A.
-    rewrite ls_cmul_aadd_distr. rewrite (ls_cmul_1_l v). rewrite ls_cmul_opp1.
-    destruct LS. apply inverseRight. 
-    apply inverseRight.
-  Qed.
-
-  (* a .* 0 = 0 *)
-  Theorem ls_cmul_0_r : forall a : A, a \.* Vzero = Vzero.
-  Proof.
-  Abort.
-
-  (* a <> 0 -> v <> 0 -> a .* v <> 0 *)
-  Theorem ls_cmul_neq0 : forall (a : A) (v : V), a <> Azero -> v <> Vzero -> a \.* v <> Vzero.
-  Proof.
-  Abort.
-  
-End Theory.
-
-(** ** Examples *)
-Section Examples.
-
-End Examples.
-

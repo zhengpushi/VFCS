@@ -298,8 +298,3 @@ Open Scope rvec_scope.
 Declare Scope cvec_scope.
 Delimit Scope cvec_scope with CV.
 Open Scope cvec_scope.
-
-(** Scope for linear-space type *)
-Declare Scope LinearSpace_scope.
-Delimit Scope LinearSpace_scope with LS.
-Open Scope LinearSpace_scope.

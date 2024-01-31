@@ -96,6 +96,56 @@ Notation "v .y" := (v $ nat2finS 1) : vec_scope.
 Notation "v .z" := (v $ nat2finS 2) : vec_scope.
 
 
+(** The equality of 1-D vector *)
+Lemma v1eq_iff : forall {A} (u v : @vec A 1),
+    u = v <-> u.1 = v.1.
+Proof.
+  intros. split; intros; subst; auto. unfold nat2finS in H; simpl in H.
+  apply veq_iff_vnth; intros. destruct i as [n Hn].
+  destruct n; [apply (vnth_sameIdx_imply H)|].
+  lia.
+Qed.
+
+(** The equality of 2-D vector *)
+Lemma v2eq_iff : forall {A} (u v : @vec A 2),
+    u = v <-> u.1 = v.1 /\ u.2 = v.2.
+Proof.
+  intros. split; intros; subst; auto. unfold nat2finS in H; simpl in H.
+  destruct H as [H1 H2].
+  apply veq_iff_vnth; intros. destruct i as [n Hn].
+  destruct n; [apply (vnth_sameIdx_imply H1)|].
+  destruct n; [apply (vnth_sameIdx_imply H2)|].
+  lia.
+Qed.
+
+(** The equality of 3-D vector *)
+Lemma v3eq_iff : forall {A} (u v : @vec A 3),
+    u = v <-> u.1 = v.1 /\ u.2 = v.2 /\ u.3 = v.3.
+Proof.
+  intros. split; intros; subst; auto. unfold nat2finS in H; simpl in H.
+  destruct H as [H1 [H2 H3]].
+  apply veq_iff_vnth; intros. destruct i as [n Hn].
+  destruct n; [apply (vnth_sameIdx_imply H1)|].
+  destruct n; [apply (vnth_sameIdx_imply H2)|].
+  destruct n; [apply (vnth_sameIdx_imply H3)|].
+  lia.
+Qed.
+
+(** The equality of 4-D vector *)
+Lemma v4eq_iff : forall {A} (u v : @vec A 4),
+    u = v <-> u.1 = v.1 /\ u.2 = v.2 /\ u.3 = v.3 /\ u.4 = v.4.
+Proof.
+  intros. split; intros; subst; auto. unfold nat2finS in H; simpl in H.
+  destruct H as [H1 [H2 [H3 H4]]].
+  apply veq_iff_vnth; intros. destruct i as [n Hn].
+  destruct n; [apply (vnth_sameIdx_imply H1)|].
+  destruct n; [apply (vnth_sameIdx_imply H2)|].
+  destruct n; [apply (vnth_sameIdx_imply H3)|].
+  destruct n; [apply (vnth_sameIdx_imply H4)|].
+  lia.
+Qed.
+
+
 (* ======================================================================= *)
 (** ** Vector with same elements *)
 Section vrepeat.
@@ -378,22 +428,73 @@ End vmap2_sametype.
 (** ** Sum of a vector *)
 Section vsum.
   Context `{HAMonoid : AMonoid}.
-  Infix "+" := Aadd.
-  Notation seqsum := (@seqsum _ Aadd Azero).
+  Infix "+" := Aadd : A_scope.
+  Notation "0" := Azero : A_scope.
+  Notation seqsum := (@seqsum _ Aadd 0).
 
   (** ∑v = v.0 + v.1 + ... + v.(n-1) *)
-  Definition vsum {n} (v : @vec A n) := @fseqsum _ Aadd Azero _ v.
+  Definition vsum {n} (v : @vec A n) := @fseqsum _ Aadd 0 _ v.
 
   (** (∀ i, u.i = v.i) -> Σu = Σv *)
   Lemma vsum_eq : forall {n} (u v : @vec A n), (forall i, u $ i = v $ i) -> vsum u = vsum v.
   Proof. intros. apply fseqsum_eq. auto. Qed.
 
+  (** (∀ i, v.i = 0) -> Σv = 0 *)
+  Lemma vsum_eq0 : forall {n} (v : @vec A n), (forall i, v $ i = 0) -> vsum v = 0.
+  Proof. intros. unfold vsum. apply fseqsum_eq0. auto. Qed.
+
+  (** Convert `vsum` to `seqsum` *)
+  Lemma vsum_to_seqsum : forall {n} (v : @vec A n) (g : nat -> A),
+      (forall i, v $ i = g (fin2nat i)) -> vsum v = seqsum g n.
+  Proof. intros. apply fseqsum_to_seqsum; auto. Qed.
+
+  (** Convert `vsum` to `seqsum` (succ form) *)
+  Lemma vsum_to_seqsum_succ : forall {n} (v : @vec A (S n)),
+      vsum v = seqsum (fun i => v $ (nat2finS i)) n + v $ (nat2finS n).
+  Proof. intros. apply fseqsum_to_seqsum_succ. Qed.
+  
+  (** `vsum` of (S n) elements, equal to addition of Sum and tail *)
+  Lemma vsumS_tail : forall {n} (u : @vec A (S n)) (v : @vec A n),
+      (forall i, u $ (fin2SuccRange i) = v $ i) -> vsum u = vsum v + u $ (nat2finS n).
+  Proof. intros. apply fseqsumS_tail; auto. Qed.
+
+  (** `vsum` of (S n) elements, equal to addition of head and Sum *)
+  Lemma vsumS_head : forall {n} (u : @vec A (S n)) (v : @vec A n),
+      (forall i, u $ (fin2SuccRangeSucc i) = v $ i) -> vsum u = u $ (nat2finS O) + vsum v.
+  Proof. intros. apply fseqsumS_head; auto. Qed.
+
   (** (∀ i, u.i = v.i + w.i) -> Σu = Σv + Σw *)
   Lemma vsum_add : forall {n} (u v w : @vec A n),
       (forall i, u $ i = v $ i + w $ i) -> vsum u = vsum v + vsum w.
   Proof. intros. unfold vsum. apply fseqsum_add. auto. Qed.
+  
+  (** `vsum` which only one item is nonzero, then got this item. *)
+  Lemma vsum_unique : forall {n} (v : @vec A n) (a : A) i,
+      v $ i = a -> (forall j, i <> j -> v $ j = Azero) -> vsum v = a.
+  Proof. intros. apply fseqsum_unique with (i:=i); auto. Qed.
 
+  (** `vsum` of the m+n elements equal to plus of two parts.
+      (i < m -> f.i = g.i) ->
+      (i < n -> f.(m+i) = h.i) ->
+      Σ[0,(m+n)] f = Σ[0,m] g + Σ[m,m+n] h. *)
+  Lemma vsum_plusIdx : forall m n (f : @vec A (m + n)) (g : @vec A m) (h : @vec A n),
+      (forall i : fin m, f $ (fin2AddRangeR i) = g $ i) ->
+      (forall i : fin n, f $ (fin2AddRangeAddL i) = h $ i) ->
+      vsum f = vsum g + vsum h.
+  Proof. intros. apply fseqsum_plusIdx; auto. Qed.
 
+  (** The order of two nested summations can be exchanged.
+      ∑[i,0,r](∑[j,0,c] v_ij) = 
+      v00 + v01 + ... + v0c + 
+      v10 + v11 + ... + v1c + 
+      ...
+      vr0 + vr1 + ... + vrc = 
+      ∑[j,0,c](∑[i,0,r] v_ij) *)
+  Lemma vsum_vsum_exchg : forall r c (v : @vec (@vec A c) r),
+      vsum (fun i => vsum (fun j => v $ i $ j)) =
+        vsum (fun j => vsum (fun i => v $ i $ j)).
+  Proof. intros. apply fseqsum_fseqsum_exchg. Qed.
+  
   (* If equip a `Group` *)
   Section Group.
     Context `{HGroup:Group A Aadd Azero Aopp}.
@@ -411,7 +512,7 @@ Section vsum.
     Infix "*" := (Amul) : A_scope.
 
     (** (∀ i, u.i = k * v.i) -> Σu = k * Σv *)
-    Lemma vsum_cmul : forall {n} (u v : @vec A n) k,
+    Lemma vsum_vcmul : forall {n} (u v : @vec A n) k,
         (forall i, u $ i = k * v $ i) -> vsum u = k * vsum v.
     Proof. intros. unfold vsum. apply fseqsum_cmul. auto. Qed.
   End ARing.
@@ -420,6 +521,7 @@ Section vsum.
   Section OrderedARing.
     Context `{HOrderedARing : OrderedARing A Aadd Azero Aopp Amul Aone Alt Ale}.
     Infix "*" := (Amul) : A_scope.
+    Infix "<" := Alt.
     Infix "<=" := Ale.
 
     (** (∀ i, 0 <= v.i) -> v.i <= ∑v *)
@@ -431,6 +533,24 @@ Section vsum.
         + intros. specialize (H (nat2fin i0 H0)). rewrite nth_ff2f with (H:=H0). auto.
         + apply fin2nat_lt.
       - rewrite nth_ff2f with (H:=fin2nat_lt _). rewrite nat2fin_fin2nat_id. auto.
+    Qed.
+
+    (** (∀ i, 0 <= v.i) -> 0 <= ∑v *)
+    Lemma vsum_ge0 : forall {n} (v : @vec A n), (forall i, Azero <= v $ i) -> Azero <= vsum v.
+    Proof.
+      intros. pose proof (vsum_ge_any v). destruct n.
+      - cbv. apply le_refl.
+      - apply le_trans with (v.1); auto.
+    Qed.
+      
+    (** (∀ i, 0 <= v.i) -> (∃ i, v.i <> 0) -> 0 < ∑v *)
+    Lemma vsum_gt0 : forall {n} (v : @vec A n),
+        (forall i, Azero <= v $ i) -> (exists i, v $ i <> Azero) -> Azero < vsum v.
+    Proof.
+      intros. destruct H0 as [i H0].
+      pose proof (vsum_ge0 v H). pose proof (vsum_ge_any v i H).
+      assert (Azero < v$i). apply lt_if_le_and_neq; auto.
+      apply lt_trans_lt_le with (v$i); auto.
     Qed.
     
   End OrderedARing.
@@ -487,6 +607,22 @@ Section vadd.
   Proof. intros. rewrite !associative. f_equal. apply commutative. Qed.
 
 End vadd.
+
+Section vadd_extra.
+  Context `{AMonoid}.
+
+  (** (∑vv).j = ∑(vv.j), which vv is a vector of vector *)
+  (* 所有向量相加后取第j个分量 = 取出向量的第j个分量后再相加 *)
+  Lemma vnth_vsum : forall {r c} (vv : @vec (@vec A c) r) j,
+      (@vsum _ (@vadd _ Aadd _) (vzero Azero) _ vv) $ j =
+        @vsum _ Aadd Azero _ (fun i => vv $ i $ j).
+  Proof.
+    intros. unfold vsum. induction r. cbv. auto. unfold vec in *.
+    rewrite fseqsumS_tail with (g:=fun i => vv (fin2SuccRange i)); auto.
+    rewrite vnth_vadd. rewrite IHr.
+    rewrite fseqsumS_tail with (g:=fun i => vv (fin2SuccRange i) j); auto.
+  Qed.
+End vadd_extra.
 
 
 (** ** Vector opposition *)
@@ -683,6 +819,14 @@ Section vcmul.
   Lemma vcmul_vsub : forall {n} a (u v : vec n), a \.* (u - v) = (a \.* u) - (a \.* v).
   Proof. intros. unfold vsub. rewrite vcmul_vadd. rewrite vcmul_vopp. auto. Qed.
 
+  (** <vadd,vzero,vopp> is an abelian group *)
+  #[export] Instance vec_AGroup : forall n, @AGroup (vec n) vadd vzero vopp.
+  Proof.
+    intros. repeat constructor; intros;
+      try apply vadd_AMonoid;
+      try apply vadd_vopp_l;
+      try apply vadd_vopp_r.
+  Qed.
   
   (* If equip a `Dec` *)
   Section AeqDec.
@@ -696,20 +840,6 @@ Section vcmul.
       rewrite vcmul_0_l in H0. easy.
     Qed.
   End AeqDec.
-
-  (* If equip a `Field` *)
-  Section Field.
-    Context `{HField : Field A Aadd Azero Aopp Amul Aone Ainv}.
-
-    #[export] Instance vec_LinearSpace {n : nat} :
-      LinearSpace (V:=vec n) vadd vzero vopp vcmul.
-    Proof.
-      constructor; try apply vadd_AGroup; intros.
-      apply vcmul_1_l. rewrite vcmul_assoc; auto.
-      apply vcmul_add. apply vcmul_vadd.
-    Qed.
-    
-  End Field.
 
   (* If equip a `Dec` and a `Field` *)
   Section Dec_Field.
@@ -780,6 +910,7 @@ Section vcmul.
   End Dec_Field.
   
 End vcmul.
+
 
 
 (** ** Dot product *)
@@ -856,7 +987,7 @@ Section vdot.
 
   (** <k * u, v> = k * <u, v> *)
   Lemma vdot_vcmul_l : forall {n} (u v : vec n) k, <k \.* u, v> = k * <u, v>.
-  Proof. intros. unfold vdot. apply vsum_cmul; intros. cbv. ring. Qed.
+  Proof. intros. unfold vdot. apply vsum_vcmul; intros. cbv. ring. Qed.
   
   (** <u, k * v> = k * <u, v> *)
   Lemma vdot_vcmul_r : forall {n} (u v : vec n) k, <u, k \.* v> = k * <u, v>.
@@ -941,28 +1072,34 @@ Section vdot.
     Infix "<" := Alt.
     Infix "<=" := Ale.
     
-    (** <v, v> = 0 <-> v = 0 *)
-    Lemma vdot_same_eq0_iff_vzero : forall {n} (v : vec n), <v, v> = 0 <-> v = vzero.
+    (** v = 0 -> <v, v> = 0 *)
+    Lemma vdot_same_eq0_if_vzero : forall {n} (v : vec n), v = vzero -> <v, v> = 0.
+    Proof. intros. subst. rewrite vdot_0_l; auto. Qed.
+    
+    (** <v, v> = 0 -> v = 0 *)
+    Lemma vdot_same_eq0_then_vzero : forall {n} (v : vec n), <v, v> = 0 -> v = vzero.
     Proof.
-      intros. split; intros.
-      - unfold vdot,vsum,fseqsum in H. apply veq_iff_vnth; intros.
-        apply seqsum_eq0_imply_seq0 with (i:=fin2nat i) in H.
-        + rewrite nth_ff2f with (H:=fin2nat_lt _) in H.
-          rewrite nat2fin_fin2nat_id in H. rewrite vnth_vmap2 in H.
-          apply field_sqr_eq0_reg in H; auto.
-        + intros. rewrite nth_ff2f with (H:=H0). rewrite vnth_vmap2. apply sqr_ge0.
-        + apply fin2nat_lt.
-      - rewrite H. apply vdot_0_l.
+      intros. unfold vdot,vsum,fseqsum in H. apply veq_iff_vnth; intros.
+      apply seqsum_eq0_imply_seq0 with (i:=fin2nat i) in H.
+      - rewrite nth_ff2f with (H:=fin2nat_lt _) in H.
+        rewrite nat2fin_fin2nat_id in H. rewrite vnth_vmap2 in H.
+        apply field_sqr_eq0_reg in H; auto.
+      - intros. rewrite nth_ff2f with (H:=H0). rewrite vnth_vmap2. apply sqr_ge0.
+      - apply fin2nat_lt.
     Qed.
       
-    (** <v, v> <> 0 <-> v <> vzero *)
-    Lemma vdot_same_neq0_iff_vnonzero : forall {n} (v : vec n), <v, v> <> 0 <-> v <> vzero.
-    Proof. intros. rewrite vdot_same_eq0_iff_vzero. easy. Qed.
+    (** v <> vzero -> <v, v> <> 0 *)
+    Lemma vdot_same_neq0_if_vnonzero : forall {n} (v : vec n), v <> vzero -> <v, v> <> 0.
+    Proof. intros. intro. apply vdot_same_eq0_then_vzero in H0; auto. Qed.
+      
+    (** <v, v> <> 0 -> v <> vzero *)
+    Lemma vdot_same_neq0_then_vnonzero : forall {n} (v : vec n), <v, v> <> 0 -> v <> vzero.
+    Proof. intros. intro. apply vdot_same_eq0_if_vzero in H0; auto. Qed.
     
     (** 0 < <v, v> *)
     Lemma vdot_gt0 : forall {n} (v : vec n), v <> vzero -> Azero < (<v, v>).
     Proof.
-      intros. apply vdot_same_neq0_iff_vnonzero in H. pose proof (vdot_ge0 v).
+      intros. apply vdot_same_neq0_if_vnonzero in H. pose proof (vdot_ge0 v).
       apply lt_if_le_and_neq; auto.
     Qed.
 
@@ -1151,7 +1288,7 @@ Section vlen.
     Lemma vlen_eq0_iff_eq0 : forall {n} (v : vec n), ||v|| = 0%R <-> v = vzero.
     Proof.
       intros. unfold vlen. split; intros.
-      - apply vdot_same_eq0_iff_vzero. apply sqrt_eq_0 in H; auto.
+      - apply vdot_same_eq0_then_vzero. apply sqrt_eq_0 in H; auto.
         apply a2r_eq0_iff; auto. apply a2r_ge0_iff; apply vdot_ge0.
       - rewrite H. rewrite vdot_0_l. rewrite a2r_0 at 1. ra.
     Qed.
@@ -1375,7 +1512,7 @@ Section vproj.
         w <> vzero -> (vproj (u + v) w = vproj u w + vproj v w)%V.
     Proof.
       intros. unfold vproj. rewrite vdot_vadd_l. rewrite <- vcmul_add. f_equal.
-      field. apply vdot_same_neq0_iff_vnonzero; auto.
+      field. apply vdot_same_neq0_if_vnonzero; auto.
     Qed.
   
     (** vproj (k \.* u) v = k * (vproj u v) *)
@@ -1383,14 +1520,14 @@ Section vproj.
         v <> vzero -> (vproj (k \.* u) v = k \.* (vproj u v))%V.
     Proof.
       intros. unfold vproj. rewrite vdot_vcmul_l. rewrite vcmul_assoc. f_equal.
-      field. apply vdot_same_neq0_iff_vnonzero; auto.
+      field. apply vdot_same_neq0_if_vnonzero; auto.
     Qed.
     
     (** vproj v v = v *)
     Lemma vproj_same : forall {n} (v : vec n), v <> vzero -> vproj v v = v.
     Proof.
       intros. unfold vproj. replace (<v, v> / <v, v>) with Aone; try field.
-      apply vcmul_1_l. apply vdot_same_neq0_iff_vnonzero; auto.
+      apply vcmul_1_l. apply vdot_same_neq0_if_vnonzero; auto.
     Qed.
   End OrderedField.
 
@@ -1450,7 +1587,7 @@ Section vperp.
       intros. unfold vorth, vperp, vproj.
       rewrite !vdot_vcmul_l. rewrite vdot_vsub_r. rewrite !vdot_vcmul_r.
       rewrite (vdot_comm v u). field_simplify. rewrite ring_mul_0_l; auto.
-      apply vdot_same_neq0_iff_vnonzero; auto.
+      apply vdot_same_neq0_if_vnonzero; auto.
     Qed.
     
     (** vperp (u + v) w = vperp u w + vperp v w *)

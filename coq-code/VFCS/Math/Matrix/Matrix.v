@@ -520,7 +520,6 @@ Section malg.
   Notation smat n := (smat A n).
   Notation vsum := (@vsum _ Aadd Azero).
 
-
   (** *** Zero matrix *)
   Definition mat0 {r c} : mat r c := fun _ _ => Azero.
 
@@ -862,7 +861,7 @@ Section malg.
   (** tr (a \.* M) = a * tr (m) *)
   Lemma mtrace_mcmul : forall {n} (a : A) (M : smat n), tr (a \.* M) = (a * tr M)%A.
   Proof.
-    intros. unfold mcmul, mtrace. apply vsum_cmul; intros.
+    intros. unfold mcmul, mtrace. apply vsum_vcmul; intros.
     rewrite mnth_mmap. auto.
   Qed.
 

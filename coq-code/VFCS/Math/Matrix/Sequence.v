@@ -187,6 +187,67 @@ Section seqsum.
     rewrite IHn; auto. asemigroup. rewrite H; auto.
   Qed.
 
+  (** Sum a sequence which only one item is nonzero, then got this item. *)
+  Lemma seqsum_unique : forall (f : nat -> A) (a : A) (n i : nat), 
+      i < n -> f i = a -> (forall j, i <> j -> f j = Azero) -> seqsum f n = a.
+  Proof.
+    intros f a n. induction n; intros. lia. simpl. bdestruct (i =? n).
+    - subst. rewrite seqsum_eq0; try group. intros. apply H1. lia.
+    - replace (seqsum f n) with a. replace (f n) with Azero; try group.
+      rewrite H1; auto. rewrite (IHn i); auto. lia.
+  Qed.
+
+  (** Sum the m+n elements equal to plus of two parts.
+      Σ[i,0,(m+n)] f(i) = Σ[i,0,m] f(i) + Σ[i,0,n] f(m + i). *)
+  Lemma seqsum_plusIdx : forall f m n,
+      seqsum f (m + n) = seqsum f m + seqsum (fun i => f (m + i)%nat) n. 
+  Proof.
+    (* induction on `n` is simpler than on `m` *)
+    intros. induction n; intros; simpl.
+    - rewrite Nat.add_0_r. monoid.
+    - replace (m + S n)%nat with (S (m + n))%nat; auto. simpl. rewrite IHn. asemigroup.
+  Qed.
+  
+  (** Sum the m+n elements equal to plus of two parts.
+      (i < m -> f(i) = g(i)) ->
+      (i < n -> f(m+i) = h(i)) ->
+      Σ[i,0,(m+n)] f(i) = Σ[i,0,m] g(i) + Σ[i,0,n] h(i). *)
+  Lemma seqsum_plusIdx_ext : forall f g h m n,
+      (forall i, i < m -> f i = g i) ->
+      (forall i, i < n -> f (m + i)%nat = h i) ->
+      seqsum f (m + n) = seqsum g m + seqsum h n.
+  Proof.
+    intros. induction n; intros; simpl.
+    - rewrite Nat.add_0_r. monoid. apply seqsum_eq. auto.
+    - replace (m + S n)%nat with (S (m + n))%nat; auto. simpl.
+      rewrite IHn. asemigroup. rewrite H0; auto. intros. auto.
+  Qed.
+  
+  (** The order of two nested summations can be exchanged.
+      ∑[i,0,r](∑[j,0,c] f_ij) = 
+      f00 + f01 + ... + f0c + 
+      f10 + f11 + ... + f1c + 
+      ...
+      fr0 + fr1 + ... + frc = 
+      ∑[j,0,c](∑[i,0,r] f_ij) *)
+  Lemma seqsum_seqsum_exchg : forall f r c,
+      seqsum (fun i => seqsum (fun j => f i j) c) r =
+        seqsum (fun j => seqsum (fun i => f i j) r) c.
+  Proof.
+    intros f. induction r.
+    - destruct c; simpl; auto. rewrite seqsum_eq0; auto. monoid.
+    - destruct c; simpl; auto. rewrite seqsum_eq0; auto. monoid.
+      replace (seqsum (fun i : nat => seqsum (fun j : nat => f i j) c + f i c) r)
+        with ((seqsum (fun i : nat => seqsum (fun j : nat => f i j) c) r) +
+                (seqsum (fun i : nat => f i c) r)).
+      replace (seqsum (fun j : nat => seqsum (fun i : nat => f i j) r + f r j) c)
+        with ((seqsum (fun j : nat => seqsum (fun i : nat => f i j) r) c) +
+                (seqsum (fun j : nat => f r j) c)).
+      rewrite IHr. asemigroup.
+      symmetry. apply seqsum_add; auto.
+      symmetry. apply seqsum_add; auto.
+  Qed.
+
   
   (** Let's have a group structure *)
   Context `{G : Group A Aadd Azero Aopp}.
@@ -218,43 +279,6 @@ Section seqsum.
     intros. induction n; simpl. ring. rewrite H, IHn; auto. ring.
   Qed.
 
-  (** Sum a sequence which only one item is nonzero, then got this item. *)
-  Lemma seqsum_unique : forall (f : nat -> A) (k : A) (n i : nat), 
-      i < n -> f i = k -> (forall j, i <> j -> f j = Azero) -> seqsum f n = k.
-  Proof.
-    intros f k n. induction n; intros. lia. simpl. bdestruct (i =? n).
-    - subst. rewrite seqsum_eq0; try ring. intros. apply H1. lia.
-    - replace (seqsum f n) with k. replace (f n) with Azero; try ring.
-      rewrite H1; auto. rewrite (IHn i); auto. lia.
-  Qed.
-
-  (** Sum the m+n elements equal to plus of two parts.
-      Σ[i,0,(m+n)] f(i) = Σ[i,0,m] f(i) + Σ[i,0,n] f(m + i). *)
-  Lemma seqsum_plusIdx : forall f m n,
-      seqsum f (m + n) = seqsum f m + seqsum (fun i => f (m + i)%nat) n. 
-  Proof.
-    (* induction on `n` is simpler than on `m` *)
-    intros. induction n; intros; simpl.
-    - rewrite Nat.add_0_r. monoid.
-    - replace (m + S n)%nat with (S (m + n))%nat; auto. simpl.
-      rewrite IHn. asemigroup.
-  Qed.
-  
-  (** Sum the m+n elements equal to plus of two parts.
-      (i < m -> f(i) = g(i)) ->
-      (i < n -> f(m+i) = h(i)) ->
-      Σ[i,0,(m+n)] f(i) = Σ[i,0,m] g(i) + Σ[i,0,n] h(i). *)
-  Lemma seqsum_plusIdx_ext : forall f g h m n,
-      (forall i, i < m -> f i = g i) ->
-      (forall i, i < n -> f (m + i)%nat = h i) ->
-      seqsum f (m + n) = seqsum g m + seqsum h n.
-  Proof.
-    intros. induction n; intros; simpl.
-    - rewrite Nat.add_0_r. monoid. apply seqsum_eq. auto.
-    - replace (m + S n)%nat with (S (m + n))%nat; auto. simpl.
-      rewrite IHn. asemigroup. rewrite H0; auto. intros. auto.
-  Qed.
-
   (** Product two sum equal to sum of products.
       Σ[i,0,m] f(i) * Σ[i,0,n] g(i) = Σ[i,0,m*n] f(i/n)*g(i%n).
     
@@ -270,31 +294,6 @@ Section seqsum.
     rewrite seqsum_plusIdx. rewrite <- IHm. asemigroup.
     apply seqsum_cmul. intros. f_equal; f_equal.
     apply add_mul_div; auto. apply add_mul_mod; auto.
-  Qed.
-  
-  (** The order of two nested summations can be exchanged.
-      ∑[i,0,r](∑[j,0,c] f_ij) = 
-      f00 + f01 + ... + f0c + 
-      f10 + f11 + ... + f1c + 
-      ...
-      fr0 + fr1 + ... + frc = 
-      ∑[j,0,c](∑[i,0,r] f_ij) *)
-  Lemma seqsum_seqsum_exchg : forall f r c,
-      seqsum (fun i => seqsum (fun j => f i j) c) r =
-        seqsum (fun j => seqsum (fun i => f i j) r) c.
-  Proof.
-    intros f. induction r.
-    - destruct c; simpl; auto. rewrite seqsum_eq0; auto. ring.
-    - destruct c; simpl; auto. rewrite seqsum_eq0; auto. ring.
-      replace (seqsum (fun i : nat => seqsum (fun j : nat => f i j) c + f i c) r)
-        with ((seqsum (fun i : nat => seqsum (fun j : nat => f i j) c) r) +
-                (seqsum (fun i : nat => f i c) r)).
-      replace (seqsum (fun j : nat => seqsum (fun i : nat => f i j) r + f r j) c)
-        with ((seqsum (fun j : nat => seqsum (fun i : nat => f i j) r) c) +
-                (seqsum (fun j : nat => f r j) c)).
-      rewrite IHr. asemigroup.
-      symmetry. apply seqsum_add; auto.
-      symmetry. apply seqsum_add; auto.
   Qed.
   
 End seqsum.
@@ -391,30 +390,15 @@ Section seqsumb.
     rewrite H,IHn; auto. rewrite group_opp_distr. amonoid.
   Qed.
 
-  
-  (** Let's have an ring structure *)
-  Context `{HARing : ARing A Aadd Azero Aopp Amul Aone}.
-  Infix "*" := Amul : A_scope.
-  Add Ring ring_inst : (make_ring_theory HARing).
-  
-  
-  (** Scalar multiplication of the sum of a sequence. *)
-  Lemma seqsumb_cmul : forall k (f g : nat -> A) (lo n : nat),
-       (forall i, i < n -> f (lo+i)%nat = k * g (lo+i)%nat) ->
-      seqsumb f lo n = k * seqsumb g lo n.
-  Proof.
-    intros. induction n; simpl. ring. rewrite H, IHn; auto. ring.
-  Qed.
-
   (** Sum a sequence which only one item is nonzero, then got this item. *)
   Lemma seqsumb_unique : forall (f : nat -> A) (k : A) (lo n i : nat), 
       i < n -> f (lo+i)%nat = k ->
       (forall j, j < n -> i <> j -> f (lo+j)%nat = Azero) -> seqsumb f lo n = k.
   Proof.
     intros f k lo n. induction n; intros. lia. simpl. bdestruct (i =? n).
-    - subst. rewrite seqsumb_eq0; try ring. intros. apply H1. lia. lia.
+    - subst. rewrite seqsumb_eq0; try monoid. intros. apply H1. lia. lia.
     - replace (seqsumb f lo n) with k.
-      replace (f (lo + n)%nat) with Azero; try ring.
+      replace (f (lo + n)%nat) with Azero; try monoid.
       rewrite H1; auto. rewrite (IHn i); auto. lia.
   Qed.
 
@@ -456,6 +440,44 @@ Section seqsumb.
     - replace (m + S n)%nat with (S (m + n))%nat; auto. simpl.
       rewrite IHn. asemigroup. rewrite H0; auto. intros. auto.
   Qed.
+  
+  (** The order of two nested summations can be exchanged.
+      ∑[i,lor,r](∑[j,loc,c] f_ij) = 
+      ... + f11 + ... + f1c + 
+                    ...
+      ... + fr1 + ... + frc = 
+      ∑[j,loc,c](∑[i,lor,r] f_ij) *)
+  Lemma seqsumb_seqsumb_exchg : forall f lor loc r c,
+      seqsumb (fun i => seqsumb (fun j => f i j) loc c) lor r =
+        seqsumb (fun j => seqsumb (fun i => f i j) lor r) loc c.
+  Proof.
+    intros f lor loc. induction r.
+    - destruct c; simpl; auto. rewrite seqsumb_eq0; auto. monoid.
+    - destruct c; simpl; auto. rewrite seqsumb_eq0; auto. monoid.
+      replace (seqsumb (fun i : nat => seqsumb (fun j : nat => f i j) loc c + f i (loc+c)%nat) lor r)
+        with ((seqsumb (fun i : nat => seqsumb (fun j : nat => f i j) loc c) lor r) +
+                (seqsumb (fun i : nat => f i (loc + c)%nat) lor r)).
+      replace (seqsumb (fun j : nat => seqsumb (fun i : nat => f i j) lor r + f (lor+r)%nat j) loc c)
+        with ((seqsumb (fun j : nat => seqsumb (fun i : nat => f i j) lor r) loc c) +
+                (seqsumb (fun j : nat => f (lor+r)%nat j) loc c)).
+      rewrite IHr. asemigroup.
+      symmetry. apply seqsumb_add; auto.
+      symmetry. apply seqsumb_add; auto.
+  Qed.
+  
+  (** Let's have an ring structure *)
+  Context `{HARing : ARing A Aadd Azero Aopp Amul Aone}.
+  Infix "*" := Amul : A_scope.
+  Add Ring ring_inst : (make_ring_theory HARing).
+  
+  
+  (** Scalar multiplication of the sum of a sequence. *)
+  Lemma seqsumb_cmul : forall k (f g : nat -> A) (lo n : nat),
+       (forall i, i < n -> f (lo+i)%nat = k * g (lo+i)%nat) ->
+      seqsumb f lo n = k * seqsumb g lo n.
+  Proof.
+    intros. induction n; simpl. ring. rewrite H, IHn; auto. ring.
+  Qed.
 
   (** Product two sum equal to sum of products.
       Σ[i,lo,m] f(i) * Σ[i,lo,n] g(i) = Σ[i,lo,m*n] f((i-lo)/n)*g((i-lo)%n).
@@ -472,30 +494,6 @@ Section seqsumb.
     replace (n + m * n)%nat with (m * n + n)%nat by ring.
     rewrite seqsumb_plusSize. asemigroup.
     Abort.
-  
-  (** The order of two nested summations can be exchanged.
-      ∑[i,lor,r](∑[j,loc,c] f_ij) = 
-      ... + f11 + ... + f1c + 
-                    ...
-      ... + fr1 + ... + frc = 
-      ∑[j,loc,c](∑[i,lor,r] f_ij) *)
-  Lemma seqsumb_seqsumb_exchg : forall f lor loc r c,
-      seqsumb (fun i => seqsumb (fun j => f i j) loc c) lor r =
-        seqsumb (fun j => seqsumb (fun i => f i j) lor r) loc c.
-  Proof.
-    intros f lor loc. induction r.
-    - destruct c; simpl; auto. rewrite seqsumb_eq0; auto. ring.
-    - destruct c; simpl; auto. rewrite seqsumb_eq0; auto. ring.
-      replace (seqsumb (fun i : nat => seqsumb (fun j : nat => f i j) loc c + f i (loc+c)%nat) lor r)
-        with ((seqsumb (fun i : nat => seqsumb (fun j : nat => f i j) loc c) lor r) +
-                (seqsumb (fun i : nat => f i (loc + c)%nat) lor r)).
-      replace (seqsumb (fun j : nat => seqsumb (fun i : nat => f i j) lor r + f (lor+r)%nat j) loc c)
-        with ((seqsumb (fun j : nat => seqsumb (fun i : nat => f i j) lor r) loc c) +
-                (seqsumb (fun j : nat => f (lor+r)%nat j) loc c)).
-      rewrite IHr. asemigroup.
-      symmetry. apply seqsumb_add; auto.
-      symmetry. apply seqsumb_add; auto.
-  Qed.
   
 End seqsumb.
 
@@ -568,18 +566,6 @@ Section seqsum_more.
       { apply IHn; auto. lia. }
       replace (f k) with (f k + 0); [| amonoid].
       apply le_add_compat; auto.
-  Qed.
-
-
-  (** 2 * a * b <= a² + b² *)
-  Lemma mul_le_add_sqr : forall r1 r2 : A, 2 * r1 * r2 <= r1² + r2².
-  Proof.
-    intros.
-    assert (0 <= (r1 - r2)²). apply sqr_ge0.
-    ring_simplify in H.
-    replace (r1 ² + - (2 * r1 * r2) + r2 ²)
-      with (r1 ² + r2 ² - (2 * r1 * r2)) in H by ring.
-    apply sub_ge0_imply_ge in H. auto.
   Qed.
   
   (** 2 * ∑(f*g) <= ∑(f)² + ∑(g)² *)

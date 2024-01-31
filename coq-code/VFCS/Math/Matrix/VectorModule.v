@@ -73,8 +73,8 @@ Module BasicVectorTheory (E : ElementType).
   Definition vmap {n} (v : vec n) (f : A -> A) : vec n := vmap f v.
   Definition vmap2 {n} (u v : vec n) (f : A -> A -> A) : vec n := vmap2 f u v.
   
-  (** Sum of a vector (also named folding) *)
-  Definition vsum {n} (v : vec n) (f : A -> A -> A) (b : A) : A := @vsum _ f b _ v.
+  (** Sum of a vector (also named folding) (generic version) *)
+  Definition vsumG {n} (v : vec n) (f : A -> A -> A) (b : A) : A := @vsum _ f b _ v.
 
   (** Make a zero vector *)
   Definition vzero {n} : vec n := vzero 0.
@@ -90,7 +90,7 @@ Module MonoidVectorTheory (E : MonoidElementType).
 
   (** *** Vector addition *)
   
-  Definition vadd {n} (u v : vec n) : vec n := vadd (Aadd:=Aadd) u v.
+  Definition vadd {n} := vadd (Aadd:=Aadd) (n:=n).
   Infix "+" := vadd : vec_scope.
 
   (** (u + v) + w = u + (v + w) *)
@@ -301,6 +301,15 @@ Module RingVectorTheory (E : RingElementType).
   Lemma vdot_neq0_imply_neq0_r : forall {n} (u v : vec n), <u, v> <> 0 -> v <> vzero.
   Proof. intros. apply vdot_neq0_imply_neq0_r in H; auto. Qed.
 
+  
+  (** *** vsum *)
+  Definition vsum {n} (v : vec n) := @vsum _ Aadd Azero _ v.
+
+  (** (∀ i, u.i = k * v.i) -> Σu = k * Σv *)
+  Lemma vsum_vcmul : forall {n} (u v : vec n) k,
+      (forall i, u $ i = k * v $ i) -> vsum u = k * vsum v.
+  Proof. intros. apply vsum_vcmul; auto. Qed.
+  
 
   (** *** Unit vector *)
   
@@ -361,6 +370,19 @@ Module OrderedRingVectorTheory (E : OrderedRingElementType).
   (** (v i)² <= <v, v> *)
   Lemma vnth_sqr_le_vdot : forall {n} (v : vec n) (i : fin n), (v i) ² <= <v, v>.
   Proof. intros. apply vnth_sqr_le_vdot. Qed.
+
+  (** (∀ i, 0 <= v.i) -> v.i <= ∑v *)
+  Lemma vsum_ge_any : forall {n} (v : vec n) i, (forall i, Azero <= v $ i) -> v $ i <= vsum v.
+  Proof. intros. apply vsum_ge_any; auto. Qed.
+  
+  (** (∀ i, 0 <= v.i) -> 0 <= ∑v *)
+  Lemma vsum_ge0 : forall {n} (v : vec n), (forall i, Azero <= v $ i) -> Azero <= vsum v.
+  Proof. intros. apply vsum_ge0; auto. Qed.
+  
+  (** (∀ i, 0 <= v.i) -> (∃ i, v.i <> 0) -> 0 < ∑v *)
+  Lemma vsum_gt0 : forall {n} (v : vec n),
+      (forall i, Azero <= v $ i) -> (exists i, v $ i <> Azero) -> Azero < vsum v.
+  Proof. intros. apply vsum_gt0; auto. Qed.
 
 End OrderedRingVectorTheory.
 
@@ -491,17 +513,37 @@ Module OrderedFieldVectorTheory (E : OrderedFieldElementType).
     (** (v i)² <= <v, v> *)
     Lemma vnth_sqr_le_vdot : forall {n} (v : vec n) (i : fin n), (v i) ² <= <v, v>.
     Proof. intros. apply vnth_sqr_le_vdot. Qed.
+
+    (** (∀ i, 0 <= v.i) -> v.i <= ∑v *)
+    Lemma vsum_ge_any : forall {n} (v : vec n) i, (forall i, Azero <= v $ i) -> v $ i <= vsum v.
+    Proof. intros. apply vsum_ge_any; auto. Qed.
+    
+    (** (∀ i, 0 <= v.i) -> 0 <= ∑v *)
+    Lemma vsum_ge0 : forall {n} (v : vec n), (forall i, Azero <= v $ i) -> Azero <= vsum v.
+    Proof. intros. apply vsum_ge0; auto. Qed.
+    
+    (** (∀ i, 0 <= v.i) -> (∃ i, v.i <> 0) -> 0 < ∑v *)
+    Lemma vsum_gt0 : forall {n} (v : vec n),
+        (forall i, Azero <= v $ i) -> (exists i, v $ i <> Azero) -> Azero < vsum v.
+    Proof. intros. apply vsum_gt0; auto. Qed.
     
   End THESE_CODE_ARE_COPIED_FROM_OrderedRingVectorTheroy.
 
+  (** v = 0 -> <v, v> = 0 *)
+  Lemma vdot_same_eq0_if_vzero : forall {n} (v : vec n), v = vzero -> <v, v> = 0.
+  Proof. intros. apply vdot_same_eq0_if_vzero; auto. Qed.
+  
+  (** <v, v> = 0 -> v = 0 *)
+  Lemma vdot_same_eq0_then_vzero : forall {n} (v : vec n), <v, v> = 0 -> v = vzero.
+  Proof. intros. apply vdot_same_eq0_then_vzero; auto. Qed.
 
-  (** <v, v> = 0 <-> v = 0 *)
-  Lemma vdot_same_eq0_iff_vzero : forall {n} (v : vec n), <v, v> = Azero <-> v = vzero.
-  Proof. intros. apply vdot_same_eq0_iff_vzero. Qed.
-
-  (** <v, v> <> 0 <-> v <> vzero *)
-  Lemma vdot_same_neq0_iff_vnonzero : forall {n} (v : vec n), <v, v> <> Azero <-> v <> vzero.
-  Proof. intros. apply vdot_same_neq0_iff_vnonzero. Qed.
+  (** v <> vzero -> <v, v> <> 0 *)
+  Lemma vdot_same_neq0_if_vnonzero : forall {n} (v : vec n), v <> vzero -> <v, v> <> 0.
+  Proof. intros. apply vdot_same_neq0_if_vnonzero; auto. Qed.
+  
+  (** <v, v> <> 0 -> v <> vzero *)
+  Lemma vdot_same_neq0_then_vnonzero : forall {n} (v : vec n), <v, v> <> 0 -> v <> vzero.
+  Proof. intros. apply vdot_same_neq0_then_vnonzero; auto. Qed.
 
   (** 0 < <v, v> *)
   Lemma vdot_gt0 : forall {n} (v : vec n), v <> vzero -> Alt Azero (<v, v>).

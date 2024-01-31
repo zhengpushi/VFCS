@@ -50,10 +50,10 @@ End RExt.
 Lemma v2eq_iff : forall u v : vec 2, u = v <-> u.x = v.x /\ u.y = v.y.
 Proof.
   intros. split; intros; subst; auto.
-  unfold nat2finS in H; simpl in H. destruct H.
+  unfold nat2finS in H; simpl in H. destruct H as [Hx Hy].
   apply veq_iff_vnth_nat; intros. unfold nat2fin.
-  destruct i; simpl; auto. apply (vnth_sameIdx_imply H).
-  destruct i; simpl; auto. apply (vnth_sameIdx_imply H0). lia.
+  destruct i; simpl; auto. apply (vnth_sameIdx_imply Hx).
+  destruct i; simpl; auto. apply (vnth_sameIdx_imply Hy). lia.
 Qed.
 
 (** The length of 2D vector *)
@@ -65,7 +65,7 @@ Lemma sqr_x_div_vlen : forall (v : vec 2),
     v <> vzero -> (v.x / ||v||)² = (1 - (v.y / ||v||)²)%R.
 Proof.
   intros. rewrite !Rsqr_div'. rewrite <- !vdot_same. field_simplify_eq.
-  cbv; field. apply vdot_same_neq0_iff_vnonzero; auto.
+  cbv; field. apply vdot_same_neq0_if_vnonzero; auto.
 Qed.
     
 (** (v.y / ||v||)² = 1 - (v.x / ||v||)² *)
@@ -73,7 +73,7 @@ Lemma sqr_y_div_vlen : forall (v : vec 2),
     v <> vzero -> (v.y / ||v||)² = (1 - (v.x / ||v||)²)%R.
 Proof.
   intros. rewrite !Rsqr_div'. rewrite <- !vdot_same. field_simplify_eq.
-  cbv; field. apply vdot_same_neq0_iff_vnonzero; auto.
+  cbv; field. apply vdot_same_neq0_if_vnonzero; auto.
 Qed.
 
 (** 0 < <u, v> ->
@@ -95,7 +95,7 @@ Proof.
   rewrite acos_atan; [|ra]. f_equal. apply Rsqr_inj. ra. ra.
   rewrite !Rsqr_div', !Rsqr_mult, <- !vdot_same. field_simplify_eq; [|ra].
   rewrite Rsqr_sqrt; [|ra]. rewrite Rsqr_sqrt; [|ra].
-  autorewrite with R. field. split; apply vdot_same_neq0_iff_vnonzero; auto.
+  autorewrite with R. field. split; apply vdot_same_neq0_if_vnonzero; auto.
 Qed.
 
 (** <u, v> < 0 ->
@@ -118,22 +118,22 @@ Proof.
   rewrite !Rsqr_div', !Rsqr_mult, <- !vdot_same. field_simplify_eq; [|ra].
   unfold a2r, id.
   rewrite Rsqr_sqrt; [|ra]. rewrite Rsqr_sqrt; [|ra].
-  autorewrite with R. field. split; apply vdot_same_neq0_iff_vnonzero; auto.
+  autorewrite with R. field. split; apply vdot_same_neq0_if_vnonzero; auto.
 Qed.
 
 
 (** ** The cross product of 2D vectors *)
-Section vcross2.
+Section v2cross.
   (* u × v) *)
-  Definition vcross2 (u v : vec 2) : R := u.x * v.y - u.y * v.x.
-  Infix "\x" := vcross2 : vec_scope.
+  Definition v2cross (u v : vec 2) : R := u.x * v.y - u.y * v.x.
+  Infix "\x" := v2cross : vec_scope.
 
   (* u × v = - (v × u) *)
-  Lemma vcross2_comm : forall (u v : vec 2), u \x v = (- (v \x u))%R.
+  Lemma v2cross_comm : forall (u v : vec 2), u \x v = (- (v \x u))%R.
   Proof. intros. cbv; ra. Qed.
 
   (** 0 <= u × v -> u × v = √((u⋅u)(v⋅v) - (u⋅v)²) *)
-  Lemma vcross2_ge0_eq : forall (u v : vec 2),
+  Lemma v2cross_ge0_eq : forall (u v : vec 2),
       u <> vzero -> v <> vzero -> 0 <= u \x v ->
       u \x v = sqrt ((<u, u> * <v, v>) - <u, v>²).
   Proof.
@@ -143,50 +143,50 @@ Section vcross2.
   Qed.
 
   (** u × v < 0 -> u × v = - √((u⋅u)(v⋅v) - (u⋅v)²) *)
-  Lemma vcross2_lt0_eq : forall (u v : vec 2),
+  Lemma v2cross_lt0_eq : forall (u v : vec 2),
       u <> vzero -> v <> vzero -> u \x v < 0 ->
       u \x v = (- sqrt ((<u, u> * <v, v>) - <u, v>²))%R.
   Proof.
-    intros. rewrite vcross2_comm. rewrite (vdot_comm u v).
-    rewrite vcross2_ge0_eq; ra.
+    intros. rewrite v2cross_comm. rewrite (vdot_comm u v).
+    rewrite v2cross_ge0_eq; ra.
     - f_equal. f_equal. ring.
-    - rewrite vcross2_comm; ra.
+    - rewrite v2cross_comm; ra.
   Qed.
 
   (* u × v = 0 <-> (<u, v> = ||u|| * ||v||) *)
-  Lemma vcross2_eq0_iff_vdot_sqr_eq : forall (u v : vec 2),
+  Lemma v2cross_eq0_iff_vdot_sqr_eq : forall (u v : vec 2),
       u <> vzero -> v <> vzero -> (u \x v = 0 <-> (<u, u> * <v, v>) = <u, v>²).
   Proof.
     intros. bdestruct (0 <=? u \x v).
     - pose proof (vdot_sqr_le u v).
-      pose proof (vcross2_ge0_eq u v H H0 H1). autounfold with A in *.
+      pose proof (v2cross_ge0_eq u v H H0 H1). autounfold with A in *.
       rewrite H3. split; intros.
       + apply sqrt_eq_0 in H4; ra.
       + rewrite H4. autorewrite with R. auto.
     - split; intros; ra.
       assert (u \x v < 0); ra.
-      pose proof (vcross2_lt0_eq u v H H0 H3).
+      pose proof (v2cross_lt0_eq u v H H0 H3).
       rewrite H2 in H4. autorewrite with R in H4. ra.
   Qed.
 
   (* (u × v = 0) <-> (u /_ v = 0) \/ (u /_ v = π) *)
-  Lemma vcross2_eq0_iff_vangle : forall (u v : vec 2),
+  Lemma v2cross_eq0_iff_vangle : forall (u v : vec 2),
       u <> vzero -> v <> vzero -> (u \x v = 0 <-> ((u /_ v = 0) \/ (u /_ v = PI))).
   Proof.
-    intros. rewrite vcross2_eq0_iff_vdot_sqr_eq; auto.
+    intros. rewrite v2cross_eq0_iff_vdot_sqr_eq; auto.
     rewrite <- vdot_sqr_eq_iff_vangle_0_or_PI; auto. easy.
   Qed.
 
   (* (u × v <> 0) <-> 0 < (u /_ v) < π) *)
-  Lemma vcross2_neq0_iff_vangle : forall (u v : vec 2),
+  Lemma v2cross_neq0_iff_vangle : forall (u v : vec 2),
       u <> vzero -> v <> vzero -> (u \x v <> 0 <-> (0 < (u /_ v) < PI)).
   Proof.
-    intros. rewrite vcross2_eq0_iff_vangle; auto.
+    intros. rewrite v2cross_eq0_iff_vangle; auto.
     pose proof (vangle_bound u v H H0). ra.
   Qed.
   
-End vcross2.
-Infix "\x" := vcross2 : vec_scope.
+End v2cross.
+Infix "\x" := v2cross : vec_scope.
 
 
 (** ** 标准基向量 *)
@@ -240,13 +240,13 @@ Lemma vangle_i_j : v2i /_ v2j = PI/2.
 Proof. cbv. match goal with |- context[acos ?a] => replace a with 0 end; ra. Qed.
 
 (** 标准基向量的叉乘 *)
-Lemma vcross2_i_l : forall (v : vec 2), v2i \x v = v.y.
+Lemma v2cross_i_l : forall (v : vec 2), v2i \x v = v.y.
 Proof. intros. cbv. ring. Qed.
-Lemma vcross2_i_r : forall (v : vec 2), v \x v2i = (- v.y)%R.
+Lemma v2cross_i_r : forall (v : vec 2), v \x v2i = (- v.y)%R.
 Proof. intros. cbv. ring. Qed.
-Lemma vcross2_j_l : forall (v : vec 2), v2j \x v = (- v.x)%R.
+Lemma v2cross_j_l : forall (v : vec 2), v2j \x v = (- v.x)%R.
 Proof. intros. cbv. ring. Qed.
-Lemma vcross2_j_r : forall (v : vec 2), v \x v2j = v.x.
+Lemma v2cross_j_r : forall (v : vec 2), v \x v2j = v.x.
 Proof. intros. cbv. ring. Qed.
 
 
@@ -260,7 +260,7 @@ Proof. intros. cbv. ring. Qed.
     如果得到了 (-π, π]，则只需要当 θ∈(-π,0)时，加上2π即可。
   * 一个现有的模型是 atan2 函数。
   3. 有多种具体做法来实现这种扩展
-  (1) 方法一 vangle2A
+  (1) 方法一 v2angleA
   * 做法
     由于 a⋅b = |a| |b| cos(θ) = ax*bx + ay*by
          a×b = |a| |b| sin(θ) = ax*by - ay*bx
@@ -288,29 +288,29 @@ Proof. intros. cbv. ring. Qed.
   4. 可证明这三种做法是等价的。我们选择便于证明的“方法三”。
  *)
 
-Definition vangle2A (u v : vec 2) : R := atan2 (u \x v) (<u, v>).
+Definition v2angleA (u v : vec 2) : R := atan2 (u \x v) (<u, v>).
 
-Definition vangle2B (u v : vec 2) : R := atan2 (v.y) (v.x) - atan2 (u.y) (u.x).
+Definition v2angleB (u v : vec 2) : R := atan2 (v.y) (v.x) - atan2 (u.y) (u.x).
 
-(* Note that, vangle2C is the default choice, we will call it vangle2 for short *)
-Definition vangle2 (u v : vec 2) : R :=
+(* Note that, v2angleC is the default choice, we will call it v2angle for short *)
+Definition v2angle (u v : vec 2) : R :=
   let alpha := u /_ v in
   if 0 ??<= u \x v then alpha else (-alpha)%R.
 
-Infix "/2_" := vangle2 : vec_scope.
+Infix "/2_" := v2angle : vec_scope.
 
-Section vangle2_props.
+Section v2angle_props.
 
-  Lemma vangle2B_vangle2A_equiv : forall (u v : vec 2), vangle2B u v = vangle2A u v.
+  Lemma v2angleB_v2angleA_equiv : forall (u v : vec 2), v2angleB u v = v2angleA u v.
   Proof.
     intros. cbv. pose proof (atan2_minus_eq). unfold Rminus in H. rewrite H.
     f_equal; ra.
   Qed.
 
-  Lemma vangle2C_vangle2A_equiv : forall (u v : vec 2),
-      u <> vzero -> v <> vzero -> vangle2 u v = vangle2A u v.
+  Lemma v2angleC_v2angleA_equiv : forall (u v : vec 2),
+      u <> vzero -> v <> vzero -> v2angle u v = v2angleA u v.
   Proof.
-    intros. unfold vangle2A,vangle2,vangle,vnorm.
+    intros. unfold v2angleA,v2angle,vangle,vnorm.
     rewrite !vdot_vcmul_l,!vdot_vcmul_r.
     pose proof (vlen_gt0 u H). pose proof (vlen_gt0 v H0).
     pose proof (vdot_gt0 u H). pose proof (vdot_gt0 v H0).
@@ -330,93 +330,93 @@ Section vangle2_props.
         rewrite atan2_Xgt0; ra. 
         destruct (0 ??<= u \x v).
         * (* 0 <= u × v *)
-          rewrite vcross2_ge0_eq; ra.
+          rewrite v2cross_ge0_eq; ra.
         * (* u × v < 0*)
-          rewrite vcross2_lt0_eq; ra.
+          rewrite v2cross_lt0_eq; ra.
           rewrite Rdiv_opp_l. rewrite atan_opp. auto.
       + (* <u, v> < 0 *)
         rewrite acos_div_dot_lt0_eq; ra.
         destruct (0 ??<= u \x v).
         * (* 0 <= u × v *)
-          rewrite atan2_Xlt0_Yge0; ra. rewrite vcross2_ge0_eq; ra.
+          rewrite atan2_Xlt0_Yge0; ra. rewrite v2cross_ge0_eq; ra.
         * (* u × v < 0*)
-          rewrite atan2_Xlt0_Ylt0; ra. rewrite vcross2_lt0_eq; ra.
+          rewrite atan2_Xlt0_Ylt0; ra. rewrite v2cross_lt0_eq; ra.
           rewrite Rdiv_opp_l. rewrite atan_opp. ring.
   Qed.
 
   (* u /2_ v ∈ (-π,π] *)
-  Lemma vangle2_bound : forall (u v : vec 2),
+  Lemma v2angle_bound : forall (u v : vec 2),
       u <> vzero -> v <> vzero -> - PI < u /2_ v <= PI.
   Proof.
-    intros. unfold vangle2.
+    intros. unfold v2angle.
     pose proof PI_bound.
     pose proof (vangle_bound u v H H0).
-    pose proof (vcross2_neq0_iff_vangle u v H H0).
+    pose proof (v2cross_neq0_iff_vangle u v H H0).
     destruct (0 ??<= u \x v); ra.
   Qed.
 
   (** u × v = 0 -> (u /2_ v) = (v /2_ u) *)
-  Lemma vangle2_comm_cross_eq0 : forall (u v : vec 2),
+  Lemma v2angle_comm_cross_eq0 : forall (u v : vec 2),
       u <> vzero -> v <> vzero -> u \x v = 0 -> u /2_ v = v /2_ u.
   Proof.
     intros. remember H1 as H2. clear HeqH2.
-    apply vcross2_eq0_iff_vangle in H1; auto. destruct H1.
-    - unfold vangle2. rewrite (vangle_comm v u). rewrite H1.
+    apply v2cross_eq0_iff_vangle in H1; auto. destruct H1.
+    - unfold v2angle. rewrite (vangle_comm v u). rewrite H1.
       destruct (_??<=_), (_??<=_); ra.
-    - unfold vangle2. rewrite (vangle_comm v u). rewrite H1.
-      rewrite (vcross2_comm v u). rewrite H2.
+    - unfold v2angle. rewrite (vangle_comm v u). rewrite H1.
+      rewrite (v2cross_comm v u). rewrite H2.
       autorewrite with R. auto.
   Qed.
 
   (** u × v <> 0 -> u /2_ v = - (v /2_ u) *)
-  Lemma vangle2_comm_cross_neq0 : forall (u v : vec 2),
+  Lemma v2angle_comm_cross_neq0 : forall (u v : vec 2),
       u <> vzero -> v <> vzero -> u \x v <> 0 -> u /2_ v = (- (v /2_ u))%R.
   Proof.
     intros. remember H1 as H2. clear HeqH2.
-    apply vcross2_neq0_iff_vangle in H1; auto.
-    unfold vangle2. rewrite (vangle_comm v u).
-    rewrite (vcross2_comm v u). destruct (_??<=_),(_??<=_); ra.
+    apply v2cross_neq0_iff_vangle in H1; auto.
+    unfold v2angle. rewrite (vangle_comm v u).
+    rewrite (v2cross_comm v u). destruct (_??<=_),(_??<=_); ra.
   Qed.
 
-End vangle2_props.
+End v2angle_props.
 
 
 (** ** More properties  *)
 
 (** i /2_ j = π/2 *)
-Fact vangle2_i_j : v2i /2_ v2j = PI/2.
+Fact v2angle_i_j : v2i /2_ v2j = PI/2.
 Proof.
-  rewrite vangle2C_vangle2A_equiv; auto with vec. cbv. apply atan2_X0_Yge0; ra.
+  rewrite v2angleC_v2angleA_equiv; auto with vec. cbv. apply atan2_X0_Yge0; ra.
 Qed.
 
 (** j /2_ j = - π/2 *)
-Fact vangle2_j_i : v2j /2_ v2i = - PI/2.
+Fact v2angle_j_i : v2j /2_ v2i = - PI/2.
 Proof.
-  rewrite vangle2C_vangle2A_equiv; auto with vec. cbv. apply atan2_X0_Ylt0; ra.
+  rewrite v2angleC_v2angleA_equiv; auto with vec. cbv. apply atan2_X0_Ylt0; ra.
 Qed.
 
 (** cos (u /2_ v) = cos (u /_ v) *)
-Lemma cos_vangle2_eq : forall (u v : vec 2), cos (u /2_ v) = cos (u /_ v).
-Proof. intros. unfold vangle2. destruct (_??<=_); ra. Qed.
+Lemma cos_v2angle_eq : forall (u v : vec 2), cos (u /2_ v) = cos (u /_ v).
+Proof. intros. unfold v2angle. destruct (_??<=_); ra. Qed.
 
 (** sin (u /2_ v) = (0 <= u \x v) ? sin (v /_ v) : (- sin (u /_ v)) *)
-Lemma sin_vangle2_eq : forall (u v : vec 2),
+Lemma sin_v2angle_eq : forall (u v : vec 2),
     sin (u /2_ v) = if 0 ??<= u \x v then sin (u /_ v) else (- sin (u /_ v))%R.
-Proof. intros. unfold vangle2. destruct (_??<=_); ra. Qed.
+Proof. intros. unfold v2angle. destruct (_??<=_); ra. Qed.
 
 (** i与任意非零向量v的夹角的余弦等于其横坐标除以长度 *)
-Lemma cos_vangle2_i : forall (v : vec 2), v <> vzero -> cos (v2i /2_ v) = (v.x / ||v||)%R.
+Lemma cos_v2angle_i : forall (v : vec 2), v <> vzero -> cos (v2i /2_ v) = (v.x / ||v||)%R.
 Proof.
-  intros. rewrite cos_vangle2_eq. unfold vangle. rewrite cos_acos; auto with vec.
+  intros. rewrite cos_v2angle_eq. unfold vangle. rewrite cos_acos; auto with vec.
   rewrite v2i_vnorm. rewrite vdot_i_l. rewrite vnth_vnorm; auto.
 Qed.
   
 (** i与任意非零向量v的夹角的正弦等于其纵坐标除以长度 *)
-Lemma sin_vangle2_i : forall (v : vec 2), v <> vzero -> sin (v2i /2_ v) = (v.y / ||v||)%R.
+Lemma sin_v2angle_i : forall (v : vec 2), v <> vzero -> sin (v2i /2_ v) = (v.y / ||v||)%R.
 Proof.
-  intros. unfold vangle2. unfold vangle. rewrite v2i_vnorm. rewrite vdot_i_l.
+  intros. unfold v2angle. unfold vangle. rewrite v2i_vnorm. rewrite vdot_i_l.
   rewrite vnth_vnorm; auto. pose proof (vlen_gt0 v H).
-  rewrite vcross2_i_l. destruct (_??<=_).
+  rewrite v2cross_i_l. destruct (_??<=_).
   - rewrite sin_acos; auto with vec.
     + rewrite <- sqr_y_div_vlen; auto. ra.
     + apply vnth_div_vlen_bound; auto.
@@ -428,18 +428,18 @@ Qed.
 (** j与任意非零向量v的夹角的余弦等于其纵坐标除以长度 *)
 Lemma cos_vangle_j : forall (v : vec 2), v <> vzero -> cos (v2j /2_ v) = (v.y / ||v||)%R.
 Proof.
-  intros. rewrite cos_vangle2_eq. unfold vangle. rewrite cos_acos.
+  intros. rewrite cos_v2angle_eq. unfold vangle. rewrite cos_acos.
   - rewrite v2j_vnorm. rewrite vdot_j_l. rewrite vnth_vnorm; auto.
   - apply vdot_vnorm_bound; auto. apply v2j_nonzero.
 Qed.
 
 (** j与任意非零向量v的夹角的正弦等于其横坐标取负除以长度 *)
 Lemma sin_vangle_j : forall (v : vec 2),
-    v <> vzero -> sin (vangle2 v2j v) = (- v.x / ||v||)%R.
+    v <> vzero -> sin (v2angle v2j v) = (- v.x / ||v||)%R.
 Proof.
-  intros. unfold vangle2. unfold vangle. rewrite v2j_vnorm. rewrite vdot_j_l.
+  intros. unfold v2angle. unfold vangle. rewrite v2j_vnorm. rewrite vdot_j_l.
   rewrite vnth_vnorm; auto. pose proof (vlen_gt0 v H).
-  rewrite vcross2_j_l. destruct (_??<=_).
+  rewrite v2cross_j_l. destruct (_??<=_).
   - assert (v.x <= 0); ra. rewrite sin_acos; auto with vec.
     + rewrite <- sqr_x_div_vlen; auto. rewrite sqrt_Rsqr_abs. rewrite Rabs_left1; ra.
       assert (0 < / (||v||)); ra.
@@ -518,7 +518,7 @@ Section RotationMatrix2D.
   (** v' = R(θ) * v *)
   Lemma R2_spec1 : forall (v : vec 2) (θ : R),
       let l := vlen v in
-      let α := vangle2 v2i v in
+      let α := v2angle v2i v in
       let vx' := (l * cos (α + θ))%R in
       let vy' := (l * sin (α + θ))%R in
       let v' : vec 2 := mk_vec2 vx' vy' in
@@ -527,12 +527,12 @@ Section RotationMatrix2D.
     lma.
     - unfold vx'. unfold l. unfold α.
       rewrite cos_plus. unfold Rminus. rewrite Rmult_plus_distr_l.
-      rewrite cos_vangle2_i, sin_vangle2_i; auto.
+      rewrite cos_v2angle_i, sin_v2angle_i; auto.
       autounfold with T. autorewrite with R. field.
       apply vlen_neq0_iff_neq0; auto.
     - unfold vy'. unfold l. unfold α.
       rewrite sin_plus. rewrite Rmult_plus_distr_l.
-      rewrite cos_vangle2_i, sin_vangle2_i; auto.
+      rewrite cos_v2angle_i, sin_v2angle_i; auto.
       autounfold with T. autorewrite with R. field.
       apply vlen_neq0_iff_neq0; auto.
   Qed.
@@ -540,7 +540,7 @@ Section RotationMatrix2D.
   (** v = R(-θ) * v' *)
   Lemma R2_spec2 : forall (v : vec 2) (θ : R),
       let l := vlen v in
-      let α := vangle2 v2i v in
+      let α := v2angle v2i v in
       let vx' := (l * cos (α + θ))%R in
       let vy' := (l * sin (α + θ))%R in
       let v' : vec 2 := mk_vec2 vx' vy' in
@@ -555,7 +555,7 @@ Section RotationMatrix2D.
   (** v = R(θ)\T * v' *)
   Lemma R2_spec3 : forall (v : vec 2) (θ : R),
       let l := vlen v in
-      let α := vangle2 v2i v in
+      let α := v2angle v2i v in
       let vx' := (l * cos (α + θ))%R in
       let vy' := (l * sin (α + θ))%R in
       let v' : vec 2 := mk_vec2 vx' vy' in
