@@ -1212,7 +1212,7 @@ Section GroupTheory.
   Infix "+" := Aadd.
   Notation "0" := Azero.
   Notation "- a" := (Aopp a).
-  Notation Asub := (fun x y => x + (-y)).
+  Notation Asub a b := (a + -b).
   Infix "-" := Asub.
 
   (** - 0 = 0 *)
@@ -1240,71 +1240,74 @@ Section GroupTheory.
   Qed.
 
   (** left inverse element is unique *)
-  Theorem group_opp_uniq_l : forall x y : A, x + y = 0 -> -x = y.
+  (* a + b = 0 -> - a = b *)
+  Theorem group_opp_uniq_l : forall a b : A, a + b = 0 -> -a = b.
   Proof.
-    (* -x = -x + 0 = -x + x + y = 0 + y = y *)
+    (* -a = -a + 0 = -a + a + b = 0 + b = b *)
     intros.
-    replace (-x) with (-x + 0) by apply G.
-    replace 0 with (x + y) by apply G.
+    replace (-a) with (-a + 0) by apply G.
+    replace 0 with (a + b) by apply G.
     rewrite <- associative. rewrite inverseLeft. amonoid.
   Qed.
   
   (** right inverse element is unique *)
-  Theorem group_opp_uniq_r : forall x y : A, x + y = 0 -> -y = x.
+  (* a + b = 0 -> -b = a *)
+  Theorem group_opp_uniq_r : forall a b : A, a + b = 0 -> -b = a.
   Proof.
-    (* -y = 0 + -y = x + y + y = x + 0 = x *)
+    (* -b = 0 + -b = a + b + b = a + 0 = a *)
     intros.
-    replace (-y) with (0 + -y) by apply G.
-    replace 0 with (x + y) by apply G.
+    replace (-b) with (0 + -b) by apply G.
+    replace 0 with (a + b) by apply G.
     rewrite associative. rewrite inverseRight. amonoid.
   Qed.
 
   (* Theorem 14.1 *)
-  (** x + y1 = x + y2 -> y1 = y2 *)
-  Theorem group_cancel_l : forall x y1 y2, x + y1 = x + y2 -> y1 = y2.
+  (** c + a = c + b -> a = b *)
+  Theorem group_cancel_l : forall a b c, c + a = c + b -> a = b.
   Proof.
     intros.
-    (* y1 = e+y1 = (-x+x)+y1 = (-x)+(x+y1) = (-x)+(x+y1) 
-      = (-x+x)+y1 = e+y1 = y1*)
+    (* a = e+a = (-c+c)+a = (-c)+(c+a) = (-c)+(c+b) = (-c+c)+b = e+b = b*)
     rewrite <- identityLeft at 1.
-    assert (0 = (-x) + x). group.
+    assert (0 = -c + c). group.
     rewrite H0. rewrite associative. rewrite H.
     rewrite <- associative. group.
   Qed.
 
-  (** x1 + y = x2 + y -> x1 = x2 *)
-  Theorem group_cancel_r : forall x1 x2 y, x1 + y = x2 + y -> x1 = x2.
+  (** a + c = b + c -> a = b *)
+  Theorem group_cancel_r : forall a b c, a + c = b + c -> a = b.
   Proof.
     intros.
-    (* x1 = x1+e = x1+(y+ -y) = (x1+y)+(-y) = (x2+y)+(-y)
-      = x2+(y+ -y) = x2+e = x2 *)
+    (* a = a+e = a+(c+ -c) = (a+c)+(-c) = (b+c)+(-c) = b+(c+ -c) = b+e = b *)
     rewrite <- identityRight at 1.
-    assert (0 = y + (-y)). group.
+    assert (0 = c + (-c)). group.
     rewrite H0. rewrite <- associative. rewrite H.
     rewrite associative. group.
   Qed.
 
-  (** - - x = x *)
-  Theorem group_opp_opp : forall x,  - - x = x.
+  (** - - a = a *)
+  Theorem group_opp_opp : forall a,  - - a = a.
   Proof.
-    intros. apply group_cancel_l with (- x). group.
+    intros. apply group_cancel_l with (- a). group.
   Qed.
+
+  (** a - a = 0 *)
+  Theorem group_sub_self : forall a, a - a = 0.
+  Proof. intros. group. Qed.
     
-  (** - x = - y -> x = y *)
-  Lemma group_opp_inj : forall x y : A, - x = - y -> x = y.
+  (** - a = - b -> a = b *)
+  Lemma group_opp_inj : forall a b : A, - a = - b -> a = b.
   Proof.
     intros. rewrite <- group_opp_opp. rewrite <- H. rewrite group_opp_opp. auto.
   Qed.
 
-  (** - (x + y) = (- y) + (- x) *)
-  Theorem group_opp_distr : forall x y, - (x + y) = (- y) + (- x).
+  (** - (a + b) = (- b) + (- a) *)
+  Theorem group_opp_distr : forall a b, - (a + b) = (- b) + (- a).
   Proof.
     intros.
-    (* (x+y)+ -(x+y) = e = x+ -x = x+e+ -x = x+(y+ -y)+ -x
-      = (x+y)+(-y+ -x), by cancel_l, got it *)
-    apply group_cancel_l with (x + y).
-    rewrite inverseRight. rewrite <- associative. rewrite (associative x y).
-    group.
+    (* (a+b)+ -(a+b) = e = a+ -a = a+e+ -a = a+(b+ -b)+ -a
+      = (a+b)+(-b+ -a), by cancel_l, got it *)
+    apply group_cancel_l with (a + b).
+    rewrite inverseRight. rewrite <- associative. rewrite (associative a b). group.
   Qed.
 
   (** a <> 0 -> - a <> 0 *)
@@ -1315,13 +1318,21 @@ Section GroupTheory.
   Qed.
     
   (* Theorem 14.2 *)
-  (** x + a = b -> x = b + (-a) *)
-  Theorem group_sol_l : forall a b x, x + a = b -> x = b + (- a).
-  Proof. intros. apply group_cancel_r with (a). group. Qed.
+  (** a + b = c -> a = c + (-b) *)
+  Theorem group_sol_l : forall a b c, a + b = c -> a = c + (- b).
+  Proof. intros. apply group_cancel_r with (b). group. Qed.
 
-  (** a + x = b -> x = (-a) + b *)
-  Theorem group_sol_r : forall a b x, a + x = b -> x = (- a) + b.
+  (** a + b = c -> b = (-a) + c *)
+  Theorem group_sol_r : forall a b c, a + b = c -> b = (- a) + c.
   Proof. intros. apply group_cancel_l with (a). rewrite <- associative. group. Qed.
+
+  (** a - b = 0 <-> a = b *)
+  Theorem group_sub_eq0_iff_eq : forall a b, a - b = 0 <-> a = b.
+  Proof.
+    intros. split; intros.
+    - apply group_cancel_r with (-b). group.
+    - subst. group.
+  Qed.
 
   (** Definition 14.1 (multiple operations) *)
   (* batch : list A -> A
@@ -1439,7 +1450,7 @@ Section Examples.
   
   Import Reals.
   
-  Goal forall x1 x2 y : R, (x1 + y = 0 /\ y + x2 = 0 -> x1 = x2)%R.
+  Goal forall a b c : R, (a + c = 0 /\ c + b = 0 -> a = b)%R.
   Proof.
     intros. destruct H.
     apply group_opp_uniq_r in H.
@@ -1474,21 +1485,25 @@ Section Theory.
   Notation "- a" := (Aopp a).
   Notation "a - b" := (a + (-b)).
 
+  (** a - b = - (b - a) *)
   Lemma agroup_sub_comm : forall a b, a - b = - (b - a).
   Proof.
     intros. rewrite group_opp_distr. rewrite group_opp_opp. easy.
   Qed.
-  
-  Lemma agroup_sub_perm : forall a b c, (a - b) - c = (a - c) - b.
-  Proof.
-    intros. rewrite ?associative. rewrite (commutative (-b)). easy.
-  Qed.
-  
+
+  (** - (a + b) = -a + (-b) *)
   Lemma agroup_sub_distr : forall a b, - (a + b) = -a + (-b).
   Proof.
     intros. rewrite group_opp_distr. apply commutative.
   Qed.
-  
+
+  (** (a - b) - c = (a - c) - b *)
+  Lemma agroup_sub_perm : forall a b c, (a - b) - c = (a - c) - b.
+  Proof.
+    intros. rewrite ?associative. rewrite (commutative (-b)). easy.
+  Qed.
+
+  (** (a - b) - c = a - (b + c) *)
   Lemma agroup_sub_assoc : forall a b c, (a - b) - c = a - (b + c).
   Proof.
     intros. rewrite ?associative. rewrite agroup_sub_distr. easy.
@@ -1509,8 +1524,7 @@ Section Instances.
   split_intro; subst; ring. Defined.
 
   Goal forall a b c : R, ((a - b) - c = a - (b + c))%R.
-    intros.
-    apply agroup_sub_assoc. Qed.
+  Proof. intros. apply agroup_sub_assoc. Qed.
 
 End Instances.
 
@@ -1604,7 +1618,7 @@ Section Theory.
   Infix "+" := Aadd : A_scope.
   Notation "1" := Aone : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
-  Notation Asub := (fun a b => a + -b).
+  Notation Asub a b := (a + -b).
   Infix "*" := Amul : A_scope.
 
 End Theory.
@@ -1616,7 +1630,7 @@ Section Examples.
   Import Reals.
   
   Goal forall a b c : R, (a * (b + c) = a * b + a * c)%R.
-    apply distributiveLeft. Qed.
+  Proof. apply distributiveLeft. Qed.
 
 End Examples.
   
@@ -1663,7 +1677,7 @@ Section Theory.
   Infix "+" := Aadd.
   Notation "0" := Azero.
   Notation "- a" := (Aopp a).
-  Notation Asub := (fun a b => a + -b).
+  Notation Asub a b := (a + -b).
   Infix "*" := Amul.
     
   (** 0 * a = 0 *)
@@ -1675,30 +1689,30 @@ Section Theory.
   Lemma ring_mul_0_l : forall a : A, 0 * a = 0.
   Proof. intros. ring. Qed.
 
-  (* a * a = 1, then a = 1 or a = -1 *)
+  (** a * a = 1, then a = 1 or a = -1 *)
   (* Tips: I can't prove it now..., and this is used in `OrthogonalMatrix` *)
   Lemma ring_sqr_eq1_imply_1_neg1 : forall (a : A),
       a * a = Aone -> a = Aone \/ a = (- Aone).
   Proof.
   Admitted.
 
-  (** (- x) * y = - (x * y) *)
-  Theorem ring_mul_opp_l : forall x y, (- x) * y = - (x * y).
+  (** (- a) * b = - (a * b) *)
+  Theorem ring_mul_opp_l : forall a b, (- a) * b = - (a * b).
   Proof.
     intros.
-    assert (x * y + (-x) * y = 0).
+    assert (a * b + (-a) * b = 0).
     - rewrite <- distributiveRight. rewrite inverseRight. apply ring_mul_0_l.
     - symmetry. apply group_opp_uniq_l. auto.
   Qed.
 
-  (** x * (- y) = - (x * y) *)
-  Theorem ring_mul_opp_r : forall x y, x * (- y) = - (x * y).
+  (** a * (- b) = - (a * b) *)
+  Theorem ring_mul_opp_r : forall a b, a * (- b) = - (a * b).
   Proof.
     intros. rewrite commutative. rewrite ring_mul_opp_l. rewrite commutative; auto.
   Qed.
     
-  (** (- x) * (- y) = x * y *)
-  Theorem ring_mul_opp_opp : forall x y, (- x) * (- y) = x * y.
+  (** (- a) * (- b) = a * b *)
+  Theorem ring_mul_opp_opp : forall a b, (- a) * (- b) = a * b.
   Proof.
     intros. rewrite ring_mul_opp_l, ring_mul_opp_r. apply group_opp_opp.
   Qed.
@@ -1821,9 +1835,10 @@ Section theories.
   Add Ring ring_inst : (make_ring_theory HOrderedARing).
 
   Infix "+" := Aadd : A_scope.
-  Notation "- a" := (Aopp a) : A_scope.
-  Infix "-" := (fun a b => a + - b) : A_scope.
   Notation "0" := Azero : A_scope.
+  Notation "- a" := (Aopp a) : A_scope.
+  Notation Asub a b := (a + - b).
+  Infix "-" := Asub : A_scope.
   Infix "*" := Amul : A_scope.
   Notation "1" := Aone : A_scope.
   Notation "2" := (1 + 1) : A_scope.
@@ -2317,8 +2332,8 @@ End Instances.
 
 Lemma make_field_theory `(H:Field)
   : field_theory Azero Aone Aadd Amul
-      (fun x y => Aadd x (Aopp y)) Aopp
-      (fun x y => Amul x (Ainv y)) Ainv eq.
+      (fun a b => Aadd a (Aopp b)) Aopp
+      (fun a b => Amul a (Ainv b)) Ainv eq.
 Proof.
   constructor; intros;
     try (rewrite ?identityLeft,?associative; reflexivity);
@@ -2332,12 +2347,12 @@ Section Theory.
   Context `{F:Field}.
   Infix "+" := Aadd.
   Notation "- a" := (Aopp a).
-  Notation Asub := (fun a b => a + -b).
+  Notation Asub a b := (a + -b).
   Notation "0" := Azero.
   Notation "1" := Aone.
   Infix "*" := Amul.
   Notation "/ a" := (Ainv a).
-  Notation Adiv := (fun a b => a * (/b)).
+  Notation Adiv a b := (a * (/b)).
   Infix "/" := Adiv.
 
   Add Field field_inst : (make_field_theory F).
@@ -2405,23 +2420,23 @@ Section Theory.
     rewrite field_mulInvL; auto.
   Qed.
 
-  (** / / x = x *)
-  Lemma field_inv_inv : forall x : A, x <> 0 -> / / x = x.
+  (** / / a = a *)
+  Lemma field_inv_inv : forall a : A, a <> 0 -> / / a = a.
   Proof.
     intros. pose proof (field_inv_neq0 H).
-    apply field_mul_cancel_l with (/ x); auto.
+    apply field_mul_cancel_l with (/ a); auto.
     rewrite field_mulInvL; auto. rewrite field_mulInvR; auto.
   Qed.
 
-  (** / x = / y -> x = y *)
-  Lemma field_inv_inj : forall x y : A, x <> 0 -> y <> 0 -> / x = / y -> x = y.
+  (** / a = / b -> a = b *)
+  Lemma field_inv_inj : forall a b : A, a <> 0 -> b <> 0 -> / a = / b -> a = b.
   Proof.
     intros. rewrite <- field_inv_inv; auto. rewrite <- H1.
     rewrite field_inv_inv; auto.
   Qed.
 
-  (** / (- x) = - (/ x) *)
-  Lemma field_inv_opp : forall x : A, x <> 0 -> / (- x) = - (/ x).
+  (** / (- a) = - (/ a) *)
+  Lemma field_inv_opp : forall a : A, a <> 0 -> / (- a) = - (/ a).
   Proof.
     intros. apply field_inv_eq_l. apply group_opp_neq0; auto.
     rewrite ring_mul_opp_opp. apply field_mulInvR; auto.
@@ -2474,11 +2489,6 @@ End Examples.
 Class OrderedField {A} Aadd Azero Aopp Amul Aone Ainv Alt Ale Altb Aleb := {
     of_Field :: @Field A Aadd Azero Aopp Amul Aone Ainv;
     of_OrderedRing :: @OrderedARing _ Aadd Azero Aopp Amul Aone Alt Ale Altb Aleb;
-    (* of_Order :: @Order A Alt Ale *)
-    (*          ? *)
-    (* (* Lt is compatible with addition operation: a < b -> a + c < a + c *) *)
-    (* lt_add_compat_r : forall a b c : A, *)
-    (*   Alt a b -> Alt (Aadd a c) (Aadd b c); *)
   }.
 
 Coercion of_Field : OrderedField >-> Field.
@@ -2497,7 +2507,7 @@ Section Theory.
   Infix "*" := Amul.
   Notation "1" := Aone.
   Notation "/ a" := (Ainv a).
-  Notation Adiv := (fun a b => a * / b).
+  Notation Adiv a b := (a * / b).
   Infix "/" := Adiv.
   
   Notation "a > b" := (Alt b a).
@@ -2536,7 +2546,7 @@ Section Theory.
     apply (gt0_mul_reg_gt0 H0); auto.
   Qed.
   
-  (** a < -> / a < 0 *)
+  (** a < 0 -> / a < 0 *)
   Lemma inv_lt0 : forall a : A, a < 0 -> / a < 0.
   Proof.
     intros. pose proof (lt_imply_neq H).

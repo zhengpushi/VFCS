@@ -454,13 +454,13 @@ Section vsum.
   Proof. intros. apply fseqsum_to_seqsum_succ. Qed.
   
   (** `vsum` of (S n) elements, equal to addition of Sum and tail *)
-  Lemma vsumS_tail : forall {n} (u : @vec A (S n)) (v : @vec A n),
-      (forall i, u $ (fin2SuccRange i) = v $ i) -> vsum u = vsum v + u $ (nat2finS n).
+  Lemma vsumS_tail : forall {n} (v : @vec A (S n)),
+      vsum v = vsum (fun i => v $ (fin2SuccRange i)) + v $ (nat2finS n).
   Proof. intros. apply fseqsumS_tail; auto. Qed.
 
   (** `vsum` of (S n) elements, equal to addition of head and Sum *)
-  Lemma vsumS_head : forall {n} (u : @vec A (S n)) (v : @vec A n),
-      (forall i, u $ (fin2SuccRangeSucc i) = v $ i) -> vsum u = u $ (nat2finS O) + vsum v.
+  Lemma vsumS_head : forall {n} (v : @vec A (S n)),
+      vsum v = v $ (nat2finS 0) + vsum (fun i => v $ (fin2SuccRangeSucc i)).
   Proof. intros. apply fseqsumS_head; auto. Qed.
 
   (** (∀ i, u.i = v.i + w.i) -> Σu = Σv + Σw *)
@@ -737,6 +737,10 @@ Section vsub.
   (** v - v = 0 *)
   Lemma vsub_self : forall {n} (v : vec n), v - v = vzero.
   Proof. intros. unfold vsub. group. Qed.
+
+  (** u - v = 0 <-> u = v *)
+  Lemma vsub_eq0_iff_eq : forall {n} (u v : vec n), u - v = vzero <-> u = v.
+  Proof. intros. apply group_sub_eq0_iff_eq. Qed.
 
 End vsub.
 
