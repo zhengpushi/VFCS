@@ -102,7 +102,6 @@ Reserved Infix "_|_"        (at level 50).       (* Two vectors are orthogonal *
 Reserved Infix "//"         (at level 50).       (* Two vectors are parallel *)
 
 
-
 (* ****************************************************** *)
 (* The precedence ∈ [1,30) are element operations *)
 
@@ -254,6 +253,32 @@ Definition option_get {A} (o : option A) (def : A) : A :=
   | Some a => a
   | _ => def
   end.
+
+
+(* ######################################################################### *)
+(** * Extension for sig type *)
+
+(** projection for sig *)
+Notation "x '.val'" := (proj1_sig x) (at level 1, format "x '.val'").
+Notation "x '.prf'" := (proj2_sig x) (at level 1, format "x '.prf'").
+
+(** {a | P a} = {b | P b} <-> a = b *)
+Lemma sig_eq_iff : forall {A} {P : A -> Prop} a b (Ha : P a) (Hb : P b),
+    (exist _ a Ha = exist _ b Hb) <-> a = b.
+Proof.
+  intros. split; intros.
+  - inversion H. auto.
+  - subst. f_equal. apply proof_irrelevance.
+Qed.
+
+(** {a | P a}.val = a *)
+Lemma sig_val : forall {A} {P : A -> Prop} a (Ha : P a), (exist _ a Ha).val = a.
+Proof. intros. simpl. auto. Qed.
+
+(** {a.val | P (a.val)} = a *)
+Lemma sig_wih_val : forall {A} {P : A -> Prop} (a : {x | P x}) (H : P (a.val)),
+    exist _ (a.val) H = a.
+Proof. intros. destruct a. simpl. apply sig_eq_iff; auto. Qed.
 
 
 (* ######################################################################### *)

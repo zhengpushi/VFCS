@@ -85,23 +85,19 @@ Proof. intros. destruct (le_gt_dec y x); auto. Defined.
 Notation "[ | i ]" := (exist _ i _) (format "[ | i ]").
 
 (** Definition of fin type *)
-Definition fin (n : nat) := {i | i < n}.
+Notation fin n := {i | i < n}.
+(* Definition fin (n : nat) := {i | i < n}. *)
 
 Lemma fin_eq_iff : forall {n} x1 x2 (H1 : x1 < n) (H2 : x2 < n),
     (exist _ x1 H1 : fin n) = (exist _ x2 H2 : fin n) <-> x1 = x2.
-Proof.
-  intros. split; intros.
-  - inversion H. auto.
-  - subst. f_equal. apply proof_irrelevance.
-Qed.
+Proof. intros. apply sig_eq_iff. Qed.
 
  (* [|proj1_sig i] = i *)
-Lemma fin_proj1_eq : forall {n} (i : fin n) (H : proj1_sig i < n),
-    exist _ (proj1_sig i) H = i.
-Proof. intros. destruct i; simpl. apply fin_eq_iff; auto. Qed.
+Lemma fin_proj1_eq : forall {n} (i : fin n) (H : i.val < n), exist _ i.val H = i.
+Proof. intros. destruct i; simpl. apply sig_eq_iff; auto. Qed.
 
 (* proj1_sig ([|i]) = i *)
-Lemma proj1_fin_eq : forall {n} i (H : i < n), proj1_sig (exist _ i H : fin n) = i.
+Lemma proj1_fin_eq : forall {n} i (H : i < n), (exist _ i H : fin n).val = i.
 Proof. intros. simpl. auto. Qed.
 
 (** Equality of `fin` is decidable *)
@@ -129,10 +125,10 @@ Proof. intros. inversion H. lia. Qed.
 (** ** [fin] to [nat] *)
 
 (** Convert from [fin] to [nat] *)
-Definition fin2nat {n} (f : fin n) := proj1_sig f.
+Definition fin2nat {n} (f : fin n) := f.val.
 
 Lemma fin2nat_inj : forall {n} (f1 f2 : fin n), fin2nat f1 = fin2nat f2 -> f1 = f2.
-Proof. intros. destruct f1,f2; simpl in H. apply fin_eq_iff; auto. Qed.
+Proof. intros. destruct f1,f2; simpl in H. apply sig_eq_iff; auto. Qed.
 
 Lemma fin2nat_lt : forall {n} (f : fin n), fin2nat f < n.
 Proof. intros. destruct f; simpl. auto. Qed.

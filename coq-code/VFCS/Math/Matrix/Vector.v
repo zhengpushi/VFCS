@@ -404,6 +404,11 @@ Section vmap2.
   (** (vmap2 f u v).i = f (u.i) (v.i) *)
   Lemma vnth_vmap2 : forall {n} (u v : vec n) i, (vmap2 u v) i = f (u $ i) (v $ i).
   Proof. intros. unfold vmap2; auto. Qed.
+
+  (* vmap2 f u v = vmap id (fun i => f u.i v.i) *)
+  Lemma vmap2_eq_vmap : forall {n} (u v : vec n),
+      vmap2 u v = vmap (fun a => a) (fun i => f (u $ i) (v $ i)).
+  Proof. intros. auto. Qed.
   
 End vmap2.
 
@@ -422,6 +427,17 @@ Section vmap2_sametype.
       vmap2 Aadd (vmap2 Aadd u v) w = vmap2 Aadd u (vmap2 Aadd v w).
   Proof. intros. apply veq_iff_vnth; intros. unfold vmap2. asemigroup. Qed.
 End vmap2_sametype.
+
+
+(* ======================================================================= *)
+(** ** Forall of a vector *)
+Section vforall.
+  Context {A : Type}.
+
+  (** Every element satisfy the `P` *)
+  Definition vforall {n} (v : @vec A n) (P : A -> Prop) : Prop := forall i, (vmap P v) $ i.
+  
+End vforall.
 
 
 (* ======================================================================= *)

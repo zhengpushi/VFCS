@@ -69,6 +69,9 @@ Module BasicVectorTheory (E : ElementType).
   Definition mkvec3 (a1 a2 a3 : A) : vec 3 := mkvec3 (Azero:=0) a1 a2 a3.
   Definition mkvec4 (a1 a2 a3 a4 : A) : vec 4 := mkvec4 (Azero:=0) a1 a2 a3 a4.
 
+  (** Every element satisfy the `P` *)
+  Definition vforall {n} (v : vec n) (P : A -> Prop) : Prop := vforall v P.
+
   (** Vector mapping *)
   Definition vmap {n} (v : vec n) (f : A -> A) : vec n := vmap f v.
   Definition vmap2 {n} (u v : vec n) (f : A -> A -> A) : vec n := vmap2 f u v.
