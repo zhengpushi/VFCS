@@ -83,7 +83,7 @@ Section f2m_m2f.
   Proof.
     intros. unfold m2f,v2f,ff2f.
     destruct (_??<_)%nat; try lia.
-    destruct (_??<_)%nat; try lia. f_equal; apply fin_eq_iff; auto.
+    destruct (_??<_)%nat; try lia. f_equal; apply sig_eq_iff; auto.
   Qed.
 
   Lemma meq_iff_nth_m2f : forall {r c} (M N : mat A r c),

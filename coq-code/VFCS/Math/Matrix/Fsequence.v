@@ -46,7 +46,7 @@ Section fseqeq.
              replace (@nat2finS n n) with i in H2; auto.
              rewrite <- (nat2fin_fin2nat_id (S n) i (fin2nat_lt _)).
              rewrite (nat2finS_eq n n (Nat.lt_succ_diag_r _)).
-             apply fin_eq_iff; auto.
+             apply sig_eq_iff; auto.
         * right. intro. destruct H2. subst. auto.
       + right. intro. destruct H1. subst. auto.
   Qed.
@@ -117,7 +117,7 @@ Section fseqsum.
     intros. unfold fseqsum. apply seqsum_eq; intros.
     specialize (H (nat2fin i H0)). simpl in *.
     unfold ff2f. destruct (_??<_); try lia.
-    rewrite <- H. f_equal. apply fin_eq_iff; auto.
+    rewrite <- H. f_equal. apply sig_eq_iff; auto.
   Qed.
 
   (** Convert `fseqsum` to `seqsum` (succ form) *)
@@ -145,7 +145,7 @@ Section fseqsum.
       rewrite fin2SuccRange_spec. rewrite fin2nat_nat2fin_id. auto.
       Unshelve. lia.
     - erewrite nth_ff2f. f_equal.
-      erewrite nat2finS_eq. apply fin_eq_iff; auto.
+      erewrite nat2finS_eq. apply sig_eq_iff; auto.
       Unshelve. apply Nat.lt_succ_diag_r. apply Nat.lt_succ_diag_r.
   Qed.
 
@@ -191,9 +191,9 @@ Section fseqsum.
   Proof.
     intros. unfold fseqsum. apply seqsum_plusIdx_ext.
     - intros. unfold ff2f. destruct (_??<_), (_??<_); try lia.
-      rewrite <- H. f_equal. apply fin_eq_iff. rewrite fin2nat_nat2fin_id; auto.
+      rewrite <- H. f_equal. apply sig_eq_iff. rewrite fin2nat_nat2fin_id; auto.
     - intros. unfold ff2f. destruct (_??<_), (_??<_); try lia.
-      rewrite <- H0. f_equal. apply fin_eq_iff. rewrite fin2nat_nat2fin_id; auto.
+      rewrite <- H0. f_equal. apply sig_eq_iff. rewrite fin2nat_nat2fin_id; auto.
   Qed.
 
   (** The order of two nested summations can be exchanged.
@@ -220,10 +220,10 @@ Section fseqsum.
       end.
       + apply seqsum_eq; intros. rewrite nth_ff2f with (H:=H0).
         apply seqsum_eq; intros. rewrite nth_ff2f with (H:=H1).
-        f_equal; apply nat2finS_eq; apply fin_eq_iff.
+        f_equal; apply nat2finS_eq; apply sig_eq_iff.
       + apply seqsum_eq; intros. rewrite nth_ff2f with (H:=H0).
         apply seqsum_eq; intros. rewrite nth_ff2f with (H:=H1).
-        f_equal; apply nat2finS_eq; apply fin_eq_iff.
+        f_equal; apply nat2finS_eq; apply sig_eq_iff.
   Qed.
 
   

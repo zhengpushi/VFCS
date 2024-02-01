@@ -88,18 +88,6 @@ Notation "[ | i ]" := (exist _ i _) (format "[ | i ]").
 Notation fin n := {i | i < n}.
 (* Definition fin (n : nat) := {i | i < n}. *)
 
-Lemma fin_eq_iff : forall {n} x1 x2 (H1 : x1 < n) (H2 : x2 < n),
-    (exist _ x1 H1 : fin n) = (exist _ x2 H2 : fin n) <-> x1 = x2.
-Proof. intros. apply sig_eq_iff. Qed.
-
- (* [|proj1_sig i] = i *)
-Lemma fin_proj1_eq : forall {n} (i : fin n) (H : i.val < n), exist _ i.val H = i.
-Proof. intros. destruct i; simpl. apply sig_eq_iff; auto. Qed.
-
-(* proj1_sig ([|i]) = i *)
-Lemma proj1_fin_eq : forall {n} i (H : i < n), (exist _ i H : fin n).val = i.
-Proof. intros. simpl. auto. Qed.
-
 (** Equality of `fin` is decidable *)
 Definition finEqdec : forall {n} (i j : fin n), {i = j} + {i <> j}.
 Proof.
@@ -138,13 +126,13 @@ Proof. intros. pose proof (fin2nat_lt f). auto. Qed.
 
 Lemma fin_fin2nat : forall {n} (i : fin n) (H : fin2nat i < n),
     exist _ (fin2nat i) H = i.
-Proof. intros. destruct i; simpl. apply fin_eq_iff; auto. Qed.
+Proof. intros. destruct i; simpl. apply sig_eq_iff; auto. Qed.
 
 (* i <> fin0 -> 0 < fin2nat i *)
 Lemma fin2nat_gt0_iff_neq0 : forall {n} (i : fin (S n)), 0 < fin2nat i <-> i <> fin0.
 Proof.
   intros. unfold fin2nat,fin0 in *. destruct i. simpl in *.
-  rewrite fin_eq_iff. lia.
+  rewrite sig_eq_iff. lia.
 Qed.
 
 
@@ -160,13 +148,13 @@ Defined.
 Lemma nat2finS_eq : forall n i (H : i < S n), nat2finS i = exist _ i H.
 Proof.
   intros. unfold nat2finS. destruct (_??<_); auto.
-  apply fin_eq_iff; auto. lia.
+  apply sig_eq_iff; auto. lia.
 Qed.
 
 Lemma nat2finS_fin2nat_id : forall n i, nat2finS (@fin2nat (S n) i) = i.
 Proof.
   intros. unfold fin2nat, nat2finS. destruct i; simpl.
-  destruct (_??<_). apply fin_eq_iff; auto. lia.
+  destruct (_??<_). apply sig_eq_iff; auto. lia.
 Qed.
 
 Lemma fin2nat_nat2finS_id : forall n i, i < (S n) -> fin2nat (@nat2finS n i) = i.
@@ -189,7 +177,7 @@ Proof. intros. unfold nat2finOpt. destruct (_??<_); auto. lia. Qed.
 Lemma nat2finOpt_Some n i (H: i < n) : @nat2finOpt n i = Some (exist _ i H).
 Proof.
   intros. unfold nat2finOpt. destruct (_??<_); auto.
-  f_equal. apply fin_eq_iff; auto. lia.
+  f_equal. apply sig_eq_iff; auto. lia.
 Qed.
 
 Lemma nat2finOpt_None_imply_nat2finOptS : forall n i,
@@ -206,7 +194,7 @@ Qed.
 Lemma nat2finOpt_fin2nat_id : forall n (f : fin n), nat2finOpt (fin2nat f) = Some f.
 Proof.
   intros. unfold nat2finOpt,fin2nat. destruct f; simpl.
-  destruct (_??<_); auto. f_equal; apply fin_eq_iff; auto. lia.
+  destruct (_??<_); auto. f_equal; apply sig_eq_iff; auto. lia.
 Qed.
 
 Lemma fin2nat_nat2finOpt_id : forall n i,
@@ -226,25 +214,25 @@ Lemma nat2finOpt_eq_nat2fin : forall {n} i (H : i < n),
     nat2finOpt i = Some (nat2fin i H).
 Proof.
   intros. unfold nat2fin, nat2finOpt. destruct (_??<_); auto.
-  f_equal; apply fin_eq_iff; auto. lia.
+  f_equal; apply sig_eq_iff; auto. lia.
 Qed.
 
 Lemma nat2fin_fin2nat_id : forall n (f : fin n) (H: fin2nat f < n),
     nat2fin (fin2nat f) H = f.
 Proof.
-  intros. unfold nat2fin,fin2nat. apply fin_proj1_eq.
+  intros. unfold nat2fin,fin2nat. apply val_sig_eq.
 Qed.
 
 Lemma fin2nat_nat2fin_id : forall n i (H: i < n), (fin2nat (nat2fin i H)) = i.
 Proof.
-  intros. unfold nat2fin, fin2nat. apply proj1_fin_eq.
+  intros. unfold nat2fin, fin2nat. apply sig_val.
 Qed.
 
 Lemma fin2nat_iff_nat2fin : forall {n} (i : fin n) j (H: j < n),
     nat2fin j H = i <-> fin2nat i = j.
 Proof.
   intros. unfold nat2fin, fin2nat. destruct i; simpl. split; intros.
-  inversion H0; auto. apply fin_eq_iff; auto.
+  inversion H0; auto. apply sig_eq_iff; auto.
 Qed.
 
 
@@ -276,7 +264,7 @@ Lemma fin2fin_fin2fin :
   forall n m (i : fin n) (H1 : fin2nat i < m) (H2 : fin2nat (fin2fin n m i H1) < n),
     fin2fin m n (fin2fin n m i H1) H2 = i.
 Proof.
-  intros. unfold fin2fin,fin2nat,nat2fin. simpl. apply fin_proj1_eq.
+  intros. unfold fin2fin,fin2nat,nat2fin. simpl. apply val_sig_eq.
 Qed.
 
 (** {i<m} + {k<m} -> (i+k<m) ? {i+k<m} : {0<m} *)
@@ -466,7 +454,7 @@ Section ff2f_f2ff.
       (ff2f ff) i = ff (nat2fin i H).
   Proof.
     intros. unfold ff2f. unfold nat2fin. destruct (_??<_).
-    f_equal. apply fin_eq_iff; auto. lia.
+    f_equal. apply sig_eq_iff; auto. lia.
   Qed.
   
   (** ff [|i] = ff2f ff i *)
@@ -480,7 +468,7 @@ Section ff2f_f2ff.
       ff2f f (fin2nat i) = f i.
   Proof.
     intros. unfold ff2f. unfold fin2nat. destruct i; simpl. destruct (_??<_).
-    f_equal. apply fin_eq_iff; auto. lia.
+    f_equal. apply sig_eq_iff; auto. lia.
   Qed.
 
   (** `f` to `ff` *)
@@ -510,7 +498,7 @@ Section ff2f_f2ff.
   Proof.
     intros. unfold ff2ff, f2ff, ff2f, fin2fin, fin2nat, nat2fin, nat2finOpt.
     destruct i; simpl in *. destruct (_??<_).
-    f_equal. apply fin_eq_iff; auto. lia.
+    f_equal. apply sig_eq_iff; auto. lia.
   Qed.
 
   Lemma ff2ff_inj : forall {n m} (ff1 ff2 : fin n -> A),

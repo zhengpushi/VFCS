@@ -276,7 +276,7 @@ Lemma sig_val : forall {A} {P : A -> Prop} a (Ha : P a), (exist _ a Ha).val = a.
 Proof. intros. simpl. auto. Qed.
 
 (** {a.val | P (a.val)} = a *)
-Lemma sig_wih_val : forall {A} {P : A -> Prop} (a : {x | P x}) (H : P (a.val)),
+Lemma val_sig_eq : forall {A} {P : A -> Prop} (a : {x | P x}) (H : P (a.val)),
     exist _ (a.val) H = a.
 Proof. intros. destruct a. simpl. apply sig_eq_iff; auto. Qed.
 

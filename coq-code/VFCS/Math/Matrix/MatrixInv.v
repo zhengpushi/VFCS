@@ -142,14 +142,14 @@ End minvGE.
 
 Lemma vnth_eq : forall {A n} (V : @vec A n) i j (Hi: i < n) (Hj: j < n),
     i = j -> V (exist _ i Hi) = V (exist _ j Hj).
-Proof. intros. subst. f_equal. apply fin_eq_iff; auto. Qed.
+Proof. intros. subst. f_equal. apply sig_eq_iff; auto. Qed.
 
 Lemma mnth_eq : forall {A r c} (M : @mat A r c) i1 j1 i2 j2
                   (Hi1: i1 < r) (Hi2: i2 < r) (Hj1: j1 < c) (Hj2: j2 < c),
     i1 = i2 -> j1 = j2 ->
     M (exist _ i1 Hi1) (exist _ j1 Hj1) =
       M (exist _ i2 Hi2) (exist _ j2 Hj2).
-Proof. intros. subst. f_equal; apply fin_eq_iff; auto. Qed.
+Proof. intros. subst. f_equal; apply sig_eq_iff; auto. Qed.
 
 
 (* ==================================== *)

@@ -67,7 +67,7 @@ Proof.
   intros.
   replace (exist _ i H3:fin n) with (exist _ i H1:fin n).
   replace (exist _ i H4:fin n) with (exist _ i H2:fin n); auto.
-  apply fin_eq_iff; auto. apply fin_eq_iff; auto.
+  apply sig_eq_iff; auto. apply sig_eq_iff; auto.
 Qed.
 
 (** {u = v} + {u <> v} *)
@@ -311,7 +311,7 @@ Section vcons.
       i = fin0 -> (vconsH a v) $ i = a.
   Proof.
     intros. unfold vconsH,f2v,v2f,f2ff,ff2f. destruct i; simpl.
-    apply fin_eq_iff in H. subst; simpl. auto.
+    apply sig_eq_iff in H. subst; simpl. auto.
   Qed.
 
   (** 0 < i < n -> [a; v].i = v.(pred i) *)
@@ -328,7 +328,7 @@ Section vcons.
   Proof.
     intros. unfold vconsH,f2v,f2ff. destruct i; simpl in *.
     destruct x; subst; simpl; try lia. erewrite nth_v2f.  f_equal.
-    apply fin_eq_iff; auto. Unshelve. lia.
+    apply sig_eq_iff; auto. Unshelve. lia.
   Qed.
 
   (** i = n -> (v2f [v; a]) i = a *)
@@ -361,7 +361,7 @@ Section vcons.
       (vconsT v a) $ i = v (fin2PredRange i H).
   Proof.
     intros. unfold vconsT,f2v,v2f,f2ff,ff2f. destruct (_??<_); auto; try lia.
-    f_equal. apply fin_eq_iff; auto.
+    f_equal. apply sig_eq_iff; auto.
   Qed.
     
 End vcons.
