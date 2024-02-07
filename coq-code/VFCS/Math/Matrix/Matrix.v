@@ -8,6 +8,10 @@
   date      : 2023.12
 
   remark    :
+  1. 变换矩阵，基变换，
+     https://en.wikipedia.org/wiki/Change_of_basis
+     change-of-basis matrix (also called transition matrix)
+  2. 
  *)
 
 
@@ -20,9 +24,10 @@ Require Import Extraction.
 Generalizable Variable A Aadd Azero Aopp Amul Aone Ainv.
 
 (** Control the scope *)
-Open Scope nat_scope.
-Open Scope A_scope.
-Open Scope vec_scope.
+(* Open Scope nat_scope. *)
+(* Open Scope fin_scope. *)
+(* Open Scope A_scope. *)
+(* Open Scope vec_scope. *)
 Open Scope mat_scope.
 
 
@@ -133,10 +138,10 @@ Section l2m_m2l.
     intros. unfold m2l.
     pose proof (map_surj (@v2l A c) d).
     assert (forall l : list A, In l d -> exists v : vec c, v2l v = l).
-    { intros. exists (l2v Azero c l). apply v2l_l2v_id.
+    { intros. exists (l2v Azero c l). apply v2l_l2v.
       apply (width_imply_in_length l d); auto. }
     specialize (H1 H2). destruct H1. destruct H1.
-    exists (l2v (vzero Azero) _ x). rewrite v2l_l2v_id; auto. lia.
+    exists (l2v (vzero Azero) _ x). rewrite v2l_l2v; auto. lia.
   Qed.
 
   Definition l2m {r c} (d : dlist A) : mat A r c :=
@@ -167,10 +172,10 @@ Section l2m_m2l.
   Proof.
     intros. unfold l2m. destruct (@l2v_surj _ (vzero Azero) r M).
     exists (map v2l x). rewrite <- H. f_equal.
-    rewrite map_map. apply ListExt.map_id. intros. apply l2v_v2l_id.
+    rewrite map_map. apply ListExt.map_id. intros. apply l2v_v2l.
   Qed.
 
-  Lemma l2m_m2l_id : forall {r c} (M : mat A r c), (@l2m r c (m2l M)) = M.
+  Lemma l2m_m2l : forall {r c} (M : mat A r c), (@l2m r c (m2l M)) = M.
   Proof.
     intros. unfold l2m,m2l.
     apply veq_iff_vnth; intros i. apply veq_iff_vnth; intros j.
@@ -179,16 +184,16 @@ Section l2m_m2l.
       try rewrite map_length; try apply v2l_length; try apply fin2nat_lt.
     rewrite nth_map with (n:=r)(Azero:=vzero Azero);
       try apply v2l_length; try apply fin2nat_lt.
-    rewrite l2v_v2l_id.
+    rewrite l2v_v2l.
     rewrite nth_v2l with (H:=fin2nat_lt _); try apply fin2nat_lt.
-    f_equal. apply nat2fin_fin2nat_id.
+    f_equal. apply nat2fin_fin2nat.
   Qed.
 
-  Lemma m2l_l2m_id : forall {r c} (d : dlist A),
+  Lemma m2l_l2m : forall {r c} (d : dlist A),
       length d = r -> width d c -> m2l (@l2m r c d) = d.
   Proof.
-    intros. unfold l2m,m2l; simpl. rewrite v2l_l2v_id.
-    - rewrite map_map. apply map_id_In; intros. apply v2l_l2v_id.
+    intros. unfold l2m,m2l; simpl. rewrite v2l_l2v.
+    - rewrite map_map. apply map_id_In; intros. apply v2l_l2v.
       apply (width_imply_in_length a d); auto.
     - rewrite map_length; auto.
   Qed.
@@ -308,21 +313,16 @@ Section RowTrans.
 
   (** 第 i1 行乘以 k *)
   Definition mrowK {r c} (M : mat A r c) (i1 : fin r) (k : A) : mat A r c :=
-    fun i j => if finEqdec i i1
-             then k * M i j
-             else M i j.
+    fun i j => if i ??= i1 then k * M i j else M i j.
   
   (** 交换 i1,i2 两行 *)
   Definition mrowSwap {r c} (M : mat A r c) (i1 i2 : fin r) : mat A r c :=
-    fun i j => if finEqdec i i1
-             then M i2 j
-             else if finEqdec i i2
-                  then M i1 j
-                  else M i j.
+    fun i j => if i ??= i1 then M i2 j
+             else (if i ??= i2 then M i1 j else M i j).
 
   (** 第 i1 行的 k 倍 加到第 i2 行 *)
   Definition mrowKAdd {r c} (M : mat A r c) (i1 i2 : fin r) (k : A) : mat A r c :=
-    fun i j => if finEqdec i i2 then (k * M i1 j + M i2 j) else M i j.
+    fun i j => if i ??= i2 then (k * M i1 j + M i2 j) else M i j.
 End RowTrans.
 
 Section test.
@@ -353,11 +353,11 @@ Section mcons.
 
   (** Construct a matrix by row with a vector and a matrix *)
   Definition mconsr {r c} (v : @vec A c) (M : mat A r c) : mat A (S r) c :=
-    vconsH (Azero:=vzero Azero) v M.
+    vconsH v M.
   
   (** Construct a matrix by column with a d vector and a matrix *)
   Definition mconsc {r c} (v : @vec A r) (M : mat A r c) : mat A r (S c) :=
-    @vmap2 A (vec c) (vec (S c)) (vconsH (Azero:=Azero)) r v M.
+    @vmap2 A (vec c) (vec (S c)) vconsH r v M.
 
 End mcons.
 
@@ -417,27 +417,27 @@ Section mset.
 
   (** set row *)
   Definition msetr {r c} (M : mat A r c) (v : @vec A c) (i0 : fin r) : mat A r c :=
-    fun i j => if finEqdec i i0 then v $ j else M $ i $ j.
+    fun i j => if i ??= i0 then v $ j else M $ i $ j.
 
   Lemma mnth_msetr_same : forall {r c} (M : mat A r c) (v : @vec A c) (i0 : fin r) i j,
       i = i0 -> (msetr M v i0) $ i $ j = v $ j.
-  Proof. intros. unfold msetr. destruct finEqdec; auto. easy. Qed.
+  Proof. intros. unfold msetr. destruct (_??=_); auto. easy. Qed.
 
   Lemma mnth_msetr_diff : forall {r c} (M : mat A r c) (v : @vec A c) (i0 : fin r) i j,
       i <> i0 -> (msetr M v i0) $ i $ j = M $ i $ j.
-  Proof. intros. unfold msetr. destruct finEqdec; auto. easy. Qed.
+  Proof. intros. unfold msetr. destruct (_??=_); auto. easy. Qed.
 
   (** set column *)
   Definition msetc {r c} (M : mat A r c) (v : @vec A r) (j0 : fin c) : mat A r c :=
-    fun i j => if finEqdec j j0 then v $ i else M $ i $ j.
+    fun i j => if j ??= j0 then v $ i else M $ i $ j.
 
   Lemma mnth_msetc_same : forall {r c} (M : mat A r c) (v : @vec A r) (j0:fin c) i j,
       j = j0 -> (msetc M v j0) $ i $ j = v $ i.
-  Proof. intros. unfold msetc. destruct finEqdec; auto. easy. Qed.
+  Proof. intros. unfold msetc. destruct (_??=_); auto. easy. Qed.
 
   Lemma mnth_msetc_diff : forall {r c} (M : mat A r c) (v : @vec A r) (j0:fin c) i j,
       j <> j0 -> (msetc M v j0) $ i $ j = M $ i $ j.
-  Proof. intros. unfold msetc. destruct finEqdec; auto. easy. Qed.
+  Proof. intros. unfold msetc. destruct (_??=_); auto. easy. Qed.
 
 End mset.
 
@@ -480,28 +480,28 @@ Section mdiag.
   Lemma mtrans_diag : forall {n} (M : smat A n), mdiag M -> M\T = M.
   Proof.
     intros. unfold mdiag in H. apply meq_iff_mnth; intros i j.
-    rewrite mnth_mtrans. destruct (finEqdec i j).
+    rewrite mnth_mtrans. destruct (i ??= j).
     subst; auto. rewrite !H; auto.
   Qed.
 
   (** Construct a diagonal matrix *)
   Definition mdiagMk {n} (v : @vec A n) : @smat A n :=
-    fun i j => if (finEqdec i j) then v $ i else Azero.
+    fun i j => if i ??= j then v $ i else Azero.
 
   (** mdiagMk is correct *)
   Lemma mdiagMk_spec : forall {n} (v : @vec A n), mdiag (mdiagMk v).
   Proof.
-    intros. hnf. intros. unfold mdiagMk. destruct (finEqdec i j); auto. easy.
+    intros. hnf. intros. unfold mdiagMk. destruct (_??=_); auto. easy.
   Qed.
 
   (** (mdiagMk l)[i,i] = l[i] *)
   Lemma mnth_mdiagMk_same : forall {n} (v : @vec A n) i, (mdiagMk v) $ i $ i = v $ i.
-  Proof. intros. unfold mdiagMk. destruct finEqdec; auto. easy. Qed.
+  Proof. intros. unfold mdiagMk. destruct (_??=_); auto. easy. Qed.
 
   (** (mdiagMk l)[i,j] = 0 *)
   Lemma mnth_mdiagMk_diff : forall {n} (v : @vec A n) i j,
       i <> j -> (mdiagMk v) $ i $ j = Azero.
-  Proof. intros. unfold mdiagMk. destruct finEqdec; auto. easy. Qed.
+  Proof. intros. unfold mdiagMk. destruct (_??=_); auto. easy. Qed.
 
 End mdiag.
 
@@ -542,22 +542,22 @@ Section malg.
   
   (** *** Unit matrix *)
   Definition mat1 {n} : smat n :=
-    fun i j => if finEqdec i j then Aone else Azero.
+    fun i j => if i ??= j then Aone else Azero.
       
   (** mat1\T = mat1 *)
   Lemma mtrans_mat1 : forall {n : nat}, (@mat1 n)\T = mat1.
   Proof.
     intros. apply meq_iff_mnth; intros. unfold mtrans,mat1.
-    destruct finEqdec,finEqdec; auto; subst; easy.
+    destruct (_??=_),(_??=_); auto; subst; easy.
   Qed.
 
   (** mat1[i,i] = 1 *)
   Lemma mnth_mat1_same : forall {n} i, (@mat1 n) $ i $ i = Aone.
-  Proof. intros. unfold mat1. destruct finEqdec; easy. Qed.
+  Proof. intros. unfold mat1. destruct (_??=_); easy. Qed.
 
   (** i <> j -> mat1[i,j] = 0 *)
   Lemma mnth_mat1_diff : forall {n} i j, i <> j -> @mat1 n $ i $ j = Azero.
-  Proof. intros. unfold mat1. destruct finEqdec; easy. Qed.
+  Proof. intros. unfold mat1. destruct (_??=_); easy. Qed.
 
   (** mat1 is diagonal matrix *)
   Lemma mat1_diag : forall {n : nat}, mdiag Azero (@mat1 n).
@@ -820,7 +820,7 @@ Section malg.
   Lemma mcmul_1_r : forall {n} a, a \.* (@mat1 n) = mdiagMk Azero (vrepeat a).
   Proof.
     intros. apply meq_iff_mnth; intros. rewrite mnth_mcmul.
-    destruct (finEqdec i j).
+    destruct (i ??= j).
     - subst. rewrite mnth_mdiagMk_same.
       rewrite mnth_mat1_same, vnth_vrepeat. ring.
     - rewrite mnth_mat1_diff, mnth_mdiagMk_diff; auto. ring.
@@ -861,7 +861,7 @@ Section malg.
   (** tr (a \.* M) = a * tr (m) *)
   Lemma mtrace_mcmul : forall {n} (a : A) (M : smat n), tr (a \.* M) = (a * tr M)%A.
   Proof.
-    intros. unfold mcmul, mtrace. apply vsum_vcmul; intros.
+    intros. unfold mcmul, mtrace. apply vsum_cmul; intros.
     rewrite mnth_mmap. auto.
   Qed.
 
@@ -968,8 +968,8 @@ Section malg.
   Proof.
     intros. apply meq_iff_mnth; intros. unfold mmul,vdot,mat1,vmap2,vsum.
     apply fseqsum_unique with (i:=i).
-    - destruct finEqdec; subst. monoid. easy.
-    - intros. destruct finEqdec; subst. easy. ring.
+    - destruct (_??=_); subst. monoid. easy.
+    - intros. destruct (_??=_); subst. easy. ring.
   Qed.
   
   (** M * 1 = M *)
@@ -977,8 +977,8 @@ Section malg.
   Proof.
     intros. apply meq_iff_mnth; intros. unfold mmul,vdot,mat1,vmap2,vsum.
     apply fseqsum_unique with (i:=j).
-    - destruct finEqdec; subst. monoid. easy.
-    - intros. destruct finEqdec; subst. easy. ring.
+    - destruct (_??=_); subst. monoid. easy.
+    - intros. destruct (_??=_); subst. easy. ring.
   Qed.
 
   (** (a \.* M) * N = a \.* (M * N) *)

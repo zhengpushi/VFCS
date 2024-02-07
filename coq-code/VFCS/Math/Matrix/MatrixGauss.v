@@ -202,7 +202,7 @@ Section GaussElim.
             | Some i' =>
                 (* 若 i <> i'，则交换 *)
                 let params1 : list RowOp * mat A r c :=
-                  if finEqdec i i'
+                  if i ??= i'
                   then params
                   else (RowOp_Swap i i' :: (fst params),
                          mrowSwap (snd params) i i') in

@@ -120,30 +120,6 @@ Proof. intros. rewrite !(commutative c _). apply Qc_lt_mul_compat_r; auto. Qed.
 Lemma Qc_le_refl : forall n : Qc, n <= n.
 Proof. apply Qcle_refl. Qed.
 
-(* Lemma Qc_zero_le_sqr : forall a : Qc, 0 <= a * a. *)
-(* Proof. intros. Admitted. *)
-
-(* Lemma Qc_add_le_compat : forall a1 b1 a2 b2 : Qc, *)
-(*     a1 <= a2 -> b1 <= b2 -> a1 + b1 <= a2 + b2. *)
-(* Proof. intros. apply Qcplus_le_compat; auto. Qed. *)
-
-(* Lemma Qc_lt_le_compat : forall a : Qc, 0 <= a <-> 0 < a \/ a = 0. *)
-(* Proof. *)
-(*   intros. split; intros. *)
-(*   - apply Qcle_lt_or_eq in H. destruct H; auto. *)
-(*   - destruct H. *)
-(*     + apply Qclt_le_weak; auto. *)
-(*     + subst. apply Qcle_refl. *)
-(* Qed. *)
-
-(* Lemma Qc_add_eq_0_reg_l : forall a b : Qc, 0 <= a -> 0 <= b -> a + b = 0 -> a = 0. *)
-(* Proof. intros. *)
-(*        (* Search (_ + _ = _). *) *)
-(*        (* Search ( _ <= _). *) *)
-(*        (* Search (_ + _ = Q2Qc 0). *) *)
-(*        (* Search (_ + _ = _ + _). *) *)
-(*        (* Search (_ = Q2Qc 0). *) *)
-(* Admitted. *)
 
 (** Bool version of "<" and "<=" for Qc *)
 Definition Qcltb (a b : Qc) : bool := if Qclt_le_dec a b then true else false.

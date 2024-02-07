@@ -1429,17 +1429,17 @@ Section GroupTheory.
       end.
     Proof.
       destruct n; intros; auto.
-    Admitted.
+    Abort.
 
     (** Theorem 14.4 *)
     Theorem group_power_inv : forall a n, (a^n) + (a^(- n)) = 0.
-    Admitted.
+    Abort.
 
     Theorem group_power_plus : forall a m n, (a^m) + (a^n) = a^(m+n).
-    Admitted.
+    Abort.
 
     Theorem group_power_mul : forall a m n, (a^m)^n = a^(m*n).
-    Admitted.
+    Abort.
 
   End th14_4.
 
@@ -2361,6 +2361,14 @@ Section Theory.
   Lemma field_mulInvR : forall a : A, a <> 0 -> a * /a = 1.
   Proof. intros. rewrite commutative. rewrite field_mulInvL; easy. Qed.
 
+  (** a <> 0 -> (1/a) * a = 1 *)
+  Lemma field_mulInvL_inv1 : forall a : A, a <> 0 -> (1/a) * a = 1.
+  Proof. intros. simpl. group. apply field_mulInvL. auto. Qed.
+  
+  (** a <> 0 -> a * (1/a) = 1 *)
+  Lemma field_mulInvR_inv1 : forall a : A, a <> 0 -> a * (1/a) = 1.
+  Proof. intros. simpl. group. apply field_mulInvR. auto. Qed.
+
   (** a <> 0 -> / a <> 0 *)
   Lemma field_inv_neq0 : forall a : A, a <> 0 -> / a <> 0.
   Proof.
@@ -2372,15 +2380,14 @@ Section Theory.
   (* / a <> 0 -> a <> 0 *)
   Lemma field_inv_neq0_rev : forall a : A, / a <> 0 -> a <> 0.
   Proof.
-    intros. intro. destruct H. Abort.
+    intros. intro. Abort.
 
-  (** a <> 0 -> (1/a) * a = 1 *)
-  Lemma field_mulInvL_inv1 : forall a : A, a <> 0 -> (1/a) * a = 1.
-  Proof. intros. simpl. group. apply field_mulInvL. auto. Qed.
-  
-  (** a <> 0 -> a * (1/a) = 1 *)
-  Lemma field_mulInvR_inv1 : forall a : A, a <> 0 -> a * (1/a) = 1.
-  Proof. intros. simpl. group. apply field_mulInvR. auto. Qed.
+  (** - 1 <> 0 *)
+  Lemma field_neg1_neq_0 : - (1) <> 0.
+  Proof.
+    intro. rewrite <- group_opp_0 in H at 1. apply group_opp_inj in H.
+    apply field_1_neq_0; auto.
+  Qed.
   
   (** a <> 0 -> a * b = a * c -> b = c *)
   Lemma field_mul_cancel_l : forall a b c : A,

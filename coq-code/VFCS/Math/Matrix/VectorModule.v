@@ -46,9 +46,9 @@ Module BasicVectorTheory (E : ElementType).
   Definition v2f {n} (v : vec n) : nat -> A := v2f 0 v.
 
   (** a :: v *)
-  Definition vconsH {n} (a : A) (v : vec n) : vec (S n) := vconsH (Azero:=0) a v.
+  Definition vconsH {n} (a : A) (v : vec n) : vec (S n) := vconsH a v.
   (** v ++ [a] *)
-  Definition vconsT {n} (v : vec n) (a : A) : vec (S n) := vconsT (Azero:=0) v a.
+  Definition vconsT {n} (v : vec n) (a : A) : vec (S n) := vconsT v a.
 
   (** Convert between list and vector *)
   Definition v2l {n} (v : vec n) : list A := v2l v.
@@ -57,11 +57,11 @@ Module BasicVectorTheory (E : ElementType).
   Lemma v2l_length : forall {n} (v : vec n), length (v2l v) = n.
   Proof. intros. apply v2l_length. Qed.
 
-  Lemma v2l_l2v_id : forall {n} (l : list A), length l = n -> (v2l (@l2v n l) = l).
-  Proof. intros. apply v2l_l2v_id; auto. Qed.
+  Lemma v2l_l2v : forall {n} (l : list A), length l = n -> (v2l (@l2v n l) = l).
+  Proof. intros. apply v2l_l2v; auto. Qed.
 
-  Lemma l2v_v2l_id : forall {n} (v : vec n), @l2v n (v2l v) = v.
-  Proof. intros. apply l2v_v2l_id. Qed.
+  Lemma l2v_v2l : forall {n} (v : vec n), @l2v n (v2l v) = v.
+  Proof. intros. apply l2v_v2l. Qed.
 
   (** Make concrete vector *)
   Definition mkvec1 (a1 : A) : vec 1 := mkvec1 (Azero:=0) a1.
@@ -307,11 +307,77 @@ Module RingVectorTheory (E : RingElementType).
   
   (** *** vsum *)
   Definition vsum {n} (v : vec n) := @vsum _ Aadd Azero _ v.
+  
+  (** (∀ i, u.i = v.i) -> Σu = Σv *)
+  Lemma vsum_eq : forall {n} (u v : vec n), (forall i, u $ i = v $ i) -> vsum u = vsum v.
+  Proof. intros. apply fseqsum_eq. auto. Qed.
+
+  (** (∀ i, v.i = 0) -> Σv = 0 *)
+  Lemma vsum_eq0 : forall {n} (v : vec n), (forall i, v $ i = 0) -> vsum v = 0.
+  Proof. intros. apply vsum_eq0; auto. Qed.
+
+  (** Convert `vsum` to `seqsum` *)
+  Lemma vsum_to_seqsum : forall {n} (v : vec n) (g : nat -> A),
+      (forall i, v $ i = g (fin2nat i)) -> vsum v = @seqsum _ Aadd Azero g n.
+  Proof. intros. apply vsum_to_seqsum; auto. Qed.
+
+  (** Convert `vsum` to `seqsum` (succ form) *)
+  Lemma vsum_to_seqsum_succ : forall {n} (v : vec (S n)),
+      vsum v = ((@seqsum _ Aadd Azero (fun i => v $ (nat2finS i)) n)
+                + v $ (nat2finS n))%A.
+  Proof. intros. apply vsum_to_seqsum_succ. Qed.
+  
+  (** `vsum` of (S n) elements, equal to addition of Sum and tail *)
+  Lemma vsumS_tail : forall {n} (v : vec (S n)),
+      vsum v = (vsum (fun i => v $ (fin2SuccRange i)) + v $ (nat2finS n))%A.
+  Proof. intros. apply vsumS_tail; auto. Qed.
+
+  (** `vsum` of (S n) elements, equal to addition of head and Sum *)
+  Lemma vsumS_head : forall {n} (v : vec (S n)),
+      vsum v = (v $ (nat2finS 0) + vsum (fun i => v $ (fin2SuccRangeSucc i)))%A.
+  Proof. intros. apply vsumS_head; auto. Qed.
+
+  (** (∀ i, u.i = v.i + w.i) -> Σu = Σv + Σw *)
+  Lemma vsum_add : forall {n} (u v w : vec n),
+      ((forall i, u $ i = v $ i + w $ i) -> vsum u = vsum v + vsum w)%A.
+  Proof. intros. apply vsum_add; auto. Qed.
+  
+  (** (∀ i, u.i = - v.i) -> Σu = - Σv *)
+  Lemma vsum_opp : forall {n} (u v : vec n),
+      ((forall i, u $ i = - v $ i) -> vsum u = - vsum v)%A.
+  Proof. intros. apply vsum_opp; auto. Qed.
 
   (** (∀ i, u.i = k * v.i) -> Σu = k * Σv *)
-  Lemma vsum_vcmul : forall {n} (u v : vec n) k,
+  Lemma vsum_cmul : forall {n} (u v : vec n) k,
       (forall i, u $ i = k * v $ i) -> vsum u = k * vsum v.
-  Proof. intros. apply vsum_vcmul; auto. Qed.
+  Proof. intros. apply vsum_cmul; auto. Qed.
+  
+  (** `vsum` which only one item is nonzero, then got this item. *)
+  Lemma vsum_unique : forall {n} (v : vec n) (a : A) i,
+      v $ i = a -> (forall j, i <> j -> v $ j = Azero) -> vsum v = a.
+  Proof. intros. apply vsum_unique with (i:=i); auto. Qed.
+
+  (** `vsum` of the m+n elements equal to plus of two parts.
+      (i < m -> f.i = g.i) ->
+      (i < n -> f.(m+i) = h.i) ->
+      Σ[0,(m+n)] f = Σ[0,m] g + Σ[m,m+n] h. *)
+  Lemma vsum_plusIdx : forall m n (f : vec (m + n)) (g : vec m) (h : vec n),
+      (forall i : fin m, f $ (fin2AddRangeR i) = g $ i) ->
+      (forall i : fin n, f $ (fin2AddRangeAddL i) = h $ i) ->
+      vsum f = (vsum g + vsum h)%A.
+  Proof. intros. apply vsum_plusIdx; auto. Qed.
+
+  (** The order of two nested summations can be exchanged.
+      ∑[i,0,r](∑[j,0,c] v_ij) = 
+      v00 + v01 + ... + v0c + 
+      v10 + v11 + ... + v1c + 
+      ...
+      vr0 + vr1 + ... + vrc = 
+      ∑[j,0,c](∑[i,0,r] v_ij) *)
+  Lemma vsum_vsum_exchg : forall r c (v : @Vector.vec (vec c) r),
+      vsum (fun i => vsum (fun j => v $ i $ j)) =
+        vsum (fun j => vsum (fun i => v $ i $ j)).
+  Proof. intros. apply vsum_vsum_exchg. Qed.
   
 
   (** *** Unit vector *)

@@ -77,12 +77,12 @@ Module BasicMatrixTheory (E : ElementType).
   Lemma m2l_width : forall {r c} (M : mat r c), width (m2l M) c.
   Proof. intros. apply m2l_width. Qed.
 
-  Lemma l2m_m2l_id : forall {r c} (M : mat r c), @l2m r c (m2l M) = M.
-  Proof. intros. apply l2m_m2l_id. Qed.
+  Lemma l2m_m2l : forall {r c} (M : mat r c), @l2m r c (m2l M) = M.
+  Proof. intros. apply l2m_m2l. Qed.
 
-  Lemma m2l_l2m_id : forall {r c} (dl : dlist A),
+  Lemma m2l_l2m : forall {r c} (dl : dlist A),
       length dl = r -> width dl c -> m2l (@l2m r c dl) = dl.
-  Proof. intros. apply m2l_l2m_id; auto. Qed.
+  Proof. intros. apply m2l_l2m; auto. Qed.
 
   Lemma l2m_inj : forall {r c} (d1 d2 : dlist A),
       length d1 = r -> width d1 c -> length d2 = r -> width d2 c ->
@@ -105,11 +105,11 @@ Module BasicMatrixTheory (E : ElementType).
 
   (** Construct a matrix by rows *)
   Definition mconsr {r c} (v : vec c) (M : mat r c) : mat (S r) c :=
-    mconsr Azero v M.
+    mconsr v M.
 
   (** Construct a matrix by columns *)
   Definition mconsc {r c} (v : vec r) (M : mat r c) : mat r (S c) :=
-    mconsc Azero v M.
+    mconsc v M.
 
   
   (* ======================================================================= *)

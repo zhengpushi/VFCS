@@ -3940,15 +3940,16 @@ Section dlremove.
       length dl = (S r) -> i < S r -> length (dlremoveRow dl i) = r.
   Proof.
     induction dl; intros; simpl in *. lia. destruct i; auto.
-    Admitted.
+    destruct r; try lia. simpl. rewrite IHdl with (r:=r); auto. lia.
+  Qed.
     
   Lemma dlremoveRow_width : forall dl c i,
       width dl c -> width (dlremoveRow dl i) c.
   Proof.
-  (*   intros. unfold dlremoveRow. apply app_width. split. *)
-  (*   apply firstn_width; auto. apply skipn_width; auto. *)
-    (* Qed. *)
-  Admitted.
+    induction dl; intros; simpl in *; auto.
+    apply cons_width_iff in H. destruct H. destruct i; auto.
+    apply cons_width_iff. split; auto.
+  Qed.
 
   
   (** *** 删除一列 *)

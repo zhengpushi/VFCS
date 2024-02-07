@@ -298,6 +298,32 @@ Section seqsum.
   
 End seqsum.
 
+(** Extension for `seqsum` *)
+Section seqsum_ext.
+  
+  (** Let's have an abelian monoid structure *)
+  Context `{AM : AMonoid}.
+  Infix "+" := Aadd : A_scope.
+  Notation seqsum := (@seqsum _ Aadd Azero).
+
+  (** Let's have another type K and an operation scalar multiplication *)
+  Context {K : Type}.
+  Context (cmul : K -> A -> A).
+  Infix "*" := cmul.
+  Context (cmul_zero_keep : forall k : K, cmul k Azero = Azero).
+  Context (cmul_add_distr : forall (a b : A) (k : K), k * (a + b) = k * a + k * b).
+
+  (** Scalar multiplication of the sum of a sequence with different type. *)
+  Lemma seqsum_cmul_ext : forall (k : K) (f g : nat -> A) (n : nat),
+      (forall i, i < n -> f i = k * g i) -> seqsum f n = k * seqsum g n.
+  Proof.
+    intros. induction n; simpl. rewrite cmul_zero_keep; auto.
+    rewrite H, IHn; auto.
+  Qed.
+  
+End seqsum_ext.
+
+
 
 (* ======================================================================= *)
 (** ** Sum of a sequence with bounds *)

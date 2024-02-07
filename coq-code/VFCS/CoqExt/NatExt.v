@@ -35,6 +35,13 @@ Proof. constructor. intros. destruct (Compare_dec.lt_dec a b); auto. Defined.
 Proof. constructor. intros. destruct (le_lt_dec a b); auto. right. lia. Defined.
 
 Infix "??=" := (@dec _ _ nat_eq_Dec) : nat_scope.
+
+(* These two notations have lower priorities, and will be covered by "??<" and "??<="
+   for Print. *)
+Notation "m ??> n" := (@dec _ _ nat_lt_Dec n m) : nat_scope.
+Notation "m ??>= n" := (@dec _ _ nat_le_Dec n m) : nat_scope.
+
+(* We mainly use these two notations to keep minimum proof obligation *)
 Infix "??<" := (@dec _ _ nat_lt_Dec) : nat_scope.
 Infix "??<=" := (@dec _ _ nat_le_Dec) : nat_scope.
 
@@ -236,7 +243,7 @@ Qed.
 
 
 (* ######################################################################### *)
-(** * Lost or deprecated lemmas *)
+(** * Lost or deprecated lemmas and new lemmas *)
 
 (** Coq.Arith.Lt.lt_S_n is deprecated since Coq 8.16.
     1. although coqc suggest us to use Nat.succ_lt_mono,
@@ -255,6 +262,31 @@ Proof.
   intros. destruct H. destruct x. easy.
   rewrite Nat.pred_succ. apply Nat.succ_lt_mono; auto.
 Qed.
+
+
+(** m >= n -> m <> n -> m > n *)
+Lemma nat_ge_neq_imply_gt : forall m n : nat, m >= n -> m <> n -> m > n.
+Proof. intros. lia. Qed.
+
+(** m <= n -> m <> n -> m < n *)
+Lemma nat_le_neq_imply_lt : forall m n : nat, m <= n -> m <> n -> m < n.
+Proof. intros. lia. Qed.
+
+(** n > m -> n <> 0 *)
+Lemma nat_gt_imply_neq0 : forall n m : nat, n > m -> n <> 0.
+Proof. intros. lia. Qed.
+
+(** n < m -> m <> 0 *)
+Lemma nat_lt_imply_neq0 : forall n m : nat, n < m -> m <> 0.
+Proof. intros. lia. Qed.
+
+(** m <= i -> i < m + n -> i - m < n *)
+Lemma le_ltAdd_imply_subLt_L : forall m n i : nat, m <= i -> i < m + n -> i - m < n.
+Proof. intros. lia. Qed.
+
+(** n <= i -> i < m + n -> i - n < m *)
+Lemma le_ltAdd_imply_subLt_R : forall m n i : nat, n <= i -> i < m + n -> i - n < m.
+Proof. intros. lia. Qed.
 
 
 (* ######################################################################### *)

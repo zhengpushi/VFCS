@@ -40,11 +40,11 @@ Section fseqeq.
       + destruct (H (f (nat2finS n)) (g (nat2finS n))) as [H2|H2].
         * left. extensionality i. destruct (fin2nat i ??< n).
           ** pose proof (equal_f H1) as H3. specialize (H3 (fin2PredRange i l)).
-             unfold ffS2ff in H3. rewrite fin2PredRange_spec in H3.
-             rewrite nat2finS_fin2nat_id in H3. auto.
+             unfold ffS2ff in H3. rewrite fin2nat_fin2PredRange in H3.
+             rewrite nat2finS_fin2nat in H3. auto.
           ** assert (fin2nat i = n). pose proof (fin2nat_lt i). lia.
              replace (@nat2finS n n) with i in H2; auto.
-             rewrite <- (nat2fin_fin2nat_id (S n) i (fin2nat_lt _)).
+             rewrite <- (nat2fin_fin2nat (S n) i (fin2nat_lt _)).
              rewrite (nat2finS_eq n n (Nat.lt_succ_diag_r _)).
              apply sig_eq_iff; auto.
         * right. intro. destruct H2. subst. auto.
@@ -141,8 +141,8 @@ Section fseqsum.
     intros. unfold fseqsum. rewrite seqsumS_tail. f_equal.
     - apply seqsum_eq. intros. specialize (H (nat2fin i H0)).
       rewrite nth_ff2f with (H:=H0). rewrite <- H.
-      erewrite nth_ff2f. f_equal. rewrite fin2nat_iff_nat2fin.
-      rewrite fin2SuccRange_spec. rewrite fin2nat_nat2fin_id. auto.
+      erewrite nth_ff2f. f_equal. rewrite nat2fin_iff_fin2nat.
+      rewrite fin2nat_fin2SuccRange. rewrite fin2nat_nat2fin. auto.
       Unshelve. lia.
     - erewrite nth_ff2f. f_equal.
       erewrite nat2finS_eq. apply sig_eq_iff; auto.
@@ -157,8 +157,8 @@ Section fseqsum.
     intros. unfold fseqsum. rewrite seqsumS_head. f_equal.
     apply seqsum_eq. intros.
     rewrite nth_ff2f with (H:=H0). rewrite <- H.
-    erewrite nth_ff2f. f_equal. rewrite fin2nat_iff_nat2fin.
-    rewrite fin2SuccRangeSucc_spec. rewrite fin2nat_nat2fin_id. auto.
+    erewrite nth_ff2f. f_equal. rewrite nat2fin_iff_fin2nat.
+    rewrite fin2nat_fin2SuccRangeSucc. rewrite fin2nat_nat2fin. auto.
     Unshelve. lia.
   Qed.
 
@@ -177,7 +177,7 @@ Section fseqsum.
     intros. unfold fseqsum. apply seqsum_unique with (i:=fin2nat i).
     apply fin2nat_lt. rewrite ff2f_fin2nat; auto.
     intros. unfold ff2f. destruct (_??<_); auto. apply H0.
-    apply not_eq_sym. rewrite fin2nat_iff_nat2fin. auto.
+    apply not_eq_sym. rewrite nat2fin_iff_fin2nat. auto.
   Qed.
 
   (** Sum the m+n elements equal to plus of two parts.
@@ -191,9 +191,9 @@ Section fseqsum.
   Proof.
     intros. unfold fseqsum. apply seqsum_plusIdx_ext.
     - intros. unfold ff2f. destruct (_??<_), (_??<_); try lia.
-      rewrite <- H. f_equal. apply sig_eq_iff. rewrite fin2nat_nat2fin_id; auto.
+      rewrite <- H. f_equal. apply sig_eq_iff. rewrite fin2nat_nat2fin; auto.
     - intros. unfold ff2f. destruct (_??<_), (_??<_); try lia.
-      rewrite <- H0. f_equal. apply sig_eq_iff. rewrite fin2nat_nat2fin_id; auto.
+      rewrite <- H0. f_equal. apply sig_eq_iff. rewrite fin2nat_nat2fin; auto.
   Qed.
 
   (** The order of two nested summations can be exchanged.
@@ -273,6 +273,32 @@ Section fseqsum.
   (* Qed. *)
   
 End fseqsum.
+
+(** Extension for `fseqsum` *)
+Section fseqsum_ext.
+  
+  (** Let's have an abelian monoid structure *)
+  Context `{AM : AMonoid}.
+  Infix "+" := Aadd : A_scope.
+  Notation fseqsum := (@fseqsum _ Aadd Azero).
+
+  (** Let's have another type K and an operation scalar multiplication *)
+  Context {K : Type}.
+  Context (cmul : K -> A -> A).
+  Infix "*" := cmul.
+  Context (cmul_zero_keep : forall k : K, cmul k Azero = Azero).
+  Context (cmul_add_distr : forall (a b : A) (k : K), k * (a + b) = k * a + k * b).
+
+  (** Scalar multiplication of the sum of a sequence with different type. *)
+  Lemma fseqsum_cmul_ext : forall {n} (k : K) (f g : fin n -> A),
+      (forall i, f i = k * g i) -> fseqsum f = k * fseqsum g.
+  Proof.
+    intros. unfold fseqsum. apply seqsum_cmul_ext; auto.
+    intros. unfold ff2f. destruct (_??<_); auto.
+  Qed.
+  
+End fseqsum_ext.
+
 
 
 (* ======================================================================= *)
