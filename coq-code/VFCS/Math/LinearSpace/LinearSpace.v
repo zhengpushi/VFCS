@@ -701,14 +701,14 @@ Section ldep.
   Qed.
 
   (** {us,vs}线性无关，则us线性无关 *)
-  Lemma vapp_lindep_imply_ldep_L : forall {n m} (us : @vec V n) (vs : @vec V m),
+  Lemma vapp_lindep_imply_lindep_L : forall {n m} (us : @vec V n) (vs : @vec V m),
       lindep (vapp us vs) -> lindep us.
   Proof.
     unfold lindep. intros. intro. destruct H. apply ldep_imply_vapp_ldep_L; auto.
   Qed.
 
   (** {us,vs}线性无关，则vs线性无关 *)
-  Lemma vapp_lindep_imply_ldep_R : forall {n m} (us : @vec V n) (vs : @vec V m),
+  Lemma vapp_lindep_imply_lindep_R : forall {n m} (us : @vec V n) (vs : @vec V m),
       lindep (vapp us vs) -> lindep vs.
   Proof.
     unfold lindep. intros. intro. destruct H. apply ldep_imply_vapp_ldep_R; auto.

@@ -58,11 +58,35 @@ Section props.
   Notation vopp := (@vopp _ Aopp).
   Notation vsub := (@vsub _ Aadd Aopp).
   Notation vcmul := (@vcmul _ Amul).
+  Notation vsum := (@vsum _ Aadd Azero).
   Notation "0" := Azero : A_scope.
   Notation "1" := Aone : A_scope.
+  Notation lcomb := (@lcomb _ _ vadd vzero vcmul).
   Notation lrepr := (@lrepr _ _ vadd vzero vcmul).
   Notation ldep := (@ldep _ Azero _ vadd vzero vcmul).
   Notation lindep := (@lindep _ Azero _ vadd vzero vcmul).
+
+  (** (lcomb cs vs).i = ∑(vmap2 Amul cs (vcol vs i)) *)
+  Lemma vnth_lcomb : forall {n r} (cs : @vec A r) (vs : @vec (@vec A n) r) (i : fin n),
+      (lcomb cs vs) $ i = vsum (vmap2 Amul cs (vcol vs i)).
+  Proof. intros. unfold lcomb. rewrite vnth_vsum. auto. Qed.
+
+  (** lcomb over vectors from `vmap2 vapp us vs` *)
+  Lemma lcomb_vec_vmap2_vapp :
+    forall (m n r : nat) (cs : @vec A r)
+      (us : @vec (@vec A m) r) (vs : @vec (@vec A n) r) (i : fin (m + n)),
+      lcomb cs (vmap2 vapp us vs) i = vapp (lcomb cs us) (lcomb cs vs) i.
+  Proof.
+    intros. rewrite vnth_lcomb. destruct (fin2nat i ??< m).
+    - rewrite vnth_vapp_L with (H:=l). unfold lcomb.
+      rewrite vnth_vsum. apply vsum_eq; intros j.
+      rewrite !vnth_vmap2. rewrite !vnth_vcmul. f_equal. rewrite !vnth_vcol.
+      rewrite vnth_vmap2. rewrite vnth_vapp_L with (H:=l); auto.
+    - assert (m <= fin2nat i). lia. rewrite vnth_vapp_R with (H:=H). unfold lcomb.
+      rewrite vnth_vsum. apply vsum_eq; intros j.
+      rewrite !vnth_vmap2. rewrite !vnth_vcmul. f_equal. rewrite !vnth_vcol.
+      rewrite vnth_vmap2. rewrite vnth_vapp_R with (H:=H). auto.
+  Qed.
 
   (** F^n的下述子集U是一个子空间 U = {(a1,...,ak,0,...,0) | ai ∈ F, 1 <= k < n } *)
   Section topKWithZero_SubSpace.
@@ -87,7 +111,6 @@ Section props.
 
     #[export] Instance topKWithZero_SubSpace : LinearSpace Hadd Hzero Hopp Hcmul :=
       makeSubSpace topKWithZero_SubSpaceStruct.
-
   End topKWithZero_SubSpace.
 
   (** F^n的下述子集U是一个子空间 U = {(a1,0,a3,0,...0,an) | ai ∈ F, i=1,3,...,n} *)
@@ -112,7 +135,6 @@ Section props.
 
     #[export] Instance oddWithZero_SubSpace : LinearSpace Hadd Hzero Hopp Hcmul :=
       makeSubSpace oddWithZero_SubSpaceStruct.
-
   End oddWithZero_SubSpace.
 
   (** 添加或去掉向量的一些分量构成的延伸组与缩短组的一对性质：
@@ -132,8 +154,114 @@ Section props.
       则从 k1v1'+...ksvs'=0 可得到 k1v1+...+ksvs=0。
       若v1,...,vs线性无关，则可知k1=...=ks=0，从而v1',...,vs'也线性无关。
    *)
-  (* Lemma extended_keep_lindep. *)
-  (* Lemma shortened_keep_ldep *)
+
+  (** 若向量组线性无关，每个向量的相同位置添上m个分量后的延伸组线性无关。*)
+  Section lindep_extend.
+    
+    (** 在每个向量头部都加入数个元素后保持线性无关 *)
+    Lemma lindep_extend_head :
+      forall {m n r} (us : @vec (@vec A m) r) (vs : @vec (@vec A n) r),
+        lindep vs -> lindep (vmap2 vapp us vs).
+    Proof.
+      intros. unfold lindep, ldep in *. intro. destruct H.
+      destruct H0 as [cs [H H0]]. exists cs. split; auto.
+      rewrite veq_iff_vnth. rewrite veq_iff_vnth in H0. intros.
+      specialize (H0 (fin2AddRangeAddL i)).
+      rewrite vnth_vzero in *. rewrite <- H0 at 2.
+      rewrite lcomb_vec_vmap2_vapp. erewrite vnth_vapp_R.
+      rewrite fin2AddRangeAddL'_fin2AddRangeAddL. auto.
+      Unshelve. rewrite fin2nat_fin2AddRangeAddL. lia.
+    Qed.
+
+    (** 在每个向量尾部都加入数个元素后保持线性无关 *)
+    Lemma lindep_extend_tail :
+      forall {m n r} (us : @vec (@vec A m) r) (vs : @vec (@vec A n) r),
+        lindep us -> lindep (vmap2 vapp us vs).
+    Proof.
+      intros. unfold lindep, ldep in *. intro. destruct H.
+      destruct H0 as [cs [H H0]]. exists cs. split; auto.
+      rewrite veq_iff_vnth. rewrite veq_iff_vnth in H0. intros.
+      specialize (H0 (fin2AddRangeR i)).
+      rewrite vnth_vzero in *. rewrite <- H0 at 2.
+      rewrite lcomb_vec_vmap2_vapp. erewrite vnth_vapp_L.
+      rewrite fin2AddRangeR'_fin2AddRangeR. auto.
+      Unshelve. rewrite fin2nat_fin2AddRangeR. apply fin2nat_lt.
+    Qed.
+
+    (** 对每个向量都插入1个元素后保持线性无关 *)
+    Lemma lindep_extend_insert :
+      forall {n r} (vs : @vec (@vec A n) r) (i : fin (S n)) (a : A),
+        lindep vs -> lindep (vmap (fun v => vinsert v i a) vs).
+    Proof.
+      intros. unfold lindep, ldep in *. intro. destruct H.
+      destruct H0 as [cs [H H0]]. exists cs. split; intros; auto.
+      rewrite veq_iff_vnth. intros j. rewrite veq_iff_vnth in H0.
+      destruct (fin2nat j ??< fin2nat i).
+      - specialize (H0 (fin2SuccRange j)).
+        rewrite vnth_vzero in *. rewrite <- H0 at 2. rewrite !vnth_lcomb.
+        apply vsum_eq; intros k. rewrite !vnth_vmap2. f_equal. unfold vcol.
+        rewrite !vnth_vmap. rewrite (@vnth_vinsert_lt _ Azero) with (j:=j); auto.
+      - specialize (H0 (fin2SuccRangeSucc j)).
+        rewrite vnth_vzero in *. rewrite <- H0 at 2. rewrite !vnth_lcomb.
+        apply vsum_eq; intros k. rewrite !vnth_vmap2. f_equal. unfold vcol.
+        rewrite !vnth_vmap. rewrite (@vnth_vinsert_gt _ Azero) with (j:=j); auto.
+        lia. apply fin2nat_lt.
+    Qed.
+
+  End lindep_extend.
+
+  (** 若向量组线性相关，每个向量的相同位置去掉m个分量后的延伸组线性相关。*)
+  Section ldep_shorten.
+    
+    (** 在每个向量头部都去掉数个元素后保持线性相关 *)
+    Lemma ldep_shorten_head : forall {m n r} (vs : @vec (@vec A (m + n)) r),
+        ldep vs -> ldep (vmap vtailN vs).
+    Proof.
+      intros. unfold ldep in *. destruct H as [cs [H H0]]. exists cs. split; auto.
+      rewrite veq_iff_vnth. rewrite veq_iff_vnth in H0. intros.
+      specialize (H0 (fin2AddRangeAddL i)). rewrite vnth_vzero in *.
+      rewrite <- H0 at 2. rewrite !vnth_lcomb. apply vsum_eq; intros j.
+      rewrite !vnth_vmap2. f_equal.
+    Qed.
+    
+    (** 在每个向量尾部都去掉数个元素后保持线性相关 *)
+    Lemma ldep_shorten_tail : forall {m n r} (vs : @vec (@vec A (m + n)) r),
+        ldep vs -> ldep (vmap vheadN vs).
+    Proof.
+      intros. unfold ldep in *. destruct H as [cs [H H0]]. exists cs. split; auto.
+      rewrite veq_iff_vnth. rewrite veq_iff_vnth in H0. intros.
+      specialize (H0 (fin2AddRangeR i)). rewrite vnth_vzero in *.
+      rewrite <- H0 at 2. rewrite !vnth_lcomb. apply vsum_eq; intros j.
+      rewrite !vnth_vmap2. f_equal.
+    Qed.
+
+    (** 对每个向量都删除1个元素后保持线性相关 *)
+    Lemma ldep_shorten_delete :
+      forall {n r} (vs : @vec (@vec A (S n)) r) (i : fin (S n)) (a : A),
+        ldep vs -> ldep (vmap (fun v => vremove v i) vs).
+    Proof.
+      intros. unfold ldep in *. destruct H as [cs [H H0]]. exists cs. split; intros; auto.
+      rewrite veq_iff_vnth. intros j. rewrite veq_iff_vnth in H0.
+      destruct (fin2nat j ??< fin2nat i).
+      - specialize (H0 (fin2SuccRange j)).
+        rewrite vnth_vzero in *. rewrite <- H0 at 2. rewrite !vnth_lcomb.
+        apply vsum_eq; intros k. f_equal. apply veq_iff_vnth; intros s.
+        rewrite !vnth_vcol. rewrite !vnth_vmap.
+        rewrite (@vnth_vremove_lt _ Azero); auto. erewrite nth_v2f. f_equal.
+        apply fin2nat_imply_nat2fin. rewrite fin2nat_fin2SuccRange. auto.
+      - specialize (H0 (fin2SuccRangeSucc j)).
+        rewrite vnth_vzero in *. rewrite <- H0 at 2. rewrite !vnth_lcomb.
+        apply vsum_eq; intros k. f_equal. apply veq_iff_vnth; intros s.
+        rewrite !vnth_vcol. rewrite !vnth_vmap.
+        rewrite (@vnth_vremove_ge _ Azero); auto; try lia.
+        + erewrite nth_v2f. f_equal. apply fin2nat_imply_nat2fin.
+          rewrite fin2nat_fin2SuccRangeSucc. auto.
+        + apply fin2nat_lt.
+          Unshelve. pose proof (fin2nat_lt j). lia.
+          pose proof (fin2nat_lt j). lia.
+    Qed.
+    
+  End ldep_shorten.
 
   
   (** F^n中的s个向量中的每一个都在这个向量组张成的线性空间中。
@@ -174,7 +302,6 @@ Section props.
     
 
 
-
   (* 几何空间：
      1. 几何空间可以看成是以原点O为起点的所有向量组成的集合V，它有加法和数量乘法两种运算。
      2. 几何空间V的一个非空子集U如果对于向量的加法和数乘都封闭，则称U是V的一个子空间。
@@ -187,9 +314,6 @@ Section props.
   Section veyes.
     Context {n : nat}.
     Notation veyes := (veyes 0 1).
-    Notation lcomb := (@lcomb _ (vec n) vadd vzero vcmul n).
-    Notation lindep := (@lindep _ Azero (vec n) vadd vzero vcmul).
-    Notation lrepr := (@lrepr _ (vec n) vadd vzero vcmul).
 
     (** 任意向量都能写成自然基的线性组合: v * eyes = v *)
     Lemma lcomb_veyes : forall v : vec n, lcomb v (veyes n) = v.
@@ -236,6 +360,7 @@ Section props.
 End props.
 
 
+(*
 Section examples.
   Import VectorR.
   Notation vlcomb := (@vlcomb _ _ vadd vzero vcmul).
@@ -269,5 +394,5 @@ Section examples.
   End ex1.
 
 End examples.
-  
+ *)
 

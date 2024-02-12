@@ -263,6 +263,16 @@ Proof.
   rewrite Nat.pred_succ. apply Nat.succ_lt_mono; auto.
 Qed.
 
+(** m < n -> n > m *)
+Lemma lt_imply_gt : forall m n : nat, m < n -> n > m.
+Proof. intros. lia. Qed.
+
+(** m > n -> n < m *)
+Lemma gt_imply_lt : forall m n : nat, m > n -> n < m.
+Proof. intros. lia. Qed.
+
+Lemma lt_ge_dec : forall x y : nat, {x < y} + {x >= y}.
+Proof. intros. destruct (le_gt_dec y x); auto. Defined.
 
 (** m >= n -> m <> n -> m > n *)
 Lemma nat_ge_neq_imply_gt : forall m n : nat, m >= n -> m <> n -> m > n.
@@ -272,12 +282,12 @@ Proof. intros. lia. Qed.
 Lemma nat_le_neq_imply_lt : forall m n : nat, m <= n -> m <> n -> m < n.
 Proof. intros. lia. Qed.
 
-(** n > m -> n <> 0 *)
-Lemma nat_gt_imply_neq0 : forall n m : nat, n > m -> n <> 0.
+(** m > n -> m <> 0 *)
+Lemma nat_gt_imply_neq0 : forall m n : nat, m > n -> m <> 0.
 Proof. intros. lia. Qed.
 
-(** n < m -> m <> 0 *)
-Lemma nat_lt_imply_neq0 : forall n m : nat, n < m -> m <> 0.
+(** m < n -> n <> 0 *)
+Lemma nat_lt_imply_neq0 : forall m n : nat, m < n -> n <> 0.
 Proof. intros. lia. Qed.
 
 (** m <= i -> i < m + n -> i - m < n *)
