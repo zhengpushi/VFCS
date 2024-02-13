@@ -2452,9 +2452,8 @@ Section Theory.
   
   Context {AeqDec : Dec (@eq A)}.
   
-  (* a * b = 0 -> a = 0 \/ b = 0 *)
-  Lemma field_mul_eq0_reg : forall a b : A,
-      a * b = 0 -> a = 0 \/ b = 0.
+  (** a * b = 0 -> a = 0 \/ b = 0 *)
+  Lemma field_mul_eq0_reg : forall a b : A, a * b = 0 -> a = 0 \/ b = 0.
   Proof.
     intros. destruct (Aeqdec b 0); auto.
     assert (a * b * /b = 0 * /b). rewrite H. auto.
@@ -2462,6 +2461,10 @@ Section Theory.
     rewrite associative in H0. rewrite field_mulInvR in H0; auto.
     rewrite identityRight in H0. auto.
   Qed.
+  
+  (** a <> 0 -> b <> 0 -> a * b <> 0 *)
+  Lemma field_mul_neq0_if_neq0_neq0 : forall a b : A, a <> 0 -> b <> 0 -> a * b <> 0.
+  Proof. intros. intro. apply field_mul_eq0_reg in H1. destruct H1; auto. Qed.
 
   (* a * a = 0 -> a = 0 *)
   Lemma field_sqr_eq0_reg : forall a : A, a * a = 0 -> a = 0.

@@ -6,6 +6,9 @@
   purpose   : Linear space
   author    : ZhengPu Shi
   date      : 2024.01
+
+  reference :
+  1. 丘维声《高等代数》，第2版，清华大学出版社，2019
   
   remark    :
   1. 向量空间推广到一般情形后称为线性空间，也简称为向量空间。
@@ -345,8 +348,13 @@ End self_SubSpace.
 (** ** Linearly combination (线性组合) *)
 Section lcomb.
   Context `{HLinearSpace : LinearSpace}.
+  Add Field field_inst : (make_field_theory F).
 
   Notation "0" := Azero : A_scope.
+  Infix "+" := Aadd : A_scope.
+  Notation "- a" := (Aopp a) : A_scope.
+  Notation Asub a b := (a + - b).
+  Infix "-" := Asub : A_scope.
   Notation vzero := (vzero 0%A).
   Notation vadd := (@vadd _ Aadd).
   Notation vopp := (@vopp _ Aopp).
@@ -446,6 +454,39 @@ Section lcomb.
     intros. rewrite !lcomb_coef_vinsert. rewrite associative. f_equal.
     replace (vs i) with (Aone \.* vs i) at 3 by apply ls_vcmul_1_l.
     rewrite <- ls_vcmul_aadd. f_equal. group.
+  Qed.
+
+  (** (vset cs i a) * vs = cs * vs + (a - cs $ i) * (vs $ i) *)
+  Lemma lcomb_coef_vset :
+    forall {n} (cs : @vec A n) (vs : @vec V n) (i : fin n) (a : A),
+      lcomb (vset cs i a) vs = lcomb cs vs + (a - cs $ i)%A \.* (vs $ i).
+  Proof.
+    intros. unfold lcomb.
+    replace ((a - cs$i)%A \.* vs$i)
+      with (vsum (vset (@Vector.vzero _ Vzero n) i ((a - cs$i)%A \.* vs i))).
+    - apply vsum_add. intros j. rewrite !vnth_vmap2. destruct (i ??= j).
+      + rewrite e. rewrite !vnth_vset_eq. rewrite <- ls_vcmul_aadd. f_equal. ring.
+      + rewrite !vnth_vset_neq; auto. rewrite vnth_vzero. monoid.
+    - apply vsum_unique with (i:=i).
+      + rewrite vnth_vset_eq. auto.
+      + intros. rewrite vnth_vset_neq; auto.
+  Qed.
+
+  (** cs * (vset vs i u) = cs * vs + (cs $ i) * (u - vs $ i) *)
+  Lemma lcomb_vec_vset :
+    forall {n} (cs : @vec A n) (vs : @vec V n) (i : fin n) (u : V),
+      lcomb cs (vset vs i u) = lcomb cs vs + (cs $ i) \.* (u - vs $ i).
+  Proof.
+    intros. unfold lcomb.
+    replace (cs$i \.* (u - vs$i))
+      with (vsum (vset (@Vector.vzero _ Vzero n) i (cs$i \.* (u - vs$i)))).
+    - apply vsum_add. intros j. rewrite !vnth_vmap2. destruct (i ??= j).
+      + rewrite e. rewrite !vnth_vset_eq. rewrite <- ls_vcmul_vadd. f_equal.
+        rewrite commutative. rewrite associative. rewrite inverseLeft. monoid.
+      + rewrite !vnth_vset_neq; auto. rewrite vnth_vzero. monoid.
+    - apply vsum_unique with (i:=i).
+      + rewrite vnth_vset_eq. auto.
+      + intros. rewrite vnth_vset_neq; auto.
   Qed.
 
   (** lcomb (vremove cs i) (vremove vs i) = (lcomb cs vs) - (cs.i * vs.i) *)
@@ -741,7 +782,6 @@ Section ldep.
   Proof.
     unfold lindep. intros. intro. destruct H. apply vtailN_ldep_imply_ldep; auto.
   Qed.
-
   
   (** 线性相关 <-> 其中至少有一个向量可以由其余向量线性表示 *)
   Lemma ldep_iff_exist_lrepr : forall {n} (vs : @vec V (S n)),
@@ -842,6 +882,41 @@ Section ldep.
      (2) 上述齐次线性方程组只有零解
      (3) |A| <> 0
    *)
+
+  (** p90, 例7，替换定理：
+      设向量组v1,...,vn线性无关，u=c1v1+...+cnvn。若ci<>0，则用u替换vi后得到的
+      向量组v1,...,v(i-1),u,v(i+1),...,vn也线性相关 *)
+  Lemma lindep_subst : forall {n} (vs : @vec V n) (cs : @vec A n) (i : fin n),
+      lindep vs -> cs $ i <> Azero -> lindep (vset vs i (lcomb cs vs)).
+  Proof.
+    intros. unfold lindep, ldep in *. intro. destruct H. destruct H1 as [ds [H1 H2]].
+    (* Let cs=c1,c2,...,cn; ds=d1,d2,...,dn. That is,
+       d1v1+d2v2+...+di(c1v1+c2v2+...+cnvn) + ... + dnvn = 0
+       ---------------------------------------------------------------------
+       cs' := {d1,d2,...,d(i-1),0,d(i+1),...,dn} + di*{c1,c2,...,cn} *)
+    exists (vadd (Aadd:=Aadd) (vset ds i Azero) (vcmul (Amul:=Amul) (ds $ i) cs)). split.
+    - apply vneq_iff_exist_vnth_neq in H1. destruct H1 as [j H1].
+      apply vneq_iff_exist_vnth_neq.
+      destruct (i ??= j).
+      + (* if i = j, then: 0 + ds.i*cs.i <> 0 *)
+        rewrite <- e in *.
+        exists i. rewrite vnth_vadd. rewrite vnth_vset_eq. rewrite identityLeft.
+        rewrite vnth_vcmul. rewrite vnth_vzero in *.
+        apply field_mul_neq0_if_neq0_neq0; auto.
+      + (* if i <> j, case (ds.i =? 0) *)
+        destruct (Aeqdec (ds$i) Azero).
+        * (* if ds.i = 0, ds.j <> 0, then: ds.j + 0 <> 0 *)
+          exists j. rewrite e. rewrite vcmul_0_l. rewrite vadd_0_r.
+          rewrite vnth_vset_neq; auto.
+        * (* if ds.i <> 0, then: 0 + ds.i*cs.i <> 0 *)
+          exists i. rewrite vnth_vadd. rewrite vnth_vset_eq. rewrite vnth_vcmul.
+          monoid. apply field_mul_neq0_if_neq0_neq0; auto.
+    - rewrite <- H2 at 2.
+      rewrite lcomb_coef_add. rewrite lcomb_coef_cmul. rewrite lcomb_coef_vset.
+      rewrite lcomb_vec_vset. rewrite ls_vcmul_vadd. asemigroup.
+      rewrite ls_vcmul_aadd. rewrite ls_vcmul_vopp. rewrite ls_vcmul_opp at 1.
+      rewrite ls_vcmul_0_l at 1. amonoid.
+  Qed.
 
 End ldep.
 

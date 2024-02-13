@@ -749,6 +749,28 @@ Section vremove.
         f_equal. cbv. apply sig_eq_iff; auto. destruct j; lia.
     - destruct (_??=_)%nat; try lia. f_equal. cbv. apply sig_eq_iff; auto.
   Qed.
+
+  (* (** i <> j -> vremove (vset v i a) j = vremove v j *) *)
+  (* Lemma vremove_vset : forall {n} (v : @vec A (S n)) (i j : fin (S n)) (a : A), *)
+  (*     i <> j -> vremove (vset v i a) j = vremove v j. *)
+  (* Proof. *)
+  (*   intros. apply veq_iff_vnth; intros k. *)
+  (*   pose proof (fin2nat_lt i). pose proof (fin2nat_lt j). pose proof (fin2nat_lt k). *)
+  (*   destruct (fin2nat k ??< fin2nat j). *)
+  (*   - rewrite !vnth_vremove_lt; auto. *)
+  (*     assert (fin2nat k < S n). lia. *)
+  (*     rewrite !nth_v2f with (H:=H3). *)
+  (*     destruct k as [k Hk]. simpl. *)
+  (*     rewrite nat2fin_fin2nat. *)
+  (*     unfold vset. *)
+  (*     rewrite vnth_vset_neq; auto. *)
+  (*     destruct i, j, k. simpl in *. intro. apply sig_eq_iff in H4. subst. lia. *)
+  (*     ? *)
+  (*     rewrite nat2fin_fin2nat. *)
+  (*   H2 : i <> j *)
+  (* ============================ *)
+  (* vremove vs j = vremove (vset vs i (lcomb cs vs)) j *)
+
   
 End vremove.
 
