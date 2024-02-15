@@ -71,6 +71,17 @@ Proof.
   apply veq_iff_vnth. intros j. auto.
 Qed.
 
+Lemma mneq_iff_exist_mnth_neq : forall {A r c} (M N : mat A r c),
+    M <> N <-> (exists i j, M $ i $ j <> N $ i $ j).
+Proof.
+  intros. rewrite meq_iff_mnth. split; intros.
+  - apply not_all_ex_not in H. destruct H as [i H].
+    apply not_all_ex_not in H. destruct H as [j H]. exists i, j; auto.
+  - destruct H as [i [j H]].
+    apply ex_not_not_all; auto. exists i.
+    apply ex_not_not_all; auto. exists j. auto.
+Qed.
+
 
 (** ** Convert between nat-indexing-Function (f) and matrix *)
 Section f2m_m2f.

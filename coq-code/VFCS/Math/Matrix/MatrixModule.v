@@ -59,11 +59,16 @@ Module BasicMatrixTheory (E : ElementType).
   (** Get n-th element of a matrix *)
   (* M $ i $ j *)
 
-  (** meq and mnth should satisfy this constraint *)
+  (** Two matrices are equal, iff, element-wise equal *)
   Lemma meq_iff_mnth : forall {r c : nat} (M N : mat r c),
       M = N <-> (forall i j, M $ i $ j = N $ i $ j).
   Proof. intros. apply meq_iff_mnth. Qed.
 
+  (** Two matrices are not equal, iff, exist one element-wise not equal *)
+  Lemma mneq_iff_exist_mnth_neq : forall {r c} (M N : mat r c),
+      M <> N <-> (exists i j, M $ i $ j <> N $ i $ j).
+  Proof. intros. apply mneq_iff_exist_mnth_neq. Qed.
+  
 
   (* ======================================================================= *)
   (** ** Convert between dlist and matrix *)
@@ -226,6 +231,23 @@ Module RingMatrixTheory (E : RingElementType).
 
   (** Zero matrix *)
   Definition mat0 {r c : nat} : mat r c := mat0 (Azero:=Azero).
+  
+  (** mat0 \T = mat0 *)
+  Lemma mtrans_mat0 : forall {r c : nat}, (@mat0 r c)\T = mat0.
+  Proof. intros. apply mtrans_mat0. Qed.
+
+  (** mat0[i,j] = 0 *)
+  Lemma mnth_mat0 : forall {r c} i j, @mat0 r c $ i $ j = Azero.
+  Proof. intros. apply mnth_mat0. Qed.
+
+  (** row mat0 i = vzero *)
+  Lemma mrow_mat0 : forall {r c} i, @mat0 r c $ i = vzero Azero.
+  Proof. intros. apply mrow_mat0. Qed.
+
+  (** col mat0 i = vzero *)
+  Lemma mcol_mat0 : forall {r c} j, (fun k => @mat0 r c $ k $ j) = vzero Azero.
+  Proof. intros. apply mcol_mat0. Qed.
+
 
   (** Identity matrix *)
   Definition mat1 {n : nat} : mat n n := mat1 (Azero:=Azero) (Aone:=Aone).
@@ -233,10 +255,6 @@ Module RingMatrixTheory (E : RingElementType).
   (** mat1 is diagonal matrix *)
   Lemma mat1_diag : forall {n : nat}, mdiag (@mat1 n).
   Proof. intros. apply mat1_diag. Qed.
-  
-  (** mat0 \T = mat0 *)
-  Lemma mtrans_mat0 : forall {r c : nat}, (@mat0 r c) \T = mat0.
-  Proof. intros. apply mtrans_mat0. Qed.
   
   (** mat1 \T = mat1 *)
   Lemma mtrans_mat1 : forall {n : nat}, (@mat1 n) \T = mat1.

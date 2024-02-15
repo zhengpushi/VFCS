@@ -14,7 +14,7 @@
  *)
 
 
-Require Export LinearSpace.
+Require Export VectorSpace.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -23,7 +23,7 @@ Generalizable Variable A Aadd Azero Aopp Amul Aone Ainv Ale Alt Altb Aleb a2r.
 
 Open Scope A_scope.
 Open Scope vec_scope.
-Open Scope LinearSpace_scope.
+Open Scope VectorSpace_scope.
 
 
 (* ===================================================================== *)
@@ -39,7 +39,7 @@ Section vectorSpace.
   Notation vcmul := (@vcmul _ Amul).
   
   #[export] Instance vectorSpace {n : nat} :
-    LinearSpace (V:=vec n) vadd vzero vopp vcmul.
+    VectorSpace (V:=vec n) vadd vzero vopp vcmul.
   Proof.
     constructor; try apply vadd_AGroup; intros.
     apply vcmul_1_l. rewrite vcmul_assoc; auto.
@@ -109,7 +109,7 @@ Section props.
         destruct (_??<_) in H; try lia. rewrite H. apply ring_mul_0_r.
     Qed.
 
-    #[export] Instance topKWithZero_SubSpace : LinearSpace Hadd Hzero Hopp Hcmul :=
+    #[export] Instance topKWithZero_SubSpace : VectorSpace Hadd Hzero Hopp Hcmul :=
       makeSubSpace topKWithZero_SubSpaceStruct.
   End topKWithZero_SubSpace.
 
@@ -133,7 +133,7 @@ Section props.
         destruct (_??=_)%nat in H; try lia. rewrite H. apply ring_mul_0_r.
     Qed.
 
-    #[export] Instance oddWithZero_SubSpace : LinearSpace Hadd Hzero Hopp Hcmul :=
+    #[export] Instance oddWithZero_SubSpace : VectorSpace Hadd Hzero Hopp Hcmul :=
       makeSubSpace oddWithZero_SubSpaceStruct.
   End oddWithZero_SubSpace.
 

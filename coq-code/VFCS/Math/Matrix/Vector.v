@@ -468,7 +468,7 @@ Section vinsert.
   Definition vinsert {n} (v : @vec A n) (i : fin (S n)) (a : A) : @vec A (S n).
     intros j. destruct (lt_eq_lt_dec (fin2nat j) (fin2nat i)) as [[H|]|H].
     - refine (v $ (fin2PredRange j _)). apply Nat.lt_le_trans with (fin2nat i); auto.
-      apply Arith_prebase.lt_n_Sm_le. apply fin2nat_lt.
+      apply PeanoNat.lt_n_Sm_le. apply fin2nat_lt.
     - apply a.
     - refine (v $ (fin2PredRangePred j _)).
       apply Nat.lt_lt_0 in H; auto.
@@ -1140,7 +1140,7 @@ Section vconsH_vconsT.
   (** cons at head: [a; v] *)
   Definition vconsH {n} (a : A) (v : @vec A n) : @vec A (S n).
     intros i. destruct (fin2nat i ??= 0)%nat. exact a.
-    assert (0 < fin2nat i). apply Arith_prebase.neq_0_lt_stt. auto.
+    assert (0 < fin2nat i). apply neq_0_lt_stt. auto.
     apply (v $ (fin2PredRangePred i H)).
   Defined.
 
@@ -1435,6 +1435,7 @@ Section vsum.
   (** (∀ i, v.i = 0) -> Σv = 0 *)
   Lemma vsum_eq0 : forall {n} (v : @vec A n), (forall i, v $ i = 0) -> vsum v = 0.
   Proof. intros. unfold vsum. apply fseqsum_eq0. auto. Qed.
+  
 
   (** Convert `vsum` to `seqsum` *)
   Lemma vsum_to_seqsum : forall {n} (v : @vec A n) (g : nat -> A),
@@ -1523,7 +1524,9 @@ Section vsum.
 
   (* if equip a `OrderedARing` *)
   Section OrderedARing.
-    Context `{HOrderedARing : OrderedARing A Aadd Azero Aopp Amul Aone Alt Ale}.
+    Context `{HOrderedARing
+        : OrderedARing A Aadd Azero Aopp Amul Aone Alt Ale Altb Aleb}.
+    (* Check HOrderedARing : Order Alt Ale Altb Aleb. *)
     Infix "*" := (Amul) : A_scope.
     Infix "<" := Alt.
     Infix "<=" := Ale.
@@ -1555,6 +1558,16 @@ Section vsum.
       pose proof (vsum_ge0 v H). pose proof (vsum_ge_any v i H).
       assert (Azero < v$i). apply lt_if_le_and_neq; auto.
       apply lt_trans_lt_le with (v$i); auto.
+    Qed.
+    
+    (** ∑v = 0 -> ∀i,v.i>=0 -> ∀i,v.i=0 *)
+    Lemma vsum_eq0_rev : forall {n} (v : @vec A n),
+        (forall i, 0 <= v $ i) -> vsum v = 0 -> (forall i, v $ i = 0).
+    Proof.
+      intros. destruct (Aeqdec (v$i) 0); auto. exfalso.
+      pose proof (vsum_ge_any v i H). rewrite H0 in H1.
+      specialize (H i).
+      pose proof (@le_antisym _ _ _ _ _ HOrderedARing (v i) 0 H1 H). easy.
     Qed.
     
   End OrderedARing.

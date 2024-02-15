@@ -741,6 +741,9 @@ Proof.
   apply Rsqr_inj; autorewrite with R; auto with R.
 Qed.
 
+Lemma sqrt_0_eq0 : forall r, r = 0 -> sqrt r = 0.
+Proof. intros. rewrite H. ra. Qed.
+  
 Lemma sqrt_le0_eq_0 : forall r, r <= 0 -> sqrt r = 0.
 Proof.
   intros. Transparent sqrt. unfold sqrt. destruct (Rcase_abs r); auto.

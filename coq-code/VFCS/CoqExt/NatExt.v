@@ -245,6 +245,9 @@ Qed.
 (* ######################################################################### *)
 (** * Lost or deprecated lemmas and new lemmas *)
 
+Lemma neq_0_lt_stt : forall n : nat, n <> 0 -> 0 < n.
+Proof. lia. Qed.
+
 (** Coq.Arith.Lt.lt_S_n is deprecated since Coq 8.16.
     1. although coqc suggest us to use Nat.succ_lt_mono,
        but that is a  a bidirectional version, not exactly same as lt_S_n.

@@ -289,7 +289,7 @@ Definition fin2SameRangeAdd {n : nat} (i k:fin n) : fin (n).
   refine (nat2fin x _). unfold x. destruct (_??<_); auto.
   destruct (n ??= 0)%nat.
   - exfalso. subst. apply (fin0_False i).
-  - apply Arith_prebase.neq_0_lt_stt; auto.
+  - apply neq_0_lt_stt; auto.
 Defined.
 
 Lemma fin2nat_fin2SameRangeAdd : forall {n} (i k : fin n),
@@ -313,7 +313,7 @@ Definition fin2SameRangeSucc {n : nat} (i:fin n) : fin (n).
   pose (if S (fin2nat i) ??< n then S (fin2nat i) else 0)%nat as x.
   refine (nat2fin x _). unfold x. destruct (_??<_); auto. destruct (n ??= 0)%nat.
   - clear n0. rewrite e in i. exfalso. apply (fin0_False i).
-  - apply Arith_prebase.neq_0_lt_stt; auto.
+  - apply neq_0_lt_stt; auto.
 Defined.
 
 Lemma fin2nat_fin2SameRangeSucc : forall {n} (i : fin n),
@@ -458,7 +458,7 @@ Qed.
 (** {i < n} -> {m + i < m + n} *)
 Definition fin2AddRangeAddL {m n} (i : fin n) : fin (m + n).
   refine (nat2fin (m + fin2nat i) _).
-  apply (Plus.plus_lt_compat_l_stt). apply fin2nat_lt.
+  apply Nat.add_lt_mono_l. apply fin2nat_lt.
 Defined.
 
 Lemma fin2nat_fin2AddRangeAddL : forall {m n} (i : fin n),
@@ -494,7 +494,7 @@ Qed.
 (** {i < m} -> {i + n < m + n} *)
 Definition fin2AddRangeAddR {m n} (i : fin m) : fin (m + n).
   refine (nat2fin (fin2nat i + n) _).
-  apply (Plus.plus_lt_compat_r_stt). apply fin2nat_lt.
+  apply Nat.add_lt_mono_r. apply fin2nat_lt.
 Defined.
 
 Lemma fin2nat_fin2AddRangeAddR : forall {m n} (i : fin m),
@@ -540,7 +540,7 @@ Proof. intros. unfold fin2PredRangePred. apply fin2nat_nat2fin. Qed.
 (* {i < n} -> {S i < S n} *)
 Definition fin2SuccRangeSucc {n} (i:fin n) : fin (S n).
   refine (nat2fin (S (fin2nat i)) _).
-  apply Arith_prebase.lt_n_S_stt. apply fin2nat_lt.
+  rewrite <- Nat.succ_lt_mono. apply fin2nat_lt.
 Defined.
 
 Lemma fin2nat_fin2SuccRangeSucc : forall {n} (i:fin n),

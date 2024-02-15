@@ -3,12 +3,14 @@
   This file is part of CoqExt. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
-  purpose   : Linear space
+  purpose   : Vector Space
   author    : ZhengPu Shi
   date      : 2024.01
 
   reference :
   1. 丘维声《高等代数》，第2版，清华大学出版社，2019
+  2. Handbook of linear algebra, Leslie Hogben
+Linear Algebra As an Introduction to Abstract Mathematics
   
   remark    :
   1. 向量空间推广到一般情形后称为线性空间，也简称为向量空间。
@@ -27,12 +29,12 @@ Generalizable Variables A Aadd Azero Aopp Amul Aone Ainv Adiv Alt Ale
 Generalizable Variables B Badd Bzero.
 Generalizable Variables C Cadd Czero.
 
-Declare Scope LinearSpace_scope.
-Delimit Scope LinearSpace_scope with VS.
+Declare Scope VectorSpace_scope.
+Delimit Scope VectorSpace_scope with VS.
 
 Open Scope A_scope.
 Open Scope vec_scope.
-Open Scope LinearSpace_scope.
+Open Scope VectorSpace_scope.
 
 
 (* ===================================================================== *)
@@ -75,7 +77,8 @@ End vsum.
 (* ===================================================================== *)
 (** ** Linear Space *)
 
-Class LinearSpace `{F : Field} {V : Type} (Vadd : V -> V -> V) (Vzero : V)
+(* elements of V called vectors, and elements of K called scalars  *)
+Class VectorSpace `{F : Field} {V : Type} (Vadd : V -> V -> V) (Vzero : V)
   (Vopp : V -> V) (Vcmul : A -> V -> V) := {
     ls_vaddC :: Commutative Vadd;
     ls_vaddA :: Associative Vadd;
@@ -88,19 +91,19 @@ Class LinearSpace `{F : Field} {V : Type} (Vadd : V -> V -> V) (Vzero : V)
   }.
 
 (** A field itself is a linear space *)
-Section field_LinearSpace.
+Section field_VectorSpace.
   Context `{HField : Field}.
   Add Field field_inst : (make_field_theory HField).
   
-  #[export] Instance field_LinearSpace : LinearSpace Aadd Azero Aopp Amul.
+  #[export] Instance field_VectorSpace : VectorSpace Aadd Azero Aopp Amul.
   Proof. split_intro; try field. Qed.
-End field_LinearSpace.
+End field_VectorSpace.
 
 (** a real function is a linear space *)
 (* ToDo *)
 
 Section props.
-  Context `{HLinearSpace : LinearSpace}.
+  Context `{HVectorSpace : VectorSpace}.
   Infix "+" := Aadd : A_scope.
   Notation "0" := Azero : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
@@ -112,12 +115,12 @@ Section props.
   Notation Adiv := (fun a b => a * (/b)).
   Infix "/" := Adiv : A_scope.
 
-  Infix "+" := Vadd : LinearSpace_scope.
-  Notation "0" := Vzero : LinearSpace_scope.
-  Notation "- v" := (Vopp v) : LinearSpace_scope.
+  Infix "+" := Vadd : VectorSpace_scope.
+  Notation "0" := Vzero : VectorSpace_scope.
+  Notation "- v" := (Vopp v) : VectorSpace_scope.
   Notation Vsub u v := (u + -v).
-  Infix "-" := Vsub : LinearSpace_scope.
-  Infix "\.*" := Vcmul : LinearSpace_scope.
+  Infix "-" := Vsub : VectorSpace_scope.
+  Infix "\.*" := Vcmul : VectorSpace_scope.
 
   (** 0 + v = v *)
   #[export] Instance ls_vaddIdL : IdentityLeft Vadd 0.
@@ -276,7 +279,7 @@ End props.
    3. H is closed under scalar multiplication. *)
 
 (* The struct of a subspace. Here, H := {x | P x} *)
-Class SubSpaceStruct `{HLinearSpace : LinearSpace} (P : V -> Prop) := {
+Class SubSpaceStruct `{HVectorSpace : VectorSpace} (P : V -> Prop) := {
     ss_zero_keep : P Vzero;
     ss_add_closed : forall {u v : sig P}, P (Vadd u.val v.val);
     ss_cmul_closed : forall {a : A} {v : sig P}, P (Vcmul a v.val);
@@ -300,7 +303,7 @@ Section makeSubSpace.
   Defined.
   Definition Hcmul (a : A) (v : H) : H := exist _ (Vcmul a v.val) ss_cmul_closed.
 
-  Lemma makeSubSpace : LinearSpace Hadd Hzero Hopp Hcmul.
+  Lemma makeSubSpace : VectorSpace Hadd Hzero Hopp Hcmul.
   Proof.
     repeat constructor; unfold Hadd, Hcmul; intros.
     - apply sig_eq_iff. apply commutative.
@@ -318,7 +321,7 @@ Arguments makeSubSpace {_ _ _ _ _ _ _ _ _ _ _ _ _ _ _} ss.
 
 (** 零子空间 *)
 Section zero_SubSpace.
-  Context `{HLinearSpace : LinearSpace}.
+  Context `{HVectorSpace : VectorSpace}.
   
   Instance zero_SubSpaceStruct : SubSpaceStruct (fun v => v = Vzero).
   Proof.
@@ -327,18 +330,18 @@ Section zero_SubSpace.
     - intros. rewrite v.prf. apply ls_vcmul_0_r.
   Qed.
 
-  #[export] Instance zero_SubSpace : LinearSpace Hadd Hzero Hopp Hcmul :=
+  #[export] Instance zero_SubSpace : VectorSpace Hadd Hzero Hopp Hcmul :=
     makeSubSpace zero_SubSpaceStruct.
 End zero_SubSpace.
 
 (** 线性空间本身也是其子空间 *)
 Section self_SubSpace.
-  Context `{HLinearSpace : LinearSpace}.
+  Context `{HVectorSpace : VectorSpace}.
   
   Instance self_SubSpaceStruct : SubSpaceStruct (fun v => True).
   Proof. constructor; auto. Qed.
 
-  #[export] Instance self_SubSpace : LinearSpace Hadd Hzero Hopp Hcmul :=
+  #[export] Instance self_SubSpace : VectorSpace Hadd Hzero Hopp Hcmul :=
     makeSubSpace self_SubSpaceStruct.
   
 End self_SubSpace.
@@ -347,7 +350,7 @@ End self_SubSpace.
 (* ===================================================================== *)
 (** ** Linearly combination (线性组合) *)
 Section lcomb.
-  Context `{HLinearSpace : LinearSpace}.
+  Context `{HVectorSpace : VectorSpace}.
   Add Field field_inst : (make_field_theory F).
 
   Notation "0" := Azero : A_scope.
@@ -365,12 +368,12 @@ Section lcomb.
   Infix "-" := vsub : vec_scope.
   Infix "\.*" := vcmul : vec_scope.
 
-  Infix "+" := Vadd : LinearSpace_scope.
-  Notation "0" := Vzero : LinearSpace_scope.
-  Notation "- v" := (Vopp v) : LinearSpace_scope.
+  Infix "+" := Vadd : VectorSpace_scope.
+  Notation "0" := Vzero : VectorSpace_scope.
+  Notation "- v" := (Vopp v) : VectorSpace_scope.
   Notation Vsub u v := (u + -v).
-  Infix "-" := Vsub : LinearSpace_scope.
-  Infix "\.*" := Vcmul : LinearSpace_scope.
+  Infix "-" := Vsub : VectorSpace_scope.
+  Infix "\.*" := Vcmul : VectorSpace_scope.
   Notation vsum := (@vsum _ Vadd 0 _).
   
   (** Linear combination of v1,v2, ..., vn by coefficients c1,c2, ..., cn *)
@@ -537,9 +540,9 @@ Section lcomb.
 End lcomb.
 
 
-(** ** 向量(向量组)可由向量组“线性表示(线性表出)”  *)
+(** ** linearly representable *)
 Section lrepr.
-  Context `{HLinearSpace : LinearSpace}.
+  Context `{HVectorSpace : VectorSpace}.
 
   (* Notation "0" := Azero : A_scope. *)
   (* Notation vzero := (vzero 0%A). *)
@@ -550,11 +553,11 @@ Section lrepr.
   (* Notation "- v" := (vopp v) : vec_scope. *)
   (* Infix "-" := vsub : vec_scope. *)
 
-  (* Infix "+" := Vadd : LinearSpace_scope. *)
-  (* Notation "0" := Vzero : LinearSpace_scope. *)
-  (* Notation "- v" := (Vopp v) : LinearSpace_scope. *)
+  (* Infix "+" := Vadd : VectorSpace_scope. *)
+  (* Notation "0" := Vzero : VectorSpace_scope. *)
+  (* Notation "- v" := (Vopp v) : VectorSpace_scope. *)
   (* Notation Vsub u v := (u + -v). *)
-  (* Infix "-" := Vsub : LinearSpace_scope. *)
+  (* Infix "-" := Vsub : VectorSpace_scope. *)
   (* Notation vsum := (@vsum _ Vadd 0 _). *)
   Notation lcomb := (@lcomb _ _ Vadd Vzero Vcmul).
 
@@ -568,6 +571,31 @@ Section lrepr.
   (* 向量组 vs 中的任意向量 v 可由 vs 线性表示 *)
   Lemma lrepr_in : forall {n} (vs : @vec V n), vforall vs (lrepr vs).
   Proof. intros. hnf. intros. hnf. exists (veye Azero Aone i). apply lcomb_coef_veye. Qed.
+  
+End lrepr.
+
+
+(** ** 向量组可由向量组“线性表示(线性表出)” *)
+Section lreprs.
+  Context `{HVectorSpace : VectorSpace}.
+
+  (* Notation "0" := Azero : A_scope. *)
+  (* Notation vzero := (vzero 0%A). *)
+  (* Notation vadd := (@vadd _ Aadd). *)
+  (* Notation vopp := (@vopp _ Aopp). *)
+  (* Notation vsub := (@vsub _ Aadd Aopp). *)
+  (* Infix "+" := vadd : vec_scope. *)
+  (* Notation "- v" := (vopp v) : vec_scope. *)
+  (* Infix "-" := vsub : vec_scope. *)
+
+  (* Infix "+" := Vadd : VectorSpace_scope. *)
+  (* Notation "0" := Vzero : VectorSpace_scope. *)
+  (* Notation "- v" := (Vopp v) : VectorSpace_scope. *)
+  (* Notation Vsub u v := (u + -v). *)
+  (* Infix "-" := Vsub : VectorSpace_scope. *)
+  (* Notation vsum := (@vsum _ Vadd 0 _). *)
+  Notation lcomb := (@lcomb _ _ Vadd Vzero Vcmul).
+  Notation lrepr := (@lrepr _ _ Vadd Vzero Vcmul).
 
   (* 向量组 vs 可线性表示向量组 us *)
   Definition lreprs {r s} (vs : @vec V s) (us : @vec V r) : Prop :=
@@ -583,13 +611,25 @@ Section lrepr.
     exists (veye Azero Aone i). rewrite lcomb_coef_veye. auto.
   Qed.
   
-End lrepr.
+End lreprs.
+
+
+(* ===================================================================== *)
+(** ** Equivalent vectors *)
+(* Section lindepms. *)
+(*   Context `{HVectorSpace : VectorSpace}. *)
+(*   Notation lcomb := (@lcomb _ _ Vadd Vzero Vcmul). *)
+(*   (* Notation lindep := (@lindep _ Azero _ Vadd Vzero Vcmul). *) *)
+(*   (* Notation lspan := (@lspan _ _ Vadd Vzero Vcmul). *) *)
+
+  
+(* End lindepms. *)
 
 
 (* ===================================================================== *)
 (** ** Span (由向量组生成(张成)的子空间 *)
 Section lspan.
-  Context `{HLinearSpace : LinearSpace}.
+  Context `{HVectorSpace : VectorSpace}.
   Notation lrepr := (@lrepr _ _ Vadd Vzero Vcmul).
 
   Instance lspan_Struct {n} (vs : @vec V n) : SubSpaceStruct (lrepr vs).
@@ -605,7 +645,7 @@ Section lspan.
   Qed.
 
   (** 由向量组 vs 张成的子空间，记作 <vs> 或 <v1,v2,...,vn> *)
-  #[export] Instance lspan {n} (vs : @vec V n) : LinearSpace Hadd Hzero Hopp Hcmul :=
+  #[export] Instance lspan {n} (vs : @vec V n) : VectorSpace Hadd Hzero Hopp Hcmul :=
     makeSubSpace (lspan_Struct vs).
 End lspan.
 
@@ -616,7 +656,7 @@ End lspan.
 (* ===================================================================== *)
 (** ** Linear Dependent, Linear Independent *)
 Section ldep.
-  Context `{HLinearSpace : LinearSpace}.
+  Context `{HVectorSpace : VectorSpace}.
   Context {AeqDec : Dec (@eq A)}.
 
   Notation "- a" := (Aopp a) : A_scope.
@@ -626,8 +666,8 @@ Section ldep.
   Notation Adiv a b := (a * / b).
   Infix "/" := Adiv : A_scope.
 
-  Infix "+" := Vadd : LinearSpace_scope.
-  Notation "0" := Vzero : LinearSpace_scope.
+  Infix "+" := Vadd : VectorSpace_scope.
+  Notation "0" := Vzero : VectorSpace_scope.
   Notation vzero := (vzero Azero).
   Notation vsub := (@vsub _ Aadd Aopp).
   Infix "-" := vsub : vec_scope.
@@ -656,12 +696,20 @@ Section ldep.
   Qed.
 
   (** 使用线性无关的向量组vs作出的两种线性组合时，必然是相同的系数 *)
-  Lemma lindep_imply_coef_uniq : forall {n} (vs : @vec V n) c1 c2,
+  Lemma lindep_imply_coef_same : forall {n} (vs : @vec V n) c1 c2,
       lindep vs -> lcomb c1 vs = lcomb c2 vs -> c1 = c2.
   Proof.
     intros. rewrite lindep_iff_coef0 in H. specialize (H (c1 - c2)).
     apply vsub_eq0_iff_eq. apply H. rewrite lcomb_coef_sub. rewrite H0.
     apply ls_vadd_vopp_r.
+  Qed.
+
+  (** 若向量组vs线性无关，且向量u可由vs线性表出，则表出方式唯一 *)
+  Lemma lindep_imply_coef_uniq : forall {n} (vs : @vec V n) u,
+      lindep vs -> lrepr vs u -> exists ! cs, u = lcomb cs vs.
+  Proof.
+    intros. unfold lrepr in H0. destruct H0 as [cs H0]. exists cs. hnf. split; auto.
+    intros. rewrite <- H0 in H1. apply lindep_imply_coef_same in H1; auto.
   Qed.
 
   (** 包含零向量的向量组，必定线性相关 *)
@@ -921,11 +969,22 @@ Section ldep.
 End ldep.
 
 
+(* ===================================================================== *)
+(** ** Maximal linearly independent system *)
+Section lindepms.
+  Context `{HVectorSpace : VectorSpace}.
+  Notation lcomb := (@lcomb _ _ Vadd Vzero Vcmul).
+  Notation lindep := (@lindep _ Azero _ Vadd Vzero Vcmul).
+  (* Notation lspan := (@lspan _ _ Vadd Vzero Vcmul). *)
+
+  
+End lindepms.
+
 (*
 (* ===================================================================== *)
 (** ** Basis *)
 Section lbasis.
-  Context `{HLinearSpace : LinearSpace}.
+  Context `{HVectorSpace : VectorSpace}.
   Notation lcomb := (@lcomb _ _ Vadd Vzero Vcmul).
   Notation lindep := (@lindep _ Azero _ Vadd Vzero Vcmul).
   Notation lspan := (@lspan _ _ Vadd Vzero Vcmul).
@@ -960,9 +1019,9 @@ End lbasis.
 (** ** Linear Transformations *)
 Section ltrans.
   Context `{HField : Field A Aadd Azero Aopp Amul Aone Ainv}.
-  Context `(HV : @LinearSpace A Aadd Azero Aopp Amul Aone Ainv HField
+  Context `(HV : @VectorSpace A Aadd Azero Aopp Amul Aone Ainv HField
                    V Vadd Vzero Vopp Vcmul).
-  Context `(HW : @LinearSpace A Aadd Azero Aopp Amul Aone Ainv HField
+  Context `(HW : @VectorSpace A Aadd Azero Aopp Amul Aone Ainv HField
                    W Wadd Wzero Wopp Wcmul).
   Notation Vsub u v := (Vadd u (Vopp v)).
   Notation Wsub u v := (Wadd u (Wopp v)).
