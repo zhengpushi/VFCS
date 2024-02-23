@@ -74,10 +74,10 @@ VFCS/Math/Matrix/MatrixZ.v
 VFCS/Math/Matrix/MatrixQ.v
 VFCS/Math/Matrix/MatrixQc.v
 # VFCS/Math/Matrix/MatrixR.v
+VFCS/Math/Matrix/MatrixC.v
+VFCS/Math/Matrix/MatrixRFun.v
 
 # VFCS/Math/Matrix/RowColVectorModule.v
-# VFCS/Math/Matrix/MatrixRFun.v
-# VFCS/Math/Matrix/MatrixC.v
 
 # VFCS/Math/LinearAlgebra/PermutationExt.v
 

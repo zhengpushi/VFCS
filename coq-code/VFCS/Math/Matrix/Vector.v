@@ -2727,7 +2727,7 @@ End vunit.
 
 
 (* ======================================================================= *)
-(** ** Orthogonal vectors *)
+(** ** Orthogonal vectors 正交的两个向量 *)
 Section vorth.
   (* Two vectors, u and v, in an inner product space v, are orthogonal (also called 
      perpendicular) if their inner-product is zero. It can be denoted as `u ⟂ v` *)
@@ -2785,23 +2785,6 @@ Section vorth.
       - apply vorth_comm in H0. apply vorth_comm. apply vorth_vcmul_l; auto.
     Qed.
   End Dec_Field.
-
-  
-  (* (** vnorm u _|_ v <-> u _|_ v *) *)
-  (* Lemma vorth_vnorm_l : forall {n} (u v : vec n), u <> vzero -> vnorm u _|_ v <-> u _|_ v. *)
-  (* Proof. *)
-  (*   intros. unfold vorth, vnorm in *. rewrite vdot_vcmul_l. autounfold with A. *)
-  (*   assert (1 * / (||u||) <> 0)%R; ra. *)
-  (*   apply Rmult_integral_contrapositive_currified; ra. *)
-  (*   apply Rinv_neq_0_compat; auto. *)
-  (*   apply vlen_neq0_iff_neq0; auto. *)
-  (* Qed. *)
-
-  (* (** u _|_ vnorm v <-> u _|_ v *) *)
-  (* Lemma vorth_vnorm_r : forall {n} (u v : vec n), v <> vzero -> u _|_ vnorm v -> u _|_ v. *)
-  (* Proof. *)
-  (*   intros. apply vorth_comm. apply vorth_comm in H0. apply vorth_vnorm_l; auto. *)
-  (* Qed. *)
   
 End vorth.
 
