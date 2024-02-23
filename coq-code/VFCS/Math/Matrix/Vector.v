@@ -33,6 +33,7 @@ Require Export Fin Sequence Fsequence.
 Require Import Extraction.
 
 Generalizable Variable A Aadd Azero Aopp Amul Aone Ainv Ale Alt Altb Aleb a2r.
+Generalizable Variable B Badd Bzero.
 
 (** Control the scope *)
 Open Scope R_scope.
@@ -95,6 +96,10 @@ Qed.
 #[export] Instance veq_dec : forall {A n} {AeqDec : Dec (@eq A)} {Azero : A},
     Dec (@eq (@vec A n)).
 Proof. intros. constructor. apply Aeqdec. Qed.
+
+(** The equality of 0-D vector *)
+Lemma v0eq : forall {A} (u v : @vec A 0), u = v.
+Proof. intros. apply veq_iff_vnth. intros. exfalso. apply fin0_False; auto. Qed.
 
 (** The equality of 1-D vector *)
 Lemma v1eq_iff : forall {A} (u v : @vec A 1),
@@ -286,7 +291,7 @@ Section vec_specific.
   Context {A} {Azero : A}.
   Variable a1 a2 a3 a4 : A.
   
-  Definition mkvec0 : @vec A 0 := vzero Azero. (* anything is ok *)
+  Definition mkvec0 : @vec A 0 := fun _ => Azero. (* anything is ok *)
   Definition mkvec1 : @vec A 1 := l2v Azero _ [a1].
   Definition mkvec2 : @vec A 2 := l2v Azero _ [a1;a2].
   Definition mkvec3 : @vec A 3 := l2v Azero _ [a1;a2;a3].
@@ -397,25 +402,61 @@ End vmap2_sametype.
 
 
 (* ======================================================================= *)
-(** ** Forall of a vector *)
+(** ** A proposition which all elements of the vector hold *)
 Section vforall.
   Context {A : Type}.
 
-  (** Every element satisfy the `P` *)
+  (** Every element of `v` satisfy the `P` *)
   Definition vforall {n} (v : @vec A n) (P : A -> Prop) : Prop := forall i, P (v $ i).
   
 End vforall.
 
 
 (* ======================================================================= *)
-(** ** Exist of a vector *)
+(** ** A proposition which at least one element of the vector holds *)
 Section vexist.
   Context {A : Type}.
 
-  (** There exist element satisfy the `P` *)
+  (** There exist element of `v` satisfy the `P` *)
   Definition vexist {n} (v : @vec A n) (P : A -> Prop) : Prop := exists i, P (v $ i).
   
 End vexist.
+
+
+(* ======================================================================= *)
+(** ** An element belongs to the vector *)
+Section vmem.
+  Context {A : Type}.
+
+  (** Element `a` belongs to the vector `v` *)
+  Definition vmem {n} (v : @vec A n) (a : A) : Prop := vexist v (fun x => x = a).
+  
+End vmem.
+
+
+(* ======================================================================= *)
+(** ** An vector belongs to another vector *)
+Section vmems.
+  Context {A : Type}.
+
+  (** Every element of vector `u` belongs to vector `v` *)
+  Definition vmems {r s} (u : @vec A r) (v : @vec A s) : Prop :=
+    vforall u (fun x => vmem v x).
+  
+End vmems.
+
+
+(* (* ======================================================================= *) *)
+(* (** ** An vector belongs to one but not belong to another *) *)
+(* Section vdiff. *)
+(*   Context {A : Type}. *)
+
+(*   (** Elements belong to vector `u` but not belongs to vector `v` *) *)
+(*   Definition vdiff {r s} (u : @vec A r) (v : @vec A s) : Prop. *)
+(*     Check fun i => vmem  *)
+(*     vforall u (fun x => vmem v x). *)
+  
+(* End vmems. *)
 
 
 (* ======================================================================= *)
@@ -1187,6 +1228,14 @@ Section vconsH_vconsT.
       + erewrite vnth_vconsH_gt0; auto.
         Unshelve. all: try lia. rewrite fin2nat_fin2SuccRangeSucc. lia.
   Qed.
+  
+  (** (a; v) <> 0 <-> a <> 0 \/ v <> 0 *)
+  Lemma vconsH_neq0_iff : forall {n} (v : @vec A n) a,
+      vconsH a v <> vzero Azero <-> a <> Azero \/ v <> vzero Azero.
+  Proof.
+    intros. rewrite vconsH_eq0_iff. split; intros.
+    apply not_and_or in H; auto. apply or_not_and; auto.
+  Qed.
 
   (** v = vconsH (vhead v) (vremoveH v) *)
   Lemma vconsH_vhead_vremoveH : forall {n} (v : @vec A (S n)),
@@ -1201,6 +1250,51 @@ Section vconsH_vconsT.
       Unshelve. lia.
   Qed.
 
+  (** {a ∈ v} + {a ∈ ∉ v} *)
+  Lemma vmem_dec : forall {AeqDec:Dec (@eq A)} {n} (v : @vec A n) (a : A),
+      {vmem v a} + {~vmem v a}.
+  Proof.
+    intros. unfold vmem. unfold vexist. induction n.
+    - right. intro. destruct H as [i H]. apply fin0_False; auto.
+    - rewrite (vconsH_vhead_vremoveH v).
+      destruct (Aeqdec (vhead v) a) as [H|H].
+      + left. exists fin0. rewrite vnth_vconsH_0; auto.
+      + destruct (IHn (vremoveH v)) as [H1|H1].
+        * left. destruct H1 as [i H1]. exists (fin2SuccRangeSucc i).
+          erewrite vnth_vconsH_gt0. rewrite fin2PredRangePred_fin2SuccRangeSucc. auto.
+        * right. intro. destruct H1. destruct H0 as [i H0].
+          destruct (i ??= fin0).
+          ** rewrite vnth_vconsH_0 in H0; auto. easy.
+          ** erewrite vnth_vconsH_gt0 in H0.
+             eexists (fin2PredRangePred i _). apply H0.
+             Unshelve. rewrite fin2nat_fin2SuccRangeSucc. lia.
+             destruct i. simpl in *. assert (x <> 0); try lia.
+             intro. destruct n0. apply sig_eq_iff; auto.
+  Qed.
+
+  (** {u ⊆ v} + {~(u \subseteq v)} *)
+  Lemma vmems_dec : forall {AeqDec:Dec (@eq A)} {r s} (u : @vec A r)  (v : @vec A s),
+      {vmems u v} + {~vmems u v}.
+  Proof.
+    intros. unfold vmems. unfold vforall.
+  (*   induction n. *)
+  (*   - right. intro. destruct H as [i H]. apply fin0_False; auto. *)
+  (*   - rewrite (vconsH_vhead_vremoveH v). *)
+  (*     destruct (Aeqdec (vhead v) a) as [H|H]. *)
+  (*     + left. exists fin0. rewrite vnth_vconsH_0; auto. *)
+  (*     + destruct (IHn (vremoveH v)) as [H1|H1]. *)
+  (*       * left. destruct H1 as [i H1]. exists (fin2SuccRangeSucc i). *)
+  (*         erewrite vnth_vconsH_gt0. rewrite fin2PredRangePred_fin2SuccRangeSucc. auto. *)
+  (*       * right. intro. destruct H1. destruct H0 as [i H0]. *)
+  (*         destruct (i ??= fin0). *)
+  (*         ** rewrite vnth_vconsH_0 in H0; auto. easy. *)
+  (*         ** erewrite vnth_vconsH_gt0 in H0. *)
+  (*            eexists (fin2PredRangePred i _). apply H0. *)
+  (*            Unshelve. rewrite fin2nat_fin2SuccRangeSucc. lia. *)
+  (*            destruct i. simpl in *. assert (x <> 0); try lia. *)
+  (*            intro. destruct n0. apply sig_eq_iff; auto. *)
+    (* Qed. *)
+  Admitted.
   
   (** *** vconsT *)
 
@@ -1238,17 +1332,17 @@ Section vconsH_vconsT.
     apply sig_eq_iff; auto.
   Qed.
 
-  (** (v; a) = 0 <-> a = 0 /\ v = 0 *)
+  (** (v; a) = 0 <-> v = 0 /\ a = 0*)
   Lemma vconsT_eq0_iff : forall {n} (v : @vec A n) a,
-      vconsT v a = vzero Azero <-> a = Azero /\ v = vzero Azero.
+      vconsT v a = vzero Azero <-> v = vzero Azero /\ a = Azero.
   Proof.
     intros. rewrite !veq_iff_vnth. split; intros.
     - split; intros; auto.
-      + specialize (H (nat2finS n)). rewrite vnth_vconsT_n in H; auto.
-        rewrite fin2nat_nat2finS; auto.
       + specialize (H (fin2SuccRange i)). rewrite vnth_vzero in *. rewrite <- H.
         erewrite vnth_vconsT_lt. f_equal.
         rewrite fin2PredRange_fin2SuccRange. auto.
+      + specialize (H (nat2finS n)). rewrite vnth_vconsT_n in H; auto.
+        rewrite fin2nat_nat2finS; auto.
     - pose proof (fin2nat_lt i).
       destruct H. subst. destruct (fin2nat i ??= n)%nat.
       + rewrite vnth_vconsT_n; auto.
@@ -1256,9 +1350,9 @@ Section vconsH_vconsT.
         Unshelve. all: try lia. rewrite fin2nat_fin2SuccRange. apply fin2nat_lt.
   Qed.
   
-  (** (v; a) <> 0 <-> a <> 0 \/ v <> 0 *)
+  (** (v; a) <> 0 <-> v <> 0 \/ a <> 0*)
   Lemma vconsT_neq0_iff : forall {n} (v : @vec A n) a,
-      vconsT v a <> vzero Azero <-> a <> Azero \/ v <> vzero Azero.
+      vconsT v a <> vzero Azero <-> v <> vzero Azero \/ a <> Azero.
   Proof.
     intros. rewrite vconsT_eq0_iff. split; intros.
     apply not_and_or in H; auto. apply or_not_and; auto.
@@ -1278,6 +1372,79 @@ Section vconsH_vconsT.
   Qed.
     
 End vconsH_vconsT.
+
+
+(* ======================================================================= *)
+(** * 找出向量中从第i个元素开始起的第1个满足谓词P的元素的序号 *)
+Section vfirstIdx.
+  Context {A : Type}.
+  
+  Fixpoint vfirstIdxFromAux {n} (P : A -> bool) (v : @vec A n) (i : fin n) (fuel : nat)
+    : option (fin n) :=
+    match fuel with
+    | O => None
+    | S fuel' =>
+        if P (v $ i)
+        then Some i
+        else
+          if S (fin2nat i) ??< n
+          then vfirstIdxFromAux P v (fin2SameRangeSucc i) fuel'
+          else None
+    end.
+
+  Lemma vfirstIdxFromAux_spec_Some
+    : forall (fuel : nat) (n : nat) (P : A -> bool) (v : @vec A n) (i j : fin n),
+      fuel >= n ->
+      (forall k : fin n, fin2nat i <= fin2nat k < fin2nat j -> ~ P (v $ k)) /\ P (v $ j) ->
+      vfirstIdxFromAux P v i fuel = Some j.
+  Proof.
+  Admitted.
+
+  Lemma vfirstIdxFromAux_spec_None
+    : forall (fuel : nat) (n : nat) (P : A -> bool) (v : @vec A n) (i : fin n),
+      (forall k : fin n, fin2nat i <= fin2nat k -> P (v $ k) = false) ->
+      vfirstIdxFromAux P v i fuel = None.
+  Proof.
+  Admitted.
+  
+  Definition vfirstIdxFrom {n} (P : A -> bool) (v : @vec A n) (i : fin n)
+    : option (fin n) :=
+    vfirstIdxFromAux P v i n.
+
+  Lemma vfirstIdxFrom_spec_None : forall {n} (P : A -> bool) (v : @vec A n) (i : fin n),
+      (forall k : fin n, fin2nat i <= fin2nat k -> P (v $ k) = false) ->
+      vfirstIdxFrom P v i = None.
+  Proof. intros. unfold vfirstIdxFrom. apply vfirstIdxFromAux_spec_None; auto. Qed.
+
+  Lemma vfirstIdxFrom_spec_Some : forall {n} (P : A -> bool) (v : @vec A n) (i j : fin n),
+      (forall k : fin n, fin2nat i <= fin2nat k < fin2nat j -> ~ P (v $ k)) /\ P (v $ j) ->
+      vfirstIdxFrom P v i = Some j.
+  Proof. intros. unfold vfirstIdxFrom. apply vfirstIdxFromAux_spec_Some; auto. Qed.
+
+  Definition vfirstIdx {n} (P : A -> bool) (v : @vec A n) : option (fin n).
+    destruct n.
+    - exact None.
+    - exact (vfirstIdxFrom P v fin0).
+  Defined.
+End vfirstIdx.
+
+(* ======================================================================= *)
+(** ** Index of first nonzero element *)
+Section vfirstNonZero.
+  Context `{AeqDec : Dec _ (@eq A)}.
+  Context {Azero : A}.
+
+  Notation Aeqb := (@Acmpb _ (@eq A) _).
+  
+  (* 计算从第i个元素开始起的第1个非零元素的序号 *)
+  Definition vfirstNonZeroFrom {n} (v : @vec A n) (i : fin n) : option (fin n) :=
+    vfirstIdxFrom (fun a => negb (Aeqb a Azero)) v i.
+  
+  (* 计算第1个非零元素的序号 *)
+  Definition vfirstNonZero {n} (v : @vec A n) : option (fin n) :=
+    vfirstIdx (fun a => negb (Aeqb a Azero)) v.
+
+End vfirstNonZero.
 
 
 (* ======================================================================= *)
@@ -1416,6 +1583,39 @@ Section test.
   (* Compute v2l (vslice v1 (nat2finS 1) (nat2finS 3)). *)
 End test.
 
+(* ======================================================================= *)
+(** ** Folding of a vector *)
+Section vfold.
+  Context {A B : Type} {Azero : A} {Bzero : B}. 
+
+  (** ((a + v.1) + v.2) + ... *)
+  Definition vfoldl {n} (v : @vec A n) (b : B) (f : B -> A -> B) : B :=
+    seqfoldl (ff2f (Azero:=Azero) v) n b f.
+  
+  (** ... + (v.(n-1) + (v.n + a)) *)
+  Definition vfoldr {n} (v : @vec A n) (b : B) (f : A -> B -> B) : B :=
+    seqfoldr (ff2f (Azero:=Azero) v) n b f.
+
+  (** Convert `vfoldl` to `seqfoldl` *)
+  Lemma vfoldl_to_seqfoldl :
+    forall {n} (v : @vec A n) (b : B) (f : B -> A -> B) (s : nat -> A),
+      (forall i, v $ i = s (fin2nat i)) -> vfoldl v b f = seqfoldl s n b f.
+  Proof.
+    intros. unfold vfoldl. apply seqfoldl_eq; auto.
+    intros. rewrite nth_ff2f with (H:=H0). rewrite H. rewrite fin2nat_nat2fin. auto.
+  Qed.
+  
+  (* (** `vsum` of (S n) elements, equal to addition of Sum and tail *) *)
+  (* Lemma vsumS_tail : forall {n} (v : @vec A (S n)), *)
+  (*     vsum v = vsum (fun i => v $ (fin2SuccRange i)) + v $ (nat2finS n). *)
+  (* Proof. intros. apply fseqsumS_tail; auto. Qed. *)
+
+  (* (** `vsum` of (S n) elements, equal to addition of head and Sum *) *)
+  (* Lemma vsumS_head : forall {n} (v : @vec A (S n)), *)
+  (*     vsum v = v $ (nat2finS 0) + vsum (fun i => v $ (fin2SuccRangeSucc i)). *)
+  (* Proof. intros. apply fseqsumS_head; auto. Qed. *)
+
+End vfold.
 
 (* ======================================================================= *)
 (** ** Sum of a vector *)
@@ -1638,29 +1838,37 @@ Section vsum_vinsert_vremove.
   
 End vsum_vinsert_vremove.
 
-(** `vsum` on ring structure *)
-Section vsum_ring.
+(** Extension for `vsum` *)
+Section vsum_ext.
   
-  (** Let's have an abelian monoid structure *)
-  Context `{AM : AMonoid}.
-  Infix "+" := Aadd : A_scope.
-  Notation vsum := (@vsum _ Aadd Azero).
-
-  (** Let's have another type K and an operation scalar multiplication *)
-  Context {K : Type}.
-  Context (cmul : K -> A -> A).
+  Context `{HAMonoidA : AMonoid}.
+  Context `{HAMonoidB : AMonoid B Badd Bzero}.
+  Context (cmul : A -> B -> B).
   Infix "*" := cmul.
-  Context (cmul_zero_keep : forall k : K, cmul k Azero = Azero).
-  Context (cmul_add_distr : forall (a b : A) (k : K), k * (a + b) = k * a + k * b).
-
-  (** Scalar multiplication of the sum of a sequence with different type. *)
-  Lemma vsum_cmul_ext : forall {n} (k : K) (f g : vec n),
-      (forall i, f$i = k * g$i) -> vsum f = k * vsum g.
-  Proof. intros. apply fseqsum_cmul_ext; auto. Qed.
   
-End vsum_ring.
-
-
+  (** ∑(a*bi) = a*b1+a*b2+a*b3 = a*(b1+b2+b3) = a * ∑(bi) *)
+  Section form1.
+    Context (cmul_zero_keep : forall a : A, cmul a Bzero = Bzero).
+    Context (cmul_badd : forall (a : A) (b1 b2 : B),
+                a * (Badd b1 b2) = Badd (a * b1) (a * b2)).
+    Lemma vsum_cmul_extK : forall {n} (a : A) (f : @vec B n) (g : @vec B n),
+        (forall i, f$i = a * g$i) ->
+        @vsum _ Badd Bzero _ f = a * (@vsum _ Badd Bzero _ g).
+    Proof. intros. apply fseqsum_cmul_extK; auto. Qed.
+  End form1.
+  
+  (** ∑(ai*b) = a1*b+a2*b+a3*b = (a1+a2+a3)*b = ∑(ai) * b *)
+  Section form2.
+    Context (cmul_zero_keep : forall b : B, cmul Azero b = Bzero).
+    Context (cmul_aadd : forall (a1 a2 : A) (b : B),
+                (Aadd a1 a2) * b = Badd (a1 * b) (a2 * b)).
+    Lemma vsum_cmul_extA : forall {n} (b : B) (f : @vec B n) (g : @vec A n),
+        (forall i, f$i = g$i * b) ->
+        @vsum _ Badd Bzero _ f = (@vsum _ Aadd Azero _ g) * b.
+    Proof. intros. apply fseqsum_cmul_extA; auto. Qed.
+  End form2.
+  
+End vsum_ext.
 
 
 (* ======================================================================= *)
@@ -2227,6 +2435,35 @@ Section vdot.
   End OrderedField_Dec.
 
 End vdot.
+
+Section vdot_extra.
+  Context `{HARing : ARing}.
+  Add Ring ring_inst : (make_ring_theory HARing).
+  Notation vdot := (@vdot _ Aadd Azero Amul).
+  
+  (** <<u,D>, v> = <u, <D,v> *)
+  (* For example:
+     (u1,u2,u3) [D11,D12] [v1]  记作 u*D*v，
+                [D21,D22] [v2]
+                [D31,D32]
+     (u*D)*v = <u,col(D,1)> v1 + <u,col(D,2)> v2
+             = (u1D11+u2D21+u3D31)v1 + (u1D12+u2D22+u3D32)v2
+     u*(D*v) = u1 <row(D,1),v> + u2 <row(D,2),v> + u3 <row(D,3),v>
+             = u1(D11v1+D12v2)+u2(D21v1+D22v2)+u3(D31v1+D32v2) *)
+  
+  Lemma vdot_assoc : forall {r c} (u : @vec A c) (D : @vec (@vec A r) c) (v : @vec A r),
+      vdot (fun j => vdot u (fun i => D i j)) v = vdot u (fun i => vdot (D i) v).
+  Proof.
+    intros. unfold vdot. unfold vmap2.
+    pose proof (vsum_vsum_exchg c r (fun i j => Amul (Amul (u i) (D i j)) (v j))).
+    match goal with
+    | H: ?a1 = ?a2 |- ?b1 = ?b2 => replace b1 with a2; [replace b2 with a1|]; auto
+    end.
+    - f_equal. extensionality i. apply vsum_cmul; intros. ring.
+    - f_equal. extensionality i. rewrite commutative. apply vsum_cmul; intros. ring.
+  Qed.
+
+End vdot_extra.
 
 
 (* ======================================================================= *)

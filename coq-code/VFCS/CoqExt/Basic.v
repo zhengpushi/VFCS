@@ -111,11 +111,13 @@ Reserved Notation "| r |"   (at level 30, r at level 25, format "| r |").  (* Ra
 
 (* Get element of a nat-function by index *)
 Reserved Notation "f ! i"
-  (at level 25, left associativity, i at next level, format "f ! i" ).
+  (at level 25, i at next level, format "f ! i" ).
+Reserved Notation "f ! i ! j"
+  (at level 25, i, j at next level, format "f ! i ! j" ).
 
 (* Get element of vector/matrix by index. *)
 Reserved Notation "V $ i"
-  (at level 25, left associativity, i at next level, format "V $ i" ).
+  (at level 25, i at next level, format "V $ i" ).
 
 (* Get element of finite vector/matrix by index.
    Note, there are two style of start number to count index, 0 or 1.

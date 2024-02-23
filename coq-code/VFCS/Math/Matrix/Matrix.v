@@ -46,22 +46,22 @@ Notation cvec A n := (mat A n 1).
 (* Note that: these notatiosn are dangerous.
    The reason can be found in the definition of `V.1` in file `Vector.v`
  *)
-Notation "M .11" := (M $ nat2finS 0 $ nat2finS 0) : mat_scope.
-Notation "M .12" := (M $ nat2finS 0 $ nat2finS 1) : mat_scope.
-Notation "M .13" := (M $ nat2finS 0 $ nat2finS 2) : mat_scope.
-Notation "M .14" := (M $ nat2finS 0 $ nat2finS 3) : mat_scope.
-Notation "M .21" := (M $ nat2finS 1 $ nat2finS 0) : mat_scope.
-Notation "M .22" := (M $ nat2finS 1 $ nat2finS 1) : mat_scope.
-Notation "M .23" := (M $ nat2finS 1 $ nat2finS 2) : mat_scope.
-Notation "M .24" := (M $ nat2finS 1 $ nat2finS 3) : mat_scope.
-Notation "M .31" := (M $ nat2finS 2 $ nat2finS 0) : mat_scope.
-Notation "M .32" := (M $ nat2finS 2 $ nat2finS 1) : mat_scope.
-Notation "M .33" := (M $ nat2finS 2 $ nat2finS 2) : mat_scope.
-Notation "M .34" := (M $ nat2finS 2 $ nat2finS 3) : mat_scope.
-Notation "M .41" := (M $ nat2finS 3 $ nat2finS 0) : mat_scope.
-Notation "M .42" := (M $ nat2finS 3 $ nat2finS 1) : mat_scope.
-Notation "M .43" := (M $ nat2finS 3 $ nat2finS 2) : mat_scope.
-Notation "M .44" := (M $ nat2finS 3 $ nat2finS 3) : mat_scope.
+Notation "M .11" := (M.1.1) : mat_scope.
+Notation "M .12" := (M.1.2) : mat_scope.
+Notation "M .13" := (M.1.3) : mat_scope.
+Notation "M .14" := (M.1.4) : mat_scope.
+Notation "M .21" := (M.2.1) : mat_scope.
+Notation "M .22" := (M.2.2) : mat_scope.
+Notation "M .23" := (M.2.3) : mat_scope.
+Notation "M .24" := (M.2.4) : mat_scope.
+Notation "M .31" := (M.3.1) : mat_scope.
+Notation "M .32" := (M.3.2) : mat_scope.
+Notation "M .33" := (M.3.3) : mat_scope.
+Notation "M .34" := (M.3.4) : mat_scope.
+Notation "M .41" := (M.4.1) : mat_scope.
+Notation "M .42" := (M.4.2) : mat_scope.
+Notation "M .43" := (M.4.3) : mat_scope.
+Notation "M .44" := (M.4.4) : mat_scope.
 
 Lemma meq_iff_mnth : forall {A r c} (M N : mat A r c),
     M = N <-> (forall i j, M $ i $ j = N $ i $ j).
@@ -902,17 +902,7 @@ Section malg.
   (** (M * N) * O = M * (N * O) *)
   Lemma mmul_assoc : forall {m n r s} (M : mat m n) (N : mat n r) (O : mat r s),
       (M * N) * O = M * (N * O).
-  Proof.
-    intros. unfold mmul,vdot,vsum,vmap2. apply meq_iff_mnth; intros.
-    pose proof (fseqsum_fseqsum_exchg r n
-                  (fun i0 j0 => M i j0 * N j0 i0 * O i0 j)%A).
-    match goal with
-    | H: ?a1 = ?b1 |- ?a2 = ?b2 => replace a2 with a1;[replace b2 with b1|]; auto
-    end.
-    - f_equal. extensionality j0. apply fseqsum_cmul; intros. ring.
-    - f_equal. extensionality j0. rewrite commutative.
-      apply fseqsum_cmul; intros. ring.
-  Qed.
+  Proof. intros. unfold mmul. apply meq_iff_mnth; intros. apply vdot_assoc. Qed.
 
   (** M * (N + O) = M * N + M * O *)
   Lemma mmul_madd_distr_l : forall {r c t} (M : mat r c) (N O : mat c t),

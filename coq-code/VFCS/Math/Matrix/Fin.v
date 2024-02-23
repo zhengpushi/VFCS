@@ -99,6 +99,16 @@ Lemma fin_eq_dec_comm : forall {A} {n} (i j : fin n) (a1 a2 : A),
 Proof. intros. destruct (_??=_),(_??=_); subst; try easy. Qed.
 
 
+(** Boolean equality of fin *)
+Definition fin_eqb {n} (i j : fin n) : bool := if fin_eq_dec i j then true else false.
+
+Lemma fin_eqb_eq : forall {n} (i j : fin n), i = j <-> fin_eqb i j = true.
+Proof. intros. unfold fin_eqb. destruct (_??=_); split; intro; easy. Qed.
+  
+Lemma fin_eqb_neq : forall {n} (i j : fin n), i <> j <-> fin_eqb i j = false.
+Proof. intros. unfold fin_eqb. destruct (_??=_); split; intro; easy. Qed.
+
+
 (** A default entry of `fin` *)
 Definition fin0 {n : nat} : fin (S n) := exist _ 0 (Nat.lt_0_succ _).
 
@@ -308,19 +318,29 @@ Lemma fin2nat_fin2SameRangeSub : forall {n} (i k : fin n),
     fin2nat (fin2SameRangeSub i k) = fin2nat i - fin2nat k.
 Proof. intros. unfold fin2SameRangeSub. simpl. auto. Qed.
 
-(** {i<n} -> (S i<n) ? {S i<n} : {0<n} *)
+(** {i<n} -> (S i<n) ? {S i<n} : {i<n} *)
 Definition fin2SameRangeSucc {n : nat} (i:fin n) : fin (n).
-  pose (if S (fin2nat i) ??< n then S (fin2nat i) else 0)%nat as x.
-  refine (nat2fin x _). unfold x. destruct (_??<_); auto. destruct (n ??= 0)%nat.
-  - clear n0. rewrite e in i. exfalso. apply (fin0_False i).
-  - apply neq_0_lt_stt; auto.
+  destruct (S (fin2nat i) ??< n) as [H|H].
+  - refine (nat2fin (S (fin2nat i)) H).
+  - apply i.
 Defined.
 
 Lemma fin2nat_fin2SameRangeSucc : forall {n} (i : fin n),
     fin2nat (fin2SameRangeSucc i) =
-      if (S (fin2nat i) ??< n)%nat then S (fin2nat i) else 0.
-Proof. intros. unfold fin2SameRangeSucc. simpl. auto. Qed.
+      if (S (fin2nat i) ??< n)%nat then S (fin2nat i) else fin2nat i.
+Proof. intros. unfold fin2SameRangeSucc. destruct (_??<_); auto. Qed.
 
+(** {i<n} -> (0 < i) ? {pred i<n} : {i<n} *)
+Definition fin2SameRangePred {n : nat} (i:fin n) : fin n.
+  destruct (0 ??< fin2nat i).
+  - refine (nat2fin (pred (fin2nat i)) _). apply Nat.lt_lt_pred. apply fin2nat_lt.
+  -  apply i.
+Defined.
+
+Lemma fin2nat_fin2SameRangePred : forall {n} (i : fin n),
+    fin2nat (fin2SameRangePred i) =
+      if (0 ??< fin2nat i)%nat then pred (fin2nat i) else fin2nat i.
+Proof. intros. unfold fin2SameRangePred. destruct (_??<_); auto. Qed.
 
 (** Loop shift left : {i<n} << {k<n}. Eg: 0 1 2 =1=> 1 2 0  *)
 Definition fin2SameRangeLSL {n : nat} (i k:fin n) : fin (n).
@@ -661,7 +681,7 @@ Section ff2f_f2ff.
 
 End ff2f_f2ff.
 
-Infix "!" := (ff2f).
+Infix "!" := (ff2f) : fin_scope.
 
 
 (** Convert `nth of ff` to `nth of nat-fun` *)

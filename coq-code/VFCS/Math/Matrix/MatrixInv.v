@@ -41,6 +41,7 @@ Require Import Matrix.
 Require Import MatrixDet.
 Require Import MatrixGauss.
 
+
 Generalizable Variable A Aadd Azero Aopp Amul Aone Ainv.
 
 
@@ -95,33 +96,31 @@ End minvertible.
 Section minvGE.
   Context `{HField : Field} {AeqDec : Dec (@eq A)}.
 
-  Notation rowEchelon := (@rowEchelon _ Aadd Azero Aopp Amul Ainv AeqDec).
-  Notation minRowEchelon :=
-    (@minRowEchelon _ Aadd Azero Aopp Amul Aone Ainv AeqDec).
+  Notation echelon := (@echelon _ Aadd Azero Aopp Amul Ainv AeqDec).
+  Notation minEchelon :=
+    (@minEchelon _ Aadd Azero Aopp Amul Aone Ainv AeqDec).
   Notation Aeqb := (Acmpb AeqDec).
-  Notation listFirstNonZero := (@listFirstNonZero _ Azero Aeqb).
+  Notation vfirstNonZero := (@vfirstNonZero _ _ Azero).
   Notation rowOpList2mat := (@rowOpList2mat _ Aadd Azero Amul Aone).
 
-  (*
-  (* 计算矩阵的行秩。利用阶梯形矩阵可很容易判定 *)
-  Definition mrowRank {r c} (M : @mat A r c) : nat :=
-    let d1 := mdata M in
-    let d2 := map listFirstNonZero d1 in
-    let d3 := map (fun o => match o with Some _ => 1 | _ => O end) d2 in
-    fold_left Nat.add d3 0.
+  (* 计算阶梯形矩阵的行秩 = 非零行的个数 *)
+  Definition mrowRankOfEchelon {r c} (M : @mat A r c) : nat :=
+    let v1 := vmap vfirstNonZero M in
+    let v2 := vmap (fun o => match o with Some _ => 1 | _ => O end) v1 in
+    @vsum _ add 0 _ v2.
 
   (* 计算逆矩阵(option版本)。
      1. 先计算阶梯形矩阵
      2. 如果秩不是n，则该矩阵不可逆，否则再计算行最简阶梯形
    *)
   Definition minvGEo {n} (M : @smat A n) : option (@smat A n) :=
-    let p1 := rowEchelon M in
-    let r := mrowRank (snd p1) in
+    let p1 := echelon M in
+    let r := mrowRankOfEchelon (snd p1) in
     match Nat.eqb r n with
     | false => None
     | _ =>
-        let p2 := minRowEchelon (snd p1) in
-        Some (rowOpList2mat (fst p2 ++ fst p1) n)
+        let p2 := minEchelon (snd p1) in
+        Some (rowOpList2mat (fst p2 ++ fst p1))
     end.
 
   (* 计算逆矩阵(带有默认值的版本) *)
@@ -135,8 +134,6 @@ Section minvGE.
   (* Lemma Some_mat_eq_if_dlist_eq : forall {A n} (M N : @smat A n), *)
   (*     mdata M = mdata N -> Some M = Some N. *)
   (* Proof. intros. f_equal. apply meq_if_mdata. auto. Qed. *)
-  
-   *)
 End minvGE.
 
 
@@ -199,10 +196,6 @@ Section minvAM.
   
   (** *** Cramer rule *)
 
-  (* (** Set one column of a square matrix *) *)
-  (* Definition msetcol {n} (M : smat n) (k : nat) (V : mat n 1) : smat n := *)
-  (*   f2m (fun i j => if (Nat.eqb j k) then (V$i$0)%nat else M$i$j). *)
-  
   (** Cramer rule, which can solving the equation with the form of A*x=b.
       Note, the result is valid only when |A| is not zero *)
   Definition cramerRule {n} (A0 : smat n) (b : @vec A n) : @vec A n :=
@@ -391,23 +384,26 @@ Section minvAM.
   
 End minvAM.
 
+
 Section test.
-(*
   Import QcExt.
+  Notation mat r c := (mat Qc r c).
   Notation mdet := (@mdet _ Qcplus 0 Qcopp Qcmult 1).
   Notation mat1 := (@mat1 _ 0 1).
-  Notation minvAM := (@minvAM _ Qcplus 0 Qcopp Qcmult 1 Qcinv).
-  Notation minv3AM := (@minv3AM _ Qcplus 0 Qcopp Qcmult Qcinv).
-  Notation minvGE := (@minvGE _ Qcplus 0 Qcopp Qcmult 1 Qcinv).
-
-  Notation rowEchelon := (@rowEchelon _ Qcplus 0 Qcopp Qcmult Qcinv).
-  Notation minRowEchelon := (@minRowEchelon _ Qcplus 0 Qcopp Qcmult 1 Qcinv).
-  Notation rowOp2mat := (@rowOp2mat _ Qcplus 0 Qcmult 1).
-  Notation rowOpList2mat := (@rowOpList2mat _ Qcplus 0 Qcmult 1).
   Notation mmul := (@mmul _ Qcplus 0 Qcmult).
   Notation l2m := (@l2m _ 0 _ _).
-  Notation mrowRank := (@mrowRank _ 0).
+  
   Infix "*" := mmul.
+
+  Notation echelon := (@echelon _ Qcplus 0 Qcopp Qcmult Qcinv).
+  Notation minEchelon := (@minEchelon _ Qcplus 0 Qcopp Qcmult 1 Qcinv).
+  Notation rowOp2mat := (@rowOp2mat _ Qcplus 0 Qcmult 1).
+  Notation rowOpList2mat := (@rowOpList2mat _ Qcplus 0 Qcmult 1).
+  Notation mrowRankOfEchelon := (@mrowRankOfEchelon _ 0).
+  Notation minvGE := (@minvGE _ Qcplus 0 Qcopp Qcmult 1 Qcinv).
+  
+  Notation minvAM := (@minvAM _ Qcplus 0 Qcopp Qcmult 1 Qcinv).
+  Notation minv3AM := (@minv3AM _ Qcplus 0 Qcopp Qcmult Qcinv).
 
   (* 简单的 2x2 矩阵 *)
   Section ex0.
@@ -422,12 +418,12 @@ Section test.
        So, A'=P4*P3*P2*P1 = [1/3; -1/9]
      *)
 
-    Let m1 : @smat Qc 2 := l2m (Q2Qc_dlist [[2;4];[6;3]]).
+    Let m1 : @smat Qc 2 := l2m (Q2Qc_dlist [[2;4];[6;3]]%Q).
     Let m2 : @smat Qc 2 := l2m (Q2Qc_dlist [[-1/6;2/9];[1/3;-1/9]]%Q).
     (* Compute m2l (minvGE m1). *)
 
     Goal m2l (minvGE m1 * m1) = m2l (r:=2)(c:=2) mat1.
-    Proof. cbv. lma; f_equal; apply UIP. Qed.
+    Proof. cbv. list_eq; f_equal; apply UIP. Qed.
   End ex0.
 
   (* 利用伴随矩阵求逆矩阵(数值矩阵) *)
@@ -455,7 +451,7 @@ Section test.
                 [  9;  4;  6]]%Q).
 
     Goal m1 * m2 = mat1.
-    Proof. lma. Qed.
+    Proof. apply m2l_inj; cbv; f_equal. Qed.
     
     Goal m2l (minvAM m1) = m2l m2.
     Proof. cbv. auto. Qed.
@@ -464,10 +460,10 @@ Section test.
     Proof. cbv. auto. Qed.
 
     Goal m2l (minvGE m1) = m2l m2.
-    Proof. cbv. lma; f_equal; apply UIP. Qed.
+    Proof. cbv. list_eq. f_equal; apply UIP. Qed.
     
-    Goal m2l (minvAM m2) = m2l m1.
-    Proof. cbv. lma. Qed.
+    Goal m2l (minvGE m2) = m2l m1.
+    Proof. cbv. list_eq. f_equal; apply UIP. Qed.
   End ex1.
 
   (* 在 matlab 中的一些测试 *)
@@ -484,7 +480,7 @@ Section test.
     0.7734   -0.5560   -0.0659    0.0881    0.0316    0.0041
    -0.3853    0.5112   -0.1290   -0.0269   -0.0102    0.0097       
      *)
-    Let m1 : @mat Qc 6 6 := l2m
+    Let m1 : mat 6 6 := l2m
                 (Q2Qc_dlist
                    [[ 1; 2; 3; 4; 5; 6];
                     [ 7; 9;10;12;11;14];
@@ -498,7 +494,7 @@ Section test.
     Goal m2l ((minvAM m1) * m1) = m2l (c:=6) mat1.
     Proof.
       (* 为了加速编译，暂时屏蔽 *)
-      (* cbv. lma; f_equal; apply UIP. Qed. *)
+      (* cbv. list_eq; f_equal; apply UIP. Qed. *)
     Abort.
 
     (* 0.05s *)
@@ -506,7 +502,7 @@ Section test.
     Goal m2l ((minvGE m1) * m1) = m2l (c:=6) mat1.
     Proof.
       (* 为了加速编译，暂时屏蔽 *)
-      (* cbv. lma; f_equal; try apply UIP. *)
+      (* cbv. list_eq; f_equal; apply UIP. Qed. *)
     Abort.
   End ex2.
 
@@ -535,5 +531,4 @@ Section test.
     (* Time Compute m2l (minvGE (@mat1 200)). *)
   End ex3.
   
-*)
 End test.

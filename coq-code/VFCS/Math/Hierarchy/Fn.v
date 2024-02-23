@@ -14,7 +14,7 @@
  *)
 
 
-Require Export VectorSpace.
+Require Import VectorSpace.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -62,7 +62,7 @@ Section props.
   Notation "0" := Azero : A_scope.
   Notation "1" := Aone : A_scope.
   Notation lcomb := (@lcomb _ _ vadd vzero vcmul).
-  Notation lrepr := (@lrepr _ _ vadd vzero vcmul).
+  Notation lrep := (@lrep _ _ vadd vzero vcmul).
   Notation ldep := (@ldep _ Azero _ vadd vzero vcmul).
   Notation lindep := (@lindep _ Azero _ vadd vzero vcmul).
 
@@ -268,16 +268,16 @@ Section props.
       即，vi ∈ <v1,v2,...,vs>, 1<=i<=s, vi∈F^n *)
   Lemma in_lspan : forall {n s} (vs : @vec (@vec A n) s) i,
       Hbelong (ss := lspan_Struct vs) (vs $ i).
-  Proof. intros. hnf. apply lrepr_in. Qed.
+  Proof. intros. hnf. apply lrep_in. Qed.
   
   (** 在F^n中，任意向量都能由n个线性无关的向量来线性表示 *)
-  Lemma lindep_imply_lrepr_any : forall {n} (vs : @vec (@vec A n) n) (u : @vec A n),
-      lindep vs -> lrepr vs u.
+  Lemma lindep_imply_lrep_any : forall {n} (vs : @vec (@vec A n) n) (u : @vec A n),
+      lindep vs -> lrep vs u.
   Proof.
     intros.
     pose proof (in_lspan vs). unfold Hbelong in H0.
     rewrite lindep_iff_coef0 in H.
-    unfold lindep,ldep in H. unfold lrepr.
+    unfold lindep,ldep in H. unfold lrep.
   Admitted.
   
   (** 在F^n中，任意n+1个向量都线性相关 *)
@@ -336,11 +336,11 @@ Section props.
     Qed.
 
     (** 任意向量 v 都可由自然基线性表示 *)
-    Lemma lrepr_veyes : forall (v : vec n), lrepr (veyes n) v.
-    Proof. intros. unfold lrepr. exists v. apply lcomb_veyes. Qed.
+    Lemma lrep_veyes : forall (v : vec n), lrep (veyes n) v.
+    Proof. intros. unfold lrep. exists v. apply lcomb_veyes. Qed.
 
     (** 任意向量 v，用自然基线性表示的方式唯一 *)
-    Lemma lrepr_veyes_unique : forall (v : vec n), exists! c, lcomb c (veyes n) = v.
+    Lemma lrep_veyes_unique : forall (v : vec n), exists! c, lcomb c (veyes n) = v.
     Proof.
       intros. exists v. split. apply lcomb_veyes. intros. rewrite lcomb_veyes in H. auto.
     Qed.

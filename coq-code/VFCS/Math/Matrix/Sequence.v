@@ -15,6 +15,7 @@ Require Export Hierarchy.
 Require RExt.
 
 Generalizable Variables A Aadd Azero Aopp Amul Aone Ainv Ale Alt.
+Generalizable Variables B Badd Bzero.
 
 (* ######################################################################### *)
 (** * Sequence by function, f : nat -> A  *)
@@ -123,6 +124,54 @@ Section seq2eq.
   Qed.
   
 End seq2eq.
+
+
+
+(* ======================================================================= *)
+(** ** Folding of a sequence *)
+Section seqfold.
+  Context {A B : Type}.
+
+  (** ((a + v.1) + v.2) + ... *)
+  Fixpoint seqfoldl (s : nat -> A) (n : nat) (b : B) (f : B -> A -> B) : B :=
+    match n with
+    | O => b
+    | S n' => seqfoldl s n' (f b (s n')) f
+    end.
+    
+  (** ... + (v.(n-1) + (v.n + a)) *)
+  Fixpoint seqfoldr (s : nat -> A) (n : nat) (b : B) (g : A -> B -> B) : B :=
+    match n with
+    | O => b
+    | S n' => seqfoldr s n' (g (s n') b) g
+    end.
+
+  Lemma seqfoldl_eq_seqfoldr :
+    forall (s : nat -> A) (n : nat) (b : B)
+      (f : B -> A -> B) (g : A -> B -> B) (f_eq_b : forall a b, f b a = g a b),
+      seqfoldl s n b f = seqfoldr s n b g.
+  Proof.
+    intros. revert s n b. induction n; intros; simpl; auto.
+    rewrite IHn. f_equal. auto.
+  Qed.
+
+  Lemma seqfoldl_eq : forall (s1 s2 : nat -> A) (n : nat) (b1 b2 : B) (f : B -> A -> B),
+      (forall i, i < n -> s1 i = s2 i) -> b1 = b2 ->
+      seqfoldl s1 n b1 f = seqfoldl s2 n b2 f.
+  Proof.
+    intros s1 s2 n. revert s1 s2. induction n; intros; auto.
+    simpl. apply IHn; auto. subst. f_equal. auto.
+  Qed.
+
+  Lemma seqfoldr_eq : forall (s1 s2 : nat -> A) (n : nat) (b1 b2 : B) (f : A -> B -> B),
+      (forall i, i < n -> s1 i = s2 i) -> b1 = b2 ->
+      seqfoldr s1 n b1 f = seqfoldr s2 n b2 f.
+  Proof.
+    intros s1 s2 n. revert s1 s2. induction n; intros; auto.
+    simpl. apply IHn; auto. subst. f_equal. auto.
+  Qed.
+
+End seqfold.
 
 
 (* ======================================================================= *)
@@ -298,6 +347,44 @@ Section seqsum.
   
 End seqsum.
 
+
+(** Extension for `seqsum` *)
+Section seqsum_ext.
+
+  Context `{HAMonoidA : AMonoid}.
+  Context `{HAMonoidB : AMonoid B Badd Bzero}.
+  Context (cmul : A -> B -> B).
+  Infix "*" := cmul.
+
+  (** ∑(a*bi) = a*b1+a*b2+a*b3 = a*(b1+b2+b3) = a * ∑(bi) *)
+  Section form1.
+    Context (cmul_zero_keep : forall a : A, cmul a Bzero = Bzero).
+    Context (cmul_badd : forall (a : A) (b1 b2 : B),
+                a * (Badd b1 b2) = Badd (a * b1) (a * b2)).
+    Lemma seqsum_cmul_extK : forall {n} (a : A) (f : nat -> B) (g : nat -> B),
+        (forall i, i < n -> f i = a * (g i)) ->
+        @seqsum _ Badd Bzero f n = a * (@seqsum _ Badd Bzero g n).
+    Proof.
+      intros. induction n; simpl. rewrite cmul_zero_keep; auto.
+      rewrite H, IHn; auto.
+    Qed.
+  End form1.
+  
+  (** ∑(ai*b) = a1*b+a2*b+a3*b = (a1+a2+a3)*b = ∑(ai) * b *)
+  Section form2.
+    Context (cmul_zero_keep : forall b : B, cmul Azero b = Bzero).
+    Context (cmul_aadd : forall (a1 a2 : A) (b : B),
+                (Aadd a1 a2) * b = Badd (a1 * b) (a2 * b)).
+    Lemma seqsum_cmul_extA : forall {n} (b : B) (f : nat -> B) (g : nat -> A),
+        (forall i, i < n -> f i = (g i) * b) ->
+        @seqsum _ Badd Bzero f n = (@seqsum _ Aadd Azero g n) * b.
+    Proof.
+      intros. induction n; simpl. rewrite cmul_zero_keep; auto. rewrite H, IHn; auto.
+    Qed.
+  End form2.
+  
+End seqsum_ext.
+
 (** Extension for `seqsum` *)
 Section seqsum_ext.
   
@@ -314,7 +401,7 @@ Section seqsum_ext.
   Context (cmul_add_distr : forall (a b : A) (k : K), k * (a + b) = k * a + k * b).
 
   (** Scalar multiplication of the sum of a sequence with different type. *)
-  Lemma seqsum_cmul_ext : forall (k : K) (f g : nat -> A) (n : nat),
+  Lemma seqsum_cmul_ext_ : forall (k : K) (f g : nat -> A) (n : nat),
       (forall i, i < n -> f i = k * g i) -> seqsum f n = k * seqsum g n.
   Proof.
     intros. induction n; simpl. rewrite cmul_zero_keep; auto.
@@ -642,7 +729,7 @@ Section seqsum_more.
   
 End seqsum_more.
 
-
+  
 (* ======================================================================= *)
 (** ** More properties of sequence on R type *)
 Section seq_R.

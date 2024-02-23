@@ -1,6 +1,6 @@
 (*
   Copyright 2022 ZhengPu Shi
-  This file is part of CoqExt. It is distributed under the MIT
+  This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
   purpose   : Extension for list
@@ -1577,9 +1577,7 @@ End width.
 Section dlnth.
   Context {A} {Azero : A}.
 
-  Definition dlnth dl i j := nth j (nth i dl []) Azero.
-  Notation "dl ! i ! j" := (dlnth dl i j)
-                             (at level 25, i,j at next level, left associativity).
+  Notation "dl ! i ! j" := (nth j (nth i dl []) Azero).
 
 End dlnth.
 
@@ -1590,9 +1588,7 @@ End dlnth.
 Section dl2elems.
   Context {A} {Azero : A}.
   
-  Notation "dl ! i ! j" :=
-    (nth j (nth i dl []) Azero)
-      (at level 25, i,j at next level, left associativity).
+  Notation "dl ! i ! j" := (nth j (nth i dl []) Azero).
 
   (* 自动处理前提中含有 width 的简单情形，以自动化 dl2elems 的证明 *)
   Ltac solve_dl2elems :=

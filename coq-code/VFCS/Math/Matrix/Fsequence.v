@@ -16,6 +16,7 @@ Require Export Fin Sequence.
 Require RExt.
 
 Generalizable Variables A Aadd Azero Aopp Amul Aone Ainv.
+Generalizable Variables B Badd Bzero.
 
 (* ######################################################################### *)
 (** * Sequence by function, ff : fin n -> A  *)
@@ -277,25 +278,38 @@ End fseqsum.
 (** Extension for `fseqsum` *)
 Section fseqsum_ext.
   
-  (** Let's have an abelian monoid structure *)
-  Context `{AM : AMonoid}.
-  Infix "+" := Aadd : A_scope.
-  Notation fseqsum := (@fseqsum _ Aadd Azero).
-
-  (** Let's have another type K and an operation scalar multiplication *)
-  Context {K : Type}.
-  Context (cmul : K -> A -> A).
+  Context `{HAMonoidA : AMonoid}.
+  Context `{HAMonoidB : AMonoid B Badd Bzero}.
+  Context (cmul : A -> B -> B).
   Infix "*" := cmul.
-  Context (cmul_zero_keep : forall k : K, cmul k Azero = Azero).
-  Context (cmul_add_distr : forall (a b : A) (k : K), k * (a + b) = k * a + k * b).
-
-  (** Scalar multiplication of the sum of a sequence with different type. *)
-  Lemma fseqsum_cmul_ext : forall {n} (k : K) (f g : fin n -> A),
-      (forall i, f i = k * g i) -> fseqsum f = k * fseqsum g.
-  Proof.
-    intros. unfold fseqsum. apply seqsum_cmul_ext; auto.
-    intros. unfold ff2f. destruct (_??<_); auto.
-  Qed.
+  
+  (** ∑(a*bi) = a*b1+a*b2+a*b3 = a*(b1+b2+b3) = a * ∑(bi) *)
+  Section form1.
+    Context (cmul_zero_keep : forall a : A, cmul a Bzero = Bzero).
+    Context (cmul_badd : forall (a : A) (b1 b2 : B),
+                a * (Badd b1 b2) = Badd (a * b1) (a * b2)).
+    Lemma fseqsum_cmul_extK : forall {n} (a : A) (f : fin n -> B) (g : fin n -> B),
+        (forall i, f i = a * (g i)) ->
+        @fseqsum _ Badd Bzero _ f = a * (@fseqsum _ Badd Bzero _ g).
+    Proof.
+      intros. unfold fseqsum. apply seqsum_cmul_extK; auto.
+      intros. unfold ff2f. destruct (_??<_); auto.
+    Qed.
+  End form1.
+  
+  (** ∑(ai*b) = a1*b+a2*b+a3*b = (a1+a2+a3)*b = ∑(ai) * b *)
+  Section form2.
+    Context (cmul_zero_keep : forall b : B, cmul Azero b = Bzero).
+    Context (cmul_aadd : forall (a1 a2 : A) (b : B),
+                (Aadd a1 a2) * b = Badd (a1 * b) (a2 * b)).
+    Lemma fseqsum_cmul_extA : forall {n} (b : B) (f : fin n -> B) (g : fin n -> A),
+        (forall i, f i = (g i) * b) ->
+        @fseqsum _ Badd Bzero _ f = (@fseqsum _ Aadd Azero _ g) * b.
+    Proof.
+      intros. unfold fseqsum. apply seqsum_cmul_extA; auto.
+      intros. unfold ff2f. destruct (_??<_); auto.
+    Qed.
+  End form2.
   
 End fseqsum_ext.
 
