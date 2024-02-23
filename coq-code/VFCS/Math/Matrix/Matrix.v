@@ -39,10 +39,6 @@ Notation mat A r c := (@vec (@vec A c) r).
 (** square matrix type *)
 Notation smat A n := (mat A n n).
 
-(** Row / Column vector type *)
-Notation rvec A n := (mat A 1 n).
-Notation cvec A n := (mat A n 1).
-
 (* Note that: these notatiosn are dangerous.
    The reason can be found in the definition of `V.1` in file `Vector.v`
  *)
@@ -82,7 +78,7 @@ Proof.
     apply ex_not_not_all; auto. exists j. auto.
 Qed.
 
-
+  
 (** ** Convert between nat-indexing-Function (f) and matrix *)
 Section f2m_m2f.
   Context {A} (Azero : A).

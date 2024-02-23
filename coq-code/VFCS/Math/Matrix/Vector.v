@@ -2812,6 +2812,7 @@ Section vproj.
   Notation vsub := (@vsub _ Aadd Aopp).
   Notation vcmul := (@vcmul _ Amul).
   Notation vdot := (@vdot _ Aadd Azero Amul).
+  Notation vunit := (@vunit _ Aadd Azero Amul Aone).
   Notation vorth := (@vorth _ Aadd Azero Amul).
   Infix "+" := vadd : vec_scope.
   Notation "- v" := (vopp v) : vec_scope.
@@ -2831,6 +2832,10 @@ Section vproj.
     replace (Azero * / (<v,v>)) with Azero. apply vcmul_0_l.
     rewrite ring_mul_0_l; auto.
   Qed.
+
+  (** vunit v -> vproj u v = <u, v> \.* v *)
+  Lemma vproj_vunit : forall {n} (u v : vec n), vunit v -> vproj u v = <u, v> \.* v.
+  Proof. intros. unfold vproj. f_equal. rewrite H. field. apply field_1_neq_0. Qed.
 
   (* If equip a `Field` *)
   Section OrderedField.
@@ -2897,6 +2902,21 @@ Section vperp.
   
   (** The perpendicular component of u respect to u *)
   Definition vperp {n} (u v : vec n) : vec n := u - vproj u v.
+
+  (** vperp u v = u - vproj u v *)
+  Lemma vperp_eq_minus_vproj : forall {n} (u v : vec n), vperp u v = u - vproj u v.
+  Proof. auto. Qed.
+
+  (** vproj u v = u - vperp u v *)
+  Lemma vproj_eq_minus_vperp : forall {n} (u v : vec n), vproj u v = u - vperp u v.
+  Proof.
+    intros. unfold vperp. unfold vsub. rewrite group_opp_distr.
+    rewrite group_opp_opp. move2h (vproj u v). group.
+  Qed.
+
+  (** vproj u v = u - vperp u v *)
+  Lemma vproj_plus_vperp : forall {n} (u v : vec n), vproj u v + vperp u v = u.
+  Proof. intros. unfold vperp. unfold vsub. move2h u. group. Qed.
   
   (** u _|_ v -> vperp u v = u *)
   Lemma vorth_imply_vperp_eq_l : forall {n} (u v : vec n),

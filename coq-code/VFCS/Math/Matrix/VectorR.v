@@ -56,6 +56,7 @@
 
  *)
 
+Require Export Ratan2.
 Require Export VectorModule.
 (* Require Export RowColVectorModule. *)
 

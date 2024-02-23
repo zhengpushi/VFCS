@@ -39,18 +39,14 @@ Module BasicMatrixTheory (E : ElementType).
   Open Scope nat_scope.
   Open Scope A_scope.
   Open Scope mat_scope.
-  
+
 
   (* ======================================================================= *)
   (** ** Matrix type and basic operations *)
   Definition mat r c : Type := @mat A r c.
-
+  
   (** square matrix type *)
-  Definition smat n := mat n n.
-
-  (** Vector type *)
-  Definition rvec n := mat 1 n.
-  Definition cvec n := mat n 1.
+  Notation smat n := (mat n n).
 
   (** Convert between function and matrix *)
   Definition f2m {r c} (f : nat -> nat -> A) : mat r c := f2m f.
@@ -877,16 +873,21 @@ Module FieldMatrixTheory (E : FieldElementType).
   (** ** O(n): General Orthogonal Group, General Linear Group *)
   
   (** The set of GOn *)
-  Definition GOn (n : nat) := (@GOn _ Aadd Azero Amul Aone n).
+  Definition GOn {n : nat} := (@GOn _ Aadd Azero Amul Aone n).
+  Definition Build_GOn {n} := (@Build_GOn _ Aadd Azero Amul Aone n).
+
+  (* Additional coercion, hence the re-definition of `mat` and `GOn` *)
+  Definition GOn_mat {n} (x : @GOn n) : mat n n := GOn_mat x.
+  Coercion GOn_mat : GOn >-> mat.
 
   (** Multiplication of elements in GOn *)
-  Definition GOn_mul {n} (x1 x2 : GOn n) : GOn n := GOn_mul x1 x2.
+  Definition GOn_mul {n} (x1 x2 : @GOn n) : @GOn n := GOn_mul x1 x2.
 
   (** Identity element in GOn *)
-  Definition GOn_1 {n} : GOn n :=  GOn_1.
+  Definition GOn_1 {n} : @GOn n :=  GOn_1.
 
   (** Inverse operation of multiplication in GOn *)
-  Definition GOn_inv {n} (x : GOn n) : GOn n := GOn_inv x.
+  Definition GOn_inv {n} (x : @GOn n) : @GOn n := GOn_inv x.
 
   (** GOn_mul is associative *)
   Lemma GOn_mul_assoc : forall n, Associative (@GOn_mul n).
@@ -917,9 +918,7 @@ Module FieldMatrixTheory (E : FieldElementType).
   Proof. intros. apply Group_GOn. Qed.
 
   (** M \-1 = M \T *)
-  Lemma GOn_imply_inv_eq_trans : forall {n} (x : GOn n),
-      let M := GOn_mat n x in
-      M \-1 = M \T.
+  Lemma GOn_imply_inv_eq_trans : forall {n} (M : @GOn n), M \-1 = M \T.
   Proof. intros. apply GOn_imply_inv_eq_trans. Qed.
 
   
@@ -927,11 +926,16 @@ Module FieldMatrixTheory (E : FieldElementType).
   (** ** SO(n): Special Orthogonal Group, Rotation Group *)
 
   (** The set of SOn *)
-  Definition SOn (n: nat) := (@SOn _ Aadd Azero Aopp Amul Aone n).
+  Definition SOn {n: nat} := (@SOn _ Aadd Azero Aopp Amul Aone n).
+  Definition Build_SOn {n} := (@Build_SOn _ Aadd Azero Aopp Amul Aone n).
+
+  (* Additional coercion, hence the re-definition of `mat` and `SOn` *)
+  Definition SOn_GOn {n} (x : @SOn n) : @GOn n := SOn_GOn x.
+  Coercion SOn_GOn : SOn >-> GOn.
+
+  Definition SOn_mul {n} (x1 x2 : @SOn n) : @SOn n := SOn_mul x1 x2.
   
-  Definition SOn_mul {n} (x1 x2 : SOn n) : SOn n := SOn_mul x1 x2.
-  
-  Definition SOn_1 {n} : SOn n := SOn_1.
+  Definition SOn_1 {n} : @SOn n := SOn_1.
 
   (** SOn_mul is associative *)
   Lemma SOn_mul_assoc : forall n, Associative (@SOn_mul n).
@@ -949,7 +953,7 @@ Module FieldMatrixTheory (E : FieldElementType).
   Lemma Monoid_SOn : forall n, Monoid (@SOn_mul n) SOn_1.
   Proof. intros. apply Monoid_SOn. Qed.
 
-  Definition SOn_inv {n} (x : SOn n) : SOn n := SOn_inv x.
+  Definition SOn_inv {n} (x : @SOn n) : @SOn n := SOn_inv x.
 
   (** SOn_inv is left-inversion of <SOn_mul,SOn_1> *)
   Lemma SOn_mul_inv_l : forall n, InverseLeft SOn_mul SOn_1 (@SOn_inv n).
@@ -964,9 +968,15 @@ Module FieldMatrixTheory (E : FieldElementType).
   Proof. intros. apply Group_SOn. Qed.
 
   (** M \-1 = M \T *)
-  Lemma SOn_imply_inv_eq_trans : forall {n} (x : SOn n),
-      let M := GOn_mat n x in
-      M \-1 = M \T.
-  Proof. intros. apply SOn_imply_inv_eq_trans. Qed.
+  Lemma SOn_inv_eq_trans : forall {n} (M : @SOn n), M \-1 = M \T.
+  Proof. intros. apply SOn_inv_eq_trans. Qed.
+
+  (** M\T * M = mat1 *)
+  Lemma SOn_mul_trans_l_eq1 : forall {n} (M : @SOn n), M\T * M = mat1.
+  Proof. intros. apply SOn_mul_trans_l_eq1. Qed.
+
+  (** M * M\T = mat1 *)
+  Lemma SOn_mul_trans_r_eq1 : forall {n} (M : @SOn n), M * M\T = mat1.
+  Proof. intros. apply SOn_mul_trans_r_eq1. Qed.
   
 End FieldMatrixTheory.

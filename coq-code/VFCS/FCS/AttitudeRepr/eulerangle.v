@@ -66,14 +66,10 @@
      sin(α)->α, cos(α)->1, 高阶项sin(α)*sin(β)->0
 *)
 
-Require Import Ratan2.
-Require Import Lra.
-Require Import VectorR.
-Require Import VectorR3.
+Require Import Math.
 
-Open Scope cvec_scope.
 
-(* (* 手性：左手定、和右手定则 *) *)
+(* (* 手性：左手定则，右手定则 *) *)
 (* Inductive HandRule := HRLeft | HRRight. *)
 
 (* (* 变换类型：主动变换、被动变换 *) *)
@@ -153,27 +149,27 @@ Section BasicRotationMatrics.
        [0; 0; 1]]%R.
 
   (** 这里的定义与 R3x,R3y,R3z 是一样的 *)
-  Lemma Rx_spec : forall θ, Rx θ == R3x θ. Proof. lma. Qed.
-  Lemma Ry_spec : forall θ, Ry θ == R3y θ. Proof. lma. Qed.
-  Lemma Rz_spec : forall θ, Rz θ == R3z θ. Proof. lma. Qed.
+  Lemma Rx_spec : forall θ, Rx θ = R3x θ. Proof. intros; meq. Qed.
+  Lemma Ry_spec : forall θ, Ry θ = R3y θ. Proof. intros; meq. Qed.
+  Lemma Rz_spec : forall θ, Rz θ = R3z θ. Proof. intros; meq. Qed.
 
-  (* Fact Rx_inv : forall θ, minv (Rx θ) == (Rx θ)\T. *)
-  (* Proof. lma; autounfold with A; autorewrite with R; auto. Qed. *)
+  Lemma Rx_inv : forall θ, minv (Rx θ) = (Rx θ)\T.
+  Proof. intros. rewrite Rx_spec. apply R3x_inv_eq_trans. Qed.
 
-  (* Fact Ry_inv : forall θ, minv (Ry θ) == (Ry θ)\T. *)
-  (* Proof. lma; autounfold with A; autorewrite with R; auto. Qed. *)
+  Lemma Ry_inv : forall θ, minv (Ry θ) = (Ry θ)\T.
+  Proof. intros. rewrite Ry_spec. apply R3y_inv_eq_trans. Qed.
   
-  (* Fact Rz_inv : forall θ, minv (Rz θ) == (Rz θ)\T. *)
-  (* Proof. lma; autounfold with A; autorewrite with R; auto. Qed. *)
+  Lemma Rz_inv : forall θ, minv (Rz θ) = (Rz θ)\T.
+  Proof. intros. rewrite Rz_spec. apply R3z_inv_eq_trans. Qed.
 
-  (* Theorem Rx_neg : forall θ, Rx (-θ) == (Rx θ)\T. *)
-  (* Proof. lma; autounfold with A; autorewrite with R; auto. Qed. *)
+  Lemma Rx_neg : forall θ, Rx (-θ) = (Rx θ)\T.
+  Proof. intros. rewrite Rx_spec. apply R3x_neg_eq_trans. Qed.
 
-  (* Theorem Ry_neg : forall θ, Ry (-θ) == (Ry θ)\T. *)
-  (* Proof. lma; autounfold with A; autorewrite with R; auto. Qed. *)
+  Lemma Ry_neg : forall θ, Ry (-θ) = (Ry θ)\T.
+  Proof. intros. rewrite Ry_spec. apply R3y_neg_eq_trans. Qed.
   
-  (* Theorem Rz_neg : forall θ, Rz (-θ) == (Rz θ)\T. *)
-  (* Proof. lma; autounfold with A; autorewrite with R; auto. Qed. *)
+  Lemma Rz_neg : forall θ, Rz (-θ) = (Rz θ)\T.
+  Proof. intros. rewrite Rz_spec. apply R3z_neg_eq_trans. Qed.
 
 End BasicRotationMatrics.
 
@@ -201,33 +197,24 @@ Section EulerAngle24.
        [s1 * s2 * c3 + s3 * c1; - s1 * s2 * s3 + c3 * c1; - s1 * c2];
        [-c1 * s2 * c3 + s3 * s1; c1 * s2 * s3 + c3 * s1; c1 * c2]]%R.
 
-  Theorem B123_spec : B123 == Rx θ1 * Ry θ2 * Rz θ3.
-  Proof. lma. Qed.
+  Theorem B123_spec : B123 = Rx θ1 * Ry θ2 * Rz θ3.
+  Proof. meq; Req. Qed.
 
   (* Linearation *)
   
   (* 这里只证明这一个例子，其余例子可以仿照此处做法 *)
-  Definition B123_L : mat 3 3 :=
+  Definition B123_Linear : mat 3 3 :=
     l2m
       [[1; -θ3; θ2];
        [θ3; 1; -θ1];
        [-θ2; θ1; 1]]%R.
 
-  Theorem B123_L_spec : LinearizationCondition -> B123 == B123_L.
+  Theorem B123_Linear_spec : LinearizationCondition -> B123 = B123_Linear.
   Proof.
     intros.
     destruct H as [Hs1 [Hs2 [Hs3 [Hc1 [Hc2 [Hc3 [H12 [H13 [H23 [H21 [H31 H32]]]]]]]]]]].
-    unfold B123, B123_L.
-    lma;
-      (* 去掉 cos，并调整形式 *)
-      rewrite ?Hc1,?Hc2,?Hc3; ring_simplify;
-      (* 去掉 s * s *)
-      rewrite ?H12,?H13,?H23,?H21,?H31,?H32; ring_simplify; try easy;
-      (* 一步改写若能解决则执行 *)
-      try (rewrite ?Hs1,?Hs2,?Hs3; reflexivity).
-    (* 最后的都是因负号导致的重写失败 *)
-    rewrite Rmult_assoc;
-      rewrite ?H12,?H13,?H23,?H21,?H31,?H32; ring_simplify; try easy.
+    unfold B123, B123_Linear.
+    rewrite ?Hc1,?Hc2,?Hc3. meq; Req. rewrite associative. rewrite H23. ra.
   Qed.
   
 
@@ -238,8 +225,8 @@ Section EulerAngle24.
        [s2; c2 * c3; - c2 * s3];
        [- s1 * c2; s1 * s2 * c3 + s3 * c1; - s1 * s2 * s3 + c3 * c1]]%R.
 
-  Theorem B231_spec : B231 == Ry θ1 * Rz θ2 * Rx θ3.
-  Proof. lma. Qed.
+  Theorem B231_spec : B231 = Ry θ1 * Rz θ2 * Rx θ3.
+  Proof. meq; Req. Qed.
 
   (** 3. Body-three, 312 *)
   Definition B312 : mat 3 3 :=
@@ -248,8 +235,8 @@ Section EulerAngle24.
        [c1 * s2 * s3 + c3 * s1; c1 * c2; - c1 * s2 * c3 + s3 * s1];
        [- c2 * s3; s2; c2 * c3]]%R.
 
-  Theorem B312_spec : B312 == Rz θ1 * Rx θ2 * Ry θ3.
-  Proof. lma. Qed.
+  Theorem B312_spec : B312 = Rz θ1 * Rx θ2 * Ry θ3.
+  Proof. meq; Req. Qed.
 
   (** 4. Body-three, 132 *)
   Definition B132 : mat 3 3 :=
@@ -258,8 +245,8 @@ Section EulerAngle24.
        [c1 * s2 * c3 + s3 * s1; c1 * c2; c1 * s2 * s3 - c3 * s1];
        [s1 * s2 * c3 - s3 * c1; s1 * c2; s1 * s2 * s3 + c3 * c1]]%R.
 
-  Theorem B132_spec : B132 == Rx θ1 * Rz θ2 * Ry θ3.
-  Proof. lma. Qed.
+  Theorem B132_spec : B132 = Rx θ1 * Rz θ2 * Ry θ3.
+  Proof. meq; Req. Qed.
 
   (** 5. Body-three, 213 *)
   Definition B213 : mat 3 3 :=
@@ -268,8 +255,8 @@ Section EulerAngle24.
        [c2 * s3; c2 * c3; - s2];
        [c1 * s2 * s3 - c3 * s1; c1 * s2 * c3 + s3 * s1; c1 * c2]]%R.
         
-  Theorem B213_spec : B213 == Ry θ1 * Rx θ2 * Rz θ3.
-  Proof. lma. Qed.
+  Theorem B213_spec : B213 = Ry θ1 * Rx θ2 * Rz θ3.
+  Proof. meq; Req. Qed.
 
   (** 6. Body-three, 321 *)
   Definition B321 : mat 3 3 :=
@@ -278,8 +265,8 @@ Section EulerAngle24.
        [s1 * c2; s1 * s2 * s3 + c3 * c1; s1 * s2 * c3 - s3 * c1];
        [- s2; c2 * s3; c2 * c3]]%R.
   
-  Theorem B321_spec : B321 == Rz θ1 * Ry θ2 * Rx θ3.
-  Proof. lma. Qed.
+  Theorem B321_spec : B321 = Rz θ1 * Ry θ2 * Rx θ3.
+  Proof. meq; Req. Qed.
 
   (** 7. Body-two, 121 *)
   Definition B121 : mat 3 3 :=
@@ -288,8 +275,8 @@ Section EulerAngle24.
        [s1 * s2; - s1 * c2 * s3 + c3 * c1; - s1 * c2 * c3 - s3 * c1];
        [- c1 * s2; c1 * c2 * s3 + c3 * s1; c1 * c2 * c3 - s3 * s1]]%R.
 
-  Theorem B121_spec : B121 == Rx θ1 * Ry θ2 * Rx θ3.
-  Proof. lma. Qed.
+  Theorem B121_spec : B121 = Rx θ1 * Ry θ2 * Rx θ3.
+  Proof. meq; Req. Qed.
   
   (** 8. Body-two, 131 *)
   Definition B131 : mat 3 3 :=
@@ -298,8 +285,8 @@ Section EulerAngle24.
        [c1 * s2; c1 * c2 * c3 - s3 * s1; - c1 * c2 * s3 - c3 * s1];
        [s1 * s2; s1 * c2 * c3 + s3 * c1; - s1 * c2 * s3 + c3 * c1]]%R.
   
-  Theorem B131_spec : B131 == Rx θ1 * Rz θ2 * Rx θ3.
-  Proof. lma. Qed.
+  Theorem B131_spec : B131 = Rx θ1 * Rz θ2 * Rx θ3.
+  Proof. meq; Req. Qed.
   
   (** 9. Body-two, 212 *)
   Definition B212 : mat 3 3 :=
@@ -308,8 +295,8 @@ Section EulerAngle24.
        [s2 * s3; c2; - s2 * c3];
        [- c1 * c2 * s3 - c3 * s1; c1 * s2; c1 * c2 * c3 - s3 * s1]]%R.
 
-  Theorem B212_spec : B212 == Ry θ1 * Rx θ2 * Ry θ3.
-  Proof. lma. Qed.
+  Theorem B212_spec : B212 = Ry θ1 * Rx θ2 * Ry θ3.
+  Proof. meq; Req. Qed.
   
   (** 10. Body-two, 232 *)
   Definition B232 : mat 3 3 :=
@@ -318,8 +305,8 @@ Section EulerAngle24.
        [s2 * c3; c2; s2 * s3];
        [- s1 * c2 * c3 - s3 * c1; s1 * s2; - s1 * c2 * s3 + c3 * c1]]%R.
   
-  Theorem B232_spec : B232 == Ry θ1 * Rz θ2 * Ry θ3.
-  Proof. lma. Qed.
+  Theorem B232_spec : B232 = Ry θ1 * Rz θ2 * Ry θ3.
+  Proof. meq; Req. Qed.
   
   (** 11. Body-two, 313 *)
   Definition B313 : mat 3 3 :=
@@ -328,8 +315,8 @@ Section EulerAngle24.
        [c1 * c2 * s3 + c3 * s1; c1 * c2 * c3 - s3 * s1; - c1 * s2];
        [s2 * s3; s2 * c3; c2]]%R.
   
-  Theorem B313_spec : B313 == Rz θ1 * Rx θ2 * Rz θ3.
-  Proof. lma. Qed.
+  Theorem B313_spec : B313 = Rz θ1 * Rx θ2 * Rz θ3.
+  Proof. meq; Req. Qed.
   
   (** 12. Body-two, 323 *)
   Definition B323 : mat 3 3 :=
@@ -338,8 +325,8 @@ Section EulerAngle24.
        [s1 * c2 * c3 + s3 * c1; - s1 * c2 * s3 + c3 * c1; s1 * s2];
        [- s2 * c3; s2 * s3; c2]]%R.
   
-  Theorem B323_spec : B323 == Rz θ1 * Ry θ2 * Rz θ3.
-  Proof. lma. Qed.
+  Theorem B323_spec : B323 = Rz θ1 * Ry θ2 * Rz θ3.
+  Proof. meq; Req. Qed.
 
   (** 13. Space-three, 123 *)
   Definition S123 : mat 3 3 :=
@@ -348,8 +335,8 @@ Section EulerAngle24.
        [c2 * s3; s1 * s2 * s3 + c3 * c1; c1 * s2 * s3 - c3 * s1];
        [- s2; s1 * c2; c1 * c2]]%R.
                                                                
-  Theorem S123_spec : S123 == Rz θ3 * Ry θ2 * Rx θ1.
-  Proof. lma. Qed.
+  Theorem S123_spec : S123 = Rz θ3 * Ry θ2 * Rx θ1.
+  Proof. meq; Req. Qed.
 
   (** 14. Space-three, 231 *)
   Definition S231 : mat 3 3 :=
@@ -358,8 +345,8 @@ Section EulerAngle24.
        [c1 * s2 * c3 + s3 * s1; c2 * c3; s1 * s2 * c3 - s3 * c1];
        [c1 * s2 * s3 - c3 * s1; c2 * s3; s1 * s2 * s3 + c3 * c1]]%R.
   
-  Theorem S231_spec : S231 == Rx θ3 * Rz θ2 * Ry θ1.
-  Proof. lma. Qed.
+  Theorem S231_spec : S231 = Rx θ3 * Rz θ2 * Ry θ1.
+  Proof. meq; Req. Qed.
 
   (** 15. Space-three, 312 *)
   Definition S312 : mat 3 3 :=
@@ -368,8 +355,8 @@ Section EulerAngle24.
        [s1 * c2; c1 * c2; - s2];
        [s1 * s2 * c3 - s3 * c1; c1 * s2 * c3 + s3 * s1; c2 * c3]]%R.
   
-  Theorem S312_spec : S312 == Ry θ3 * Rx θ2 * Rz θ1.
-  Proof. lma. Qed.
+  Theorem S312_spec : S312 = Ry θ3 * Rx θ2 * Rz θ1.
+  Proof. meq; Req. Qed.
 
   (** 16. Space-three, 132 *)
   Definition S132 : mat 3 3 :=
@@ -378,8 +365,8 @@ Section EulerAngle24.
        [s2; c1 * c2; - s1 * c2];
        [- c2 * s3; c1 * s2 * s3 + c3 * s1; - s1 * s2 * s3 + c3 * c1]]%R.
   
-  Theorem S132_spec : S132 == Ry θ3 * Rz θ2 * Rx θ1.
-  Proof. lma. Qed.
+  Theorem S132_spec : S132 = Ry θ3 * Rz θ2 * Rx θ1.
+  Proof. meq; Req. Qed.
 
   (** 17. Space-three, 213 *)
   Definition S213 : mat 3 3 :=
@@ -388,8 +375,8 @@ Section EulerAngle24.
        [s1 * s2 * c3 + s3 * c1; c2 * c3; - c1 * s2 * c3 + s3 * s1];
        [- s1 * c2; s2; c1 * c2]]%R.
   
-  Theorem S213_spec : S213 == Rz θ3 * Rx θ2 * Ry θ1.
-  Proof. lma. Qed.
+  Theorem S213_spec : S213 = Rz θ3 * Rx θ2 * Ry θ1.
+  Proof. meq; Req. Qed.
 
   (** 18. Space-three, 321 *)
   Definition S321 : mat 3 3 :=
@@ -398,8 +385,8 @@ Section EulerAngle24.
        [c1 * s2 * s3 + c3 * s1; - s1 * s2 * s3 + c3 * c1; - c2 * s3];
        [- c1 * s2 * c3 + s3 * s1; s1 * s2 * c3 + s3 * c1; c2 * c3]]%R.
         
-  Theorem S321_spec : S321 == Rx θ3 * Ry θ2 * Rz θ1.
-  Proof. lma. Qed.
+  Theorem S321_spec : S321 = Rx θ3 * Ry θ2 * Rz θ1.
+  Proof. meq; Req. Qed.
 
   (** 19. Space-two, 121 *)
   Definition S121 : mat 3 3 :=
@@ -408,8 +395,8 @@ Section EulerAngle24.
        [s2 * s3; - s1 * c2 * s3 + c3 * c1; - c1 * c2 * s3 - c3 * s1];
        [- s2 * c3; s1 * c2 * c3 + s3 * c1; c1 * c2 * c3 - s3 * s1]]%R.
 
-  Theorem S121_spec : S121 == Rx θ3 * Ry θ2 * Rx θ1.
-  Proof. lma. Qed.
+  Theorem S121_spec : S121 = Rx θ3 * Ry θ2 * Rx θ1.
+  Proof. meq; Req. Qed.
 
   (** 20. Space-two, 131 *)
   Definition S131 : mat 3 3 :=
@@ -418,8 +405,8 @@ Section EulerAngle24.
        [s2 * c3; c1 * c2 * c3 - s3 * s1; - s1 * c2 * c3 - s3 * c1];
        [s2 * s3; c1 * c2 * s3 + c3 * s1; - s1 * c2 * s3 + c3 * c1]]%R.
           
-  Theorem S131_spec : S131 == Rx θ3 * Rz θ2 * Rx θ1.
-  Proof. lma. Qed.
+  Theorem S131_spec : S131 = Rx θ3 * Rz θ2 * Rx θ1.
+  Proof. meq; Req. Qed.
 
   (** 21. Space-two, 212 *)
   Definition S212 : mat 3 3 :=
@@ -428,8 +415,8 @@ Section EulerAngle24.
        [s1 * s2; c2; - c1 * s2];
        [-s1 * c2 * c3 - s3 * c1; s2 * c3; c1 * c2 * c3 - s3 * s1]]%R.
   
-  Theorem S212_spec : S212 == Ry θ3 * Rx θ2 * Ry θ1.
-  Proof. lma. Qed.
+  Theorem S212_spec : S212 = Ry θ3 * Rx θ2 * Ry θ1.
+  Proof. meq; Req. Qed.
 
   (** 22. Space-two, 232 *)
   Definition S232 : mat 3 3 :=
@@ -438,8 +425,8 @@ Section EulerAngle24.
        [c1 * s2; c2; s1 * s2];
        [- c1 * c2 * s3 - c3 * s1; s2 * s3; - s1 * c2 * s3 + c3 * c1]]%R.
   
-  Theorem S232_spec : S232 == Ry θ3 * Rz θ2 * Ry θ1.
-  Proof. lma. Qed.
+  Theorem S232_spec : S232 = Ry θ3 * Rz θ2 * Ry θ1.
+  Proof. meq; Req. Qed.
 
   (** 23. Space-two, 313 *)
   Definition S313 : mat 3 3 :=
@@ -448,8 +435,8 @@ Section EulerAngle24.
        [s1 * c2 * c3 + s3 * c1; c1 * c2 * c3 - s3 * s1; - s2 * c3];
        [s1 * s2; c1 * s2; c2]]%R.
   
-  Theorem S313_spec : S313 == Rz θ3 * Rx θ2 * Rz θ1.
-  Proof. lma. Qed.
+  Theorem S313_spec : S313 = Rz θ3 * Rx θ2 * Rz θ1.
+  Proof. meq; Req. Qed.
 
   (** 24. Space-two, 323 *)
   Definition S323 : mat 3 3 :=
@@ -458,8 +445,8 @@ Section EulerAngle24.
        [c1 * c2 * s3 + c3 * s1; - s1 * c2 * s3 + c3 * c1; s2 * s3];
        [-c1 * s2; s1 * s2; c2]]%R.
   
-  Theorem S323_spec : S323 == Rz θ3 * Ry θ2 * Rz θ1.
-  Proof. lma. Qed.
+  Theorem S323_spec : S323 = Rz θ3 * Ry θ2 * Rz θ1.
+  Proof. meq; Req. Qed.
 
 End EulerAngle24.
 
@@ -478,51 +465,50 @@ Module R2Euler.
       (** Claim: If θ = kπ+π/2, then we can not uniquely determine ϕ and ψ. *)
 
       (* Let's prove some simpler goals first. *)
-
-      (** If θ = -π/2, then the rotation matrix has following form. *)
-      Lemma B123_θ_eq_pi2_neg : forall (ϕ θ ψ : R),
-          θ = -PI/2 ->
-          B123 ϕ θ ψ ==
-            l2m [[0; 0; -1];
-                 [sin (ψ - ϕ); cos (ψ - ϕ); 0];
-                 [cos (ψ - ϕ); - sin (ψ - ϕ); 0]].
-      Proof.
-        intros; rewrite H.
-        lma; autounfold with T; autorewrite with R; auto; try field.
-      Qed.
       
       (** If θ = π/2, then the rotation matrix has following form. *)
       Lemma B123_θ_eq_pi2 : forall (ϕ θ ψ : R),
           θ = PI/2 ->
-          B123 ϕ θ ψ ==
+          B123 ϕ θ ψ =
             l2m [[0; 0; 1];
                  [sin (ϕ + ψ); cos (ϕ + ψ); 0];
                  [- cos (ϕ + ψ); sin (ϕ + ψ); 0]].
       Proof.
         intros; rewrite H.
-        lma; autounfold with T; autorewrite with R; auto; try field.
+        pose proof cos_PI2. pose proof sin_PI2. cbv in H0, H1. meq; Req_more.
       Qed.
 
+      (** If θ = -π/2, then the rotation matrix has following form. *)
+      Lemma B123_θ_eq_pi2_neg : forall (ϕ θ ψ : R),
+          θ = -PI/2 ->
+          B123 ϕ θ ψ =
+            l2m [[0; 0; -1];
+                 [sin (ψ - ϕ); cos (ψ - ϕ); 0];
+                 [cos (ψ - ϕ); - sin (ψ - ϕ); 0]].
+      Proof.
+        intros; rewrite H.
+        pose proof cos_PI2. pose proof sin_PI2. cbv in H0, H1. meq; Req_more.
+      Qed.
 
       (** If θ = π/2, then there are infinite ϕ can generate a same matrix. *)
-      Fact B123_singularity_ϕ_when_θ_eq_pi2 : forall (ϕ θ ψ : R),
-        θ = PI/2 -> forall ϕ', (exists ψ', B123 ϕ' θ ψ' == B123 ϕ θ ψ).
+      Lemma B123_singularity_ϕ_when_θ_eq_pi2 : forall (ϕ θ ψ : R),
+        θ = PI/2 -> forall ϕ', (exists ψ', B123 ϕ' θ ψ' = B123 ϕ θ ψ).
       Proof.
         intros. eexists. rewrite !B123_θ_eq_pi2; auto.
-        lma. instantiate (1:=ψ + ϕ - ϕ'). all: f_equiv; try field. f_equiv. field.
+        meq; Req. instantiate (1:=ψ + ϕ - ϕ'). all: repeat (f_equal; try lra).
       Qed.
       
       (** If θ = -π/2, then there are infinite ϕ can generate a same matrix. *)
-      Fact B123_singularity_ϕ_when_θ_eq_pi2_neg : forall (ϕ θ ψ : R),
-        θ = -PI/2 -> forall ϕ', (exists ψ', B123 ϕ' θ ψ' == B123 ϕ θ ψ).
+      Lemma B123_singularity_ϕ_when_θ_eq_pi2_neg : forall (ϕ θ ψ : R),
+        θ = -PI/2 -> forall ϕ', (exists ψ', B123 ϕ' θ ψ' = B123 ϕ θ ψ).
       Proof.
         intros. eexists. rewrite !B123_θ_eq_pi2_neg; auto.
-        lma. instantiate (1:=ψ - ϕ + ϕ'). all: f_equiv; try field. f_equiv. field.
+        meq; Req. instantiate (1:=ψ - ϕ + ϕ'). all: repeat (f_equal; try lra).
       Qed.
 
       (** If θ = ±π/2, then there are infinite ϕ can generate a same matrix. *)
       Theorem B123_singularity_ϕ : forall (ϕ θ ψ : R),
-        (θ = PI/2 \/ θ = -PI/2) -> forall ϕ', (exists ψ', B123 ϕ' θ ψ' == B123 ϕ θ ψ).
+        (θ = PI/2 \/ θ = -PI/2) -> forall ϕ', (exists ψ', B123 ϕ' θ ψ' = B123 ϕ θ ψ).
       Proof.
         intros. destruct H.
         apply B123_singularity_ϕ_when_θ_eq_pi2; auto.
@@ -530,24 +516,24 @@ Module R2Euler.
       Qed.
 
       (** If θ = π/2, then there are infinite ψ can generate a same matrix. *)
-      Fact B123_singularity_ψ_when_θ_eq_pi2 : forall (ϕ θ ψ : R),
-        θ = PI/2 -> forall ψ', (exists ϕ', B123 ϕ' θ ψ' == B123 ϕ θ ψ).
+      Lemma B123_singularity_ψ_when_θ_eq_pi2 : forall (ϕ θ ψ : R),
+        θ = PI/2 -> forall ψ', (exists ϕ', B123 ϕ' θ ψ' = B123 ϕ θ ψ).
       Proof.
         intros. eexists. rewrite !B123_θ_eq_pi2; auto.
-        lma. instantiate (1:=ψ + ϕ - ψ'). all: f_equiv; try field. f_equiv. field.
+        meq; Req. instantiate (1:=ψ + ϕ - ψ'). all: repeat (f_equal; try lra).
       Qed.
                 
       (** If θ = -π/2, then there are infinite ψ can generate a same matrix. *)
-      Fact B123_singularity_ψ_when_θ_eq_pi2_neg : forall (ϕ θ ψ : R),
-        θ = -PI/2 -> forall ψ', (exists ϕ', B123 ϕ' θ ψ' == B123 ϕ θ ψ).
+      Lemma B123_singularity_ψ_when_θ_eq_pi2_neg : forall (ϕ θ ψ : R),
+        θ = -PI/2 -> forall ψ', (exists ϕ', B123 ϕ' θ ψ' = B123 ϕ θ ψ).
       Proof.
         intros. eexists. rewrite !B123_θ_eq_pi2_neg; auto.
-        lma. instantiate (1:=-ψ + ϕ + ψ'). all: f_equiv; try field. f_equiv. field.
+        meq; Req. instantiate (1:=-ψ + ϕ + ψ'). all: repeat (f_equal; try lra).
       Qed.
 
       (** If θ = ±π/2, then there are infinite ψ can generate a same matrix. *)
       Theorem B123_singularity_ψ : forall (ϕ θ ψ : R),
-        (θ = PI/2 \/ θ = -PI/2) -> forall ψ', (exists ϕ', B123 ϕ' θ ψ' == B123 ϕ θ ψ).
+        (θ = PI/2 \/ θ = -PI/2) -> forall ψ', (exists ϕ', B123 ϕ' θ ψ' = B123 ϕ θ ψ).
       Proof.
         intros. destruct H.
         apply B123_singularity_ψ_when_θ_eq_pi2; auto.
@@ -557,54 +543,41 @@ Module R2Euler.
 
     (* 算法1：避开奇异点，小机动范围，即 roll,pitch,yaw ∈ (-π/2,π/2) *)
     Module alg1.
-      Section sec.
-        Definition ϕ' (C : smat 3) := atan (- C.23 / C.33).
-        Definition θ' (C : smat 3) := asin (C.13).
-        Definition ψ' (C : smat 3) := atan (- C.12 / C.11).
-        
-        Theorem alg_spec : forall (ϕ θ ψ : R) (C : smat 3),
-            -PI/2 < ϕ < PI/2 ->
-            -PI/2 < θ < PI/2 ->
-            -PI/2 < ψ < PI/2 ->
-            C == B123 ϕ θ ψ ->
-            ϕ' C = ϕ /\ θ' C = θ /\ ψ' C = ψ.
-        Proof.
-          intros.
-          cbv. rewrite !H2; auto.
-          cbv. autorewrite with R; ra.
-        Qed.
-      End sec.
+      Definition ϕ' (C : smat 3) := atan (- C.23 / C.33).
+      Definition θ' (C : smat 3) := asin (C.13).
+      Definition ψ' (C : smat 3) := atan (- C.12 / C.11).
       
+      Theorem alg_spec : forall (ϕ θ ψ : R) (C : smat 3),
+          -PI/2 < ϕ < PI/2 ->
+          -PI/2 < θ < PI/2 ->
+          -PI/2 < ψ < PI/2 ->
+          C = B123 ϕ θ ψ ->
+          ϕ' C = ϕ /\ θ' C = θ /\ ψ' C = ψ.
+      Proof. intros. cbv. rewrite !H2; auto. cbv; Req_more. Qed.
     End alg1.
 
     (* 算法2：避开奇异点，大机动范围，即 pitch ∈ (-π/2,π/2), roll,yaw ∈ (-π,π) *)
     Module alg2.
-      Section sec.
-        Definition ϕ' (C : smat 3) := atan2 (- C.23) (C.33).
-        Definition θ' (C : smat 3) := asin (C.13).
-        Definition ψ' (C : smat 3) := atan2 (- C.12) (C.11).
+      Definition ϕ' (C : smat 3) := atan2 (- C.23) (C.33).
+      Definition θ' (C : smat 3) := asin (C.13).
+      Definition ψ' (C : smat 3) := atan2 (- C.12) (C.11).
 
-        Theorem alg_spec : forall (ϕ θ ψ : R) (C : smat 3),
-            -PI < ϕ < PI ->
-            -PI/2 < θ < PI/2 ->
-            -PI < ψ < PI ->
-            C == B123 ϕ θ ψ ->
-            ϕ' C = ϕ /\ θ' C = θ /\ ψ' C = ψ.
-        Proof.
-          intros.
-          cbv. rewrite !H2; auto.
-          cbv. autorewrite with R; ra.
-          assert (0 < cos θ). { apply cos_gt_0; try lra. }
-          repeat split.
-          - rewrite atan2_sin_cos_eq1; auto.
-          - rewrite !(Rmult_comm (cos θ)).
-            rewrite atan2_sin_cos_eq1; auto.
-        Qed.
-      End sec.
-      
+      Theorem alg_spec : forall (ϕ θ ψ : R) (C : smat 3),
+          -PI < ϕ < PI ->
+          -PI/2 < θ < PI/2 ->
+          -PI < ψ < PI ->
+          C = B123 ϕ θ ψ ->
+          ϕ' C = ϕ /\ θ' C = θ /\ ψ' C = ψ.
+      Proof.
+        intros. cbv. rewrite !H2; auto. cbv; Req_more.
+        assert (0 < cos θ). { apply cos_gt_0; try lra. }
+        repeat split.
+        - rewrite atan2_sin_cos_eq1; auto. lra.
+        - rewrite !(Rmult_comm (cos θ)). rewrite atan2_sin_cos_eq1; auto. lra.
+      Qed.
     End alg2.
       
-    (* 算法2：保留奇异点，完整的机动范围，即 roll,pitch,yaw ∈ [-π,π] *)
+    (* 算法3：保留奇异点，完整的机动范围，即 roll,pitch,yaw ∈ [-π,π] *)
     Module alg3.
       (* 该算法来自于 QQ's book, page94.
          1. 当θ=±π/2时(此时 r11=r21=0)，ϕ和ψ不唯一，可以人为规定 ϕ = 0
@@ -631,8 +604,8 @@ Module R2Euler.
         Definition case1_cond : bool := (C.11 =? 0) && (C.21 =? 0).
 
         (* ϕ, θ, ψ = v.1, v.2, v.3 *)
-        Definition case1_values : cvec 3 :=
-          l2cv [0; (Rsign (-C.31)) * (PI / 2); atan2 (-C.12) (C.22)].
+        Definition case1_values : vec 3 :=
+          l2v [0; (Rsign (-C.31)) * (PI / 2); atan2 (-C.12) (C.22)].
 
         (* (5.15) possible euler angles *)
         
@@ -663,41 +636,35 @@ Module R2Euler.
             (fun x y => match x, y with (_,_,_,x1),(_,_,_,y1) => x1 <? y1 end)
             l.
 
-        Definition case2_values : cvec 3 :=
+        Definition case2_values : vec 3 :=
           let '(ϕ,θ,ψ,_) := find_best in
-          l2cv [ϕ; θ; ψ].
+          l2v [ϕ; θ; ψ].
 
         (** If the matrix is identity matrix, there are two possible solutions *)
         Definition case3_cond : bool :=
           (C.11 =? 1) && (C.33 =? 1) && (C.21 =? 0) && (C.32 =? 0) && (C.31 =? 0).
         
-        Definition case3_opts : mat 3 2 :=
-          l2m [[0; PI]; [0; PI]; [0; PI]].
-
-        (** If the euler angles is option 1 or 2, then the matrix is identity matrix *)
+        (** If the euler angles is {0,0,0} or {π,π,π}, then the matrix is identity matrix *)
         Lemma case3_opts_1_eq_mat1 :
-          let ea := mcol case3_opts 0 in
-          B123 (ea.1) (ea.2) (ea.3) == mat1.
-        Proof. lma; autorewrite with R; easy. Qed.
+          B123 0 0 0 = mat1.
+        Proof. meq; Req_more. Qed.
         
         Lemma case3_opts_2_eq_mat1 :
-          let ea := mcol case3_opts 1 in
-          B123 (ea.1) (ea.2) (ea.3) == mat1.
-        Proof. lma; autorewrite with R; cbv; ring. Qed.
+          B123 PI PI PI = mat1.
+        Proof. meq; Req_more. Qed.
 
-        Definition case3_values (old : cvec 3) : cvec 3 :=
+        Definition case3_values (old : vec 3) : vec 3 :=
           (* 根据历史值，与之接近的是正解 *)
           let closest (old opt1 opt2 : R) : R :=
             if Rabs (old - opt1) <? Rabs (old - opt2) then opt1 else opt2 in
-          let m := case3_opts in
-          l2cv [
-              closest (old.1) (m.11) (m.12);
-              closest (old.2) (m.21) (m.22);
-              closest (old.3) (m.31) (m.32)
+          l2v [
+              closest (old.1) 0 PI;
+              closest (old.2) 0 PI;
+              closest (old.3) 0 PI
             ].
 
         (** final algorithm *)
-        Definition euler_angles (old : cvec 3) : cvec 3 :=
+        Definition euler_angles (old : vec 3) : vec 3 :=
           if case1_cond
           then case1_values
           else if case3_cond
@@ -719,16 +686,16 @@ Section skew3.
   Open Scope R.
 
   (** Given matrix is skew-symmetric matrices *)
-  (* Check cv3skewP. *)
-  (* Check cv3skewP_spec. *)
+  (* Check v3skewP. *)
+  (* Check v3skewP_eq. *)
 
   (** Convert a vector to its corresponding skew-symmetric matrix *)
-  (* Check cv3skew. *)
+  (* Check v3skew. *)
 
   (** Convert a skew-symmetric matrix to its corresponding vector *)
-  (* Check cv3skew2v. *)
+  (* Check v3vex. *)
 
-  (* Check cv3skew_skew2v_id. *)
-  (* Check cv3skew2v_skew_id. *)
+  (* Check v3skew_v3vex_id. *)
+  (* Check v3vex_v3skew_id. *)
   
 End skew3.

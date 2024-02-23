@@ -4013,3 +4013,120 @@ Section dlrowFirstNonZero.
   Context {A : Type} {Azero : A}.
 
 End dlrowFirstNonZero.
+
+
+(* ======================================================================= *)
+(** ** Special search algorithm *)
+Section search.
+
+  (** Find the minimum element from a list *)
+  Section list_min.
+    (** Find the minimum element from a list (Auxiliary function).
+      Parameters:
+      l         the given list
+      cmp       compare function, t1 < t2 is true, otherwise false
+      val       minimum value, init is the head of l
+         
+      Return:
+      if the given list is empty, return val
+      otherwise, return the value we need.
+     *)
+    Fixpoint list_min_aux {T} (val : T) (l : list T) (cmp : T -> T -> bool) : T :=
+      match l with
+      | [] => val
+      | a :: tl =>
+          if cmp a val
+          then list_min_aux a tl cmp
+          else list_min_aux val tl cmp
+      end.
+
+    (** Find the minimum element from a list.
+
+      Parameters:
+      T0    default value of A
+      cmp   compare function, t1 < t2 is true, otherwise false
+      l     the given list
+         
+      Return:
+      if the given list is empty, return T0
+      otherwise, return the value we need.
+     *)
+    Definition list_min {T} (T0 : T) (cmp : T -> T -> bool) (l : list T) : T :=
+      list_min_aux (hd T0 l) l cmp.
+
+    Section test.
+      
+      Open Scope nat.
+      (* Compute list_min 9 Nat.ltb []. *)
+      (* Compute list_min 0 Nat.ltb [2;3;4;1;5]. *)
+      (* Compute list_min 0 Nat.ltb [2;3;4;1;1;5]. (* find the first minimum *) *)
+      (* Compute list_min 0 Nat.ltb [1;2;3;4;5]. *)
+      (* Compute list_min 0 Nat.ltb [2;3;4;5;1]. *)
+      
+    End test.
+
+  End list_min.
+
+
+  (** Find the index of the minimum element from a list *)
+  Section list_min_pos.
+    (** Find the index of the minimum element from a list (Auxiliary function).
+
+      Parameters:
+      l         the given list
+      cmp       compare function, t1 < t2 is true, otherwise false
+      min_val   minimum value, init is the head of l
+      min_pos   record position where the element is minum, init is 0
+      cnt       to count the position, init is 0
+         
+      Return:
+      if the given list is empty, return min_pos
+      otherwise, return the value we need.
+     *)
+    Fixpoint list_min_pos_aux {T} (cmp : T -> T -> bool) (l : list T) 
+      (min_val : T) (min_pos : nat) (cnt : nat) : nat :=
+      match l with
+      | [] => min_pos
+      | a :: tl =>
+          if cmp a min_val 
+          then list_min_pos_aux cmp tl a cnt (S cnt)
+          else list_min_pos_aux cmp tl min_val min_pos (S cnt)
+      end.
+
+    (** Find the index of the minimum element from a list.
+
+      Parameters:
+      T0    default value of A, only be used as the parameter of hd, any value is ok.
+      cmp   compare function, t1 < t2 is true, otherwise false
+      l     the given list
+         
+      Return:
+      if the given list is empty, return 0
+      otherwise, return the value we need.
+     *)
+    Definition list_min_pos {T} (T0 : T) (cmp : T -> T -> bool) (l : list T) : nat :=
+      list_min_pos_aux cmp l (hd T0 l) 0 0.
+
+    (** Spec: no any other elements is smaller than the result. *)
+    Lemma list_min_pos_spec : forall {T} (T0 : T) (cmp : T -> T -> bool) (l : list T),
+        let min_pos :=  list_min_pos T0 cmp l in
+        let min_val := nth min_pos l T0 in
+        Forall (fun a => negb (cmp a min_val)) l.
+    Proof.
+      intros T T0 cmp l. simpl. induction l; constructor.
+    Abort.
+
+    Section test.
+      
+      Open Scope nat.
+      (* Compute list_min_pos 9 Nat.ltb []. *)
+      (* Compute list_min_pos 0 Nat.ltb [2;3;4;1;5]. *)
+      (* Compute list_min_pos 0 Nat.ltb [2;3;4;1;1;5]. (* find the first minimum *) *)
+      (* Compute list_min_pos 0 Nat.ltb [1;2;3;4;5]. *)
+      (* Compute list_min_pos 0 Nat.ltb [2;3;4;5;1]. *)
+      
+    End test.
+  End list_min_pos.
+
+End search.
+

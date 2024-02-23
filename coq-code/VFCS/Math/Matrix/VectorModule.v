@@ -391,7 +391,6 @@ Module RingVectorTheory (E : RingElementType).
   Lemma vopp_vunit : forall {n} (v : vec n), vunit (vopp v) <-> vunit v.
   Proof. intros. apply vopp_vunit. Qed.
 
-
   (** *** Orthogonal vectors *)
 
   (* Two vectors, u and v, in an inner product space v, are orthogonal (also called 
@@ -519,20 +518,19 @@ Module FieldVectorTheory (E : FieldElementType).
   Proof. intros. apply vunit_neq0; auto. Qed.
 
   (** (k \.* u) _|_ v <-> u _|_ v *)
-  Lemma vorth_vcmul_l : forall {n} k (u v : vec n), k <> 0 -> ((k \.* u) _|_ v <-> u _|_ v).
+  Lemma vorth_vcmul_l : forall {n} k (u v : vec n),
+      k <> 0 -> ((k \.* u) _|_ v <-> u _|_ v).
   Proof. intros. apply vorth_vcmul_l; auto. Qed.
   
   (** u _|_ (k \.* v) <-> u _|_ v *)
-  Lemma vorth_vcmul_r : forall {n} k (u v : vec n), k <> 0 -> (u _|_ (k \.* v) <-> u _|_ v).
+  Lemma vorth_vcmul_r : forall {n} k (u v : vec n),
+      k <> 0 -> (u _|_ (k \.* v) <-> u _|_ v).
   Proof. intros. apply vorth_vcmul_r; auto. Qed.
 
-  
-  (** *** Projection component of a vector onto another *)
-  
-  (** The projection component of a onto b *)
-  Definition vproj {n} (u v : vec n) : vec n := @vproj _ Aadd 0 Amul Ainv _ u v.
 
-  (* u // v -> v // u *)
+  (** *** Parallel *)
+  
+  (** u // v -> v // u *)
   Lemma vpara_sym : forall {n} (u v : vec n), u // v -> v // u.
   Proof. intros. apply vpara_sym; auto. Qed.
 
@@ -548,12 +546,34 @@ Module FieldVectorTheory (E : FieldElementType).
   Lemma vcmul_vpara_r : forall {n} k (u v : vec n), k <> 0 -> u // v -> u // (k \.* v).
   Proof. intros. apply vcmul_vpara_r; auto. Qed.
 
+  
+  (** *** Projection component of a vector onto another *)
+  
+  (** The projection component of a onto b *)
+  Definition vproj {n} (u v : vec n) : vec n := @vproj _ Aadd 0 Amul Ainv _ u v.
 
+  (** vunit v -> vproj u v = <u, v> \.* v *)
+  Lemma vproj_vunit : forall {n} (u v : vec n), vunit v -> vproj u v = <u, v> \.* v.
+  Proof. intros. apply vproj_vunit; auto. Qed.
+
+  
   (** *** Perpendicular component of a vector respect to another *)
   
   (** The perpendicular component of u respect to u *)
   Definition vperp {n} (u v : vec n) : vec n :=
     @vperp _ Aadd 0 Aopp Amul Ainv _ u v.
+
+  (** vperp u v = u - vproj u v *)
+  Lemma vperp_eq_minus_vproj : forall {n} (u v : vec n), vperp u v = u - vproj u v.
+  Proof. intros; apply vperp_eq_minus_vproj. Qed.
+
+  (** vproj u v = u - vperp u v *)
+  Lemma vproj_eq_minus_vperp : forall {n} (u v : vec n), vproj u v = u - vperp u v.
+  Proof. intros; apply vproj_eq_minus_vperp. Qed.
+
+  (** vproj u v = u - vperp u v *)
+  Lemma vproj_plus_vperp : forall {n} (u v : vec n), vproj u v + vperp u v = u.
+  Proof. intros; apply vproj_plus_vperp. Qed.
 
   (** u _|_ v -> vperp u v = u *)
   Lemma vorth_imply_vperp_eq_l : forall {n} (u v : vec n),

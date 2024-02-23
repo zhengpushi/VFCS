@@ -173,6 +173,7 @@ Reserved Notation "M .44"      (at level 25, format "M .44").
 #[global] Ltac list_eq :=
   repeat match goal with
     | |- cons ?h1 ?t1 = cons ?h2 ?t2 => f_equal
+    | [H: cons _ _ = cons _ _ |- _] => inversion H; clear H
     end.
 
 (* repeat split *)
@@ -315,13 +316,3 @@ Open Scope vec_scope.
 Declare Scope mat_scope.
 Delimit Scope mat_scope with M.
 Open Scope mat_scope.
-
-(** Scope for row-vector type *)
-Declare Scope rvec_scope.
-Delimit Scope rvec_scope with RV.
-Open Scope rvec_scope.
-
-(** Scope for column-vector type *)
-Declare Scope cvec_scope.
-Delimit Scope cvec_scope with CV.
-Open Scope cvec_scope.

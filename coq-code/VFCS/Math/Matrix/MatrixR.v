@@ -78,11 +78,9 @@ Section matrix_norm.
         rewrite mnth_mat0. ra.
     Qed.
 
-    ?
     Lemma mnormF_spec_mcmul : forall r c, mnorm_spec_mcmul (@mnormF r c).
     Proof.
     Admitted.
-
 
     Lemma mnormF_spec_trig : forall r c, mnorm_spec_trig (@mnormF r c).
     Proof.
@@ -97,17 +95,13 @@ End matrix_norm.
 (** ** Orthogonal matrix *)
 Section morth.
 
-  (** orthogonal m -> |m| = ± 1 *)
-  Lemma morth_mdet : forall {n} (m : smat n),
-      morth m -> (mdet m = 1 \/ mdet m = - (1))%T.
+  (** orthogonal M -> |M| = ± 1 *)
+  Lemma morth_mdet : forall {n} (M : smat n),
+      morth M -> (mdet M = 1 \/ mdet M = -1).
   Proof.
-    intros.
-    assert (m\T * m = mat1).
-    { unfold morth in H. unfold Matrix.morth in H. rewrite H. easy. }
-    assert (mdet (m\T * m)%M = mdet (@mat1 n))%T.
-    { rewrite H0. easy. }
-    rewrite mdet_mmul in H1. rewrite mdet_mtrans in H1. rewrite mdet_1 in H1.
-    apply Rsqr_eq1 in H1. easy.
+    intros. rewrite morth_iff_mul_trans_l in H.
+    assert (mdet (M\T * M) = mdet (@mat1 n)). rewrite H. auto.
+    rewrite mdet_mmul, mdet_mtrans, mdet_mat1 in H0. apply Rsqr_eq1 in H0. easy.
   Qed.
 
 End morth.
@@ -116,18 +110,16 @@ End morth.
 (* ==================================== *)
 (** ** SO(n): special orthogonal group *)
 
+(** SO2 *)
+Notation SO2 := (@SOn 2).
+
+(** SO3 *)
+Notation SO3 := (@SOn 3).
+
 Section SOn.
 
-  (** SO2 *)
-  Definition SO2 := SOn 2.
-
-  (** SO3 *)
-  Definition SO3 := SOn 3.
-
-  Variable m : SO3.
-
-  Goal m\T = m⁻¹.
-  Proof. destruct m. rewrite morth_imply_inv_eq_trans; try easy. Qed.
+  Goal forall M : SO3, M\-1 = M\T.
+  Proof. apply SOn_inv_eq_trans. Qed.
 
 End SOn.
 
@@ -141,8 +133,8 @@ Section test.
   (* Compute m2l (mmap Ropp m1). *)
   (* Compute m2l (m1 * m1). *)
 
-  Variable a11 a12 a21 a22 : T.
-  Variable f : T -> T.
+  Variable a11 a12 a21 a22 : A.
+  Variable f : A -> A.
   Let m2 := @l2m 2 2 [[a11;a12];[a21;a22]].
   (* Compute m2l m2.     (* = [[a11; a12]; [a21; a22]] *) *)
   (* Compute m2l (mmap f m2).       (* = [[f a11; f a12]; [f a21; f a22]] *) *)
@@ -152,7 +144,7 @@ Section test.
   Proof. intros. apply madd_comm. Qed.
 
   (** Simulate Outer/inner product of two vectors *)
-  Variables a1 a2 a3 b1 b2 b3 : T.
+  Variables a1 a2 a3 b1 b2 b3 : A.
   Let m31 := @l2m 3 1 [[a1];[a2];[a3]].
   Let m13 := @l2m 1 3 [[b1;b2;b3]].
   (* Compute m2l (m31 * m13). *)
@@ -160,7 +152,7 @@ Section test.
 
   (** mmul_sub_distr_r *)
   Goal forall r c s (m1 m2 : mat r c) (m3 : mat c s), (m1 - m2) * m3 = m1 * m3 - m2 * m3.
-    intros. rewrite mmul_msub_distr_r. easy. Qed.
+  Proof. intros. rewrite mmul_msub_distr_r. easy. Qed.
 
   (* test rewriting *)
   Goal forall r c (m1 m2 : mat r c) x, m1 = m2 -> x \.* m1 = x \.* m2.
@@ -171,23 +163,23 @@ Section test.
 
   (* test_monoid. *)
   Goal forall r c (m1 m2 : mat r c), mat0 + m1 = m1.
-    monoid_simp. Qed.
+  Proof. monoid. Qed.
 End test.
 
 
 Section Example4CoordinateSystem.
   Variable ψ θ φ: R.
-  Let Rx := (mk_mat_3_3 1 0 0 0 (cos φ) (sin φ) 0 (-sin φ) (cos φ))%R.
-  Let Ry := (mk_mat_3_3 (cos θ) 0 (-sin θ) 0 1 0 (sin θ) 0 (cos θ))%R.
-  Let Rz := (mk_mat_3_3 (cos ψ) (sin ψ) 0 (-sin ψ) (cos ψ) 0 0 0 1)%R.
-  Let Rbe := (mk_mat_3_3
+  Let Rx := (mkmat_3_3 1 0 0 0 (cos φ) (sin φ) 0 (-sin φ) (cos φ))%R.
+  Let Ry := (mkmat_3_3 (cos θ) 0 (-sin θ) 0 1 0 (sin θ) 0 (cos θ))%R.
+  Let Rz := (mkmat_3_3 (cos ψ) (sin ψ) 0 (-sin ψ) (cos ψ) 0 0 0 1)%R.
+  Let Rbe := (mkmat_3_3
                 (cos θ * cos ψ) (cos ψ * sin θ * sin φ - sin ψ * cos φ)
                 (cos ψ * sin θ * cos φ + sin φ * sin ψ) (cos θ * sin ψ)
                 (sin ψ * sin θ * sin φ + cos ψ * cos φ)
                 (sin ψ * sin θ * cos φ - cos ψ * sin φ)
                 (-sin θ) (sin φ * cos θ) (cos φ * cos θ))%R.
   Lemma Rbe_ok : (Rbe = Rz\T * Ry\T * Rx\T).
-  Proof. lma. Qed.
+  Proof. apply m2l_inj; cbv; list_eq; lra. Qed.
     
 End Example4CoordinateSystem.
 
@@ -203,36 +195,36 @@ Module Exercise_Ch1_Symbol.
   Notation "4" := ((R1 + R1) * (R1 + R1))%R.
   
   Example ex6_1 : forall a b : R,
-      (let m := mk_mat_3_3 (a*a) (a*b) (b*b) (2*a) (a+b) (2*b) 1 1 1 in
+      (let m := mkmat_3_3 (a*a) (a*b) (b*b) (2*a) (a+b) (2*b) 1 1 1 in
       mdet m = (a - b)^3)%R.
-  Proof. intros. cbv. ring. Qed.
+  Proof. intros; cbv; lra. Qed.
   
-  Example ex6_2 : forall a b x y z : T,
-      (let m1 := mk_mat_3_3
+  Example ex6_2 : forall a b x y z : R,
+      (let m1 := mkmat_3_3
                    (a*x+b*y) (a*y+b*z) (a*z+b*x)
                    (a*y+b*z) (a*z+b*x) (a*x+b*y)
                    (a*z+b*x) (a*x+b*y) (a*y+b*z) in
-       let m2 := mk_mat_3_3 x y z y z x z x y in
+       let m2 := mkmat_3_3 x y z y z x z x y in
        mdet m1 = (a^3 + b^3) * mdet m2)%R.
-  Proof. intros. cbv. ring. Qed.
+  Proof. intros; cbv; lra. Qed.
   
-  Example ex6_3 : forall a b e d : T,
-      (let m := mk_mat_4_4
+  Example ex6_3 : forall a b e d : A,
+      (let m := mkmat_4_4
                  (a*a) ((a+1)^2) ((a+2)^2) ((a+3)^2)
                  (b*b) ((b+1)^2) ((b+2)^2) ((b+3)^2)
                  (e*e) ((e+1)^2) ((e+2)^2) ((e+3)^2)
                  (d*d) ((d+1)^2) ((d+2)^2) ((d+3)^2) in
       mdet m = 0)%R.
-  Proof. intros. cbv. ring. Qed.
+  Proof. intros. cbv. lra. Qed.
   
-  Example ex6_4 : forall a b e d : T,
-      let m := mk_mat_4_4
+  Example ex6_4 : forall a b e d : A,
+      let m := mkmat_4_4
                  1 1 1 1
                  a b e d
                  (a^2) (b^2) (e^2) (d^2)
                  (a^4) (b^4) (e^4) (d^4) in
       (mdet m = (a-b)*(a-e)*(a-d)*(b-e)*(b-d)*(e-d)*(a+b+e+d))%R.
-  Proof. intros. cbv. ring. Qed.
+  Proof. intros; cbv; lra. Qed.
   
   (* (** 6.(5), it is an infinite structure, need more work, later... *) *)
 

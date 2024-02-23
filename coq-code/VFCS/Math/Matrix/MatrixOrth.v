@@ -224,30 +224,30 @@ Section GOn.
 
   
   (** The set of GOn *)
-  Record GOn (n: nat) := {
+  Record GOn {n: nat} := {
       GOn_mat :> smat n;
       GOn_orth : morth GOn_mat
     }.
   
-  Arguments GOn_mat {n}.
+  Arguments Build_GOn {n}.
 
   (** Two GOn are equal, only need the matrix are equal *)
-  Lemma GOn_eq_iff : forall {n} (x1 x2 : GOn n), GOn_mat x1 = GOn_mat x2 -> x1 = x2.
+  Lemma GOn_eq_iff : forall {n} (x1 x2 : @GOn n), GOn_mat x1 = GOn_mat x2 -> x1 = x2.
   Proof.
     intros. destruct x1,x2; simpl in H.
     subst. f_equal. apply proof_irrelevance.
   Qed.
 
   (** Multiplication of elements in GOn *)
-  Definition GOn_mul {n} (x1 x2 : GOn n) : GOn n.
-    refine (Build_GOn n (x1 * x2) _).
+  Definition GOn_mul {n} (x1 x2 : @GOn n) : @GOn n.
+    refine (Build_GOn (x1 * x2) _).
     destruct x1 as [M1 Horth1], x2 as [M2 Horth2]. simpl.
     apply morth_mul; auto.
   Defined.
 
   (** Identity element in GOn *)
-  Definition GOn_1 {n} : GOn n.
-    refine (Build_GOn n (mat1 n) _).
+  Definition GOn_1 {n} : @GOn n.
+    refine (Build_GOn (mat1 n) _).
     apply morth_mat1.
   Defined.
 
@@ -280,8 +280,8 @@ Section GOn.
   Qed.
 
   (** Inverse operation of multiplication in GOn *)
-  Definition GOn_inv {n} (x : GOn n) : GOn n.
-    refine (Build_GOn n (x\T) _). destruct x as [M Horth]. simpl.
+  Definition GOn_inv {n} (x : @GOn n) : @GOn n.
+    refine (Build_GOn (x\T) _). destruct x as [M Horth]. simpl.
     apply morth_mtrans; auto.
   Defined.
 
@@ -313,11 +313,9 @@ Section GOn.
   (* Tips: this lemma is useful to get the inversion matrix *)
   
   (** M\-1 = M\T *)
-  Lemma GOn_imply_inv_eq_trans : forall {n} (x : GOn n),
-      let M := GOn_mat x in
-      M\-1 = M\T.
+  Lemma GOn_imply_inv_eq_trans : forall {n} (M : @GOn n), M\-1 = M\T.
   Proof.
-    intros. unfold M. destruct x as [M' H]. simpl in *.
+    intros. destruct M as [M H]. simpl in *.
     rewrite morth_imply_inv_eq_trans; auto.
   Qed.
 
@@ -341,15 +339,16 @@ Section SOn.
   Notation GOn_mat := (@GOn_mat _ Aadd Azero Amul Aone _).
   
   (** The set of SOn *)
-  Record SOn (n: nat) := {
-      SOn_GOn :> GOn n;
-      SOn_det1 : mdet (GOn_mat SOn_GOn) = Aone
+  Record SOn {n: nat} := {
+      SOn_GOn :> @GOn n;
+      SOn_det1 : mdet SOn_GOn = Aone
     }.
 
-  Arguments SOn_GOn {n}.
-    
+  Arguments Build_SOn {n}.
+
   (* 这个证明失败了，所以下面分解为两个步骤 *)
-  Lemma SOn_eq_iff_try : forall {n} (x1 x2 : SOn n), GOn_mat x1 = GOn_mat x2 -> x1 = x2.
+  Lemma SOn_eq_iff_try : forall {n} (x1 x2 : @SOn n),
+      GOn_mat x1 = GOn_mat x2 -> x1 = x2.
   Proof.
     intros.
     destruct x1 as [[M1 Horth1] Hdet1], x2 as [[M2 Horth2] Hdet2]; simpl in *.
@@ -358,27 +357,27 @@ Section SOn.
   Abort.
   
   (** Two SOn are equal, only need the GOn are equal *)
-  Lemma SOn_eq_iff_step1 : forall {n} (x1 x2 : SOn n),
+  Lemma SOn_eq_iff_step1 : forall {n} (x1 x2 : @SOn n),
       SOn_GOn x1 = SOn_GOn x2 -> x1 = x2.
   Proof.
     intros. destruct x1,x2. simpl in *. subst. f_equal. apply proof_irrelevance.
   Qed.
 
   (** Two SOn are equal, only need the matrix are equal *)
-  Lemma SOn_eq_iff : forall {n} (x1 x2 : SOn n), GOn_mat x1 = GOn_mat x2 -> x1 = x2.
+  Lemma SOn_eq_iff : forall {n} (x1 x2 : @SOn n), GOn_mat x1 = GOn_mat x2 -> x1 = x2.
   Proof.
     intros. apply SOn_eq_iff_step1. simpl in *.
     destruct x1,x2. simpl in *. apply GOn_eq_iff. auto.
   Qed.
 
-  Definition SOn_mul {n} (s1 s2 : SOn n) : SOn n.
-    refine (Build_SOn n (GOn_mul s1 s2) _).
+  Definition SOn_mul {n} (s1 s2 : @SOn n) : @SOn n.
+    refine (Build_SOn (GOn_mul s1 s2) _).
     destruct s1 as [[M1 Horth1] Hdet1], s2 as [[M2 Horth2] Hdet2]. simpl in *.
     rewrite mdet_mmul. rewrite Hdet1,Hdet2. monoid.
   Defined.
 
-  Definition SOn_1 {n} : SOn n.
-    refine (Build_SOn n (GOn_1) _).
+  Definition SOn_1 {n} : @SOn n.
+    refine (Build_SOn (GOn_1) _).
     apply mdet_mat1.
   Defined.
 
@@ -410,8 +409,8 @@ Section SOn.
     apply SOn_mul_assoc.
   Qed.
 
-  Definition SOn_inv {n} (x : SOn n) : SOn n.
-    refine (Build_SOn n (GOn_inv x) _).
+  Definition SOn_inv {n} (x : @SOn n) : @SOn n.
+    refine (Build_SOn (GOn_inv x) _).
     destruct x as [[M Horth] Hdet]; simpl.
     rewrite mdet_mtrans. auto.
   Defined.
@@ -444,12 +443,19 @@ Section SOn.
   (** ** Extract the properties of SOn to its carrier *)
 
   (** M\-1 = M\T *)
-  Lemma SOn_imply_inv_eq_trans : forall {n} (x : SOn n),
-      let M := GOn_mat x in
-      M\-1 = M\T.
+  Lemma SOn_inv_eq_trans : forall {n} (M : @SOn n), M\-1 = M\T.
   Proof.
-    intros. unfold M. destruct x as [[M' Horth] Hdet]; simpl in *.
-    rewrite morth_imply_inv_eq_trans; auto.
+    intros. destruct M as [[M Horth] Hdet]; simpl.
+    apply morth_imply_inv_eq_trans. auto.
   Qed.
 
+  (** M\T * M = mat1 *)
+  Lemma SOn_mul_trans_l_eq1 : forall {n} (M : @SOn n), M\T * M = mat1 n.
+  Proof. intros. rewrite <- SOn_inv_eq_trans. apply AM_mmul_minv_l. Qed.
+
+  (** M * M\T = mat1 *)
+  Lemma SOn_mul_trans_r_eq1 : forall {n} (M : @SOn n), M * M\T = mat1 n.
+  Proof. intros. rewrite <- SOn_inv_eq_trans. apply AM_mmul_minv_r. Qed.
+
 End SOn.
+

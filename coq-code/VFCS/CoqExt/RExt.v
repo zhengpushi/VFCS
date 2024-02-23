@@ -923,6 +923,14 @@ Ltac solve_sqrt_eq :=
 (* ======================================================================= *)
 (** ** About "trigonometric functions" *)
 
+(** sin R0 = 0 *)
+Lemma sin_R0 : sin R0 = 0.
+Proof. pose proof sin_0. ra. Qed.
+
+(** cos R0 = 1 *)
+Lemma cos_R0 : cos R0 = 1.
+Proof. pose proof cos_0. ra. Qed.
+
 (*  sin (- (PI/2)) = -1 *)
 Lemma sin_PI2_neg : sin (- (PI/2)) = -1.
 Proof.
@@ -983,7 +991,9 @@ Proof. intros. assert (0 < cos r). { apply cos_gt_0; ra. } ra. Qed.
 
 #[export] Hint Rewrite
   sin_0         (* sin 0 = 0 *)
+  sin_R0        (* sin R0 = 0 *)
   cos_0         (* cos 0 = 1 *)
+  cos_R0        (* cos R0 = 1 *)
   sin_PI        (* sin PI = 0 *)
   cos_PI        (* cos PI = -1 *)
   sin_PI2       (* sin (PI / 2) = 1 *)
@@ -1013,7 +1023,9 @@ Proof. intros. assert (0 < cos r). { apply cos_gt_0; ra. } ra. Qed.
 
 #[export] Hint Resolve
   sin_0         (* sin 0 = 0 *)
+  sin_R0        (* sin R0 = 0 *)
   cos_0         (* cos 0 = 1 *)
+  cos_R0        (* cos R0 = 1 *)
   sin_PI        (* sin PI = 0 *)
   cos_PI        (* cos PI = -1 *)
   sin_PI2       (* sin (PI / 2) = 1 *)

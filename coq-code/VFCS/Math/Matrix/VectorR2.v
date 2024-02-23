@@ -11,8 +11,7 @@
   remark    :
  *)
 
-Require Import VectorR.
-Require Import Ratan2.
+Require Export VectorR.
 Open Scope vec_scope.
 
 
