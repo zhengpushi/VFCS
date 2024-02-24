@@ -101,19 +101,22 @@ Proof. intros. constructor. apply Aeqdec. Qed.
 Lemma v0eq : forall {A} (u v : @vec A 0), u = v.
 Proof. intros. apply veq_iff_vnth. intros. exfalso. apply fin0_False; auto. Qed.
 
+Lemma v0neq : forall {A} (u v : @vec A 0), u <> v -> False.
+Proof. intros. destruct H. apply v0eq. Qed.
+
 (** The equality of 1-D vector *)
-Lemma v1eq_iff : forall {A} (u v : @vec A 1),
-    u = v <-> u.1 = v.1.
+Lemma v1eq_iff : forall {A} (u v : @vec A 1), u = v <-> u.1 = v.1.
 Proof.
   intros. split; intros; subst; auto. unfold nat2finS in H; simpl in H.
   apply veq_iff_vnth; intros. destruct i as [n Hn].
-  destruct n; [apply (vnth_sameIdx_imply H)|].
-  lia.
+  destruct n; [apply (vnth_sameIdx_imply H)|]. lia.
 Qed.
 
+Lemma v1neq_iff : forall {A} (u v : @vec A 1), u <> v <-> u.1 <> v.1.
+Proof. intros. rewrite v1eq_iff. tauto. Qed.
+
 (** The equality of 2-D vector *)
-Lemma v2eq_iff : forall {A} (u v : @vec A 2),
-    u = v <-> u.1 = v.1 /\ u.2 = v.2.
+Lemma v2eq_iff : forall {A} (u v : @vec A 2), u = v <-> u.1 = v.1 /\ u.2 = v.2.
 Proof.
   intros. split; intros; subst; auto. unfold nat2finS in H; simpl in H.
   destruct H as [H1 H2].
@@ -122,6 +125,9 @@ Proof.
   destruct n; [apply (vnth_sameIdx_imply H2)|].
   lia.
 Qed.
+
+Lemma v2neq_iff : forall {A} (u v : @vec A 2), u <> v <-> (u.1 <> v.1 \/ u.2 <> v.2).
+Proof. intros. rewrite v2eq_iff. tauto. Qed.
 
 (** The equality of 3-D vector *)
 Lemma v3eq_iff : forall {A} (u v : @vec A 3),
@@ -136,6 +142,10 @@ Proof.
   lia.
 Qed.
 
+Lemma v3neq_iff : forall {A} (u v : @vec A 3),
+    u <> v <-> (u.1 <> v.1 \/ u.2 <> v.2 \/ u.3 <> v.3).
+Proof. intros. rewrite v3eq_iff. tauto. Qed.
+
 (** The equality of 4-D vector *)
 Lemma v4eq_iff : forall {A} (u v : @vec A 4),
     u = v <-> u.1 = v.1 /\ u.2 = v.2 /\ u.3 = v.3 /\ u.4 = v.4.
@@ -149,6 +159,10 @@ Proof.
   destruct n; [apply (vnth_sameIdx_imply H4)|].
   lia.
 Qed.
+
+Lemma v4neq_iff : forall {A} (u v : @vec A 4),
+    u <> v <-> (u.1 <> v.1 \/ u.2 <> v.2 \/ u.3 <> v.3 \/ u.4 <> v.4).
+Proof. intros. rewrite v4eq_iff. tauto. Qed.
 
 (** u <> v <-> ∃ i, u $ i <> v $ i *)
 Lemma vneq_iff_exist_vnth_neq : forall {A n} (u v : @vec A n), u <> v <-> exists i, u $ i <> v $ i.

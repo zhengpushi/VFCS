@@ -165,8 +165,9 @@ Section morth.
       morth M <-> M * M\T = mat1 n.
   Proof.
     intros. split; intros H.
-    - apply AM_mmul_eq1_iff_minv_r in H. rewrite <- H. apply AM_mmul_minv_r.
-    - red. apply AM_mmul_eq1_iff_minv_l in H. rewrite <- H. apply AM_mmul_minv_l.
+    - pose proof (morth_invertible M H).
+      apply AM_mmul_eq1_iff_minv_r in H. rewrite <- H. apply AM_mmul_minv_r; auto.
+    - apply minv_eq_trans_imply_morth. apply AM_mmul_eq1_iff_minv_l. auto.
   Qed.
 
   (** orthogonal mat1 *)
@@ -451,11 +452,17 @@ Section SOn.
 
   (** M\T * M = mat1 *)
   Lemma SOn_mul_trans_l_eq1 : forall {n} (M : @SOn n), M\T * M = mat1 n.
-  Proof. intros. rewrite <- SOn_inv_eq_trans. apply AM_mmul_minv_l. Qed.
+  Proof.
+    intros. rewrite <- SOn_inv_eq_trans. apply AM_mmul_minv_l.
+    destruct M as [[M H] H1]. simpl. apply morth_invertible; auto.
+  Qed.
 
   (** M * M\T = mat1 *)
   Lemma SOn_mul_trans_r_eq1 : forall {n} (M : @SOn n), M * M\T = mat1 n.
-  Proof. intros. rewrite <- SOn_inv_eq_trans. apply AM_mmul_minv_r. Qed.
+  Proof.
+    intros. rewrite <- SOn_inv_eq_trans. apply AM_mmul_minv_r.
+    destruct M as [[M H] H1]. simpl. apply morth_invertible; auto.
+  Qed.
 
 End SOn.
 

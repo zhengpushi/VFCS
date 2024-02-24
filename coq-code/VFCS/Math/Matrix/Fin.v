@@ -115,6 +115,10 @@ Definition fin0 {n : nat} : fin (S n) := exist _ 0 (Nat.lt_0_succ _).
 Lemma fin0_False : fin 0 -> False.
 Proof. intros. inversion H. lia. Qed.
 
+(** fin 1 is unique *)
+Lemma fin1_uniq : forall (i : fin 1), i = fin0.
+Proof. intros. destruct i. apply sig_eq_iff. lia. Qed.
+
 
 (** ** [fin] to [nat] *)
 

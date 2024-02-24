@@ -63,6 +63,10 @@ Module BasicVectorTheory (E : ElementType).
   Lemma l2v_v2l : forall {n} (v : vec n), @l2v n (v2l v) = v.
   Proof. intros. apply l2v_v2l. Qed.
 
+  (** v2l u = v2l v -> u = v *)
+  Lemma v2l_inj : forall {n} (u v : vec n), v2l u = v2l v -> u = v.
+  Proof. intros. apply v2l_inj; auto. Qed.
+
   (** Make concrete vector *)
   Definition mkvec1 (a1 : A) : vec 1 := mkvec1 (Azero:=0) a1.
   Definition mkvec2 (a1 a2 : A) : vec 2 := mkvec2 (Azero:=0) a1 a2.

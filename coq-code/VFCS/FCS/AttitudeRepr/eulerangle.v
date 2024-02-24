@@ -67,7 +67,7 @@
 *)
 
 Require Import Math.
-
+Require Import Pose3D.
 
 (* (* 手性：左手定则，右手定则 *) *)
 (* Inductive HandRule := HRLeft | HRRight. *)
@@ -679,23 +679,3 @@ Module R2Euler.
   End B123.
 
 End R2Euler.
-
-(** Skew-symmetric matrix of 3-dimensions *)
-Section skew3.
-
-  Open Scope R.
-
-  (** Given matrix is skew-symmetric matrices *)
-  (* Check v3skewP. *)
-  (* Check v3skewP_eq. *)
-
-  (** Convert a vector to its corresponding skew-symmetric matrix *)
-  (* Check v3skew. *)
-
-  (** Convert a skew-symmetric matrix to its corresponding vector *)
-  (* Check v3vex. *)
-
-  (* Check v3skew_v3vex_id. *)
-  (* Check v3vex_v3skew_id. *)
-  
-End skew3.

@@ -425,7 +425,7 @@ Proof.
 Qed.
 
 (** j与任意非零向量v的夹角的余弦等于其纵坐标除以长度 *)
-Lemma cos_vangle_j : forall (v : vec 2), v <> vzero -> cos (v2j /2_ v) = (v.y / ||v||)%R.
+Lemma cos_v2angle_j : forall (v : vec 2), v <> vzero -> cos (v2j /2_ v) = (v.y / ||v||)%R.
 Proof.
   intros. rewrite cos_v2angle_eq. unfold vangle. rewrite cos_acos.
   - rewrite v2j_vnorm. rewrite vdot_j_l. rewrite vnth_vnorm; auto.
@@ -433,8 +433,8 @@ Proof.
 Qed.
 
 (** j与任意非零向量v的夹角的正弦等于其横坐标取负除以长度 *)
-Lemma sin_vangle_j : forall (v : vec 2),
-    v <> vzero -> sin (v2angle v2j v) = (- v.x / ||v||)%R.
+Lemma sin_v2angle_j : forall (v : vec 2),
+    v <> vzero -> sin (v2j /2_ v) = (- v.x / ||v||)%R.
 Proof.
   intros. unfold v2angle. unfold vangle. rewrite v2j_vnorm. rewrite vdot_j_l.
   rewrite vnth_vnorm; auto. pose proof (vlen_gt0 v H).
@@ -449,177 +449,35 @@ Proof.
     + apply vnth_div_vlen_bound; auto.
 Qed.
 
-(*
-(** ** Rotation matrix in 2D *)
-Section RotationMatrix2D.
+(** ||a|| * cos (i /2_ a) = a.x *)
+Lemma v2len_mul_cos_v2angle_i : forall (a : vec 2),
+    a <> vzero -> (||a|| * cos (v2i /2_ a) = a.x)%R.
+Proof.
+  intros. rewrite cos_v2angle_i; auto. field_simplify; auto.
+  apply vlen_neq0_iff_neq0; auto.
+Qed.
 
-  (** 主动旋转，逆时针正向(或顺时针负向)时，旋转矩阵 *)
+(** ||a|| * sin (i /2_ a) = a.y *)
+Lemma v2len_mul_sin_v2angle_i : forall (a : vec 2),
+    a <> vzero -> (||a|| * sin (v2i /2_ a) = a.y)%R.
+Proof.
+  intros. rewrite sin_v2angle_i; auto. field_simplify; auto.
+  apply vlen_neq0_iff_neq0; auto.
+Qed.
 
-  (** 注意列向量和行向量的不同用法：
-     1. 给一个在该坐标系下的列向量 v1，正向旋转该向量 θ 角得到新的向量 v1'，按如下公式
-          v1' = R2(θ) * v1
-          v1  = R2(θ)\T * v1'
-     2. 给一个在该坐标系下的行向量 v2，正向旋转该向量 θ 角得到新的向量 v2'，按如下公式
-          v2' = v2 * (R2(θ))\T
-     3. 如果进行了连续两次旋转，即，先旋转θ1，然后在此基础上再旋转θ2，则
-        按照列向量：v' = R(θ2) * R(θ1) * v，其中 R 是 R2
-        按照行向量：v' = v * R(θ1) * R(θ2)，其中 R 是 R2\T
- *)
+(** ||a|| * cos (j /2_ a) = a.y *)
+Lemma v2len_mul_cos_v2angle_j : forall (a : vec 2),
+    a <> vzero -> (||a|| * cos (v2j /2_ a) = a.y)%R.
+Proof.
+  intros. rewrite cos_v2angle_j; auto. field_simplify; auto.
+  apply vlen_neq0_iff_neq0; auto.
+Qed.
 
-  (** Rotation matrix in 2D *)
-  Definition R2 (θ : R) : smat 2 :=
-    let c := cos θ in
-    let s := sin θ in
-    l2m [[c;-s];[s;c]]%R.
+(** ||a|| * sin (j /2_ a) = - a.x *)
+Lemma v2len_mul_sin_v2angle_j : forall (a : vec 2),
+    a <> vzero -> (||a|| * sin (v2j /2_ a) = - a.x)%R.
+Proof.
+  intros. rewrite sin_v2angle_j; auto. field_simplify; auto.
+  apply vlen_neq0_iff_neq0; auto.
+Qed.
 
-  (** R2 is orthogonal matrix *)
-  Lemma R2_orthogonal : forall (θ : R), morth (R2 θ).
-  Proof. lma; autorewrite with R; easy. Qed.
-
-  (** The determinant of R2 is 1 *)
-  Lemma R2_det1 : forall (θ : R), mdet (R2 θ) = 1.
-  Proof. intros. cbv. autorewrite with R; easy. Qed.
-
-  (** R2 is a member of SO2 *)
-  Definition R2_SO2 (θ : R) : SO2.
-    refine (Build_SOn _ (R2 θ) _). split.
-    apply R2_orthogonal. apply R2_det1.
-  Defined.
-
-  (** R(θ)⁻¹ = R(θ)\T *)
-  
-  Lemma R2_inv_eq_trans : forall θ : R, (R2 θ)⁻¹ = (R2 θ)\T.
-  Proof.
-    (* method 1 : prove by computing (slow) *)
-    (* lma; autounfold with A; autorewrite with R; try easy. *)
-    (* method 2 : prove by reasoning *)
-    intros; apply (SOn_imply_inv_eq_trans (R2_SO2 θ)).
-  Qed.
-
-  (** R(-θ) = R(θ)\T *)
-  Lemma R2_neg_eq_trans : forall θ : R, R2 (-θ) = (R2 θ)\T.
-  Proof. lma; autorewrite with R; try easy. Qed.
-
-  (** R(-θ) * R(θ) = I *)
-  Lemma R2_neg_R2_inv : forall θ : R, R2 (- θ) * R2 θ = mat1.
-  Proof.
-    (* lma; autounfold with A; autorewrite with R; auto; ring. *)
-    intros; rewrite R2_neg_eq_trans, <- R2_inv_eq_trans, mmul_minv_l; easy.
-  Qed.
-
-  (** R(θ) * R(-θ) = I *)
-  Lemma R2_R2_neg_inv : forall θ : R, R2 θ * R2 (- θ) = mat1.
-  Proof.
-    (* lma; autounfold with A; autorewrite with R; auto; ring. *)
-    intros; rewrite R2_neg_eq_trans, <- R2_inv_eq_trans, mmul_minv_r; easy.
-  Qed.
-
-  (** v' = R(θ) * v *)
-  Lemma R2_spec1 : forall (v : vec 2) (θ : R),
-      let l := vlen v in
-      let α := v2angle v2i v in
-      let vx' := (l * cos (α + θ))%R in
-      let vy' := (l * sin (α + θ))%R in
-      let v' : vec 2 := mk_vec2 vx' vy' in
-      v <> vzero -> v' = R2 θ * v.
-  Proof.
-    lma.
-    - unfold vx'. unfold l. unfold α.
-      rewrite cos_plus. unfold Rminus. rewrite Rmult_plus_distr_l.
-      rewrite cos_v2angle_i, sin_v2angle_i; auto.
-      autounfold with T. autorewrite with R. field.
-      apply vlen_neq0_iff_neq0; auto.
-    - unfold vy'. unfold l. unfold α.
-      rewrite sin_plus. rewrite Rmult_plus_distr_l.
-      rewrite cos_v2angle_i, sin_v2angle_i; auto.
-      autounfold with T. autorewrite with R. field.
-      apply vlen_neq0_iff_neq0; auto.
-  Qed.
-
-  (** v = R(-θ) * v' *)
-  Lemma R2_spec2 : forall (v : vec 2) (θ : R),
-      let l := vlen v in
-      let α := v2angle v2i v in
-      let vx' := (l * cos (α + θ))%R in
-      let vy' := (l * sin (α + θ))%R in
-      let v' : vec 2 := mk_vec2 vx' vy' in
-      v <> vzero -> v = (R2 (-θ)) * v'.
-  Proof.
-    intros.
-    pose proof (R2_spec1 v θ). simpl in H0. specialize (H0 H).
-    unfold v',vx',vy',l,α. rewrite H0. rewrite <- mmul_assoc.
-    rewrite R2_neg_R2_inv. rewrite mmul_1_l. easy.
-  Qed.
-
-  (** v = R(θ)\T * v' *)
-  Lemma R2_spec3 : forall (v : vec 2) (θ : R),
-      let l := vlen v in
-      let α := v2angle v2i v in
-      let vx' := (l * cos (α + θ))%R in
-      let vy' := (l * sin (α + θ))%R in
-      let v' : vec 2 := mk_vec2 vx' vy' in
-      v <> vzero -> v = (R2 θ)\T * v'.
-  Proof.
-    intros.
-    pose proof (R2_spec2 v θ). simpl in H0. specialize (H0 H).
-    unfold v',vx',vy',l,α. rewrite <- R2_neg_eq_trans. auto.
-  Qed.
-
-  (** 预乘和后乘旋转矩阵的关系，即: v ~ v' -> R(θ) * v ~ v' * R(θ) *)
-  Lemma R2_spec4 : forall (v1 : vec 2) (θ : R),
-      let v1' : rvec 2 := v1\T in  (* v1和v1'是列向量和行向量形式的同一个向量 *)
-      let v2 : vec 2 := (R2 θ) * v1 in       (* 用列向量形式计算 *)
-      let v2' : rvec 2 := v1' * ((R2 θ)\T) in (* 用行向量形式计算 *)
-      let v2'' : vec 2 := v2'\T in           (* v2' 的列向量形式 *)
-      v2 = v2''. (* 结果应该相同 *)
-  Proof. lma. Qed.
-
-  (** R的乘法是交换的: R(θ1) * R(θ2) = R(θ2) * R(θ1) *)
-  Lemma R2_mul_comm : forall (θ1 θ2 : R), (R2 θ1) * (R2 θ2) = (R2 θ2) * (R2 θ1).
-  Proof. lma. Qed.
-
-  (** R的乘法等价于对参数的加法: R(θ1) * R(θ2) = R(θ1 + θ2) *)
-  Lemma R2_mul_eq_sum : forall (θ1 θ2 : R), (R2 θ1) * (R2 θ2) = R2 (θ1 + θ2).
-  Proof. lma; autounfold with T; autorewrite with R; ring. Qed.
-
-End RotationMatrix2D.
- *)
-
-
-(*
-(** ** Rotation: Friendly name for user, avoid low-level matrix operation *)
-Section Rotation.
-
-  (** 为了避免旋转矩阵使用错误，命名一些操作 *)
-  
-  (** 2D中旋转一个列向量 *)
-  Definition Rot2C (θ : R) (v : vec 2) : vec 2 := (R2 θ) * v.
-
-  (** 2D中旋转一个行向量 *)
-  Definition Rot2R (θ : R) (v : rvec 2) : rvec 2 := v * ((R2 θ)\T).
-
-  (** 旋转列向量，等效于旋转行向量 *)
-  Lemma Rot2C_eq_Rot2R : forall θ (v : vec 2), Rot2C θ v = (Rot2R θ (v\T))\T.
-  Proof. lma. Qed.
-
-  (** 旋转行向量，等效于旋转列向量 *)
-  Lemma Rot2R_eq_Rot2C : forall θ (v : rvec 2), Rot2R θ v = (Rot2C θ (v\T))\T.
-  Proof. lma. Qed.
-
-  (** 旋转两次，等价于一次旋转两个角度之和: Rot(θ2, Rot(θ1,v)) = Rot(θ1+θ2, v) *)
-  Lemma Rot2C_twice : forall (θ1 θ2 : R) (v : vec 2),
-      Rot2C θ2 (Rot2C θ1 v) = Rot2C (θ1+θ2) v.
-  Proof.
-    intros. unfold Rot2C. rewrite <- mmul_assoc. rewrite R2_mul_eq_sum.
-    rewrite Rplus_comm. easy.
-  Qed.
-  
-  Lemma Rot2R_twice : forall (θ1 θ2 : R) (v : rvec 2),
-      Rot2R θ2 (Rot2R θ1 v) = Rot2R (θ1+θ2) v.
-  Proof.
-    intros. unfold Rot2R. rewrite mmul_assoc.
-    rewrite <- mtrans_mmul. rewrite R2_mul_eq_sum. rewrite Rplus_comm. easy.
-  Qed.
-  
-End Rotation.
- *)

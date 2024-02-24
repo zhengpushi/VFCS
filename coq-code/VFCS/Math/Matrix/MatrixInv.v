@@ -209,6 +209,15 @@ Section minvAM.
   Definition minvAM {n} (M : smat n) := (Aone / mdet M) \.* (madj M).
   Notation "M \-1" := (minvAM M) : mat_scope.
 
+  (** M * M\-1 = mat1 *)
+  Lemma AM_mmul_minv_r : forall {n} (M : smat n), minvertible M -> M * M\-1 = mat1.
+  Proof.
+  Admitted.
+
+  (** M\-1 * M = mat1 *)
+  Lemma AM_mmul_minv_l : forall {n} (M : smat n), minvertible M -> (minvAM M) * M = mat1.
+  Proof.
+  Admitted.
 
   (** M * N = mat1 -> M \-1 = N *)
   Lemma AM_mmul_eq1_iff_minv_l : forall {n} (M N : smat n),
@@ -226,16 +235,8 @@ Section minvAM.
   Lemma AM_minv_invertible : forall {n} (M : smat n),
       minvertible M -> minvertible (M\-1).
   Proof.
-  Admitted.
-
-  (** M * M\-1 = mat1 *)
-  Lemma AM_mmul_minv_r : forall {n} (M : smat n), M * M\-1 = mat1.
-  Proof.
-  Admitted.
-
-  (** M\-1 * M = mat1 *)
-  Lemma AM_mmul_minv_l : forall {n} (M : smat n), (minvAM M) * M = mat1.
-  Proof.
+    intros. hnf. hnf in H. destruct H as [N [H|H]].
+    - exists N; auto.
   Admitted.
 
   (** mat1 \-1 = mat1 *)
@@ -248,10 +249,18 @@ Section minvAM.
   Proof.
   Admitted.
 
+  (* P \/ P = P *)
+  Lemma or_same : forall (P : Prop), P \/ P -> P.
+  Proof. intros. destruct H; auto. Qed.
+  
   (** (M * N) \-1 = N\-1 * M\-1 *)
   Lemma AM_minv_mmul : forall {n} (M N : smat n),
       minvertible M -> minvertible N -> (M * N)\-1 = N \-1 * M \-1.
   Proof.
+    intros. hnf in H,H0. destruct H as [M' H], H0 as [N' H0].
+    rewrite AM_mmul_eq1_iff_minv_r in H,H0.
+    rewrite AM_mmul_eq1_iff_minv_l in H,H0.
+    apply or_same in H,H0.
   Admitted.
 
   (** (M \T) \-1 = (M \-1) \T *)
@@ -262,6 +271,23 @@ Section minvAM.
   (** mdet (M\-1) = 1 / (mdet M) *)
   Lemma AM_mdet_minv : forall {n} (M : smat n), mdet (M \-1) = Aone / (mdet M).
   Admitted.
+
+  (** minvertible M -> M * N = M * O -> N = O *)
+  Lemma mmul_cancel_l : forall {r c} (M : smat r) (N O : mat r c),
+      minvertible M -> M * N = M * O -> N = O.
+  Proof.
+    intros. assert (M\-1 * (M * N) = M\-1 * (M * O)). rewrite H0; auto.
+    rewrite <- !mmul_assoc in H1. rewrite !AM_mmul_minv_l, !mmul_1_l in H1; auto.
+  Qed.
+
+  (** minvertible M -> N * M = O * M -> N = O *)
+  Lemma mmul_cancel_r : forall {r c} (M : smat c) (N O : mat r c),
+      minvertible M -> N * M = O * M -> N = O.
+  Proof.
+    intros. assert ((N * M) * M\-1 = (O * M) * M\-1). rewrite H0; auto.
+    rewrite !mmul_assoc in H1. rewrite !AM_mmul_minv_r, !mmul_1_r in H1; auto.
+  Qed.
+  
 
   (** Direct compute inversion of a symbol matrix of 1~4 order. *)
   Section CheckInvMatFormula.
