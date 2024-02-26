@@ -33,13 +33,13 @@ Section test.
 
   Open Scope vec_scope.
 
-  Let u := l2v 3 [1 +i 2; 3 +i 4; 5 +i 6].
-  Let v := l2v 3 [0 +i 2; 3 +i 4; 5 +i 6].
+  Let u := @l2v 3 [1 +i 2; 3 +i 4; 5 +i 6].
+  Let v := @l2v 3 [0 +i 2; 3 +i 4; 5 +i 6].
 
   
   Open Scope mat_scope.
   
-  Let M := l2m 2 2 [[1 +i 2; 3 +i 4];[5 +i 6; 7 +i 8]].
+  Let M := @l2m 2 2 [[1 +i 2; 3 +i 4];[5 +i 6; 7 +i 8]].
 
   (* test rewriting *)
   Example mat_C_ex1 : forall r c s (m1 m2 : mat r c) (m3 : mat c s),

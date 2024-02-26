@@ -222,11 +222,13 @@ Section morth.
   
   Notation smat n := (smat A n).
   Notation mat1 n := (@mat1 _ Azero Aone n).
-  Notation mmul := (@mmul _ Aadd Azero Amul _ _ _).
+  Notation mmul := (@mmul _ Aadd Azero Amul).
+  Infix "*" := mmul  : mat_scope.
+  Notation mmulv := (@mmulv _ Aadd Azero Amul).
+  Infix "*" := mmulv  : vec_scope.
   Notation mdet := (@mdet _ Aadd Azero Aopp Amul Aone _).
   Notation minvertible := (@minvertible _ Aadd Azero Amul Aone _).
   Notation mcolsOrthonormal := (@mcolsOrthonormal _ Aadd Azero Amul Aone).
-  Infix "*" := mmul  : mat_scope.
   Notation "M \-1" := (@minvAM _ Aadd Azero Aopp Amul Aone Ainv _ M) : mat_scope.
 
   (** An orthogonal matrix *)
@@ -319,15 +321,12 @@ Section morth.
 
   (** Transformation by orthogonal matrix will keep inner-product *)
   Theorem morth_keep_dot : forall {n} (M : smat n) (u v : vec n),
-      morth M -> <cv2v (M * v2cv u), cv2v (M * v2cv v)> = <u, v>.
+      morth M -> <M * u, M * v>%V = <u, v>.
   Proof.
-    intros. rewrite vdot_eq_mul_trans. rewrite v2cv_cv2v. rewrite v2rv_cv2v.
-    replace (fun i j => (M * v2cv u) j i) with ((M * v2cv u)\T); auto.
-    rewrite mtrans_mmul. rewrite mmul_assoc. rewrite <- (mmul_assoc _ M).
-    rewrite morth_iff_mul_trans_l in H. rewrite H. rewrite mmul_1_l.
-    apply vsum_eq; intros. auto.
+    intros. rewrite vdot_eq_mmul. rewrite v2rv_mmulv. rewrite v2cv_mmulv.
+    rewrite mmul_assoc. rewrite <- (mmul_assoc _ M).
+    rewrite morth_iff_mul_trans_l in H. rewrite H. rewrite mmul_1_l. auto.
   Qed.
-
   
   Context `{HOrderedField : OrderedField A Aadd Azero Aopp Amul Aone Ainv}.
   Context `{HConvertToR
@@ -337,7 +336,7 @@ Section morth.
 
   (** Transformation by orthogonal matrix will keep length. *)
   Corollary morth_keep_length : forall {n} (M : smat n) (v : vec n),
-      morth M -> ||cv2v (M * v2cv v)|| = ||v||.
+      morth M -> ||(M * v)%V|| = ||v||.
   Proof.
     intros. rewrite vlen_eq_iff_dot_eq. apply morth_keep_dot. auto.
   Qed.

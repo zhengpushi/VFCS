@@ -37,15 +37,15 @@ Section test.
   
   Open Scope vec_scope.
 
-  Let u := l2v 3 (Q2Qc_list [1; 2; 3]%Q).
-  Let v := l2v 3 (Q2Qc_list [2; 1; 0]%Q).
+  Let u := @l2v 3 (Q2Qc_list [1; 2; 3]%Q).
+  Let v := @l2v 3 (Q2Qc_list [2; 1; 0]%Q).
   (* Compute v2l (vproj u v). *)
   (* Compute v2l (vperp u v). *)
   (* Compute vlen u. *)
   
   Open Scope mat_scope.
   
-  Let M := l2m 3 3 (Q2Qc_dlist [[1;-3;-2];[-2;1;-4];[-1;4;-1]]%Q).
+  Let M := @l2m 3 3 (Q2Qc_dlist [[1;-3;-2];[-2;1;-4];[-1;4;-1]]%Q).
   
   (* Compute m2l M. *)
   (* Compute m2l (M * M). *)

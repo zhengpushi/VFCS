@@ -32,9 +32,9 @@ Section test.
 
   Open Scope vec_scope.
   
-  Let u := l2v 3 [1;2;3].
+  Let u := @l2v 3 [1;2;3].
   (* Compute v2l u. *)
-  Let v := f2v 3 (fun i => 5 + i)%nat.
+  Let v := @f2v 3 (fun i => 5 + i)%nat.
   (* Compute f2l 3 (v2f u). *)
   
   (* Compute mkvec3 4 5 6. *)
@@ -55,7 +55,7 @@ Section test.
   
   Open Scope nat_scope.
   
-  Let M := l2m 3 3 [[1;2;3];[4;5;6];[7;8;9]].
+  Let M := @l2m 3 3 [[1;2;3];[4;5;6];[7;8;9]].
   (* Compute m2l M. *)
   (* Compute m2l (mmap S M). *)
   (* Compute m2l (mkmat_2_2 1 2 3 4). *)

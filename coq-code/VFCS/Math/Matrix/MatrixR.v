@@ -250,7 +250,7 @@ Proof. intros. unfold vangle. rewrite vdot_comm. auto. Qed.
    but actual cases maybe have any value, it is hard to finished in Coq.
    Because the construction of {sqrt, acos, PI, etc} is complex. *)
 (** The angle between (1,0,0) and (1,1,0) is 45 degree, i.e., π/4 *)
-Fact vangle_pi4 : (l2v 3 [1;0;0]) /_ (l2v _ [1;1;0]) = PI/4.
+Fact vangle_pi4 : (@l2v 3 [1;0;0]) /_ (l2v [1;1;0]) = PI/4.
 Proof.
   rewrite <- acos_inv_sqrt2. unfold vangle. f_equal.
   compute. autorewrite with R. auto.
@@ -567,7 +567,10 @@ Hint Resolve vdot_vnorm_bound : vec.
 
 (** u × v *)
 Definition v2cross (u v : vec 2) : R := u.x * v.y - u.y * v.x.
-Infix "\x" := v2cross : vec_scope.
+
+Module Export V2Notations.
+  Infix "\x" := v2cross : vec_scope.
+End V2Notations.
 
 (** u × v = - (v × u) *)
 Lemma v2cross_comm : forall (u v : vec 2), u \x v = (- (v \x u))%R.
@@ -999,17 +1002,20 @@ Definition v3cross (u v : vec 3) : vec 3 :=
     (u.2 * v.3 - u.3 * v.2)%R
     (u.3 * v.1 - u.1 * v.3)%R
     (u.1 * v.2 - u.2 * v.1)%R.
-Infix "\x" := v3cross : vec_scope.
+
+Module Export V3Notations.
+  Infix "\x" := v3cross : vec_scope.
+End V3Notations.
 
 (* functional style, for C-code generation *)
 Definition v3crossFun (u v : vec 3) : vec 3 :=
-  f2v 3 (fun i =>
-           match i with
-           | 0 => u.2*v.3 - u.3*v.2
-           | 1 => u.3*v.1 - u.1*v.3
-           | 2 => u.1*v.2 - u.2*v.1
-           | _=> 0
-           end)%R.
+  f2v (fun i =>
+         match i with
+         | 0 => u.2*v.3 - u.3*v.2
+         | 1 => u.3*v.1 - u.1*v.3
+         | 2 => u.1*v.2 - u.2*v.1
+         | _=> 0
+         end)%R.
 
 (* These two definitions should equiv *)
 Lemma v3cross_v3crossFun_equiv : forall u v : vec 3, v3cross u v = v3crossFun u v.
@@ -1508,16 +1514,16 @@ Qed.
 
 (** Transformation by orthogonal matrix will keep normalization. *)
 Lemma morth_keep_norm : forall {n} (m : smat n) (v : vec n),
-    morth m -> vnorm (cv2v (m * v2cv v)) = cv2v (m * v2cv (vnorm v)).
+    morth m -> vnorm (m * v)%V = (m * vnorm v)%V.
 Proof.
   intros. unfold vnorm.
   pose proof (morth_keep_length m). unfold vlen. rewrite H0; auto.
-  rewrite <- cv2v_mcmul. f_equal. rewrite <- mmul_mcmul_r. f_equal.
+  rewrite <- mmulv_vcmul. auto.
 Qed.
 
 (** Transformation by orthogonal matrix will keep angle. *)
 Lemma morth_keep_angle : forall {n} (m : smat n) (u v : vec n),
-    morth m -> (cv2v (m * v2cv u)) /_ (cv2v (m * v2cv v)) = u /_ v.
+    morth m -> (m * u)%V /_ (m * v)%V = u /_ v.
 Proof.
   intros. unfold vangle. f_equal. rewrite !morth_keep_norm; auto.
   apply morth_keep_dot; auto.
@@ -1558,7 +1564,7 @@ Proof.
 Qed.
 
 Section test.
-  Let m1 := l2m 2 2 [[1;2];[3;4]].
+  Let m1 := @l2m 2 2 [[1;2];[3;4]].
   (* Compute m2l m1. *)
   (* Compute m2l (mmap Ropp m1). *)
   (* Compute m2l (m1 * m1). *)

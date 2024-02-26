@@ -107,12 +107,12 @@ Module BasicMatrixTheory (E : ElementType).
   (* ======================================================================= *)
   (** ** Convert between vector and function *)
   Definition v2f {n} (v : vec n) : nat -> A := v2f 0 v.
-  Definition f2v n (f : nat -> A) : vec n := f2v f.
+  Definition f2v {n} (f : nat -> A) : vec n := f2v f.
 
   (* ======================================================================= *)
   (** ** Convert between vector and list *)
   Definition v2l {n} (v : vec n) : list A := v2l v.
-  Definition l2v n (l : list A) : vec n := l2v 0 _ l.
+  Definition l2v {n} (l : list A) : vec n := l2v 0 _ l.
   
   Lemma v2l_length : forall {n} (v : vec n), length (v2l v) = n.
   Proof. intros. apply v2l_length. Qed.
@@ -272,16 +272,19 @@ Module BasicMatrixTheory (E : ElementType).
 
   Lemma v2rv_rv2v : forall {n} (v : rvec n), v2rv (rv2v v) = v.
   Proof. intros. apply v2rv_rv2v. Qed.
+  
+  Lemma vnth_v2rv : forall {n} (v : vec n) i, (v2rv v) $ i  = v.
+  Proof. intros. apply vnth_v2rv. Qed.
 
   (* ======================================================================= *)
   (** ** Convert between matrix and function *)
   Definition m2f {r c} (M : mat r c) : nat -> nat -> A := m2f 0 M.
-  Definition f2m r c (f : nat -> nat -> A) : mat r c := f2m f.
+  Definition f2m {r c} (f : nat -> nat -> A) : mat r c := f2m f.
 
   (* ======================================================================= *)
   (** ** Convert between matrix and list *)
   Definition m2l {r c} (M : mat r c) : dlist A := m2l M.
-  Definition l2m r c (dl : dlist A) : mat r c := l2m 0 dl.
+  Definition l2m {r c} (dl : dlist A) : mat r c := l2m 0 dl.
 
   Lemma m2l_length : forall {r c} (M : mat r c), length (m2l M) = r.
   Proof. intros. apply m2l_length. Qed.
@@ -298,10 +301,10 @@ Module BasicMatrixTheory (E : ElementType).
 
   Lemma l2m_inj : forall {r c} (d1 d2 : dlist A),
       length d1 = r -> width d1 c -> length d2 = r -> width d2 c ->
-      l2m r c d1 = l2m _ _ d2 -> d1 = d2.
+      @l2m r c d1 = l2m d2 -> d1 = d2.
   Proof. intros. apply l2m_inj in H3; auto. Qed.
   
-  Lemma l2m_surj : forall {r c} (M : mat r c), (exists d, l2m _ _ d = M).
+  Lemma l2m_surj : forall {r c} (M : mat r c), (exists d, l2m d = M).
   Proof. intros. apply l2m_surj. Qed.
   
   Lemma m2l_inj : forall {r c} (m1 m2 : mat r c), m2l m1 = m2l m2 -> m1 = m2.
@@ -314,6 +317,7 @@ Module BasicMatrixTheory (E : ElementType).
   (* ======================================================================= *)
   (** ** Convert between `list of vectors` and mat *)
   
+
   (** mat to `list of row vectors` *)
   Definition m2rvl {r c} (M : mat r c) : list (vec c) := m2rvl M.
 
@@ -339,7 +343,7 @@ Module BasicMatrixTheory (E : ElementType).
   
   Lemma cvl2m_m2cvl : forall {r c} (M : mat r c), cvl2m (m2cvl M) = M.
   Proof. apply cvl2m_m2cvl. Qed.
-
+  
   (* ======================================================================= *)
   (** ** Make concrete matrix *)
 
@@ -1084,14 +1088,8 @@ Module RingMatrixTheory (E : RingElementType).
   Proof. intros. apply vdot_row_row. Qed.
 
   (** <u,v> = (u\T * v).11 *)
-  Lemma vdot_eq_mul_trans : forall {n} (u v : vec n), <u, v> = (v2rv u * v2cv v).11.
-  Proof. intros. apply vdot_eq_mul_trans. Qed.
-
-  (* Tips: a good example showing "mixed using polymorphic and monomorphic function" *)
-  (** cv2v (M * v2cv v) = vmap (vdot v) M *)
-  Lemma cv2v_mmul_v2cv : forall {r c} (M : mat r c) (v : vec c),
-      cv2v (M * v2cv v) = Vector.vmap (vdot v) M.
-  Proof. intros. apply cv2v_mmul_v2cv. Qed.
+  Lemma vdot_eq_mmul : forall {n} (u v : vec n), <u, v> = (v2rv u * v2cv v).11.
+  Proof. intros. apply vdot_eq_mmul. Qed.
 
   (** (M * N) * O = M * (N * O) *)
   Lemma mmul_assoc : forall {r c s t : nat} (M : mat r c) (N : mat c s) (O : mat s t), 
@@ -1162,7 +1160,93 @@ Module RingMatrixTheory (E : RingElementType).
   (** tr (M * N) = tr (N * M) *)
   Lemma mtrace_mmul : forall {r c} (M : mat r c) (N : mat c r), tr (M * N) = tr (N * M).
   Proof. intros. apply mtrace_mmul. Qed.
+  
+  (* ======================================================================= *)
+  (** ** Matrix multiply vector (treat vector as column vector) *)
 
+  Open Scope vec_scope.
+  
+  Definition mmulv {r c : nat} (M : mat r c) (v : vec c) : vec r :=
+    @mmulv _ Aadd 0 Amul _ _ M v.
+  Infix "*" := mmulv : vec_scope.
+
+  (** (M * v)[i] = <row M i, v> *)
+  Lemma vnth_mmulv : forall {r c} (M : mat r c) (v : vec c) i,
+      (M * v) $ i = <M $ i, v>.
+  Proof. intros. apply vnth_mmulv. Qed.
+
+  (** (M * N) * v = M * (N * v) *)
+  Lemma mmulv_assoc : forall {m n r} (M : mat m n) (N : mat n r) (v : vec r),
+      (M * N)%M * v = M * (N * v).
+  Proof. intros. apply mmulv_assoc. Qed.
+
+  (** M * (u + v) = M * u + M * v *)
+  Lemma mmulv_vadd : forall {r c} (M : mat r c) (u v : vec c),
+      M * (u + v) = (M * u) + (M * v).
+  Proof. intros. apply mmulv_vadd. Qed.
+  
+  (** (M + N) * v = M * v + N * v *)
+  Lemma mmulv_madd : forall {r c} (M N : mat r c) (v : vec c),
+      (M + N)%M * v = (M * v) + (N * v).
+  Proof. intros. apply mmulv_madd. Qed.
+
+  (** (- M) * v = - (M * v) *)
+  Lemma mmulv_mopp : forall {r c} (M : mat r c) (v : vec c), (- M)%M * v = - (M * v).
+  Proof. intros. apply mmulv_mopp. Qed.
+
+  (** M * (- v) = - (M * v) *)
+  Lemma mmulv_vopp : forall {r c} (M : mat r c) (v : vec c), M * (- v) = - (M * v).
+  Proof. intros. apply mmulv_vopp. Qed.
+
+  (** M * (u - v) = M * u - M * v *)
+  Lemma mmulv_vsub : forall {r c} (M : mat r c) (u v : vec c),
+      M * (u - v) = (M * u) - (M * v).
+  Proof. intros. apply mmulv_vsub. Qed.
+  
+  (** (M - N) * v = M * v - N * v *)
+  Lemma mmulv_msub : forall {r c} (M N : mat r c) (v : vec c),
+      (M - N)%M * v = (M * v) - (N * v).
+  Proof. intros. apply mmulv_msub. Qed.
+  
+  (** 0 * v = 0 *)
+  Lemma mmulv_0_l : forall {r c} (v : vec c), (@mat0 r c) * v = vzero.
+  Proof. intros. apply mmulv_0_l. Qed.
+  
+  (** M * 0 = 0 *)
+  Lemma mmulv_0_r : forall {r c} (M : mat r c), M * vzero = vzero.
+  Proof. intros. apply mmulv_0_r. Qed.
+  
+  (** 1 * v = v *)
+  Lemma mmulv_1_l : forall {n} (v : vec n), mat1 * v = v.
+  Proof. intros. apply mmulv_1_l. Qed.
+
+  (** (a \.* M) * v = a \.* (M * v) *)
+  Lemma mmulv_mcmul : forall {r c} (a : A) (M : mat r c) (v : vec c), 
+      (a \.* M)%M * v = a \.* (M * v).
+  Proof. intros. apply mmulv_mcmul. Qed.
+  
+  (** M * (a \.* v) = a \.* (M * v) *)
+  Lemma mmulv_vcmul : forall {r c} (a : A) (M : mat r c) (v : vec c), 
+      M * (a \.* v) = a \.* (M * v).
+  Proof. intros. apply mmulv_vcmul. Qed.
+
+  (** <u,v> = (u\T * v).1 *)
+  Lemma vdot_eq_mmulv : forall {n} (u v : vec n), <u, v> = (v2rv u * v).1.
+  Proof. intros. apply vdot_eq_mmulv. Qed.
+  
+  (** v2cv (M * v) = M * v2cv v *)
+  Lemma v2cv_mmulv : forall {r c} (M : mat r c) (v : vec c),
+      v2cv (M * v) = (M * v2cv v)%M.
+  Proof. intros. apply v2cv_mmulv. Qed.
+
+  (** v2rv (M * v) = (v2rv v) * M\T *)
+  Lemma v2rv_mmulv : forall {r c} (M : mat r c) (v : vec c),
+      v2rv (M * v) = (v2rv v * M\T)%M.
+  Proof. intros. apply v2rv_mmulv. Qed.
+
+
+  Open Scope mat_scope.
+  
   (* ======================================================================= *)
   (** ** Skew-symmetric matrix *)
   
@@ -1175,7 +1259,7 @@ Module RingMatrixTheory (E : RingElementType).
 
   (* ======================================================================= *)
   (** ** Hardmard product *)
-  
+
   (** Hardmard product (also known as the element-wise product, entrywise product 
       or Schur product).
       It is a binary operation that takes two matrices of the same dimensions and 
@@ -1185,7 +1269,7 @@ Module RingMatrixTheory (E : RingElementType).
       The hardmard product is associative, distribute and commutative *)
   (* Definition mhp {n : nat} (M N : smat n) : smat n := mhp m1 m2 (Amul:=Amul). *)
   (* Infix "⦿" := mhp : mat_scope. *)
-  
+
   (* ======================================================================= *)
   (** ** Determinant of a matrix *)
 
@@ -1203,7 +1287,7 @@ Module RingMatrixTheory (E : RingElementType).
   (** |mat1| = 1 *)
   Lemma mdet_mat1 : forall {n}, mdet (@mat1 n) = 1.
   Proof. intros. apply mdet_mat1. Qed.
-  
+
   (* ======================================================================= *)
   (** ** Determinant on matrix of 1-,2-, or 3-dim*)
 
@@ -1576,6 +1660,12 @@ Module FieldMatrixTheory (E : FieldElementType).
   Lemma mmul_cancel_r : forall {r c} (M : smat c) (N O : mat r c),
       minvertible M -> N * M = O * M -> N = O.
   Proof. intros. apply mmul_cancel_r in H0; auto. Qed.
+  
+  (** minvertible M -> M * u = M * v -> u = v *)
+  Lemma mmulv_cancel_l : forall {n} (M : smat n) (u v : vec n),
+      minvertible M -> (M * u = M * v)%V -> u = v.
+  Proof. intros. apply mmulv_cancel_l in H0; auto. Qed.
+  
 
   (* ======================================================================= *)
   (** ** Inversion matrix of common finite dimension *)

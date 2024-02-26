@@ -52,12 +52,12 @@
  *)
 
 Require Export Math.
-Require Export VectorR2.
+Import V2Notations.
 
 Open Scope nat_scope.
 Open Scope R_scope.
-Open Scope vec_scope.
 Open Scope mat_scope.
+Open Scope vec_scope.
 
 
 (* ########################################################################### *)
@@ -65,7 +65,7 @@ Open Scope mat_scope.
 
 (** Transformation by SOn matrix will keep v2cross. *)
 Lemma SOn_keep_v2cross : forall (M : smat 2) (u v : vec 2),
-    SOnP M -> (cv2v (M * v2cv u)) \x (cv2v (M * v2cv v)) = u \x v.
+    SOnP M -> (M * u) \x (M * v) = u \x v.
 Proof.
   intros. cbv. ring_simplify.
   assert (M.11 * M.22 - M.12 * M.21 = 1)%R.
@@ -79,64 +79,51 @@ Proof.
   rewrite H1. rewrite H0. lra.
 Qed.
 
-(** Transformation by SOn matrix will keep v2angle. *)
-Lemma SOn_keep_v2angle : forall (M : smat 2) (u v : vec 2),
-    SOnP M -> (cv2v (M * v2cv u)) /2_ (cv2v (M * v2cv v)) = u /2_ v.
+(** Transformation by SOn matrix will keep vangle2. *)
+Lemma SOn_keep_vangle2 : forall (M : smat 2) (u v : vec 2),
+    SOnP M -> (M * u) /2_ (M * v) = u /2_ v.
 Proof.
-  intros. unfold v2angle.
-  pose proof (SOn_keep_v2cross M u v H).
-  destruct H as [Horth Hdet1]. pose proof (morth_keep_angle M u v Horth).
-  rewrite H0. rewrite H. auto.
+  intros. unfold vangle2. rewrite SOn_keep_v2cross; auto.
+  rewrite morth_keep_angle; auto. apply H.
 Qed.
 
-(* (** <col(m1,i), col(m2,j)> = (m1\T * m2)[i,j] *) *)
-(* Lemma vdot_col_col : forall {n} (m : smat n) i j, *)
-(*     <mcol m i, mcol m j> = (m\T * m) $ i $ j. *)
-(* Proof. intros. apply seqsum_eq. intros; auto. Qed. *)
+(* ########################################################################### *)
+(** * Skew-symmetric matrix in 2-D *)
 
-(* (** <row(m1,i), row(m2,j)> = (m1 * m2\T)[i,j] *) *)
-(* Lemma vdot_row_row : forall {n} (m : smat n) i j, *)
-(*     <mrow m i, mrow m j> = (m * m\T) $ i $ j. *)
-(* Proof. intros. apply seqsum_eq. intros; auto. Qed. *)
-
-(* ======================================================================= *)
-(** ** Skew-symmetric matrix in 2-dimensions *)
-Section skew2.
-  
-  (** Equivalent form of skewP of 2D vector *)
-  Lemma skewP2_eq : forall M : smat 2,
-      skewP M <->
+(** Equivalent form of skewP of 2D vector *)
+Lemma skewP2_eq : forall M : smat 2,
+    skewP M <->
       (M.11 = 0) /\ (M.22 = 0) /\ (M.12 = -M.21)%R.
-  Proof.
-    intros. split; intros.
-    - hnf in H. assert (m2l (- M) = m2l (M\T)). rewrite H; auto.
-      cbv in H0. list_eq. cbv in *. ra.
-    - apply m2l_inj. cbv in *. list_eq; ra.
-  Qed.
+Proof.
+  intros. split; intros.
+  - hnf in H. assert (m2l (- M) = m2l (M\T))%M. rewrite H; auto.
+    cbv in H0. list_eq. cbv in *. ra.
+  - apply m2l_inj. cbv in *. list_eq; ra.
+Qed.
 
-  (** Create a skew-symmetric matrix in 2D with a value *)
-  Definition skew2 (a : R) : mat 2 2 := l2m [[0; -a];[a; 0]]%R.
+(** Create a skew-symmetric matrix in 2D with a value *)
+Definition skew2 (a : R) : mat 2 2 := l2m [[0; -a];[a; 0]]%R.
 
-  Lemma skew2_spec : forall a, skewP (skew2 a).
-  Proof. intros. rewrite skewP2_eq. cbv. lra. Qed.
+Lemma skew2_spec : forall a, skewP (skew2 a).
+Proof. intros. rewrite skewP2_eq. cbv. lra. Qed.
 
-  (** Convert a skew-symmetric matrix in 2D to its corresponding value *)
-  Definition vex2 (M : mat 2 2) : R := M.21.
+(** Convert a skew-symmetric matrix in 2D to its corresponding value *)
+Definition vex2 (M : mat 2 2) : R := M.21.
 
-  Lemma skew2_vex2 : forall (M : mat 2 2), skewP M -> skew2 (vex2 M) = M.
-  Proof. intros. rewrite skewP2_eq in H. cbv in H. meq; ra. Qed.
+Lemma skew2_vex2 : forall (M : mat 2 2), skewP M -> skew2 (vex2 M) = M.
+Proof. intros. rewrite skewP2_eq in H. cbv in H. meq; ra. Qed.
 
-  Lemma vex2_skew2 : forall (a : R), vex2 (skew2 a) = a.
-  Proof. intros. cbv. auto. Qed.
-  
-End skew2.
+Lemma vex2_skew2 : forall (a : R), vex2 (skew2 a) = a.
+Proof. intros. cbv. auto. Qed.
 
 
 (* ########################################################################### *)
-(** * Rotation matrix in 2D *)
+(** * Orientation in 2D (pure rotation) *)
 
 (* ======================================================================= *)
-(** ** Definition of 2D rotation matrix *)
+(** ** 2-D Rotation matrix *)
+
+Open Scope mat_scope.
 
 (** 创建一个2D旋转矩阵。说明：
    1. 该矩阵是标准正交的，即行向量相互正交，列向量相互正交，并且长度都是1.
@@ -146,107 +133,232 @@ End skew2.
    5. 逆矩阵是其转置。
    6. 该矩阵的四个元素并不独立，实际上只有一个参数theta。这是非最小表示的一个例子，
       缺点是占用更多存储空间，优点是可组合性(composability)
-   7. 如何使用该矩阵来变换向量？见 rot2
+   7. 如何使用该矩阵来变换向量？见 operations
  *)
-Definition R2 (theta : R) : smat 2 :=
+Definition rot2 (theta : R) : smat 2 :=
   (mkmat_2_2
      (cos theta) (- sin theta)
      (sin theta) (cos theta))%R.
 
+(** rot2 is orthogonal matrix *)
+Lemma rot2_orth : forall (θ : R), morth (rot2 θ).
+Proof. intros; meq; req. Qed.
 
-(* ======================================================================= *)
-(** ** Properties of 2D rotation matrix *)
+(** The determinant of rot2 is 1 *)
+Lemma rot2_det1 : forall (θ : R), mdet (rot2 θ) = 1.
+Proof. intros; cbv; req. Qed.
 
-Section R2.
-  (** R2 is orthogonal matrix *)
-  Lemma R2_orth : forall (θ : R), morth (R2 θ).
-  Proof. intros; meq; Req_more. Qed.
+(** rot2 satisfies SOnP *)
+Lemma rot2_SOnP : forall (θ : R), SOnP (rot2 θ).
+Proof. intros. hnf. split. apply rot2_orth. apply rot2_det1. Qed.
 
-  (** The determinant of R2 is 1 *)
-  Lemma R2_det1 : forall (θ : R), mdet (R2 θ) = 1.
-  Proof. intros; cbv; Req_more. Qed.
+(** rot2 is a member of SO2 *)
+Definition rot2_SO2 (θ : R) : SO2 := mkSOn (rot2 θ) (rot2_SOnP θ).
 
-  (** R2 satisfies SOnP *)
-  Lemma R2_SOnP : forall (θ : R), SOnP (R2 θ).
-  Proof. intros. hnf. split. apply R2_orth. apply R2_det1. Qed.
-  
-  (** R2 is a member of SO2 *)
-  Definition R2_SO2 (θ : R) : SO2 := mkSOn (R2 θ) (R2_SOnP θ).
+(** rot2 is invertible *)
+Lemma rot2_invertible : forall (θ : R), minvertible (rot2 θ).
+Proof. intros. apply morth_invertible. apply rot2_orth. Qed.
 
-  (** R2 is invertible *)
-  Lemma R2_invertible : forall (θ : R), minvertible (R2 θ).
-  Proof. intros. apply morth_invertible. apply R2_orth. Qed.
+(** rot2\-1 = rot2\T *)
+Lemma rot2_inv_eq_trans : forall θ : R, (rot2 θ)\-1 = (rot2 θ)\T.
+Proof.
+  (* method 1 : prove by computing (slow) *)
+  (* intros; meq; req. *)
+  (* method 2 : prove by reasoning *)
+  intros; apply (SOn_inv_eq_trans (rot2_SO2 θ)).
+Qed.
 
-  (** R(θ)\-1 = R(θ)\T *)
-  Lemma R2_inv_eq_trans : forall θ : R, (R2 θ)\-1 = (R2 θ)\T.
-  Proof.
-    (* method 1 : prove by computing (slow) *)
-    (* intros; meq; Req_more. *)
-    (* method 2 : prove by reasoning *)
-    intros; apply (SOn_inv_eq_trans (R2_SO2 θ)).
-  Qed.
+(** rot2 * rot2\-1 = I *)
+Lemma rot2_mul_rot2_inv : forall θ : R, rot2 θ * ((rot2 θ)\-1) = mat1.
+Proof. intros. apply mmul_minv_r. apply rot2_invertible. Qed.
 
-  (** R(θ) * R(θ)\-1 = I *)
-  Lemma R2_mul_R2_inv : forall θ : R, R2 θ * ((R2 θ)\-1) = mat1.
-  Proof. intros. apply mmul_minv_r. apply R2_invertible. Qed.
+(** rot2\-1 * rot2 = I *)
+Lemma rot2_inv_mul_rot2 : forall θ : R, (rot2 θ)\-1 * (rot2 θ) = mat1.
+Proof. intros. apply mmul_minv_l. apply rot2_invertible. Qed.
 
-  (** R(θ)\-1 * R(θ) = I *)
-  Lemma R2_inv_mul_R2 : forall θ : R, (R2 θ)\-1 * (R2 θ) = mat1.
-  Proof. intros. apply mmul_minv_l. apply R2_invertible. Qed.
+(** rot2 * rot2\T = I *)
+Lemma rot2_mul_rot2_trans : forall θ : R, rot2 θ * ((rot2 θ)\T) = mat1.
+Proof. intros. rewrite <- rot2_inv_eq_trans. apply rot2_mul_rot2_inv. Qed.
 
-  (** R(θ) * R(θ)\T = I *)
-  Lemma R2_mul_R2_trans : forall θ : R, R2 θ * ((R2 θ)\T) = mat1.
-  Proof. intros. rewrite <- R2_inv_eq_trans. apply R2_mul_R2_inv. Qed.
+(** rot2\T * rot2 = I *)
+Lemma rot2_trans_mul_rot2 : forall θ : R, (rot2 θ)\T * (rot2 θ) = mat1.
+Proof. intros. rewrite <- rot2_inv_eq_trans. apply rot2_inv_mul_rot2. Qed.
 
-  (** R(θ)\T * R(θ) = I *)
-  Lemma R2_trans_mul_R2 : forall θ : R, (R2 θ)\T * (R2 θ) = mat1.
-  Proof. intros. rewrite <- R2_inv_eq_trans. apply R2_inv_mul_R2. Qed.
-  
-  (** R(θ1) * R(θ2) = R(θ1 + θ2) *)
-  Lemma R2_mul_eq_add : forall (θ1 θ2 : R), (R2 θ1) * (R2 θ2) = R2 (θ1 + θ2).
-  Proof. intros; meq; Req_more. Qed.
+(** rot2(θ1) * rot2(θ2) = rot2(θ1 + θ2) *)
+Lemma rot2_eq_add : forall (θ1 θ2 : R), (rot2 θ1) * (rot2 θ2) = rot2 (θ1 + θ2).
+Proof. intros; meq; req. Qed.
 
-  (** R(θ1) * R(θ2) = R(θ2) * R(θ1) *)
-  Lemma R2_mul_comm : forall (θ1 θ2 : R), (R2 θ1) * (R2 θ2) = (R2 θ2) * (R2 θ1).
-  Proof. intros; meq; Req. Qed.
-  
-End R2.
+(** rot2(θ1) * rot2(θ2) = rot2(θ2) * rot2(θ1) *)
+Lemma rot2_comm : forall (θ1 θ2 : R), (rot2 θ1) * (rot2 θ2) = (rot2 θ2) * (rot2 θ1).
+Proof. intros; meq; ra. Qed.
 
-Section R2_neg.
-  
-  (** R(-θ) = R(θ)\-1 *)
-  Lemma R2_neg_eq_inv : forall θ : R, R2 (-θ) = (R2 θ)\-1.
-  Proof. intros; meq; Req_more. Qed.
+(** rot2(-θ) = rot2(θ)\-1 *)
+Lemma rot2_neg_eq_inv : forall θ : R, rot2 (-θ) = (rot2 θ)\-1.
+Proof. intros; meq; req. Qed.
 
-  (** R(-θ) = R(θ)\T *)
-  Lemma R2_neg_eq_trans : forall θ : R, R2 (-θ) = (R2 θ)\T.
-  Proof. intros; meq; Req_more. Qed.
-  
-End R2_neg.
+(** rot2(-θ) = rot2(θ)\T *)
+Lemma rot2_neg_eq_trans : forall θ : R, rot2 (-θ) = (rot2 θ)\T.
+Proof. intros; meq; req. Qed.
 
-
-(* ########################################################################### *)
-(** * Orientation in 2D (rotation) *)
 
 (* ======================================================================= *)
 (** ** Definition of 2D rotation operations *)
 
-?
-(** create a relative pose with a finite rotation *)
-Definition rot2 (theta : R) : smat 2 := (R2 theta).
+Open Scope vec_scope.
 
-Definition rot2' (theta : R) (v : vec 2) : vec 2 := cv2v ((R2 theta)\T * (v2cv v)).
+(* Given two coordinate frames, the world frame {W} and the body frame
+   {B}, where {B} is rotated by an angle of theta relative to {W}, the
+   coordinates of a vector v in these two coordinate frames are w and
+   b, respectively. The following relationship holds:
+      w = rot2(theta) * b
+      b = rot2(theta)^T * w
+
+  假定有两个坐标系，世界坐标系{W}和物体坐标系{B}，并且{B}相对于{W}旋转
+  了theta角，某个向量v在这两个坐标系下的坐标分别为w和b，则满足如下关系
+  式：w = rot2(theta)*b, b = rot2(theta)' * w. *)
+Definition world4rot (theta : R) (b : vec 2) : vec 2 := rot2 theta * b.
+Definition body4rot (theta : R) (w : vec 2) : vec 2 := (rot2 theta)\T * w.
+
+(* In a coordinate frame, if the coordinates of a vector are `a` and
+   the vector is rotated by an angle of `theta`, the coordinates after
+   rotation are `b`. The following relationship holds:
+      b = rot2(theta) * a
+      a = rot2(theta)^T * b
+
+  在一个坐标系中，某个向量的坐标是v1，该向量旋转了theta角，旋转后的坐
+  标是v2，则有以下关系式：b = rot2(theta) * a, a = rot2'(theta) * b *)
+Definition afterRot (theta : R) (a : vec 2) : vec 2 := rot2 theta * a.
+Definition beforeRot (theta : R) (b : vec 2) : vec 2 := (rot2 theta)\T * b.
+
 
 (* ======================================================================= *)
-(** ** Specifications for 2D rotation operations *)
+(** ** Properties for 2D rotation operations *)
 
-(** 规范1：证明在同一个坐标系下向量旋转前后的坐标变化 *)
-Section spec1.
+(** world4rot . body4rot = id *)
+Lemma world4rot_body4rot : forall theta w, world4rot theta (body4rot theta w) = w.
+Proof.
+  intros. unfold world4rot, body4rot. rewrite <- mmulv_assoc.
+  rewrite rot2_mul_rot2_trans, mmulv_1_l. auto.
+Qed.
+
+(** body4rot . world4rot = id *)
+Lemma body4rot_world4rot : forall theta b, body4rot theta (world4rot theta b) = b.
+Proof.
+  intros. unfold world4rot, body4rot. rewrite <- mmulv_assoc.
+  rewrite rot2_trans_mul_rot2, mmulv_1_l. auto.
+Qed.
+
+(** world4rot (-θ) = body4rot(θ) *)
+Lemma world4rot_neg_eq_body4rot : forall theta v,
+    world4rot (-theta) v = body4rot theta v.
+Proof.
+  intros. unfold world4rot, body4rot. rewrite rot2_neg_eq_trans. auto.
+Qed.
+
+(** Two 2-D rotations equal to once with the addition of the angles *)
+Lemma world4rot_twice : forall (theta1 theta2 : R) (v : vec 2),
+    world4rot theta2 (world4rot theta1 v) =
+      world4rot (theta1 + theta2) v.
+Proof.
+  intros. unfold world4rot. rewrite <- mmulv_assoc.
+  rewrite rot2_eq_add. rewrite Rplus_comm. auto.
+Qed.
+
+(** The order of two 2-D rotations does not matter *)
+Lemma world4rot_anyOrder : forall (θ1 θ2 : R) (v : vec 2),
+    world4rot θ2 (world4rot θ1 v) = world4rot θ1 (world4rot θ2 v).
+Proof. intros. rewrite !world4rot_twice. f_equal. ring. Qed.
+
+(* we can easily prove the similiarly properties for other operations *)
+
+
+(* ======================================================================= *)
+(** ** Specifications for 2-D rotation operations *)
+
+(** 两个坐标系中同一个向量的坐标变化 *)
+Section spec_TwoFrame.
+  Open Scope mat_scope.
+  
+  (* 参考了 RVC 书中 2.1.1.1 节的方法 *)
 
   (* 命题：
-     任意二维平面中的非零点P，给定某坐标系{0:OXY}，向量OP在{0}下的坐标为a，
-     当将OP绕正方向旋转theta角后到达OP'，OP'在{0}下的坐标为b，证明：
-     b = rot2(theta,a) 以及  a = rot2'(theta,b) *)
+     任意二维平面中的原点重合的两个坐标系{W}和{B}，{W}旋转theta后到达{B}，
+     某向量 OP 在 {W} 和 {B} 下的坐标分别为 w 和 b，证明：
+     w = world4rot(theta,b) 以及 b=body4rot(theta,w) *)
+  
+  Variable xw' yw' : vec 2.   (* 坐标系 {W} 的坐标轴单位向量 *)
+  Hypotheses xw'yw'_orth : morth (cvl2m [xw';yw']). (* {W}的坐标轴是正交的 *)
+  Variable xb' yb' : vec 2.   (* 坐标系 {B} 的坐标轴单位向量 *)
+  Hypotheses xb'yb'_orth : morth (cvl2m [xb';yb']). (* {B}的坐标轴是正交的 *)
+  Variable theta : R.         (* 坐标系{W}旋转theta角后到{B} *)
+  Hypotheses Hxb' :           (* xb'由 theta 和 {xw,yw} 表示 *)
+    xb' = (cos theta \.* xw' + sin theta \.* yw')%V.
+  Hypotheses Hyb' :           (* yb'由 theta 和 {xw,yw} 表示 *)
+    yb' = ((- sin theta)%R \.* xw' + cos theta \.* yw')%V.
+  
+  Variable p : vec 2.        (* 任意P点 *)
+  Variable w : vec 2.        (* P点在 {W} 下的坐标 *)
+  Variable b : vec 2.        (* P点在 {B} 下坐标 *)
+  Hypotheses Hpw : p = (w.x \.* xw' + w.y \.* yw')%V. (* P点在{W}中的表示 *)
+  Hypotheses Hpb : p = (b.x \.* xb' + b.y \.* yb')%V. (* P点在{B}中的表示 *)
+
+  (* Hxb' 和 Hyb' 的矩阵形式，公式(2.4) *)
+  Fact Hxb'Hyb' : cvl2m [xb';yb'] = (cvl2m [xw';yw']) * rot2 theta.
+  Proof. subst. meq; ra. Qed.
+  
+  (* Hxw' 和 Hyw' 的矩阵形式 *)
+  Fact Hxw'Hyw' : @cvl2m 2 2 [xw';yw'] = (cvl2m [xb';yb']) * (rot2 theta)\T.
+  Proof.
+    assert (cvl2m [xb'; yb'] * (rot2 theta)\T =
+              cvl2m [xw'; yw'] * rot2 theta * (rot2 theta)\T).
+    { rewrite Hxb'Hyb'. auto. }
+    rewrite mmul_assoc in H. rewrite rot2_mul_rot2_trans, mmul_1_r in H. auto.
+  Qed.
+
+  (* Hpv 的矩阵形式 *)
+  Fact HpwM : p = (@cvl2m 2 2 [xw';yw'] * w)%V.
+  Proof. rewrite Hpw. veq; ra. Qed.
+  
+  (* Hpb 的矩阵形式 *)
+  Fact HpbM : p = (@cvl2m 2 2 [xb';yb'] * b)%V.
+  Proof. rewrite Hpb. veq; ra. Qed.
+  
+  (* p 用 {xw',yw'} 和 b 的矩阵乘法表示，公式(2.5) *)
+  Fact p_w_b : p = ((cvl2m [xw';yw'] * rot2 theta)%M * b)%V.
+  Proof. rewrite HpbM. f_equal. f_equal. apply Hxb'Hyb'. Qed.
+  
+  (* p 用 {xb',yb'} 和 w 的矩阵乘法表示 *)
+  Fact p_b_w : p = ((cvl2m [xb';yb'] * (rot2 theta)\T)%M * w)%V.
+  Proof. rewrite HpwM. f_equal. f_equal. apply Hxw'Hyw'. Qed.
+  
+  Lemma world4rot_spec : w = world4rot theta b.
+  Proof.
+    unfold world4rot.
+    assert (@cvl2m 2 2 [xw';yw'] * w =
+              (cvl2m [xw';yw'] * rot2 theta)%M * b)%V.
+    { rewrite <- HpwM. rewrite <- p_w_b. auto. }
+    rewrite mmulv_assoc in H. apply mmulv_cancel_l in H; auto.
+    apply morth_invertible; auto.
+  Qed.
+  
+  Lemma body4rot_spec : b = body4rot theta w.
+  Proof.
+    unfold body4rot.
+    assert (@cvl2m 2 2 [xb';yb'] * b =
+              (cvl2m [xb';yb'] * (rot2 theta)\T)%M * w)%V.
+    { rewrite <- HpbM. rewrite <- p_b_w. auto. }
+    rewrite mmulv_assoc in H. apply mmulv_cancel_l in H; auto.
+    apply morth_invertible; auto.
+  Qed.
+End spec_TwoFrame.
+
+(** 证明在同一个坐标系下向量旋转前后的坐标变化 *)
+Section spec_OneFrame.
+
+  (* 命题：
+     任给二维平面及坐标系{0}，坐标原点为O，某非零点P，向量OP的坐标为a，
+     当将OP绕正方向旋转theta角后到达OP'，OP'坐标为b，证明：
+     b = afterRot(theta,a) 以及  a = beforeRot(theta,b) *)
 
   Context (a : vec 2). (* 任给OP在{0}下的坐标a *)
   Context (theta : R). (* 任给旋转角theta *)
@@ -257,154 +369,58 @@ Section spec1.
   Let b_y := (l * sin (alpha + theta))%R.   (* OP'的纵坐标 *)
   Let b : vec 2 := l2v [b_x;b_y].           (* OP'的坐标 *)
 
-  Lemma rot2_spec1 : b = rot2 theta a.
+  Lemma afterRot_spec : b = afterRot theta a.
   Proof.
     (* convert the equality of matrix to element-wise equalities *)
-    intros. unfold b,b_x,b_y,rot2. apply v2l_inj. rewrite v2l_l2v; auto.
-    replace (v2l (cv2v (R2 theta * v2cv a)))
+    intros. unfold b,b_x,b_y,afterRot. apply v2l_inj. rewrite v2l_l2v; auto.
+    replace (v2l (rot2 theta * a))
       with [a.x * (cos theta) + a.y * (- sin theta);
             a.x * (sin theta) + a.y * (cos theta)]%R.
-    2:{ cbv. list_eq; Req. } list_eq.
+    2:{ cbv. list_eq; ra. } list_eq.
     (* proof equality of element *)
     - rewrite cos_add. unfold alpha, Rminus, l. ring_simplify.
-      rewrite v2len_mul_cos_v2angle_i; auto.
-      rewrite v2len_mul_sin_v2angle_i; auto. lra.
+      rewrite v2len_mul_cos_vangle2_i; auto.
+      rewrite v2len_mul_sin_vangle2_i; auto. lra.
     - rewrite sin_add. unfold alpha, l. ring_simplify.
-      rewrite v2len_mul_cos_v2angle_i; auto.
-      rewrite v2len_mul_sin_v2angle_i; auto. lra.
+      rewrite v2len_mul_cos_vangle2_i; auto.
+      rewrite v2len_mul_sin_vangle2_i; auto. lra.
   Qed.
 
-  Lemma rot2'_spec1 : a = rot2' theta b.
+  Lemma beforeRot_spec : a = beforeRot theta b.
   Proof.
     (* convert the equality of matrix to element-wise equalities *)
-    intros. unfold b,b_x,b_y,rot2'. apply v2l_inj.
+    intros. unfold b,b_x,b_y,beforeRot. apply v2l_inj.
     replace (v2l a) with [a.x; a.y]; [|cbv; auto].
-    replace (v2l
-               (cv2v
-                  ((R2 theta)\T *
-                     v2cv (l2v [(l * cos (alpha + theta))%R;
-                                (l * sin (alpha + theta))%R]))))
+    replace (v2l (((rot2 theta)\T *
+                     (l2v [(l * cos (alpha + theta))%R;
+                           (l * sin (alpha + theta))%R]))))
       with [
         (cos theta) * l * cos (alpha + theta) +
           (sin theta) * l * sin (alpha + theta);
         - (sin theta) * l * cos (alpha + theta) +
           (cos theta) * l * sin (alpha + theta)]%R.
-    2:{ Local Opaque cos sin vlen v2angle. cbv; list_eq; Req. } list_eq.
+    2:{ Local Opaque cos sin vlen vangle2. cbv; list_eq; ra. } list_eq.
     (* proof equality of element *)
     - (* Tips: `a.x` and `a.y` is A type, making `ring` will fail. *)
       remember ((a (nat2finS 0)) : R) as a_x.
       rewrite cos_add, sin_add; unfold alpha, Rminus, l. ring_simplify.
-      rewrite associative. rewrite v2len_mul_cos_v2angle_i; auto.
+      rewrite associative. rewrite v2len_mul_cos_vangle2_i; auto.
       rewrite cos2'. ra.
     - remember ((a (nat2finS 1)) : R) as a_y.
       rewrite cos_add, sin_add; unfold alpha, Rminus, l. ring_simplify.
       replace ((||a||) * cos theta ^ 2 * sin (v2i /2_ a))%R
         with (cos theta ^ 2 * (||a|| * sin (v2i /2_ a)))%R; ra.
-      rewrite associative. rewrite v2len_mul_sin_v2angle_i; auto.
+      rewrite associative. rewrite v2len_mul_sin_vangle2_i; auto.
       rewrite sin2'. ra.
   Qed.
-End spec1.
-
-(** 规范1：证明坐标系旋转前后(即，两个坐标系)时同一个向量的坐标变化 *)
-Section method2.
-  (* 参考了 RVC 书中 2.1.1.1 节的方法 *)
-
-  (* 命题：
-     任意二维平面中的原点重合的两个坐标系{V}和{B}，{V}旋转theta后到达{B}而来，
-     任意向量 OP 在 {V} 和 {B} 下的坐标分别为 v 和 b，证明：
-     v = rot2(theta,b) 以及  b = rot2'(theta,v) *)
-  
-    Variable xv' yv' : vec 2.   (* 坐标系 {V} 的坐标轴单位向量 *)
-    Hypotheses xv'yv'_orth : morth (cvl2m [xv';yv']). (* {V}的坐标轴是正交的 *)
-    Variable xb' yb' : vec 2.   (* 坐标系 {B} 的坐标轴单位向量 *)
-    Hypotheses xb'yb'_orth : morth (cvl2m [xb';yb']). (* {B}的坐标轴是正交的 *)
-    Variable theta : R.         (* 坐标系{V}旋转theta角后到{B} *)
-    Hypotheses Hxb' :           (* xb'由 theta 和 {xv,yv} 表示 *)
-      xb' = (cos theta \.* xv' + sin theta \.* yv')%V.
-    Hypotheses Hyb' :           (* yb'由 theta 和 {xv,yv} 表示 *)
-      yb' = ((- sin theta)%R \.* xv' + cos theta \.* yv')%V.
-    
-    Variable p : vec 2.         (* 任意P点 *)
-    Variable v : vec 2.         (* P点在 {V} 下的坐标 *)
-    Variable b : vec 2.         (* P点在 {B} 下坐标 *)
-    Hypotheses Hpv : p = (v.x \.* xv' + v.y \.* yv')%V. (* P点在{V}中的表示 *)
-    Hypotheses Hpb : p = (b.x \.* xb' + b.y \.* yb')%V. (* P点在{B}中的表示 *)
-
-    (* Hxb' 和 Hyb' 的矩阵形式，公式(2.4) *)
-    Fact Hxb'Hyb' : cvl2m [xb';yb'] = (cvl2m [xv';yv']) * R2 theta.
-    Proof. subst. meq; Req. Qed.
-    
-    (* Hxv' 和 Hyv' 的矩阵形式 *)
-    Fact Hxv'Hyv' : @cvl2m 2 2 [xv';yv'] = (cvl2m [xb';yb']) * (R2 theta)\T.
-    Proof.
-      assert (cvl2m [xb'; yb'] * (R2 theta)\T =
-                cvl2m [xv'; yv'] * R2 theta * (R2 theta)\T).
-      { rewrite Hxb'Hyb'. auto. }
-      rewrite mmul_assoc in H. rewrite R2_mul_R2_trans, mmul_1_r in H. auto.
-    Qed.
-
-    (* Hpv 的矩阵形式 *)
-    Fact HpvM : p = cv2v (@cvl2m 2 2 [xv';yv'] * v2cv v).
-    Proof. rewrite Hpv. veq; Req. Qed.
-    
-    (* Hpb 的矩阵形式 *)
-    Fact HpbM : p = cv2v (@cvl2m 2 2 [xb';yb'] * v2cv b).
-    Proof. rewrite Hpb. veq; Req. Qed.
-      
-    (* p 用 {xv',yv'} 和 b 的矩阵乘法表示，公式(2.5) *)
-    Fact p_v_b : p = cv2v ((cvl2m [xv';yv'] * R2 theta) * v2cv b).
-    Proof. rewrite HpbM. f_equal. f_equal. apply Hxb'Hyb'. Qed.
-      
-    (* p 用 {xb',yb'} 和 v 的矩阵乘法表示 *)
-    Fact p_b_v : p = cv2v ((cvl2m [xb';yb'] * (R2 theta)\T) * v2cv v).
-    Proof. rewrite HpvM. f_equal. f_equal. apply Hxv'Hyv'. Qed.
-    
-    Lemma rot2_spec2 : v = rot2 theta b.
-    Proof.
-      unfold rot2.
-      assert (cv2v (@cvl2m 2 2 [xv';yv'] * v2cv v) =
-                cv2v ((cvl2m [xv';yv'] * R2 theta) * v2cv b)).
-      { rewrite <- HpvM. rewrite <- p_v_b. auto. }
-      apply cv2v_inj in H. rewrite mmul_assoc in H. apply mmul_cancel_l in H.
-      - apply v2cv_inj. rewrite v2cv_cv2v. auto.
-      - apply morth_invertible; auto.
-    Qed.
-    
-    Lemma rot2'_spec2 : b = rot2' theta v.
-    Proof.
-      unfold rot2'.
-      assert (cv2v (@cvl2m 2 2 [xb';yb'] * v2cv b) =
-                cv2v ((cvl2m [xb';yb'] * (R2 theta)\T) * v2cv v)).
-      { rewrite <- HpbM. rewrite <- p_b_v. auto. }
-      apply cv2v_inj in H. rewrite mmul_assoc in H. apply mmul_cancel_l in H.
-      - apply v2cv_inj. rewrite v2cv_cv2v. auto.
-      - apply morth_invertible; auto.
-    Qed.
-End method2.
-
-
-(* ======================================================================= *)
-(** ** Properties for 2D rotation operations *)
-
-(** 旋转两次，等价于一次旋转两个角度之和: Rot(θ2,Rot(θ1,v)) = Rot(θ1+θ2,v) *)
-Lemma rot2_twice : forall (θ1 θ2 : R) (v : vec 2),
-    rot2 θ2 (rot2 θ1 v) = rot2 (θ1+θ2) v.
-Proof.
-  intros. unfold rot2. rewrite v2cv_cv2v. rewrite <- mmul_assoc.
-  rewrite R2_mul_eq_add. rewrite Rplus_comm. auto.
-Qed.
-
-(** 2D旋转时，旋转次序无关 *)
-Lemma rot2_any_order : forall (θ1 θ2 : R) (v : vec 2),
-    rot2 θ2 (rot2 θ1 v) = rot2 θ1 (rot2 θ2 v).
-Proof. intros. rewrite !rot2_twice. f_equal. ring. Qed.
+End spec_OneFrame.
 
 
 (* ########################################################################### *)
-(** * Pose in 2D *)
+(** * Pose in 2-D *)
 
 (* ======================================================================= *)
-(** ** Definition of 2D rotation operations *)
+(** ** Convert between Euclidean coordinates and homogeneous coordinates *)
 
 (** Convert Euclidean coordinates to homogeneous coordinates *)
 Definition e2h (v : vec 2) : vec 3 := mkvec3 (v.x) (v.y) 1.
@@ -413,70 +429,80 @@ Definition e2h (v : vec 2) : vec 3 := mkvec3 (v.x) (v.y) 1.
 Definition h2e (v : vec 3) : vec 2 := mkvec2 (v.x/v.z) (v.y/v.z).
 
 Lemma h2e_e2h : forall (v : vec 2), h2e (e2h v) = v.
-Proof. intros. veq; Req. Qed.
+Proof. intros. veq; ra. Qed.
 
 Lemma e2h_h2e : forall (v : vec 3), v.z = 1 -> e2h (h2e v) = v.
-Proof. intros. cbv in H. veq; rewrite H; Req. Qed.
+Proof. intros. cbv in H. veq; rewrite H; ra. Qed.
 
-(** 2D homogeneous transformation. It represents translation and orientation,
-    or relative pose. This is oftern referred to as a rigid-body motion. *)
-(* T2 ∈ SE(2) ⊂ R^(3x3), SE: special Euclidean group *)
+(* Lemma e2h_vadd : forall (u v : vec 2), e2h (u + v) = e2h u + e2h v. *)
+(* Proof. intros. veq; req. Qed. *)
 
-(* 坐标系{0} 先平移 t，再旋转 θ 后的相对位姿 *)
-Definition T2 (θ : R) (t : vec 2) : mat 3 3 :=
-  l2m [[cos θ; - sin θ; t.x];
-       [sin θ; cos θ;   t.y];
-       [0;     0;       1  ]]%R.
 
-(* Notes:
-   1. 相对位姿可用3个参数(t.x, t.y, θ)，或齐次矩阵 T2 来表示 
-   2. 由于平移和旋转操作不可交换，所以我们总是使用两个分开的操作
- *)
+(* ======================================================================= *)
+(** ** 2-D homogeneous transformation matrix *)
 
-(** create a relative pose with a finite translation but zero rotation *)
-Definition Transl2 (t : vec 2) : mat 3 3 := T2 0 t.
+Open Scope mat_scope.
 
-(** translate a vector `v` by offset `t` *)
-Definition transl2 (t : vec 2) (v : vec 2) : mat 3 3 := T2 0 t.
+(** Create a 2-D homogeneous transformation matrix:
+    1. It represents translation and orientation, or relative pose. 
+       This is often referred to as a rigid-body motion.
+    2. 它表示坐标系先平移 t，再旋转 θ 后的相对位姿
+    3. trans2 ∈ SE(2) ⊂ R^(3x3), SE: special Euclidean group
+    4. 相对位姿可用3个参数(t.x, t.y, θ)，或齐次矩阵来表示，前者省空间，后者有组合性
+    5. 由于平移和旋转操作不可交换，所以我们总是使用两个分开的操作
+    6. 如何使用该矩阵来变换向量？见 operations *)
+Definition trans2 (t : vec 2) (θ : R) : mat 3 3 :=
+  l2m
+    [[cos θ; - sin θ; t.x];
+     [sin θ; cos θ;   t.y];
+     [0;     0;       1  ]]%R.
 
-(* 在同一个坐标系中，任给向量 v，平移 t 后，得到的向量是 transl2(t,v) *)
-Lemma transl2_spec : forall (t : vec 2) (v : vec 2),
-    (v + t)%V = h2e (cv2v (((transl2 t) * (v2cv (e2h v))))).
-Proof. intros. veq; Req_more. Qed.
 
-(** create a relative pose with a finite rotation but zero translation *)
-Definition trot2 (theta : R) : mat 3 3 := T2 theta vzero.
+(* ======================================================================= *)
+(** ** 2-D transformation operations *)
 
-(* 在同一个坐标系中，任给向量 v，旋转 theta 后，得到的向量是 trot2(theta,v) *)
-Lemma transl2_spec : forall (theta : R) (v : vec 2),
-    rot2 theta v = (trot2 theta) v.
-    (v + t)%V = h2e (cv2v (((transl2 t) * (v2cv (e2h v))))).
-Proof. intros. veq; Req_more. Qed.
-(* Lemma T2_spec : forall (θ : R) (t : vec 2) (v : vec 2), *)
+(** Create a 2-D relative pose with pure translate of offset `t` *)
+Definition transl2 (t : vec 2) : mat 3 3 := trans2 t 0.
 
-Example ex_T1 := transl2 (mkvec2 1 2) * trot2 (0.5). (* 30 'deg). *)
+(** Create a 2-D relative pose with a pure rotation of angle `theta` *)
+Definition trot2 (theta : R) : mat 3 3 := trans2 vzero theta.
 
 (** A transformation to rotate about point C *)
 Definition trot2center (C : vec 2) (theta : R) : mat 3 3 :=
   transl2 C * trot2 theta * transl2 (- C)%V.
 
+(* 示例：构造一个相对位姿，坐标系先平移(1,2)，再旋转30度 *)
+Example trans_example1 := transl2 (mkvec2 1 2) * trot2 (0.5). (* 30 'deg). *)
+
+(* 任给坐标系中的坐标为v的向量，平移 t 后的新坐标是 transl2(t)*v *)
+Lemma transl2_spec : forall (t : vec 2) (v : vec 2),
+    (transl2 t * e2h v)%V = e2h (v + t)%V.
+Proof. intros. veq; req. Qed.
+
+(* 任给坐标系中的坐标为v的向量，旋转 theta 后的新坐标是 trot2(theta)*v *)
+Lemma trot2_spec : forall (theta : R) (v : vec 2),
+    (trot2 theta * e2h v)%V = e2h (rot2 theta * v)%V.
+Proof. intros. veq; req. Qed.
+
+(* 任给坐标系中的坐标为v的向量，先平移 t 再旋转 theta，得到的新坐标是 trans2(theta,t)*v *)
+Lemma trans2_spec : forall (t : vec 2) (theta : R) (v : vec 2),
+    (* ((trot2 theta) * e2h (v + t))%V = (trans2 t theta * e2h v)%V. *)
+    (h2e (trot2 theta * e2h v) + t = h2e (trans2 t theta * e2h v))%V.
+Proof. intros. veq; req. Qed.
+  
 
 (* ########################################################################### *)
 (** * Others *)
 
-(** 预乘和后乘旋转矩阵的关系，即: u1 ~ u2 -> R * u1 ~ u2 * R' *)
-Lemma R2_pre_post : forall (u : vec 2) (θ : R),
-    let u1 : cvec 2 := v2cv u in         (* u1是u的列向量形式 *)
-    let u2 : rvec 2 := v2rv u in         (* u2是u的行向量形式 *)
-    let v1 : cvec 2 := (R2 θ) * u1 in      (* v1是用列向量形式计算的结果 *)
-    let v2 : rvec 2 := u2 * (R2' θ) in  (* v2是用行向量形式计算的结果 *)
-    let v1' : vec 2 := cv2v v1 in           (* v1再转为普通向量 *)
-    let v2' : vec 2 := rv2v v2 in           (* v2再转为普通向量 *)
-    v1' = v2'. (* 结果应该相同 *)
-Proof. intros. veq; Req. Qed.
+(** 预乘和后乘旋转矩阵的关系，即: R * u = u * R' *)
+Lemma rot2_pre_post : forall (u : vec 2) (θ : R),
+    let v1 : vec 2 := (rot2 θ * u)%V in      (* v1是用列向量形式计算的结果 *)
+    let v2 : vec 2 := rv2v (v2rv u * (rot2 θ)\T) in  (* v2是用行向量形式计算的结果 *)
+    v1 = v2. (* 结果应该相同 *)
+Proof. intros. veq; ra. Qed.
 
 (** Special Euclidean Group of dimension 3: T ∈ SE(2) ⊂ R^(3x3) *)
-(* Record SE2 := { *)
-(*     SE2R :> mat 3 3; *)
-(*     _ : orthonormal2 SO2R *)
-(*   }. *)
+  (* Record SE2 := { *)
+  (*     SE2R :> mat 3 3; *)
+  (*     _ : orthonormal2 SO2R *)
+  (*   }. *)

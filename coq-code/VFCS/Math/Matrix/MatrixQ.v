@@ -31,11 +31,11 @@ Open Scope mat_scope.
 Section test.
   Open Scope vec_scope.
   
-  Let u := l2v 3 [1;2;-3].
-  Let v := f2v 3 (fun i => -1 + nat2Q i).
+  Let u := @l2v 3 [1;2;-3].
+  Let v := @f2v 3 (fun i => -1 + nat2Q i).
   
   Open Scope mat_scope.
   
-  Let M1 := l2m 3 3 [[1;-3;-2];[-2;1;-4];[-1;4;-1]].
+  Let M1 := @l2m 3 3 [[1;-3;-2];[-2;1;-4];[-1;4;-1]].
   (* Compute m2l M1. *)
 End test.

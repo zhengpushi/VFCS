@@ -79,6 +79,25 @@ Proof.
 Qed.
 
 
+(* ======================================================================= *)
+(** ** Zero matrix *)
+Section mat0.
+  Context {A} {Azero : A}.
+  Definition mat0 {r c} : mat A r c := fun _ _ => Azero.
+
+  (** mat0[i,j] = 0 *)
+  Lemma mnth_mat0 : forall {r c} i j, @mat0 r c $ i $ j = Azero.
+  Proof. intros. auto. Qed.
+
+  (* row mat0 i = vzero *)
+  Lemma mrow_mat0 : forall {r c} i, @mat0 r c $ i = vzero Azero.
+  Proof. intros. auto. Qed.
+
+  (* col mat0 i = vzero *)
+  Lemma mcol_mat0 : forall {r c} j, (fun k => @mat0 r c $ k $ j) = vzero Azero.
+  Proof. intros. auto. Qed.
+End mat0.
+
 
 (* ======================================================================= *)
 (** ** Row vector and column vector *)
@@ -152,6 +171,9 @@ Section rvec_vec.
     apply sig_eq_iff; auto.
   Qed.
   
+  Lemma vnth_v2rv : forall {n} (v : vec n) i, (v2rv v) $ i  = v.
+  Proof. intros. unfold v2rv. auto. Qed.
+  
 End rvec_vec.
 
 
@@ -169,6 +191,8 @@ Section vl2m_m2vl.
   Context {A} (Azero : A).
 
   Notation mat r c := (mat A r c).
+
+
   
   (** mat to `list of row vectors` *)
   Definition m2rvl {r c} (M : mat r c) : list (@vec A c) :=
@@ -357,21 +381,28 @@ End l2m_m2l.
 Section mtrans.
   Context {A} (Azero : A).
 
+  Notation mat0 := (@mat0 _ Azero).
+
   (* Definition mtrans_old {r c} (M : mat A r c) : mat A c r := *)
   (*   vmap (fun j => mcol M j) (vfinseq c). *)
   
   Definition mtrans {r c} (M : mat A r c) : mat A c r := fun i j => M j i.
+  Notation "M \T" := (mtrans M) : mat_scope.
 
   (** (M\T)[i,*] = M[*,i] *)
-  Lemma vnth_mtrans : forall {r c} (M : mat A r c) i, (mtrans M) $ i = fun j => M $ j $ i.
+  Lemma vnth_mtrans : forall {r c} (M : mat A r c) i, (M\T) $ i = fun j => M $ j $ i.
   Proof. intros. auto. Qed.
 
   (** (M\T)[i,j] = M[j,i] *)
-  Lemma mnth_mtrans : forall {r c} (M : mat A r c) i j, (mtrans M) $ i $ j = M $ j $ i.
+  Lemma mnth_mtrans : forall {r c} (M : mat A r c) i j, (M\T) $ i $ j = M $ j $ i.
   Proof. intros. auto. Qed.
 
   (** Transpose twice return back *)
-  Lemma mtrans_mtrans : forall {r c} (M : mat A r c), mtrans (mtrans M) = M.
+  Lemma mtrans_mtrans : forall {r c} (M : mat A r c), (M\T)\T = M.
+  Proof. intros. auto. Qed.
+  
+  (** mat0\T = mat0 *)
+  Lemma mtrans_mat0 : forall {r c : nat}, (@mat0 r c)\T = mat0.
   Proof. intros. auto. Qed.
 
 End mtrans.
@@ -666,30 +697,6 @@ End mdiag.
 
 
 (* ======================================================================= *)
-(** ** Zero matrix *)
-Section mat0.
-  Context {A} {Azero : A}.
-  Definition mat0 {r c} : mat A r c := fun _ _ => Azero.
-
-  (** mat0\T = mat0 *)
-  Lemma mtrans_mat0 : forall {r c : nat}, (@mat0 r c)\T = mat0.
-  Proof. intros. auto. Qed.
-
-  (** mat0[i,j] = 0 *)
-  Lemma mnth_mat0 : forall {r c} i j, @mat0 r c $ i $ j = Azero.
-  Proof. intros. auto. Qed.
-
-  (* row mat0 i = vzero *)
-  Lemma mrow_mat0 : forall {r c} i, @mat0 r c $ i = vzero Azero.
-  Proof. intros. auto. Qed.
-
-  (* col mat0 i = vzero *)
-  Lemma mcol_mat0 : forall {r c} j, (fun k => @mat0 r c $ k $ j) = vzero Azero.
-  Proof. intros. auto. Qed.
-End mat0.
-
-
-(* ======================================================================= *)
 (** ** Matrix Addition *)
 Section madd.
   Context `{AMonoid}.
@@ -833,8 +840,15 @@ Section malg.
 
   (** *** Matrix Opposition *)
   Section mopp.
+    Notation vopp := (@vopp _ Aopp).
+    Notation "- v" := (vopp v) : vec_scope.
+    
     Definition mopp {r c} (M : mat r c) : mat r c := mmap Aopp M.
     Notation "- M" := (mopp M) : mat_scope.
+    
+    (** (- M)[i] = - M[i] *)
+    Lemma vnth_mopp : forall {r c} (M : mat r c) i, (- M) $ i = (- (M $ i))%V.
+    Proof. intros. unfold mopp,vopp. rewrite !vnth_vmap. auto. Qed.
     
     (** (- M)[i, j] = - M[i, j] *)
     Lemma mnth_mopp : forall {r c} (M : mat r c) i j, (- M) $ i $ j = (- M $ i $ j)%A.
@@ -970,6 +984,11 @@ Section malg.
   Section mcmul.
     Definition mcmul {r c : nat} (a : A) (M : mat r c) : mat r c := mmap (Amul a) M.
     Infix "\.*" := mcmul : mat_scope.
+
+    (** (a * M)[i] = a * M[i] *)
+    Lemma vnth_mcmul : forall {r c} (M : mat r c) a i,
+        (a \.* M) $ i = (a \.* (M $ i))%V.
+    Proof. intros. auto. Qed.
 
     (** (a * M)[i,j] = a * M[i,j] *)
     Lemma mnth_mcmul : forall {r c} (M : mat r c) a i j,
@@ -1136,18 +1155,9 @@ Section malg.
     Proof. intros. apply vsum_eq. intros; auto. Qed.
 
     (** <u,v> = (u\T * v).11 *)
-    Lemma vdot_eq_mul_trans : forall {n} (u v : vec n), <u, v> = (v2rv u * v2cv v).11.
+    Lemma vdot_eq_mmul : forall {n} (u v : vec n), <u, v> = (v2rv u * v2cv v).11.
     Proof. intros. apply vsum_eq; intros; auto. Qed.
 
-    (** cv2v (M * v2cv v) = vmap (vdot v) M *)
-    Lemma cv2v_mmul_v2cv : forall {r c} (M : mat r c) (v : vec c),
-        cv2v (M * v2cv v) =
-          @Vector.vmap _ _ (@Vector.vdot _ Aadd Azero Amul _ v) _ M.
-    Proof.
-      intros. apply veq_iff_vnth; intros. rewrite vnth_vmap. unfold cv2v,v2cv.
-      rewrite mnth_mmul. rewrite vdot_comm. auto.
-    Qed.
-    
     (** (M * N) * O = M * (N * O) *)
     Lemma mmul_assoc : forall {m n r s} (M : mat m n) (N : mat n r) (O : mat r s),
         (M * N) * O = M * (N * O).
@@ -1305,7 +1315,137 @@ Section malg.
     Qed.
   End mmul.
   Infix "*" := mmul : mat_scope.
+  
+  (** *** Matrix multiply vector (treat vector as column vector) *)
+  Section mmulv.
+    Open Scope vec_scope.
+    
+    Notation vec := (@vec A).
+    Notation vzero := (vzero Azero).
+    Notation vopp := (@vopp _ Aopp).
+    Notation "- v" := (vopp v) : vec_scope.
+    Notation vsub := (@vsub _ Aadd Aopp).
+    Infix "-" := vsub : vec_scope.
+   
+    Definition mmulv {r c : nat} (M : mat r c) (v : vec c) : vec r :=
+      fun i => <M $ i, v>.
+    Infix "*" := mmulv : vec_scope.
 
+    (** (M * v)[i] = <row M i, v> *)
+    Lemma vnth_mmulv : forall {r c} (M : mat r c) (v : vec c) i,
+        (M * v) $ i = <M $ i, v>.
+    Proof. intros. auto. Qed.
+
+    (** (M * N) * v = M * (N * v) *)
+    Lemma mmulv_assoc : forall {m n r} (M : mat m n) (N : mat n r) (v : vec r),
+        (M * N)%M * v = M * (N * v).
+    Proof. intros. unfold mmulv. apply veq_iff_vnth; intros. apply vdot_assoc. Qed.
+
+    (** M * (u + v) = M * u + M * v *)
+    Lemma mmulv_vadd : forall {r c} (M : mat r c) (u v : vec c),
+        M * (u + v) = (M * u) + (M * v).
+    Proof.
+      intros. apply veq_iff_vnth; intros. rewrite vnth_vadd, vnth_mmulv.
+      unfold vdot. apply vsum_add; intros k. rewrite !vnth_vmap2. ring.
+    Qed.
+    
+    (** (M + N) * v = M * v + N * v *)
+    Lemma mmulv_madd : forall {r c} (M N : mat r c) (v : vec c),
+        (M + N)%M * v = (M * v) + (N * v).
+    Proof.
+      intros. apply veq_iff_vnth; intros. rewrite vnth_vadd, vnth_mmulv.
+      unfold vdot. apply vsum_add; intros k. rewrite !vnth_vmap2, mnth_madd. ring.
+    Qed.
+
+    (** (- M) * v = - (M * v) *)
+    Lemma mmulv_mopp : forall {r c} (M : mat r c) (v : vec c), (- M)%M * v = - (M * v).
+    Proof.
+      intros. apply veq_iff_vnth; intros. rewrite ?vnth_vopp, ?vnth_mmulv.
+      rewrite vnth_mopp. rewrite vdot_vopp_l. auto.
+    Qed.
+
+    (** M * (- v) = - (M * v) *)
+    Lemma mmulv_vopp : forall {r c} (M : mat r c) (v : vec c), M * (- v) = - (M * v).
+    Proof.
+      intros. apply veq_iff_vnth; intros. rewrite ?vnth_vopp, ?vnth_mmulv.
+      rewrite vdot_vopp_r. auto.
+    Qed.
+
+    (** M * (u - v) = M * u - M * v *)
+    Lemma mmulv_vsub : forall {r c} (M : mat r c) (u v : vec c),
+        M * (u - v) = (M * u) - (M * v).
+    Proof.
+      intros. unfold vsub. rewrite mmulv_vadd. rewrite mmulv_vopp. auto.
+    Qed.
+    
+    (** (M - N) * v = M * v - N * v *)
+    Lemma mmulv_msub : forall {r c} (M N : mat r c) (v : vec c),
+        (M - N)%M * v = (M * v) - (N * v).
+    Proof.
+      intros. unfold msub. rewrite mmulv_madd. rewrite mmulv_mopp. auto.
+    Qed.
+    
+    (** 0 * v = 0 *)
+    Lemma mmulv_0_l : forall {r c} (v : vec c), (@mat0 r c) * v = vzero.
+    Proof.
+      intros. apply veq_iff_vnth; intros. rewrite !vnth_mmulv, vnth_vzero.
+      apply vdot_0_l.
+    Qed.
+    
+    (** M * 0 = 0 *)
+    Lemma mmulv_0_r : forall {r c} (M : mat r c), M * vzero = vzero.
+    Proof.
+      intros. apply veq_iff_vnth; intros. rewrite !vnth_mmulv, vnth_vzero.
+      apply vdot_0_r.
+    Qed.
+    
+    (** 1 * v = v *)
+    Lemma mmulv_1_l : forall {n} (v : vec n), mat1 * v = v.
+    Proof.
+      intros. apply veq_iff_vnth; intros. rewrite vnth_mmulv.
+      apply vsum_unique with (i:=i).
+      - rewrite vnth_vmap2. rewrite mnth_mat1_same. monoid.
+      - intros. rewrite vnth_vmap2. rewrite mnth_mat1_diff; auto. ring.
+    Qed.
+
+    (** (a \.* M) * v = a \.* (M * v) *)
+    Lemma mmulv_mcmul : forall {r c} (a : A) (M : mat r c) (v : vec c), 
+        (a \.* M)%M * v = a \.* (M * v).
+    Proof.
+      intros. apply veq_iff_vnth; intros.
+      repeat rewrite ?vnth_mmulv, ?vnth_vcmul, ?vnth_mcmul.
+      rewrite vdot_vcmul_l. auto.
+    Qed.
+    
+    (** M * (a \.* v) = a \.* (M * v) *)
+    Lemma mmulv_vcmul : forall {r c} (a : A) (M : mat r c) (v : vec c), 
+        M * (a \.* v) = a \.* (M * v).
+    Proof.
+      intros. apply veq_iff_vnth; intros.
+      repeat rewrite ?vnth_mmulv, ?vnth_vcmul, ?vnth_mcmul.
+      rewrite vdot_vcmul_r. auto.
+    Qed.
+
+    (** <u,v> = (u\T * v).1 *)
+    Lemma vdot_eq_mmulv : forall {n} (u v : vec n), <u, v> = (v2rv u * v).1.
+    Proof. intros. apply vsum_eq; intros; auto. Qed.
+
+    (** v2cv (M * v) = M * v2cv v *)
+    Lemma v2cv_mmulv : forall {r c} (M : mat r c) (v : vec c),
+        v2cv (M * v) = (M * v2cv v)%M.
+    Proof. intros. auto. Qed.
+
+    (** v2rv (M * v) = (v2rv v) * M\T *)
+    Lemma v2rv_mmulv : forall {r c} (M : mat r c) (v : vec c),
+        v2rv (M * v) = (v2rv v * M\T)%M.
+    Proof.
+      intros. apply meq_iff_mnth; intros. unfold v2rv.
+      rewrite vnth_mmulv. rewrite mnth_mmul. rewrite vdot_comm. auto.
+    Qed.
+    
+  End mmulv.
+  Infix "*" := mmulv : vec_scope.
+    
   
   (** *** Skew-symmetric matrix *)
   Section skew.

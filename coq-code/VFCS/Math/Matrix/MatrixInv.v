@@ -162,8 +162,11 @@ Section minvAM.
   Notation "/ a" := (Ainv a) : A_scope.
   Infix "/" := (fun x y => x * (/ y)) : A_scope.
 
-  Infix "*" := (@mmul A Aadd Azero Amul _ _ _) : mat_scope.
+  Notation mmul := (@mmul A Aadd Azero Amul).
+  Infix "*" := mmul : mat_scope.
   Infix "\.*" := (@mcmul A Amul _ _) : mat_scope.
+  Notation mmulv := (@mmulv A Aadd Azero Amul).
+  Infix "*" := mmulv : vec_scope.
   
   Notation mat1 := (@mat1 _ Azero Aone).
   Notation l2m := (@l2m A Azero _ _).
@@ -287,8 +290,22 @@ Section minvAM.
     intros. assert ((N * M) * M\-1 = (O * M) * M\-1). rewrite H0; auto.
     rewrite !mmul_assoc in H1. rewrite !AM_mmul_minv_r, !mmul_1_r in H1; auto.
   Qed.
-  
 
+  (** minvertible M -> M * u = M * v -> u = v *)
+  Lemma mmulv_cancel_l : forall {n} (M : smat n) (u v : vec n),
+      minvertible M -> (M * u = M * v)%V -> u = v.
+  Proof.
+    intros. assert (M\-1 * (M * u) = M\-1 * (M * v))%V. rewrite H0; auto.
+    rewrite <- !mmulv_assoc in H1. rewrite !AM_mmul_minv_l, !mmulv_1_l in H1; auto.
+  Qed.
+
+  (** M * v = N * v -> M = N *)
+  Lemma mmulv_cancel_r : forall {n} (M N : smat n) (v : vec n),
+      (M * v = N * v)%V -> M = N.
+  Proof.
+    intros.
+  Abort.
+  
   (** Direct compute inversion of a symbol matrix of 1~4 order. *)
   Section CheckInvMatFormula.
     Variable a11 a12 a13 a14 a21 a22 a23 a24 a31 a32 a33 a34 a41 a42 a43 a44 : A.

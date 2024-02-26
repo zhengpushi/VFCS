@@ -251,12 +251,8 @@ End TEST_psatz.
 Ltac ra :=
   intros; unfold Rsqr in *; try lra; try nra; auto with R.
 
-(** Try to prove equality of two R values. *)
-Ltac req :=
-  ra.
-
 (** Try to prove equality of two R values, using `R` db, especially for triangle *)
-Ltac req_slow :=
+Ltac req :=
   autorewrite with R; ra.
 
 (** Convert `a ^ (n + 2)` to `(a ^ 2) * (a ^ n)` *)
