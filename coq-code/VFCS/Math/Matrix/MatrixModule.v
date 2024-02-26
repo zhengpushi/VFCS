@@ -73,32 +73,23 @@ Module BasicMatrixTheory (E : ElementType).
 
 
   (* ======================================================================= *)
-  (** ** Convert between rvec/cvec and vec *)
-  
-  (** Convert row/column vector to vector *)
-  Definition rv2v {n} (v : rvec n) : vec n := rv2v v.
+  (** ** Convert between cvec and vec *)
+
   Definition cv2v {n} (v : cvec n) : vec n := cv2v v.
-
-  (* (** Convert vector to row/column vector *) *)
-  Definition v2rv {n} (v : vec n) : rvec n := v2rv v.
   Definition v2cv {n} (v : vec n) : cvec n := v2cv v.
-
-  Lemma rv2v_spec : forall {n} (v : rvec n) i, v $ fin0 $ i = (rv2v v) $ i.
-  Proof. intros. apply rv2v_spec. Qed.
+  
   Lemma cv2v_spec : forall {n} (v : cvec n) i, v $ i $ fin0 = (cv2v v) $ i.
   Proof. intros. apply (cv2v_spec v). Qed.
 
-  Lemma v2rv_spec : forall {n} (v : vec n) i, v $ i = (v2rv v) $ fin0 $ i.
-  Proof. intros. apply v2rv_spec. Qed.
   Lemma v2cv_spec : forall {n} (v : vec n) i, v $ i = (v2cv v) $ i $ fin0.
   Proof. intros. apply v2cv_spec. Qed.
-
+  
   Lemma cv2v_v2cv : forall {n} (v : vec n), cv2v (v2cv v) = v.
   Proof. intros. apply cv2v_v2cv. Qed.
-
+  
   Lemma v2cv_cv2v : forall {n} (v : cvec n), v2cv (cv2v v) = v.
   Proof. intros. apply v2cv_cv2v. Qed.
-  
+
   Lemma cv2v_inj : forall {n} (u v : cvec n), cv2v u = cv2v v -> u = v.
   Proof. intros. apply cv2v_inj; auto. Qed.
   
@@ -108,6 +99,25 @@ Module BasicMatrixTheory (E : ElementType).
   Lemma vnth_v2cv : forall {n} (v : vec n) i j, (v2cv v) $ i $ j  = v $ i.
   Proof. intros. apply vnth_v2cv. Qed.
   
+
+  (* ======================================================================= *)
+  (** ** Convert between rvec and vec *)
+  
+  Definition rv2v {n} (v : rvec n) : vec n := rv2v v.
+  Definition v2rv {n} (v : vec n) : rvec n := v2rv v.
+
+  Lemma rv2v_spec : forall {n} (v : rvec n) i, v $ fin0 $ i = (rv2v v) $ i.
+  Proof. intros. apply rv2v_spec. Qed.
+
+  Lemma v2rv_spec : forall {n} (v : vec n) i, v $ i = (v2rv v) $ fin0 $ i.
+  Proof. intros. apply v2rv_spec. Qed.
+
+  Lemma rv2v_v2rv : forall {n} (v : vec n), rv2v (v2rv v) = v.
+  Proof. intros. apply cv2v_v2cv. Qed.
+
+  Lemma v2rv_rv2v : forall {n} (v : rvec n), v2rv (rv2v v) = v.
+  Proof. intros. apply v2rv_rv2v. Qed.
+
 
   (* ======================================================================= *)
   (** ** Convert between dlist and matrix *)
@@ -297,8 +307,10 @@ Module RingMatrixTheory (E : RingElementType).
 
   Notation vadd := (@vadd _ Aadd).
   Notation vcmul := (@vcmul _ Amul).
+  Notation vdot := (@vdot _ Aadd Azero Amul).
   Infix "+" := vadd : vec_scope.
   Infix "\.*" := vcmul : vec_scope.
+  Notation "< u , v >" := (vdot u v) : vec_scope.
 
   (* ======================================================================= *)
   (** ** Zero matrirx and identity matrix *)
@@ -598,13 +610,37 @@ Module RingMatrixTheory (E : RingElementType).
 
   (** N is cvec -> M * N = fun i => (vdot N) (M $ i) *)
   Lemma mmul_cvec : forall {r c} (M : mat r c) (N : cvec c),
-      M * N = v2cv (fun i => (@vdot _ Aadd Azero Amul _) (cv2v N) (M $ i)).
+      M * N = fun i j => <cv2v N, M $ i>.
   Proof. intros. apply mmul_cvec. Qed.
 
   (** M is rvec -> M * N = fun i j => (vdot M) (mcol N j) *)
   Lemma mmul_rvec : forall {r c} (M : rvec r) (N : mat r c),
-      M * N = fun i j => (@vdot _ Aadd Azero Amul _) (rv2v M) (mcol N j).
+      M * N = fun i j => <rv2v M, mcol N j>.
   Proof. intros. apply mmul_rvec. Qed.
+
+  (** <row(M,i), col(N,j)> = [M * N].ij *)
+  Lemma vdot_row_col : forall {r c s} (M : mat r c) (N : mat c s) i j,
+      <mrow M i, mcol N j> = (M * N) $ i $ j.
+  Proof. intros. apply vdot_row_col. Qed.
+
+  (** <col(M,i), col(N,j)> = (M\T * N)[i,j] *)
+  Lemma vdot_col_col : forall {n} (M N : smat n) i j,
+      <mcol M i, mcol N j> = (M\T * N) $ i $ j.
+  Proof. intros. apply vdot_col_col. Qed.
+
+  (** <row(M,i), row(N,j)> = (M * N\T)[i,j] *)
+  Lemma vdot_row_row : forall {n} (M N : smat n) i j,
+      <mrow M i, mrow N j> = (M * N\T) $ i $ j.
+  Proof. intros. apply vdot_row_row. Qed.
+
+  (** <u,v> = (u\T * v).11 *)
+  Lemma vdot_eq_mul_trans : forall {n} (u v : vec n), <u, v> = (v2rv u * v2cv v).11.
+  Proof. intros. apply vdot_eq_mul_trans. Qed.
+  
+  (** cv2v (M * v2cv v) = vmap (vdot v) M *)
+  Lemma cv2v_mmul_v2cv : forall {r c} (M : mat r c) (v : vec c),
+      cv2v (M * v2cv v) = vmap (vdot v) M.
+  Proof. intros. apply cv2v_mmul_v2cv. Qed.
 
   (** (M * N) * O = M * (N * O) *)
   Lemma mmul_assoc : forall {r c s t : nat} (M : mat r c) (N : mat c s) (O : mat s t), 
@@ -994,11 +1030,21 @@ Module FieldMatrixTheory (E : FieldElementType).
   
   (** The set of GOn *)
   Definition GOn {n : nat} := (@GOn _ Aadd Azero Amul Aone n).
-  Definition Build_GOn {n} := (@Build_GOn _ Aadd Azero Amul Aone n).
+  
+  (* Definition Build_GOn {n} := (@Build_GOn _ Aadd Azero Amul Aone n). *)
 
   (* Additional coercion, hence the re-definition of `mat` and `GOn` *)
   Definition GOn_mat {n} (x : @GOn n) : mat n n := GOn_mat x.
   Coercion GOn_mat : GOn >-> mat.
+
+  (** The condition to form a GOn from a matrix *)
+  Definition GOnP {n} (m : smat n) : Prop := @GOnP _ Aadd Azero Amul Aone _ m.
+
+  Lemma GOnP_spec : forall {n} (x : @GOn n), GOnP x.
+  Proof. intros. apply GOnP_spec. Qed.
+
+  (** Create a GOn from a matrix satisfing `GOnP` *)
+  Definition mkGOn {n} (m : smat n) (H : GOnP m) : @GOn n := mkGOn m H.
 
   (** Multiplication of elements in GOn *)
   Definition GOn_mul {n} (x1 x2 : @GOn n) : @GOn n := GOn_mul x1 x2.
@@ -1047,11 +1093,21 @@ Module FieldMatrixTheory (E : FieldElementType).
 
   (** The set of SOn *)
   Definition SOn {n: nat} := (@SOn _ Aadd Azero Aopp Amul Aone n).
-  Definition Build_SOn {n} := (@Build_SOn _ Aadd Azero Aopp Amul Aone n).
+  (* Definition Build_SOn {n} := (@Build_SOn _ Aadd Azero Aopp Amul Aone n). *)
 
   (* Additional coercion, hence the re-definition of `mat` and `SOn` *)
   Definition SOn_GOn {n} (x : @SOn n) : @GOn n := SOn_GOn x.
   Coercion SOn_GOn : SOn >-> GOn.
+
+  (** The condition to form a SOn from a matrix *)
+  Definition SOnP {n} (m : smat n) : Prop := @SOnP _ Aadd Azero Aopp Amul Aone _ m.
+
+  Lemma SOnP_spec : forall {n} (x : @SOn n), SOnP x.
+  Proof. intros. apply SOnP_spec. Qed.
+
+  (** Create a SOn from a matrix satisfing `SOnP` *)
+  Definition mkSOn {n} (m : smat n) (H : SOnP m) : @SOn n := mkSOn m H.
+
 
   Definition SOn_mul {n} (x1 x2 : @SOn n) : @SOn n := SOn_mul x1 x2.
   

@@ -18,34 +18,52 @@
   group of distance-preserving transformations of a Euclidean space of dimension
   n that preserve a fixed point, where the group operation is given by composing
   transformations. 
+  在数学中，n维正交群，记作O(n)，是保持欧几里得空间距离的变换群，这些
+  变换保持一个固定点不变，群操作是通过组合变换来定义的。
 
   The orthogonal group is sometimes called the general orthogonal group, by 
   analogy with the general linear group. Equivalently, it is the group of 
   n × n matrices, where the group operation is given by matrix multiplication 
   (an orthogonal matrix is a real matrix whose inverse equals its transpose). 
+  正交群有时被称为一般正交群，这是与一般线性群进行类比的结果。等价地，
+  它是n×n矩阵的群，其中群操作是通过矩阵乘法来定义的（正交矩阵是一个实
+  矩阵，其逆等于其转置）。
 
   By extension, for any field F, an n × n matrix with entries in F such that its 
   inverse equals its transpose is called an orthogonal matrix over F. 
   The n × n orthogonal matrices form a subgroup, denoted O(n,F), of the general 
   linear group GL(n,F); that is 
+  通过扩展，对于任何域F，一个n×n矩阵，其元素在F中，且其逆等于其转置，
+  被称为F上的正交矩阵。n×n正交矩阵形成了一般线性群GL(n,F)的一个子群，
+  记作O(n,F)；也就是说，
+
          O(n,F) = {Q ∈ GL(n,F) ∣ Q\T * Q = Q * Q\T = I}.
   
   -------------------------- O(3) -----------------------------------
   Every rotation maps an orthonormal basis of R^3 to another orthonormal basis.
   Like any linear transformation of finite-dimensional vector spaces, a rotation 
   can always be represented by a matrix.
+  每个旋转都将R3的一个正交基映射到另一个正交基。与有限维向量空间的任何
+  线性变换一样，旋转总是可以通过矩阵来表示。
 
   Let R be a given rotation. With respect to the standard basis e1, e2, e3 of R^3 
   the columns of R are given by (Re1, Re2, Re3). Since the standard basis is 
   orthonormal, and since R preserves angles and length, the columns of R form 
   another orthonormal basis. This orthonormality condition can be expressed in 
   the form 
+  设R是一个给定的旋转。关于R3的标准基e1​,e2​,e3​，R的列由(Re1​,Re2​,Re3​)给
+  出。由于标准基是正交的，并且R保持角度和长度不变，因此R的列形成另一个
+  正交基。这个正交性条件可以表示为
+
      R\T * R = R * R\T = I,
+
   where R\T denotes the transpose of R and I is the 3 × 3 identity matrix. 
   Matrices for which this property holds are called orthogonal matrices.
+  其中R\T表示R的转置，I是3×3单位矩阵。满足这个性质的矩阵被称为正交矩阵。
 
   The group of all 3 × 3 orthogonal matrices is denoted O(3), and consists of all 
   proper and improper rotations.
+  所有3×3正交矩阵的群记作O(3)，由所有适当和不适当的旋转组成。
 
   In addition to preserving length, proper rotations must also preserve 
   orientation. 
@@ -53,6 +71,9 @@
   determinant of the matrix is positive or negative. 
   For an orthogonal matrix R, note that "det R\T = det R" implies 
   "(det R)^2 = 1", so that "det R = ±1".
+  除了保持长度外，适当的旋转还必须保持方向。一个矩阵将根据矩阵的行列式
+  是正是负来保持或反转方向。对于正交矩阵R，注意“det R\T = det R”意味
+  着“(det R)^2=1”，所以“detR=±1”。
 
   The subgroup of orthogonal matrices with determinant +1 is called the special 
   orthogonal group, denoted SO(3). 
@@ -60,43 +81,50 @@
   determinant. Moreover, since composition of rotations corresponds to matrix 
   multiplication, the rotation group is isomorphic to the special orthogonal group 
   SO(3).
+  行列式为+1的正交矩阵的子群被称为特殊正交群，记作SO(3)。因此，每个旋
+  转都可以由具有单位行列式的正交矩阵唯一表示。此外，由于旋转的组合对应
+  于矩阵乘法，旋转群与特殊正交群SO(3)是同构的。
 
   Improper rotations correspond to orthogonal matrices with determinant −1, and 
   they do not form a group because the product of two improper rotations is a 
   proper rotation. 
+  不适当的旋转对应于行列式为−1的正交矩阵，并且它们不形成一个群，因为两
+  个不适当旋转的乘积是一个适当的旋转。
+
 
   ----------- 中文笔记 ---------------
   Orthogonal: 正交的，一般用于描述一组基是相互正交的（垂直的）
-  Orthonormal Basic: 标准正交基，两两正交，并且单个向量具有单位长度。
+  Orthonormal Basic: 标准正交基，不仅相互正交，而且每个向量具有单位长度。
   Gram-Schmidt: 施密特正交化。以2维为例，该算法保持r1不变，r3的改变最多。
-  有一种无偏差的递增正交化算法，不偏向特定轴，需要多次迭代（比如10次），然后用1次
+    有一种无偏差的递增正交化算法，不偏向特定轴，需要多次迭代（比如10次），然后用1次
     标准的Gram-Schmidt算法来保证完全正交。
   O(n): Orthogonal Group 正交群（保距，行列式为±1）
   SO(n): Special Orthogonal Group 特殊正交群（保持手性，行列式为1）
-    Proper rotation: 正确的旋转 (行列式为1)
-    Improper rotation: 错误的旋转（行列式为-1）, rotation-reflect, 旋转反射，瑕旋转
+    Proper rotation:  适当的旋转 (行列式为1)
+    Improper rotation: 不适当的旋转（行列式为-1）, rotation-reflect, 旋转反射，瑕旋转
   ----------------------
   补充一些理论：
   1. 特殊矩阵：对称（自伴）、斜对称（斜伴）、正交（酉）、正规矩阵
       实矩阵                      复矩阵
       条件           名称         条件            名称
-  (1) T = A\T        对称阵       T = A\H         自伴阵
-  (2) T = -A\T       斜称阵       T = -A\H        斜伴阵
-  (3) AA\T = E       正交阵       AA\H = E        酉矩阵
-  (4)                            T A\H=A\H T      正规矩阵
+  (1) A = A\T        对称阵       A = A\H         自伴阵
+  (2) A = -A\T       斜称阵       A = -A\H        斜伴阵
+  (3) A*A\T = E      正交阵       A*A\H = E       酉矩阵
+  (4)                             A*A\H = A\H*A   正规矩阵
   其中，(1),(2),(3)都是正规矩阵
 
   正规矩阵的一个定理：每个 n*n 正规矩阵A，都有一个由对应于特征值λ1,...,λn的特征向量
   组成的完全正交基 x1,...,xn。
   若设 U = (x1,...,xn)，则 U 是酉矩阵，并且有
-  U^{-1} T U = 对角阵 {λ1,...,λn}
+  U^{-1} A U = 对角阵 {λ1,...,λn}
 
   正交矩阵的应用（旋转）：若一个 n*n 实矩阵A是正交的，则其特征值等于
   ±1 或 e^{±iϕ}成对出现（ϕ是实数）。
   
   2. 特征值、特征向量、矩阵的谱
-  (1) 方阵A，使方程 T x = λ x 有非零解时，λ(复数)称一个特征值，x称对应的特征向量
-  (2) A的所有特征值的集合称为A的谱 σ(A)，A的特征值的绝对值的最大值称为A的谱半径，记做 r(A)
+  (1) 方阵A，使方程 Ax = λx 有非零解时，λ(复数)称一个特征值，x称对应的特征向量
+  (2) A的所有特征值的集合称为A的谱 σ(A)，A的特征值的绝对值的最大值称为A的谱半径，
+      记做 r(A)
   (3) 特征方程：det(A-λE)=0，其解是A的特征值λ，λ的重数称为代数重数。
   (4) 设矩阵U是正交的（酉的），U的谱由数 e^{±iϕ} 组成，
       变换 x' = U x 对应于笛卡尔坐标系中的正向旋转，旋转角ϕ
@@ -108,7 +136,6 @@
   (iii) 酉矩阵的谱在单位圆上
 
   3. 正交性
-
  *)
 
 
@@ -117,7 +144,7 @@ Require Export Matrix.
 Require Export MatrixDet.
 Require Export MatrixInv.
 
-Generalizable Variable A Aadd Aopp Amul Ainv.
+Generalizable Variable A Aadd Aopp Amul Ainv Alt Ale Altb Aleb a2r.
 
 Open Scope nat_scope.
 Open Scope A_scope.
@@ -125,16 +152,81 @@ Open Scope mat_scope.
 
 
 (* ======================================================================= *)
+(** ** Orthonormal vectors 标准正交的向量组 *)
+Section mcolsOrthonormal.
+  Context `{HField:Field}.
+  Notation mat r c := (mat A r c).
+  Notation vunit := (@vunit _ Aadd Azero Amul Aone).
+  Notation vorth := (@vorth _ Aadd Azero Amul).
+  Infix "_|_" := vorth : vec_scope.
+
+  (** All (different) column-vectors of a matrix are orthogonal each other.
+      For example: [v1;v2;v3] => u_|_v2 && u_|_v3 && v_|_v3. *)
+  Definition mcolsOrth {r c} (m : mat r c) : Prop :=
+    forall j1 j2, j1 <> j2 -> mcol m j1 _|_ mcol m j2.
+
+  (*
+  (** bool version *)
+  Definition mcolsorthb {r c} (m : mat r c) : bool :=
+    let is_orth (i j : nat) : bool := (<mcol m i, mcol m j> =? Azero)%R in
+    let cids (i : nat) : list nat := seq (S i) (c - S i) in
+    let chk_col (j : nat) : bool := and_blist (map (fun k => is_orth j k) (cids j)) in
+    and_blist (map (fun j => chk_col j) (seq 0 c)).
+
+  Lemma mcolsorthb_spec : forall {r c} (m : mat r c),
+      mcolsorthb m <-> mcolsorth m.
+  Proof.
+  Abort.
+  
+  Section test.
+    Variable a11 a12 a13 a21 a22 a23 a31 a32 a33 : R.
+    Let m1 : mat 1 3 := l2m [[a11;a12;a13];[a21;a22;a23]].
+    Let m2 : mat 3 1 := l2m [[a11;a12];[a21;a22];[a31;a32]].
+
+    (* Compute mcolsorthb m1. *)
+    (* Compute mcolsorthb m2. (* because only one column, needn't be check *) *)
+  End test.
+   *)
+
+  (** All column-vectors of a matrix are unit vector.
+      For example: [v1;v2;v3] => unit u && unit v && unit v3 *)
+  Definition mcolsUnit {r c} (m : mat r c) : Prop := forall j, vunit (mcol m j).
+
+  (*
+  (** bool version *)
+  Definition mcolsUnitb {r c} (m : mat r c) : bool :=
+    and_blist (map (fun i => vunitb (mcol m i)) (seq 0 c)).
+
+  Lemma mcolsUnitb_spec : forall {r c} (m : mat r c),
+      mcolsUnitb m <-> mcolsUnit m.
+  Proof.
+  Abort.
+   *)
+
+  (** The columns of a matrix is orthogomal *)
+  Definition mcolsOrthonormal {r c} (m : mat r c) : Prop :=
+    mcolsOrth m /\ mcolsUnit m.
+
+End mcolsOrthonormal.
+
+
+(* ======================================================================= *)
 (** ** Orthogonal matrix *)
 Section morth.
-  Context `{HField:Field}.
-
+  Context `{HField : Field}.
+  
   Notation "- a" := (Aopp a) : A_scope.
-  Infix "*" := (@mmul _ Aadd Azero Amul _ _ _) : mat_scope.
+  
+  Notation vdot := (@vdot _ Aadd Azero Amul).
+  Notation "< u , v >" := (vdot u v) : vec_scope.
+  
   Notation smat n := (smat A n).
   Notation mat1 n := (@mat1 _ Azero Aone n).
+  Notation mmul := (@mmul _ Aadd Azero Amul _ _ _).
   Notation mdet := (@mdet _ Aadd Azero Aopp Amul Aone _).
   Notation minvertible := (@minvertible _ Aadd Azero Amul Aone _).
+  Notation mcolsOrthonormal := (@mcolsOrthonormal _ Aadd Azero Amul Aone).
+  Infix "*" := mmul  : mat_scope.
   Notation "M \-1" := (@minvAM _ Aadd Azero Aopp Amul Aone Ainv _ M) : mat_scope.
 
   (** An orthogonal matrix *)
@@ -207,6 +299,52 @@ Section morth.
     rewrite mdet_mtrans,mdet_mat1 in H0.
     symmetry in H0. apply ring_sqr_eq1_imply_1_neg1 in H0. auto.
   Qed.
+  
+  (** matrix m is orthogonal <-> columns of m are orthogomal *)
+  Lemma morth_iff_mcolsOrthonormal : forall {n} (m : smat n),
+      morth m <-> mcolsOrthonormal m.
+  Proof.
+    intros.
+    unfold morth,mcolsOrthonormal. unfold mcolsOrth, mcolsUnit. unfold vorth, vunit.
+    split; intros.
+    - split; intros.
+      + rewrite vdot_col_col; auto. rewrite H; auto. rewrite mnth_mat1_diff; auto.
+      + rewrite vdot_col_col; auto. rewrite H; auto. rewrite mnth_mat1_same; auto.
+    - destruct H as [H1 H2]. apply meq_iff_mnth; intros.
+      rewrite <- vdot_col_col; auto.
+      destruct (i ??= j)%fin.
+      + subst. rewrite mnth_mat1_same; auto.
+      + rewrite mnth_mat1_diff; auto.
+  Qed.
+
+  (** Transformation by orthogonal matrix will keep inner-product *)
+  Theorem morth_keep_dot : forall {n} (M : smat n) (u v : vec n),
+      morth M -> <cv2v (M * v2cv u), cv2v (M * v2cv v)> = <u, v>.
+  Proof.
+    intros. rewrite vdot_eq_mul_trans. rewrite v2cv_cv2v. rewrite v2rv_cv2v.
+    replace (fun i j => (M * v2cv u) j i) with ((M * v2cv u)\T); auto.
+    rewrite mtrans_mmul. rewrite mmul_assoc. rewrite <- (mmul_assoc _ M).
+    rewrite morth_iff_mul_trans_l in H. rewrite H. rewrite mmul_1_l.
+    apply vsum_eq; intros. auto.
+  Qed.
+
+  
+  Context `{HOrderedField : OrderedField A Aadd Azero Aopp Amul Aone Ainv}.
+  Context `{HConvertToR
+      : ConvertToR A Aadd Azero Aopp Amul Aone Ainv Alt Ale Altb Aleb a2r}.
+  Notation vlen := (@vlen _ Aadd Azero Amul a2r).
+  Notation "|| v ||" := (vlen v) : vec_scope.
+
+  (** Transformation by orthogonal matrix will keep length. *)
+  Corollary morth_keep_length : forall {n} (M : smat n) (v : vec n),
+      morth M -> ||cv2v (M * v2cv v)|| = ||v||.
+  Proof.
+    intros. rewrite vlen_eq_iff_dot_eq. apply morth_keep_dot. auto.
+  Qed.
+
+(** 由于正交矩阵可保持变换向量的长度和角度，它可保持坐标系的整体结构不变。
+    因此，正交矩阵仅可用于旋转变换和反射变换或二者的组合变换。
+    当正交矩阵的行列式为1，表示一个旋转，行列式为-1，表示一个反射。*)
 
 End morth.
 
@@ -232,13 +370,24 @@ Section GOn.
   
   Arguments Build_GOn {n}.
 
+  (** The condition to form a GOn from a matrix *)
+  Definition GOnP {n} (m : smat n) : Prop := morth m.
+
+  Lemma GOnP_spec : forall {n} (x : @GOn n), GOnP x.
+  Proof. intros. apply x. Qed.
+
+  (** Create a GOn from a matrix satisfing `GOnP` *)
+  Definition mkGOn {n} (m : smat n) (H : GOnP m) : @GOn n.
+    refine (Build_GOn m _). apply H.
+  Defined.
+
   (** Two GOn are equal, only need the matrix are equal *)
   Lemma GOn_eq_iff : forall {n} (x1 x2 : @GOn n), GOn_mat x1 = GOn_mat x2 -> x1 = x2.
   Proof.
     intros. destruct x1,x2; simpl in H.
     subst. f_equal. apply proof_irrelevance.
   Qed.
-
+ 
   (** Multiplication of elements in GOn *)
   Definition GOn_mul {n} (x1 x2 : @GOn n) : @GOn n.
     refine (Build_GOn (x1 * x2) _).
@@ -346,6 +495,18 @@ Section SOn.
     }.
 
   Arguments Build_SOn {n}.
+
+  (** The condition to form a SOn from a matrix *)
+  Definition SOnP {n} (m : smat n) : Prop := morth m /\ mdet m = Aone.
+
+  Lemma SOnP_spec : forall {n} (x : @SOn n), SOnP x.
+  Proof. intros. hnf. destruct x. split; auto. apply SOn_GOn0. Qed.
+
+  (** Create a SOn from a matrix satisfing `SOnP` *)
+  Definition mkSOn {n} (m : smat n) (H : SOnP m) : @SOn n.
+    refine (Build_SOn (Build_GOn _ m _) _). apply H.
+    Unshelve. apply H.
+  Defined.
 
   (* 这个证明失败了，所以下面分解为两个步骤 *)
   Lemma SOn_eq_iff_try : forall {n} (x1 x2 : @SOn n),

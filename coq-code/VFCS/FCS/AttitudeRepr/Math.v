@@ -51,7 +51,14 @@ Ltac simp_pow :=
 
 
 (* ======================================================================= *)
+(** ** Mixed operations contain matrix and vector *)
+
+
+(* ======================================================================= *)
 (** ** Row vector and column vector *)
+
+(* Definition cv2v {n} (v : cvec n) : vec n := cv2v v. *)
+(* Definition v2cv {n} (v : vec n) : cvec n := v2cv v. *)
 
 (** cv2v (v1 + v2) = cv2v v1 + cv2v v2 *)
 Lemma cv2v_madd : forall {n} (v1 v2 : cvec n), cv2v (v1 + v2)%M = cv2v v1 + cv2v v2.
@@ -73,6 +80,7 @@ Proof. intros. apply cv2v_mcmul. Qed.
 (*   Definition v2cv {n} (v : vec n) : cvec n := v2cv v. *)
   
 (* End rvec_cvec. *)
+
 
 
 (* ======================================================================= *)
@@ -120,3 +128,4 @@ End angle.
 
 Notation "r 'rad" := (mk_angle_rad r) (at level 30).
 Notation "d 'deg" := (mk_angle_deg d) (at level 30).
+

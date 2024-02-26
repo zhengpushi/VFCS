@@ -15,6 +15,7 @@ Require Export MatrixModule.
 (* ======================================================================= *)
 (** * Matrix theory come from common implementations *)
 
+Require VectorR.
 Module Export MatrixTheoryR := FieldMatrixTheory FieldElementTypeR.
 
 Open Scope R_scope.
@@ -49,7 +50,7 @@ Section matrix_norm.
   End spec.
 
   Section mnormF.
-    Notation vsum := (@vsum _ Aadd 0 _).
+    Notation vsum := (@vsum _ Aadd Azero).
     
     (* F-norm (M) := √(∑∑M(i,j)²) *)
     Definition mnormF {r c} (M : mat r c) : R :=
@@ -72,7 +73,7 @@ Section matrix_norm.
         + apply mneq_iff_exist_mnth_neq in H. destruct H as [i [j H]].
           exists i. intro. apply vsum_eq0_rev with (i:=j) in H0; auto.
           * rewrite mnth_mat0 in H. cbv in H. ra.
-          * intros. ra.
+          * intros. cbv. ra.
       - rewrite H. unfold mnormF.
         apply sqrt_0_eq0. apply vsum_eq0; intros. apply vsum_eq0; intros.
         rewrite mnth_mat0. ra.
@@ -94,6 +95,8 @@ End matrix_norm.
 (* ==================================== *)
 (** ** Orthogonal matrix *)
 Section morth.
+  Import VectorR.
+  Open Scope mat_scope.
 
   (** orthogonal M -> |M| = ± 1 *)
   Lemma morth_mdet : forall {n} (M : smat n),
@@ -102,6 +105,23 @@ Section morth.
     intros. rewrite morth_iff_mul_trans_l in H.
     assert (mdet (M\T * M) = mdet (@mat1 n)). rewrite H. auto.
     rewrite mdet_mmul, mdet_mtrans, mdet_mat1 in H0. apply Rsqr_eq1 in H0. easy.
+  Qed.
+
+  (** Transformation by orthogonal matrix will keep normalization. *)
+  Corollary morth_keep_norm : forall {n} (m : smat n) (v : vec n),
+      morth m -> vnorm (cv2v (m * v2cv v)) = cv2v (m * v2cv (vnorm v)).
+  Proof.
+    intros. unfold vnorm.
+    pose proof (morth_keep_length m). unfold vlen. rewrite H0; auto.
+    rewrite <- cv2v_mcmul. f_equal. rewrite <- mmul_mcmul_r. f_equal.
+  Qed.
+
+  (** Transformation by orthogonal matrix will keep angle. *)
+  Corollary morth_keep_angle : forall {n} (m : smat n) (u v : vec n),
+      morth m -> (cv2v (m * v2cv u)) /_ (cv2v (m * v2cv v)) = u /_ v.
+  Proof.
+    intros. unfold vangle. f_equal. rewrite !morth_keep_norm; auto.
+    apply morth_keep_dot; auto.
   Qed.
 
 End morth.
