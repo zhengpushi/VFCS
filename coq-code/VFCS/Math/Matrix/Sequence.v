@@ -12,7 +12,6 @@ Require Export Basic.
 Require Export NatExt.
 Require Export ListExt.
 Require Export Hierarchy.
-Require RExt.
 
 Generalizable Variables A Aadd Azero Aopp Amul Aone Ainv Ale Alt.
 Generalizable Variables B Badd Bzero.
@@ -729,60 +728,11 @@ Section seqsum_more.
   
 End seqsum_more.
 
-  
-(* ======================================================================= *)
-(** ** More properties of sequence on R type *)
-Section seq_R.
-  Import RExt.
-  Open Scope R_scope.
-
-  Notation Sum := (@seqsum _ Rplus R0).
-  
-  (** *** 算术-几何平均值不等式，简称 “算几不等式” *)
-  (* 设 x1,x2,...,xn 为 n 个正实数，
-     记算术平均数是 An = (∑xi)/n，
-     记几何平均数是 Gn = n√(∏xi)，
-     则 An >= Gn
-     等号成立，当且仅当 x1 = x2 = ... = xn。
-     
-     展开后的形式
-
-     a1+a2+...+an    n ______________
-     ------------ >=  / a1*a2*...*an
-          n
-   *)
-
-  (** 平均数不等式，或称平均值不等式、均值不等式。是算几不等式的推广 *)
-  (* https://zh.wikipedia.org/wiki/平均数不等式 *)
-
-  (* 在2维和3维的具体形式 *)
-  Lemma Rineq2 : forall a b : R,
-      0 <= a -> 0 <= b ->
-      (a + b) / 2 >= sqrt(a * b).
-  Abort.
-  
-  Lemma Rineq3 : forall a b c : R,
-      0 <= a -> 0 <= b -> 0 <= c ->
-      (a + b + c) / 3 >= sqrt(a * b).
-  Abort.
-
-End seq_R.
-
-
-
 (* ======================================================================= *)
 (** ** Usage demo *)
 Section test.
-  Import RExt.
 
-  Example seq1 := fun n => Z2R (Z.of_nat n).
-
-  (* Compute @seqsum _ Rplus R0 seq1 3. *)
-  
-  Open Scope Z.
-  Example seq2 := fun i j => Z.of_nat i + Z.of_nat j.
-  Example seq3 := fun i j => Z.of_nat i + Z.of_nat j + 1.
-
-  (* Compute @seqsum _ Z.add (0%Z) (seq2 0) 3. *)
-  
+  Example seq1 := fun x : nat => x.
+  Example seq2 := fun x : nat => S x.
+  (* Compute @seqsum _ plus 0 seq1 3. *)
 End test. 

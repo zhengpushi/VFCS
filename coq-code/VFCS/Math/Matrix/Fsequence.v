@@ -13,7 +13,6 @@ Require Export ListExt.
 Require Export Hierarchy.
 Require Export NatExt.
 Require Export Fin Sequence.
-Require RExt.
 
 Generalizable Variables A Aadd Azero Aopp Amul Aone Ainv.
 Generalizable Variables B Badd Bzero.
@@ -112,7 +111,7 @@ Section fseqsum.
   Qed.
 
   (** Convert `fseqsum` to `seqsum` *)
-  Lemma fseqsum_to_seqsum : forall {n} (f : fin n -> A) (g : nat -> A),
+  Lemma fseqsum_eq_seqsum : forall {n} (f : fin n -> A) (g : nat -> A),
       (forall i, f i = g (fin2nat i)) -> fseqsum f = seqsum g n.
   Proof.
     intros. unfold fseqsum. apply seqsum_eq; intros.
@@ -122,7 +121,7 @@ Section fseqsum.
   Qed.
 
   (** Convert `fseqsum` to `seqsum` (succ form) *)
-  Lemma fseqsum_to_seqsum_succ : forall {n} (f : fin (S n) -> A),
+  Lemma fseqsum_eq_seqsum_succ : forall {n} (f : fin (S n) -> A),
       fseqsum f = seqsum (fun i => f (nat2finS i)) n + f (nat2finS n).
   Proof.
     intros. unfold fseqsum. simpl. f_equal.
@@ -313,62 +312,10 @@ Section fseqsum_ext.
   
 End fseqsum_ext.
 
-
-
-(* ======================================================================= *)
-(** ** Sequence on R type *)
-Section Seq_R.
-
-  Import Reals.
-  Open Scope R.
-  
-  Notation fseqsum := (@fseqsum _ Rplus R0).
-
-  (* (** If all elements of a sequence are >= 0, then the sum is >= 0 *) *)
-  (* Lemma seqsum_ge0 : forall (f : nat -> R) n, *)
-  (*     (forall i, (i < n)%nat -> 0 <= f i) -> 0 <= seqsum f n. *)
-  (* Proof. intros. induction n; simpl. lra. apply Rplus_le_le_0_compat; auto. Qed. *)
-
-  (* (** If all elements of a sequence are >= 0, and the sum of top (n+1) elements of *)
-  (*     the sequence is = 0, then the sum of top n elements are 0 *) *)
-  (* Lemma seqsum_eq0_less : forall (f : nat -> R) (n : nat),  *)
-  (*     (forall i, (i < S n)%nat -> 0 <= f i) -> *)
-  (*     seqsum f (S n) = 0 -> *)
-  (*     seqsum f n = 0. *)
-  (* Proof. *)
-  (*   intros. rewrite seqsumS_tail in H0. *)
-  (*   assert (0 <= f n); auto. *)
-  (*   assert (0 <= seqsum f n). apply seqsum_ge0; auto. lra. *)
-  (* Qed. *)
-
-  (* (** If all elements of a sequence are >= 0, and the sum of the sequence is = 0, *)
-  (*     then all elements of the sequence are 0. *) *)
-  (* Lemma seqsum_eq0_imply_seq0 : forall (f : nat -> R) (n : nat),  *)
-  (*     (forall i, (i < n)%nat -> 0 <= f i) -> seqsum f n = 0 -> (forall i, (i < n)%nat -> f i = 0). *)
-  (* Proof. *)
-  (*   intros f n. induction n. intros H1 H2 i H3; try easy. intros. *)
-  (*   assert (i < n \/ i = n)%nat by nia. destruct H2. *)
-  (*   - apply IHn; auto. apply seqsum_eq0_less; auto. *)
-  (*   - subst. *)
-  (*     assert (0 <= f n); auto. *)
-  (*     assert (0 <= seqsum f n). apply seqsum_ge0; auto. *)
-  (*     rewrite seqsumS_tail in H0. lra. *)
-  (* Qed. *)
-  
-End Seq_R.
-
-
 (* ======================================================================= *)
 (** ** Usage demo *)
 Section test.
-  Import RExt.
 
-  Let n := 3%nat.
-  Let seq1 : fin n -> R := fun i => Z2R (Z.of_nat (fin2nat i)).
-  (* Compute @fseqsum _ Rplus R0 _ seq1. *)
-  
-  Open Scope Z.
-  Let seq2 : fin n -> fin n -> Z :=
-        fun i j => Z.of_nat (fin2nat i) + Z.of_nat (fin2nat j) + 1.
-  (* Compute @fseqsum _ Z.add 0 _ (seq2 fin0). *)
+  Let seq1 : fin 3 -> nat := fun i => fin2nat i.
+  (* Compute @fseqsum _ plus 0 _ seq1. *)
 End test. 

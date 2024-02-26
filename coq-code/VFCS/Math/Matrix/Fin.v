@@ -624,7 +624,7 @@ Section ff2f_f2ff.
   Qed.
   
   (** ff [|i] = ff2f ff i *)
-  Lemma nth_ff_to_nth_f : forall {n} (ff : fin n -> A) (i : nat) (H : i < n),
+  Lemma nth_ff_eq_nth_f : forall {n} (ff : fin n -> A) (i : nat) (H : i < n),
       ff (exist _ i H) = ff2f ff i.
   Proof. intros. rewrite nth_ff2f with (H:=H). f_equal. Qed.
 
@@ -693,9 +693,9 @@ Ltac ff2f Azero :=
   repeat
     match goal with
     | [ H : context[?ff (exist _ ?i ?Hi)] |- _ ] =>
-        rewrite (@nth_ff_to_nth_f _ Azero _ ff i) in H
+        rewrite (@nth_ff_eq_nth_f _ Azero _ ff i) in H
     | [ |- context [ ?ff (exist _ ?i ?Hi) ]] =>
-        rewrite (@nth_ff_to_nth_f _ Azero _ ff i)
+        rewrite (@nth_ff_eq_nth_f _ Azero _ ff i)
     end.
 
 Section test.

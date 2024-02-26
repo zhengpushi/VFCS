@@ -19,9 +19,7 @@ Linear Algebra As an Introduction to Abstract Mathematics
 
 Require Export Hierarchy.
 Require Export Matrix.
-Require Export MatrixGauss.
 Require Export MatrixInv.
-Require Export Vector.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -38,7 +36,6 @@ Delimit Scope VectorSpace_scope with VS.
 Open Scope A_scope.
 Open Scope vec_scope.
 Open Scope VectorSpace_scope.
-
 
 (* ===================================================================== *)
 (** ** Additional properties *)
@@ -773,7 +770,7 @@ Section lreps.
     destruct H0 as [c H0]. rewrite <- H0.
     apply (lcomb_all_ex_imply_any_ex (Azero:=Azero)) in H.
     destruct H as [d H]. rewrite H.
-    exists (fun i => vsum (Aadd:=Aadd)(Azero:=Azero)(vmap2 Amul c (fun j => d j i))).
+    exists (fun i => vsum Aadd Azero (vmap2 Amul c (fun j => d j i))).
     rewrite <- lcomb_assoc. f_equal.
   Qed.
 

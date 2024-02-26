@@ -666,6 +666,108 @@ End mdiag.
 
 
 (* ======================================================================= *)
+(** ** Zero matrix *)
+Section mat0.
+  Context {A} {Azero : A}.
+  Definition mat0 {r c} : mat A r c := fun _ _ => Azero.
+
+  (** mat0\T = mat0 *)
+  Lemma mtrans_mat0 : forall {r c : nat}, (@mat0 r c)\T = mat0.
+  Proof. intros. auto. Qed.
+
+  (** mat0[i,j] = 0 *)
+  Lemma mnth_mat0 : forall {r c} i j, @mat0 r c $ i $ j = Azero.
+  Proof. intros. auto. Qed.
+
+  (* row mat0 i = vzero *)
+  Lemma mrow_mat0 : forall {r c} i, @mat0 r c $ i = vzero Azero.
+  Proof. intros. auto. Qed.
+
+  (* col mat0 i = vzero *)
+  Lemma mcol_mat0 : forall {r c} j, (fun k => @mat0 r c $ k $ j) = vzero Azero.
+  Proof. intros. auto. Qed.
+End mat0.
+
+
+(* ======================================================================= *)
+(** ** Matrix Addition *)
+Section madd.
+  Context `{AMonoid}.
+  Notation mat r c := (mat A r c).
+  Infix "+" := Aadd : A_scope.
+  Notation vadd := (@vadd _ Aadd).
+  Infix "+" := vadd : vec_scope.
+  Notation mat0 := (@mat0 _ Azero).
+  
+  Definition madd {r c} (M N : mat r c) : mat r c := mmap2 Aadd M N.
+  Infix "+" := madd : mat_scope.
+  
+  (** (M+N)[i,j] = M[i,j] + N[i,j] *)
+  Lemma mnth_madd : forall {r c} (M N : mat r c) i j,
+      (M + N) $ i $ j = (M $ i $ j + N $ i $ j)%A.
+  Proof. intros. unfold madd. rewrite !vnth_vmap2. auto. Qed.
+
+  Lemma cv2v_madd : forall {n} (v1 v2 : cvec A n),
+      cv2v (v1 + v2) = (cv2v v1 + cv2v v2)%V.
+  Proof. intros. apply veq_iff_vnth; intros. cbv. auto. Qed.
+
+  Lemma madd_comm : forall {r c} (M N : mat r c), M + N = N + M.
+  Proof. intros. apply mmap2_comm. Qed.
+  
+  Lemma madd_assoc : forall {r c} (M N O : mat r c),
+      (M + N) + O = M + (N + O).
+  Proof. intros. apply mmap2_assoc. Qed.
+  
+  (** 0 + M = M *)
+  Lemma madd_0_l : forall {r c} (M : mat r c), mat0 + M = M.
+  Proof.
+    intros. unfold madd. apply meq_iff_mnth; intros.
+    rewrite mnth_mmap2. rewrite mnth_mat0. monoid.
+  Qed.
+
+  (** M + 0 = M *)
+  Lemma madd_0_r : forall {r c} (M : mat r c), M + mat0 = M.
+  Proof. intros. rewrite madd_comm, madd_0_l; auto. Qed.
+
+  (** (M + N) + O = (M + O) + N *)
+  Lemma madd_perm : forall {r c} (M N O : mat r c), (M + N) + O = (M + O) + N.
+  Proof. intros. rewrite !associative. f_equal. apply commutative. Qed.
+  
+  Instance Associative_madd : forall r c, @Associative (mat r c) madd.
+  Proof. intros. constructor. apply madd_assoc. Qed.
+
+  Instance Commutative_madd : forall r c, @Commutative (mat r c) madd.
+  Proof. intros. constructor. apply madd_comm. Qed.
+
+  Instance IdentityLeft_madd : forall r c, @IdentityLeft (mat r c) madd mat0.
+  Proof. intros. constructor. apply madd_0_l. Qed.
+
+  Instance IdentityRight_madd : forall r c, @IdentityRight (mat r c) madd mat0.
+  Proof. intros. constructor. apply madd_0_r. Qed.
+
+  Instance Monoid_madd : forall r c, Monoid (@madd r c) mat0.
+  Proof.
+    intros. repeat constructor; intros;
+      try apply associative;
+      try apply identityLeft;
+      try apply identityRight.
+  Qed.
+
+  Example madd_monoid_example1 : forall r c (M N : mat r c),
+      mat0 + M + N + mat0 = M + mat0 + N.
+  Proof. monoid. Qed.
+  
+
+  (** (M + N)\T = M\T + N\T *)
+  Lemma mtrans_madd : forall {r c} (M N : mat r c), (M + N)\T = M\T + N\T.
+  Proof.
+    intros. unfold madd. apply meq_iff_mnth; intros.
+    rewrite ?mnth_mtrans, ?mnth_mmap2, ?mnth_mtrans. auto.
+  Qed.
+End madd.
+
+
+(* ======================================================================= *)
 (** ** matrix algebra *)
 (* addition,opposition,subtraction, trace, scalar multiplication, multiplication *)
 Section malg.
@@ -680,28 +782,10 @@ Section malg.
   Notation vsum := (@vsum _ Aadd Azero).
   Notation vadd := (@vadd _ Aadd).
   Infix "+" := vadd : vec_scope.
-
-  (** *** Zero matrix *)
-  Section mat0.
-    Definition mat0 {r c} : mat r c := fun _ _ => Azero.
-
-    (** mat0\T = mat0 *)
-    Lemma mtrans_mat0 : forall {r c : nat}, (@mat0 r c)\T = mat0.
-    Proof. intros. auto. Qed.
-
-    (** mat0[i,j] = 0 *)
-    Lemma mnth_mat0 : forall {r c} i j, @mat0 r c $ i $ j = Azero.
-    Proof. intros. auto. Qed.
-
-    (* row mat0 i = vzero *)
-    Lemma mrow_mat0 : forall {r c} i, @mat0 r c $ i = vzero Azero.
-    Proof. intros. auto. Qed.
-
-    (* col mat0 i = vzero *)
-    Lemma mcol_mat0 : forall {r c} j, (fun k => @mat0 r c $ k $ j) = vzero Azero.
-    Proof. intros. auto. Qed.
-  End mat0.
-
+  Notation mat0 := (@mat0 _ Azero).
+  Notation madd := (@madd _ Aadd).
+  Infix "+" := madd : mat_scope.
+  
   
   (** *** Unit matrix *)
   Section mat1.
@@ -737,76 +821,14 @@ Section malg.
     (** tr(M\T) = tr(M) *)
     Lemma mtrace_mtrans : forall {n} (M : smat n), tr (M\T) = tr M.
     Proof. intros. apply vsum_eq; intros. apply mnth_mtrans. Qed.
-  End mtrace.
-  Notation "'tr' M" := (mtrace M).
-  
-  
-  (** *** Matrix Addition *)
-  Section madd.
-    Definition madd {r c} (M N : mat r c) : mat r c := mmap2 Aadd M N.
-    Infix "+" := madd : mat_scope.
-    
-    (** (M+N)[i,j] = M[i,j] + N[i,j] *)
-    Lemma mnth_madd : forall {r c} (M N : mat r c) i j,
-        (M + N) $ i $ j = (M $ i $ j + N $ i $ j)%A.
-    Proof. intros. unfold madd. rewrite !vnth_vmap2. auto. Qed.
-
-    Lemma cv2v_madd : forall {n} (v1 v2 : cvec A n),
-        cv2v (v1 + v2) = (cv2v v1 + cv2v v2)%V.
-    Proof. intros. apply veq_iff_vnth; intros. cbv. auto. Qed.
-
-    Lemma madd_comm : forall {r c} (M N : mat r c), M + N = N + M.
-    Proof. intros. apply mmap2_comm. Qed.
-    
-    Lemma madd_assoc : forall {r c} (M N O : mat r c),
-        (M + N) + O = M + (N + O).
-    Proof. intros. apply mmap2_assoc. Qed.
-    
-    (** 0 + M = M *)
-    Lemma madd_0_l : forall {r c} (M : mat r c), mat0 + M = M.
-    Proof.
-      intros. unfold madd. apply meq_iff_mnth; intros.
-      rewrite mnth_mmap2. rewrite mnth_mat0. monoid.
-    Qed.
-
-    (** M + 0 = M *)
-    Lemma madd_0_r : forall {r c} (M : mat r c), M + mat0 = M.
-    Proof. intros. rewrite madd_comm, madd_0_l; auto. Qed.
-    
-    Instance Associative_madd : forall r c, @Associative (mat r c) madd.
-    Proof. intros. constructor. apply madd_assoc. Qed.
-
-    Instance Commutative_madd : forall r c, @Commutative (mat r c) madd.
-    Proof. intros. constructor. apply madd_comm. Qed.
-
-    Instance IdentityLeft_madd : forall r c, @IdentityLeft (mat r c) madd mat0.
-    Proof. intros. constructor. apply madd_0_l. Qed.
-
-    Instance IdentityRight_madd : forall r c, @IdentityRight (mat r c) madd mat0.
-    Proof. intros. constructor. apply madd_0_r. Qed.
-
-    Instance Monoid_madd : forall r c, Monoid (@madd r c) mat0.
-    Proof.
-      intros. repeat constructor; intros;
-        try apply associative;
-        try apply identityLeft;
-        try apply identityRight.
-    Qed.
-
-    (** (M + N)\T = M\T + N\T *)
-    Lemma mtrans_madd : forall {r c} (M N : mat r c), (M + N)\T = M\T + N\T.
-    Proof.
-      intros. unfold madd. apply meq_iff_mnth; intros.
-      rewrite ?mnth_mtrans, ?mnth_mmap2, ?mnth_mtrans. auto.
-    Qed.
 
     (** tr(M + N) = tr(M) + tr(N) *)
     Lemma mtrace_madd : forall {n} (M N : smat n), tr (M + N) = (tr M + tr N)%A.
     Proof.
       intros. unfold madd, mtrace. apply vsum_add; intros. rewrite mnth_mmap2. auto.
     Qed.
-  End madd.
-  Infix "+" := madd : mat_scope.
+  End mtrace.
+  Notation "'tr' M" := (mtrace M).
 
 
   (** *** Matrix Opposition *)
@@ -843,11 +865,17 @@ Section malg.
         try apply commutative.
     Qed.
 
-    (* Now, we ca use group theory on <madd, mat0, mopp, msub> *)
+    Example madd_agroup_example1 : forall r c (M N : mat r c), mat0 + M + (- N) + N = M.
+    Proof.
+      intros.
+      (* rewrite associative. *)
+      (* rewrite inverseLeft. *)
+      (* rewrite identityRight. *)
+      (* rewrite identityLeft. *)
+      group.
+    Qed.
 
-    (** (M + N) + O = (M + O) + N *)
-    Lemma madd_perm : forall {r c} (M N O : mat r c), (M + N) + O = (M + O) + N.
-    Proof. intros. rewrite !associative. f_equal. apply commutative. Qed.
+    (* Now, we ca use group theory on <madd, mat0, mopp, msub> *)
     
     (** - (- M) = M *)
     Lemma mopp_mopp : forall {r c} (M : mat r c), - (- M) = M.
@@ -858,7 +886,7 @@ Section malg.
     Proof. intros. split; intros; subst; rewrite group_opp_opp; auto. Qed.
 
     (** - (mat0) = mat0 *)
-    Lemma mopp_mat0 : forall {r c:nat}, - (@mat0 r c) = mat0.
+    Lemma mopp_mat0 : forall {r c:nat}, - (@Matrix.mat0 _ Azero r c) = mat0.
     Proof. intros. apply group_opp_0. Qed.
 
     (** - (m1 + m2) = (-m1) + (-m2) *)
@@ -994,7 +1022,7 @@ Section malg.
     Qed.
 
     (** a \.* mat0 = mat0 *)
-    Lemma mcmul_0_r : forall {r c} a, a \.* (@mat0 r c) = mat0.
+    Lemma mcmul_0_r : forall {r c} a, a \.* (@Matrix.mat0 _ Azero r c) = mat0.
     Proof.
       intros. apply meq_iff_mnth; intros. rewrite !mnth_mcmul, !mnth_mat0. ring.
     Qed.
@@ -1172,14 +1200,14 @@ Section malg.
     Qed.
     
     (** 0 * M = 0 *)
-    Lemma mmul_0_l : forall {r c t} (M : mat c t), mat0 * M = @mat0 r t.
+    Lemma mmul_0_l : forall {r c t} (M : mat c t), mat0 * M = @Matrix.mat0 _ Azero r t.
     Proof.
       intros. apply meq_iff_mnth; intros. rewrite !mnth_mmul, mnth_mat0.
       rewrite mrow_mat0. apply vdot_0_l.
     Qed.
     
     (** M * 0 = 0 *)
-    Lemma mmul_0_r : forall {r c t} (M : mat r c), M * mat0 = @mat0 r t.
+    Lemma mmul_0_r : forall {r c t} (M : mat r c), M * mat0 = @Matrix.mat0 _ Azero r t.
     Proof.
       intros. apply meq_iff_mnth; intros. rewrite !mnth_mmul, mnth_mat0.
       rewrite mcol_mat0. apply vdot_0_r.

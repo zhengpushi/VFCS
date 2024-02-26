@@ -5,7 +5,7 @@
 
   purpose   : Matrix theory on function of R to R.
   author    : ZhengPu Shi
-  date      : 2023.04
+  date      : 2023.12
  *)
 
 Require Export RExt.
@@ -13,21 +13,22 @@ Require Export Calculus.
 Require Export MatrixModule.
 
 
-(* ======================================================================= *)
+(* ######################################################################### *)
 (** * Matrix theory come from common implementations *)
 
 Module Export MatrixTheoryRFun := RingMatrixTheory RingElementTypeRFun.
 
 Open Scope R_scope.
 Open Scope Rfun_scope.
+Open Scope vec_scope.
 Open Scope mat_scope.
 
 
-(* ======================================================================= *)
+(* ######################################################################### *)
 (** * Matrix theory applied to this type *)
 
-(* ==================================== *)
-(** ** Derivative of matrix *)
+
+(** Derivative of matrix *)
 (* ref: page 162, QuanQuan, 多旋翼设计与控制 *)
 
 (** 标量(函数)对矩阵(函数)的梯度 *)
@@ -37,7 +38,7 @@ Open Scope mat_scope.
 (* Definition mderiv {r c} (a : T) (X : mat r c) := *)
   
 
-(* ======================================================================= *)
+(* ######################################################################### *)
 (** * Usage demo *)
 
 Section test.
@@ -50,23 +51,6 @@ Section test.
   (* Compute m2l m1. *)
   (* Compute m2l (mmap Aopp m1). *)
   (* Compute m2l (m1 * m1). *)
-
-  Variable a00 a01 a10 a11 : A.
-  Variable f : A -> A.
-  Let m2 := @l2m 2 2 [[a00;a01];[a10;a11]].
-  (* Compute m2l m2.       (* = [[a00; a01]; [a10; a11]] *) *)
-  (* Compute m2l (mmap f m2).     (* = [[f a00; f a01]; [f a10; f a11]] *) *)
-  (* Compute m2l (m2 * m2). *)
-
-  Goal forall r c (m1 m2 : mat r c), m1 + m2 = m2 + m1.
-  Proof. intros. apply madd_comm. Qed.
-
-  (** mmul_sub_distr_r *)
-  Goal forall r c s (m0 : mat r s) (m1 m2 : mat r c) (m3 : mat c s),
-      m0 + (m1 - m2) * m3 = m0 + m1 * m3 - m2 * m3.
-    intros. rewrite mmul_msub_distr_r.
-    unfold msub. unfold Matrix.msub. monoid.
-  Qed.
   
 End test.
 
@@ -74,9 +58,6 @@ Section Example4CoordinateSystem.
   Open Scope fun_scope.
   Notation "1" := Aone : fun_scope.
   Notation "0" := Azero : fun_scope.
-  (* Infix "+" := Aadd : fun_scope. *)
-  (* Notation "- a" := (Aopp a) : fun_scope. *)
-  (* Infix "*" := Amul : fun_scope. *)
   
   Variable ψ θ ϕ : A.
   Let cθ : A := fun t => cos (θ t).
@@ -100,4 +81,3 @@ Section Example4CoordinateSystem.
   Proof. apply m2l_inj. cbv. list_eq; extensionality x; ring. Qed.
     
 End Example4CoordinateSystem.
-

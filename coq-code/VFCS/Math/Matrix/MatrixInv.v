@@ -37,9 +37,9 @@
 
 Require Import Basic NatExt.
 Require Import MyExtrOCamlR.
-Require Import Matrix.
-Require Import MatrixDet.
-Require Import MatrixGauss.
+Require Export Matrix.
+Require Export MatrixDet.
+Require Export MatrixGauss.
 
 
 Generalizable Variable A Aadd Azero Aopp Amul Aone Ainv.

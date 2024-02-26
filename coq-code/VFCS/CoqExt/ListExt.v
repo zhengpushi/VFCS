@@ -952,31 +952,31 @@ End concat.
 (* ===================================================================== *)
 (** ** Convert between list and natural-number-index-function *)
 Section f2l_l2f.
-  Context {A} {Azero : A}.
+  Context {A} (Azero : A).
 
-  Definition f2l {n : nat} (f : nat -> A) : list A :=
+  Definition f2l (n : nat) (f : nat -> A) : list A :=
     map f (seq 0 n).
 
-  Definition l2f {n : nat} (l : list A) : nat -> A :=
+  Definition l2f (n : nat) (l : list A) : nat -> A :=
     fun i => nth i l Azero.
 
-  Lemma f2l_length : forall n f, length (@f2l n f) = n.
+  Lemma f2l_length : forall n f, length (f2l n f) = n.
   Proof.
     intros. unfold f2l. rewrite map_length. apply seq_length.
   Qed.
 
   (** (f2l f)[i] = f i *)
-  Lemma nth_f2l : forall {n} f a i, i < n -> nth i (@f2l n f) a = f i.
+  Lemma nth_f2l : forall {n} f a i, i < n -> nth i (f2l n f) a = f i.
   Proof. intros. unfold f2l. rewrite nth_map_seq; auto. Qed.
 
-  Lemma f2l_l2f_id : forall l {n}, length l = n -> @f2l n (@l2f n l) = l.
+  Lemma f2l_l2f_id : forall l {n}, length l = n -> f2l n (l2f n l) = l.
   Proof.
     intros. rewrite (list_eq_iff_nth Azero n); auto.
     - intros. rewrite nth_f2l; auto.
     - apply f2l_length.
   Qed.
 
-  Lemma l2f_f2l_id : forall f {n} i, i < n -> @l2f n (@f2l n f) i = f i.
+  Lemma l2f_f2l_id : forall f {n} i, i < n -> l2f n (f2l n f) i = f i.
   Proof. intros. unfold l2f. rewrite nth_f2l; auto. Qed.
 
 End f2l_l2f.
@@ -984,10 +984,10 @@ End f2l_l2f.
 Section test.
   (** [1;2;3] *)
   Let f := fun i => i + 1.
-  Let l := @f2l nat 3 f.
+  Let l := f2l 3 f.
   (* Compute l. *)
 
-  Let g := @l2f nat 0 3 l.
+  Let g := l2f 0 3 l.
   (* Compute (g 0, g 1, g 2). *)
 End test.  
 
@@ -1816,20 +1816,20 @@ End dlist_map2.
 (* ===================================================================== *)
 (** ** Convert between dlist and function *)
 Section f2dl_dl2f.
-  Context {A : Type} {Azero : A}.
+  Context {A : Type} (Azero : A).
 
-  Definition f2dl {r c : nat} (f : nat -> nat -> A) : dlist A :=
-    map (fun i => f2l (n:=c) (f i)) (seq 0 r).
+  Definition f2dl (r c : nat) (f : nat -> nat -> A) : dlist A :=
+    map (fun i => f2l c (f i)) (seq 0 r).
 
-  Definition dl2f {r c : nat} (dl : dlist A) : nat -> nat -> A :=
+  Definition dl2f (r c : nat) (dl : dlist A) : nat -> nat -> A :=
     fun i j => nth j (nth i dl []) Azero.
 
-  Lemma f2dl_length : forall r c f, length (@f2dl r c f) = r.
+  Lemma f2dl_length : forall r c f, length (f2dl r c f) = r.
   Proof.
     intros. unfold f2dl. rewrite map_length. apply seq_length.
   Qed.
 
-  Lemma f2dl_width : forall r c f, width (@f2dl r c f) c.
+  Lemma f2dl_width : forall r c f, width (f2dl r c f) c.
   Proof.
     unfold f2dl,width.
     induction r; intros; simpl; try constructor.
@@ -1840,7 +1840,7 @@ Section f2dl_dl2f.
 
   (** (f2dl f)[i,j] = f i j *)
   Lemma nth_f2dl : forall {r c} f l a i j,
-      i < r -> j < c -> nth j (nth i (@f2dl r c f) l) a = f i j.
+      i < r -> j < c -> nth j (nth i (f2dl r c f) l) a = f i j.
   Proof.
     intros. unfold f2dl. rewrite nth_map_seq; auto. rewrite nth_f2l; auto.
   Qed.
@@ -1850,10 +1850,10 @@ End f2dl_dl2f.
 Section test.
   (** [[1;2;3];[4;5;6];[7;8;9]] *)
   Let f := fun i j => i * 3 + j + 1.
-  Let dl := @f2dl nat 3 3 f.
+  Let dl := f2dl 3 3 f.
   (* Compute dl. *)
 
-  Let g := @dl2f nat 0 3 3 dl.
+  Let g := dl2f 0 3 3 dl.
   (* Compute (g 0 0, g 0 1, g 0 2, g 1 0, g 1 1, g 1 2, g 2 0, g 2 1, g 2 2). *)
 End test.  
 

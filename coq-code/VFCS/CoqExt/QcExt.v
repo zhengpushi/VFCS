@@ -162,24 +162,29 @@ End test.
 (** ** Convertion between Qc and other types *)
 
 (** Qc to Q *)
-Definition Qc2Q (qc : Qc) : Q := this qc.
+Definition Qc2Q (x : Qc) : Q := this x.
 
 (** Z to Qc *)
-Definition Z2Qc (z : Z) : Qc := Q2Qc (Z2Q z).
+Definition Z2Qc (x : Z) : Qc := Q2Qc (Z2Q x).
 
 (** nat to Qc *)
-Definition nat2Qc (n : nat) : Qc := Q2Qc (nat2Q n).
+Definition nat2Qc (x : nat) : Qc := Q2Qc (nat2Q x).
 
 (** Qc to Z *)
 Definition Qc2Z_ceiling (q : Qc) : Z := Q2Z_ceiling (Qc2Q q).
 Definition Qc2Z_floor (q : Qc) : Z := Q2Z_floor (Qc2Q q).
 
 (** list Q to list Qc *)
-Definition Q2Qc_list l := List.map (fun q => Q2Qc q) l.
+Definition Q2Qc_list l := map Q2Qc l.
 
-(** list (list Q) to list (list Qc) *)
-Definition Q2Qc_dlist dl := List.map Q2Qc_list dl.
+(** dlist Q to dlist Qc *)
+Definition Q2Qc_dlist dl := map Q2Qc_list dl.
 
+(** list Qc to list Q, for better printing *)
+Definition Qc2Q_list l := map Qc2Q l.
+
+(** dlist Qc to dlist Q *)
+Definition Qc2Q_dlist dl := map Qc2Q_list dl.
 
 
 (* ######################################################################### *)

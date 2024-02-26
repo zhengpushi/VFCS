@@ -51,7 +51,7 @@ Module ElementTypeNat <: ElementType.
   Hint Unfold A Azero : A.
 
   Lemma AeqDec : Dec (@eq A).
-  Proof. apply nat_eq_Dec. Qed.
+  Proof. apply nat_eq_Dec. Defined.
 End ElementTypeNat.
 
 Module ElementTypeZ <: ElementType.
@@ -61,7 +61,7 @@ Module ElementTypeZ <: ElementType.
   Hint Unfold A Azero : A.
 
   Lemma AeqDec : Dec (@eq A).
-  Proof. apply Z_eq_Dec. Qed.
+  Proof. apply Z_eq_Dec. Defined.
 End ElementTypeZ.
 
 Module ElementTypeQ <: ElementType.
@@ -71,7 +71,7 @@ Module ElementTypeQ <: ElementType.
   Hint Unfold A Azero : A.
 
   Lemma AeqDec : Dec (@eq A).
-  Proof. apply Q_eq_Dec. Qed.
+  Proof. apply Q_eq_Dec. Defined.
 End ElementTypeQ.
 
 Module ElementTypeQc <: ElementType.
@@ -81,7 +81,7 @@ Module ElementTypeQc <: ElementType.
   Hint Unfold A Azero : A.
 
   Lemma AeqDec : Dec (@eq A).
-  Proof. apply Qc_eq_Dec. Qed.
+  Proof. apply Qc_eq_Dec. Defined.
 
 End ElementTypeQc.
 
@@ -93,7 +93,7 @@ Module ElementTypeR <: ElementType.
   Hint Unfold A Azero : A.
 
   Lemma AeqDec : Dec (@eq A).
-  Proof. apply R_eq_Dec. Qed.
+  Proof. apply R_eq_Dec. Defined.
 End ElementTypeR.
 
 Module ElementTypeC <: ElementType.
@@ -103,7 +103,7 @@ Module ElementTypeC <: ElementType.
   Hint Unfold A Azero : A.
 
   Lemma AeqDec : Dec (@eq A).
-  Proof. apply Complex_eq_Dec. Qed.
+  Proof. apply Complex_eq_Dec. Defined.
 End ElementTypeC.
 
 Module ElementTypeRFun <: ElementType.
@@ -139,7 +139,6 @@ Module ElementType_Test.
   Goal f = g.
   Proof. cbv. intros. auto. Qed.
 End ElementType_Test.
-
 
 
 (* ######################################################################### *)

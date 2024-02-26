@@ -244,11 +244,27 @@ Section TEST_psatz.
 
 End TEST_psatz.
 
+(* ======================================================================= *)
+(** ** Automation for proof *)
+
 (** arithmetric on reals : lra + nra *)
 Ltac ra :=
   intros; unfold Rsqr in *; try lra; try nra; auto with R.
 
+(** Try to prove equality of two R values. *)
+Ltac req :=
+  ra.
 
+(** Try to prove equality of two R values, using `R` db, especially for triangle *)
+Ltac req_slow :=
+  autorewrite with R; ra.
+
+(** Convert `a ^ (n + 2)` to `(a ^ 2) * (a ^ n)` *)
+Ltac simp_pow :=
+  match goal with
+  | |- context[?a ^ 4] => replace (a ^ 4) with ((a ^ 2) ^ 2); [|ring]
+  | |- context[?a ^ 3] => replace (a ^ 3) with ((a ^ 2) * a)%R; [|ring]
+  end.
 
 
 (* ######################################################################### *)

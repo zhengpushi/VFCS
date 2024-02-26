@@ -218,7 +218,7 @@ Section f2v_v2f.
   Proof. intros. unfold v2f. erewrite nth_ff2f; auto. Qed.
 
   (** v [|i] = v2f v i *)
-  Lemma vnth_to_nth : forall {n} (v : vec n) (i : nat) (H : i < n),
+  Lemma vnth_eq_nth : forall {n} (v : vec n) (i : nat) (H : i < n),
       v (exist _ i H) = v2f v i.
   Proof. intros. rewrite nth_v2f with (H:=H). f_equal. Qed.
 
@@ -611,7 +611,7 @@ Section vinsert.
     assert (S (fin2nat j) <= n). pose proof (fin2nat_lt j); lia.
     specialize (H1 H2 H3). clear H2 H3. simpl in *. v2f Azero.
     rewrite ff2f_fin2nat in H1. rewrite <- H1.
-    erewrite <- !nth_ff_to_nth_f. f_equal. destruct j. cbv. apply sig_eq_iff; auto.
+    erewrite <- !nth_ff_eq_nth_f. f_equal. destruct j. cbv. apply sig_eq_iff; auto.
     Unshelve. pose proof (fin2nat_lt j). lia.
   Qed.
     
@@ -625,7 +625,7 @@ Section vinsert.
     assert (S (fin2nat j) <= n). pose proof (fin2nat_lt j); lia.
     specialize (H1 H2 H3). clear H2 H3. simpl in *. v2f Azero.
     rewrite ff2f_fin2nat in H1. rewrite <- H1.
-    erewrite <- !nth_ff_to_nth_f. f_equal. destruct j. cbv. apply sig_eq_iff; auto.
+    erewrite <- !nth_ff_eq_nth_f. f_equal. destruct j. cbv. apply sig_eq_iff; auto.
     Unshelve. pose proof (fin2nat_lt j). lia.
   Qed.
 
@@ -1611,23 +1611,13 @@ Section vfold.
     seqfoldr (ff2f (Azero:=Azero) v) n b f.
 
   (** Convert `vfoldl` to `seqfoldl` *)
-  Lemma vfoldl_to_seqfoldl :
+  Lemma vfoldl_eq_seqfoldl :
     forall {n} (v : @vec A n) (b : B) (f : B -> A -> B) (s : nat -> A),
       (forall i, v $ i = s (fin2nat i)) -> vfoldl v b f = seqfoldl s n b f.
   Proof.
     intros. unfold vfoldl. apply seqfoldl_eq; auto.
     intros. rewrite nth_ff2f with (H:=H0). rewrite H. rewrite fin2nat_nat2fin. auto.
   Qed.
-  
-  (* (** `vsum` of (S n) elements, equal to addition of Sum and tail *) *)
-  (* Lemma vsumS_tail : forall {n} (v : @vec A (S n)), *)
-  (*     vsum v = vsum (fun i => v $ (fin2SuccRange i)) + v $ (nat2finS n). *)
-  (* Proof. intros. apply fseqsumS_tail; auto. Qed. *)
-
-  (* (** `vsum` of (S n) elements, equal to addition of head and Sum *) *)
-  (* Lemma vsumS_head : forall {n} (v : @vec A (S n)), *)
-  (*     vsum v = v $ (nat2finS 0) + vsum (fun i => v $ (fin2SuccRangeSucc i)). *)
-  (* Proof. intros. apply fseqsumS_head; auto. Qed. *)
 
 End vfold.
 
@@ -1649,17 +1639,16 @@ Section vsum.
   (** (∀ i, v.i = 0) -> Σv = 0 *)
   Lemma vsum_eq0 : forall {n} (v : @vec A n), (forall i, v $ i = 0) -> vsum v = 0.
   Proof. intros. unfold vsum. apply fseqsum_eq0. auto. Qed.
-  
 
   (** Convert `vsum` to `seqsum` *)
-  Lemma vsum_to_seqsum : forall {n} (v : @vec A n) (g : nat -> A),
+  Lemma vsum_eq_seqsum : forall {n} (v : @vec A n) (g : nat -> A),
       (forall i, v $ i = g (fin2nat i)) -> vsum v = seqsum g n.
-  Proof. intros. apply fseqsum_to_seqsum; auto. Qed.
+  Proof. intros. apply fseqsum_eq_seqsum; auto. Qed.
 
   (** Convert `vsum` to `seqsum` (succ form) *)
-  Lemma vsum_to_seqsum_succ : forall {n} (v : @vec A (S n)),
+  Lemma vsum_eq_seqsum_succ : forall {n} (v : @vec A (S n)),
       vsum v = seqsum (fun i => v $ (nat2finS i)) n + v $ (nat2finS n).
-  Proof. intros. apply fseqsum_to_seqsum_succ. Qed.
+  Proof. intros. apply fseqsum_eq_seqsum_succ. Qed.
   
   (** `vsum` of (S n) elements, equal to addition of Sum and tail *)
   Lemma vsumS_tail : forall {n} (v : @vec A (S n)),
@@ -1787,6 +1776,9 @@ Section vsum.
   End OrderedARing.
 
 End vsum.
+
+Arguments vsum {A} Aadd Azero {n}.
+
 
 (** vsum with vinsert and vremove  *)
 Section vsum_vinsert_vremove.
@@ -2210,6 +2202,13 @@ Section vcmul.
       cbv in H. cbv. apply field_mul_eq_imply_a1_or_b0 in H; auto. tauto.
     Qed.
     
+    (** k = 1 \/ v = 0 -> k * v = v *)
+    Lemma vcmul_same_if_k1_or_v0 : forall {n} k (v : vec n),
+        (k = Aone \/ v = vzero) -> k \.* v = v.
+    Proof.
+      intros. destruct H; subst. apply vcmul_1_l; auto. apply vcmul_0_r; auto.
+    Qed.
+    
     (** k * v = v -> v <> 0 -> k = 1 *)
     Corollary vcmul_same_imply_k1 : forall {n} k (v : vec n),
         k \.* v = v -> v <> vzero -> k = Aone.
@@ -2368,13 +2367,13 @@ Section vdot.
         remember (fun i => v (nat2finS i)) as g.
         replace (fseqsum (fun i => (u i * v i)))
           with (seqsum (fun i => f i * g i) (S n)); auto.
-        2:{ rewrite ?Heqf,?Heqg. rewrite !fseqsum_to_seqsum_succ. auto. }
+        2:{ rewrite ?Heqf,?Heqg. rewrite !fseqsum_eq_seqsum_succ. auto. }
         replace (fseqsum (fun i => u i * u i))
           with (seqsum (fun i => f i * f i) (S n)).
-        2:{ rewrite ?Heqf,?Heqg. rewrite !fseqsum_to_seqsum_succ. auto. }
+        2:{ rewrite ?Heqf,?Heqg. rewrite !fseqsum_eq_seqsum_succ. auto. }
         replace (fseqsum (fun i => v i * v i))
           with (seqsum (fun i => g i * g i) (S n)).
-        2:{ rewrite ?Heqf,?Heqg. rewrite !fseqsum_to_seqsum_succ. auto. }
+        2:{ rewrite ?Heqf,?Heqg. rewrite !fseqsum_eq_seqsum_succ. auto. }
         apply seqsum_SqrMul_le_MulSqr.
     Qed.
 
@@ -2478,7 +2477,6 @@ Section vdot_extra.
   Qed.
 
 End vdot_extra.
-
 
 (* ======================================================================= *)
 (** ** Euclidean norm (L2 norm), Length of vector *)
@@ -2980,6 +2978,38 @@ End vperp.
 
 (* ======================================================================= *)
 (** ** Two vectors are parallel (on vnonzero version) *)
+
+(* 关于零向量的平行和垂直问题
+  1. 来自《高等数学》的理论：
+  (1) 零向量的起点和终点重合，它的方向可看做是任意的。
+  (2) 如果∠a,b = 0 or π，则称它们平行，记做 a//b。
+      当两向量平行时，若将起点放在同一点，则终点和公共起点应在同一条直线，故
+      两向量平行也称两向量共线。
+  (3) 如果∠a,b = π/2，称它们垂直，记做 a⟂b。
+  (4) 由于零向量与另一向量的夹角可以是[0,π]中的任意值，可认为零向量与任何向量
+      都平行，也可认为零向量与任何向量都垂直。
+  2. 网络上的观点
+  (1) There are two choices to handling zero-vector
+      a. The mainstream approach is that the zero vector is parallel and
+         perpendicular to any vector.
+      b. Only consider the non-zero vector, one reason of it is that the 
+         transitivity is broken after including zero-vector.
+         (因为包含了零向量以后，平行的传递性被破坏了）
+  (2) https://www.zhihu.com/question/489006373
+      a. “平行”或“不平行”是对两个可以被识别的方向的比较，对于零向量，“方向”是不可
+         识别的，或说，是不确定的。从这个角度讲，“平行”这个概念不该被用到评价两个
+         零向量的关系上的。
+      b. 不过，两个零向量是“相等”的，对于向量而言，“相等”这件事包含了大小和方向
+         的相等，这么说来，说两个零向量“方向”相等，也就是“平行”或也是说得通的。
+  3. 使用向量运算的做法
+  (1) 使用向量的运算来定义平行和垂直，这样无须三角函数就能判定。
+      两向量点乘为零，则它们垂直；两向量叉乘为零向量，则它们平行。
+  (2) 在严格证明中，都加上非零向量这一假设条件。
+  4. 本文的做法
+  (1) vnonzero 类型：表示非零向量。
+      在这个类型上定义平行、垂直、角度等。
+      换言之，零向量上未定义几何关系。
+*)
 
 (* 这是使用了子类型 `vnonzero` 来实现 `vpara` 的版本。
    这种做法的特点是：

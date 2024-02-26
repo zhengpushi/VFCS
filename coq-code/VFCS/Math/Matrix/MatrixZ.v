@@ -5,53 +5,68 @@
 
   purpose   : Matrix theory on Z.
   author    : ZhengPu Shi
-  date      : 2021.12
+  date      : 2023.12
  *)
 
 Require Export ZExt.
 Require Export MatrixModule.
 
 
-(* ======================================================================= *)
+(* ######################################################################### *)
 (** * Matrix theory come from common implementations *)
 
-Module Export MatrixTheoryZ := RingMatrixTheory RingElementTypeZ.
+Module Export MatrixTheoryZ := OrderedRingMatrixTheory OrderedRingElementTypeZ.
 
 Open Scope Z_scope.
+Open Scope vec_scope.
 Open Scope mat_scope.
 
 
-(* ======================================================================= *)
+(* ######################################################################### *)
 (** * Matrix theory applied to this type *)
 
 
-(* ======================================================================= *)
+(* ######################################################################### *)
 (** * Usage demo *)
 Section test.
-  Let M1 := @l2m 2 2 [[1;2];[3;4]].
-  (* Compute m2l M1.                 (* = [[1; 2]; [3; 4]] *) *)
-  (* Compute m2l (mmap Z.opp M1).    (* = [[-1; -2]; [-3; -4]] *) *)
-  (* Compute m2l (M1 * M1).          (* = [[7; 10]; [15; 22]] *) *)
-
-  Variable a11 a12 a21 a22 : A.
-  Variable f : A -> A.
-  Let M2 := @l2m 2 2 [[a11;a12];[a21;a22]].
-  (* Compute m2l M2.                 (* = [[a11; a12]; [a21; a22]] *) *)
-  (* Compute m2l (mmap f M2).        (* = [[f a11; f a12]; [f a21; f a22]] *) *)
-
-  Let M3 : mat 3 3 := l2m [[10; -42; 13]; [-34; 15; 76]; [77; 98; 49]].
-  (* Time Eval compute in mdet M3. *)
-  (*      = -441217 *)
-  (*      : T *)
-  (* Finished transaction in 0.004 secs (0.004u,0.s) (successful) *)
+  Open Scope vec_scope.
   
-  (* Time Eval vm_compute in mdet M3. *)
-  (*        = -441217 *)
-  (*      : T *)
-  (* Finished transaction in 0.001 secs (0.001u,0.s) (successful) *)
+  Let u := @l2v 3 [1;2;-3].
+  Let v := @f2v 3 (fun i => -1 + nat2Z i)%Z.
+  (* Compute v2l (u + v). *)
+  (* Compute v2l (- u). *)
+  (* Compute v2l (u - v). *)
+  (* Compute v2l (5 \.* u). *)
+  (* Compute <u, v>. *)
+  (* Compute vsum u. *)
+  (* Check vunit u. *)
+  (* Check u _|_ v. *)
+  (* Check u // v. *)
+  
+  Open Scope mat_scope.
+  
+  Let M := l2m 3 3 [[1;2;3];[4;5;6];[7;8;9]].
+  Let N := l2m 3 3 [[1;2;3];[4;5;6];[7;8;10]].
+  (* Compute m2l M.                 (* = [[1; 2]; [3; 4]] *) *)
+  (* Compute m2l (mmap Z.opp M).    (* = [[-1; -2]; [-3; -4]] *) *)
+  (* Compute m2l (@mat1 3). *)
+  (* Compute m2l (M + M). *)
+  (* Compute tr M. *)
+  (* Compute m2l (M - M). *)
+  (* Compute m2l (- M). *)
+  (* Compute m2l (5 \.* M). *)
+  (* Compute m2l (M * M). *)
+  (* Check skewP M. *)
+  (* Compute mdet M. *)
+  (* Compute mdet N. *)
+  (* Compute mdet1 mat1. *)
+  (* Compute mdet2 mat1. *)
+  (* Compute mdet3 mat1. *)
+  (* Compute m2l (madj M). *)
+  (* Check minvertible M. *)
 
-  Let M4 : mat 9 9 :=
-        l2m
+  Let M4 :=
+        l2m 9 9
           [[  9;     2;     7;     8;     5;     3;     8;     9;     4;     1];
            [ 10;    10;     1;     1;     4;     7;     3;     3;     9;     1];
            [  2;    10;     9;     3;     8;     7;     6;     9;     6;     6];
@@ -68,8 +83,8 @@ Section test.
   (*      : T *)
   (* Finished transaction in 13.995 secs (13.992u,0.s) (successful) *)
 
-  Let M5 : mat 20 20 :=
-        l2m
+  Let M5 :=
+        l2m 20 20
           [[74;77;35;72;54;56;73;57;61;80;51;95;38;61;96;24;87;10;34;28];
            [10;19;33;87;91;44;91;34;11;36;84;14;84;56;84;47;46;94;59;57];
            [53;39;51;88;47;31;90;56;10;39;79;94;15;68;80;57;24;97;70;44];
