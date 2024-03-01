@@ -99,7 +99,9 @@ Reserved Infix "/_"         (at level 60).       (* angle of two vectors *)
 Reserved Infix "/2_"        (at level 60).       (* angle of two vectors in 2D *)
 
 Reserved Infix "_|_"        (at level 50).       (* Two vectors are orthogonal *)
-Reserved Infix "//"         (at level 50).       (* Two vectors are parallel *)
+Reserved Infix "//"         (at level 50).       (* Two vectors are collinear *)
+Reserved Infix "//+"        (at level 50).       (* Two vectors are parallel *)
+Reserved Infix "//-"        (at level 50).       (* Two vectors are antiparallel *)
 
 
 (* ****************************************************** *)
@@ -152,6 +154,11 @@ Reserved Notation "M .41"      (at level 25, format "M .41").
 Reserved Notation "M .42"      (at level 25, format "M .42").
 Reserved Notation "M .43"      (at level 25, format "M .43").
 Reserved Notation "M .44"      (at level 25, format "M .44").
+
+Reserved Notation "M &1"       (at level 25, format "M &1").      (* mcol M 1 *)
+Reserved Notation "M &2"       (at level 25, format "M &2").
+Reserved Notation "M &3"       (at level 25, format "M &3").
+Reserved Notation "M &4"       (at level 25, format "M &4").
 
 
 (* this level is consistent with coq.ssr.ssrbool.v *)

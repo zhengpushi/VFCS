@@ -39,6 +39,10 @@ Notation mat A r c := (@vec (@vec A c) r).
 (** square matrix type *)
 Notation smat A n := (mat A n n).
 
+(* Actually, mat A r c = forall A r c, fin r -> fin c -> A  *)
+(* Eval cbv in forall A r c, mat A r c. *)
+
+
 (* Note that: these notatiosn are dangerous.
    The reason can be found in the definition of `V.1` in file `Vector.v`
  *)
@@ -1484,7 +1488,7 @@ Section malg.
     Proof.
       intros. destruct (Aeqdec k Azero); auto. right.
       apply meq_iff_mnth; intros. rewrite meq_iff_mnth in H0. specialize (H0 i j).
-      cbv in H0. cbv. apply field_mul_eq0_reg in H0. tauto.
+      cbv in H0. cbv. apply field_mul_eq0_iff in H0. tauto.
     Qed.
 
     (** (M <> 0 /\ k * M = 0) -> M = 0 *)

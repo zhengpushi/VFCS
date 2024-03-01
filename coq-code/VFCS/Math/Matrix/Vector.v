@@ -1993,6 +1993,15 @@ Section vopp.
   Lemma vopp_vzero : forall {n:nat}, - (@Vector.vzero _ Azero n) = vzero.
   Proof. intros. apply group_opp_0. Qed.
 
+  (** - v = vzero <-> v = vzero *)
+  Lemma vopp_eq0_iff : forall {n} (v : vec n), - v = vzero <-> v = vzero.
+  Proof.
+    intros. split; intros; rewrite veq_iff_vnth in *; intros;
+      specialize (H0 i); rewrite vnth_vzero, vnth_vopp in *.
+    - apply group_opp_eq0_iff; auto.
+    - apply group_opp_eq0_iff; auto.
+  Qed.
+  
   (** - (u + v) = (- u) + (- v) *)
   Lemma vopp_vadd : forall {n} (u v : vec n), - (u + v) = (- u) + (- v).
   Proof. intros. rewrite group_opp_distr. apply commutative. Qed.
@@ -2175,7 +2184,7 @@ Section vcmul.
     Proof.
       intros. destruct (Aeqdec k Azero); auto. right.
       apply veq_iff_vnth; intros. rewrite veq_iff_vnth in H. specialize (H i).
-      cbv in H. cbv. apply field_mul_eq0_reg in H; auto. tauto.
+      cbv in H. cbv. apply field_mul_eq0_iff in H; auto. tauto.
     Qed.
 
     (** k * v = 0 -> v <> 0 -> k = 0 *)
@@ -2784,7 +2793,7 @@ Section vorth.
         k <> Azero -> ((k \.* u) _|_ v <-> u _|_ v).
     Proof.
       intros. unfold vorth in *. rewrite vdot_vcmul_l. split; intros.
-      - apply field_mul_eq0_reg in H0. destruct H0; auto. easy.
+      - apply field_mul_eq0_iff in H0. destruct H0; auto. easy.
       - rewrite H0. ring.
     Qed.
     
@@ -3011,14 +3020,14 @@ End vperp.
       换言之，零向量上未定义几何关系。
 *)
 
-(* 这是使用了子类型 `vnonzero` 来实现 `vpara` 的版本。
+(* 一种方式是使用子类型 `vnonzero` 来实现 `vpara` 的版本。
    这种做法的特点是：
    1. `vpara`成了等价关系（因为排除了非零向量，而且将非零的条件封装到了类型中）
    2. 同时也带来了一些构造上的繁琐性。因为返回该类型的函数必须要证明其满足非零的条件。
    3. 同时也使得其他相关的函数都要使用 vnonzero 版本，可能过于复杂。
    所以，当一个概念特别有应用需求时，才考虑用这种子类型的方式。
  *)
-Module vpara_on_vnonzero.
+Module demo_vpara_on_vnonzero.
   Context `{HARing : ARing}.
   Notation vcmul := (@vcmul _ Amul).
   Infix "\.*" := vcmul : vec_scope.
@@ -3037,96 +3046,44 @@ Module vpara_on_vnonzero.
         vnonzero_cond : vnonzeroV <> vzero Azero
       }.
 
-  Arguments mkvnonzero {n}.
-  Arguments vnonzeroV {n}.
-  Arguments vnonzero_cond {n}.
+  (** Two non-zero vectors are parallel, when their components are proportional *)
+  Definition vpara {n} (u v : vnonzero n) : Prop :=
+    exists k : A, k \.* u = v.
 
-  Context `{HField : Field A Aadd Azero Aopp Amul Aone Ainv}.
-  Add Field field_inst : (make_field_theory HField).
-  Context {AeqDec : Dec (@eq A)}.
-  Infix "*" := Amul : A_scope.
-  Notation "/ a" := (Ainv a) : A_scope.
-  Notation Adiv := (fun x y => x * / y).
-  Infix "/" := Adiv : A_scope.
-
-  (** Vector scalar multiplication on `vnonzero` *)
-  Definition vnonzero_cmul {n} (k : Anonzero) (v : vnonzero n) : vnonzero n.
-    refine (mkvnonzero (k \.* v) _).
-    intro. apply vcmul_eq0_imply_k0_or_v0 in H. destruct k, v, H; auto.
-  Defined.
-
-  Section vpara.
-
-    (** Two non-zero vectors are parallel, when their components are proportional *)
-    Definition vpara {n} (u v : vnonzero n) : Prop :=
-      exists k : A, k \.* u = v.
-
-    (* Note: if the coefficient `k` is limited to positive, then two vectors have
-     same direction *)
-
-    Infix "//" := vpara : vec_scope.
-
-    (** vparallel is an equivalence relation *)
-
-    Lemma vpara_refl : forall {n} (v : vnonzero n), v // v.
-    Proof. intros. exists Aone. apply vcmul_1_l. Qed.
-
-    Lemma vpara_sym : forall {n} (u v : vnonzero n), u // v -> v // u.
-    Proof.
-      intros. destruct H as [k H]. exists (Aone/k). rewrite <- H.
-      rewrite vcmul_assoc. symmetry. rewrite <- vcmul_1_l at 1. f_equal.
-      field. apply vcmul_eq_imply_k_neq0 in H; auto. apply u. apply v.
-    Qed.
-
-    Lemma vpara_trans : forall {n} (u v w : vnonzero n), u // v -> v // w -> u // w.
-    Proof.
-      intros. destruct H as [k1 H1], H0 as [k2 H2].
-      exists (k2 * k1). rewrite <- H2,<- H1. rewrite vcmul_assoc. auto.
-    Qed.
-
-    (** u // v -> (k \.* u) // v *)
-    Lemma vcmul_vpara_l : forall {n} (k : Anonzero) (u v : vnonzero n),
-        u // v -> (vnonzero_cmul k u) // v.
-    Proof.
-      intros. destruct H as [x H]. exists (x/k); simpl. rewrite <- H.
-      rewrite vcmul_assoc. f_equal. destruct k. cbv in *. field. auto.
-    Qed.
-
-    (** u // v -> u // (k \.* v) *)
-    Lemma vcmul_vpara_r : forall {n} (k : Anonzero) (u v : vnonzero n),
-        u // v -> u // (vnonzero_cmul k v).
-    Proof.
-      intros. apply vpara_sym. apply vcmul_vpara_l; auto. apply vpara_sym; auto.
-    Qed.
-
-    (** u // v => ∃! k, k * u = v *)
-    Lemma vpara_imply_uniqueK : forall {n} (u v : vnonzero n),
-        u // v -> (exists ! k, k \.* u = v).
-    Proof.
-      intros. destruct H as [k H]. exists k. split; auto.
-      intros. rewrite <- H in H0. apply vcmul_sameV_imply_eqK in H0; auto.
-      apply u.
-    Qed.
-
-  End vpara.
-
-  Infix "//" := vpara : vec_scope.
-
-End vpara_on_vnonzero.
+End demo_vpara_on_vnonzero.
 
 
 (* ======================================================================= *)
-(** ** Two vectors are parallel (or called collinear) *)
-Section vpara.
-  (* Let's have an Abelian-ring *)
-  Context `{HARing : ARing A Aadd Azero Aopp Amul Aone}.
-  Add Ring ring_inst : (make_ring_theory HARing).
-  
+(** ** Two vectors are collinear, parallel or antiparallel. *)
+(* https://en.wikipedia.org/wiki/Euclidean_vector
+   Two vectors are parallel if they have the same direction but not
+   necessarily the same magnitude, or antiparallel if they have opposite
+   direction but not necessarily the same magnitude *)
+Section vcoll_vpara_vantipara.
+
+  (* 
+     1. we need order relation to distinguish "k > 0 or k < 0" to define parallel
+        and antiparallel
+     2. we need to prove the reflexivity of collinear, so need a nonzero coefficient
+        k, such as 1, thus need a field.
+     3. we need a coefficent k and 1/k to prove the symmetric of collinear, so we 
+        need a field.
+   *)
+  Context `{HOrderedField
+      : OrderedField A Aadd Azero Aopp Amul Aone Ainv Alt Ale Altb Aleb}.
+  Add Field field_inst : (make_field_theory HOrderedField).
+  Notation "0" := Azero : A_scope.
+  Notation "1" := Aone : A_scope.
+  Infix "<" := Alt : A_scope.
+  Infix "<=" := Ale : A_scope.
   Infix "+" := Aadd : A_scope.
   Infix "*" := Amul : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
-  Notation Asub := (fun a b => a + (- b))%A.
+  Notation Asub a b := (a + (- b))%A.
   Infix "-" := Asub : A_scope.
+  Notation "/ a" := (Ainv a) : A_scope.
+  Notation Adiv a b := (a * (/ b))%A.
+  Infix "/" := Adiv : A_scope.
 
   Notation vzero := (vzero Azero).
   Notation vadd := (@vadd _ Aadd).
@@ -3134,77 +3091,266 @@ Section vpara.
   Notation vsub := (@vsub _ Aadd Aopp).
   Notation vcmul := (@vcmul _ Amul).
   Infix "+" := vadd : vec_scope.
-  Notation "0" := Azero.
-  Notation "1" := Aone.
   Notation "- v" := (vopp v) : vec_scope.
   Infix "-" := vsub : vec_scope.
   Infix "\.*" := vcmul : vec_scope.
-  
-  (** Two non-zero vectors are parallel, when their components are proportional *)
-  Definition vpara {n} (u v : vec n) : Prop :=
-    u <> vzero /\ v <> vzero /\ exists k : A, k \.* u = v.
 
-  (* Note: if the coefficient `k` is limited to positive, then two vectors have
-     same direction *)
 
-  Infix "//" := vpara : vec_scope.
-
-  (** vpara is almost an equivalence relation (but the reflexivity law not hold) *)
-
-  (** v // v *)
-  Lemma vpara_refl : forall {n} (v : vec n), v <> vzero -> v // v.
-  Proof. intros. unfold vpara. repeat split; auto. exists 1. apply vcmul_1_l. Qed.
-
-  (** u // v -> v // w -> u // w *)
-  Lemma vpara_trans : forall {n} (u v w: vec n), u // v -> v // w -> u // w.
-  Proof.
-    intros. destruct H as [H1 [H2 [k1 H3]]], H0 as [H4 [H5 [k2 H6]]].
-    repeat split; auto.
-    exists (k2 * k1). rewrite <- H6,<- H3. rewrite vcmul_assoc. auto.
-  Qed.
-  
-  Section Field_Dec.
-    Context `{HField : Field A Aadd Azero Aopp Amul Aone Ainv}.
-    Context {AeqDec : Dec (@eq A)}.
-    Add Field field_inst : (make_field_theory HField).
-    Notation "/ a" := (Ainv a) : A_scope.
-    Notation Adiv := (fun x y => x * / y).
-    Infix "/" := Adiv : A_scope.
+  (** *** Colinear *)
+  Section vcoll.
     
-    (* u // v -> v // u *)
-    Lemma vpara_sym : forall {n} (u v : vec n), u // v -> v // u.
+    (** Two non-zero vectors are collinear, if the components are proportional *)
+    (* Note, k <> 0 could be removed, but it need a prove *)
+    Definition vcoll {n} (u v : vec n) : Prop :=
+      u <> vzero /\ v <> vzero /\ exists k : A, k <> 0 /\ k \.* u = v.
+    Infix "//" := vcoll : vec_scope.
+    
+    (** v // v *)
+    Lemma vcoll_refl : forall {n} (v : vec n), v <> vzero -> v // v.
     Proof.
-      intros. destruct H as [H1 [H2 [k H3]]]. repeat split; auto.
-      exists (1/k). rewrite <- H3.
-      rewrite vcmul_assoc. symmetry. rewrite <- vcmul_1_l at 1. f_equal.
-      field. apply vcmul_eq_imply_k_neq0 in H3; auto.
+      intros. hnf. repeat split; auto. exists 1. split.
+      apply field_1_neq_0. apply vcmul_1_l.
+    Qed.
+    
+    (** u // v -> v // u *)
+    Lemma vcoll_sym : forall {n} (u v : vec n), u // v -> v // u.
+    Proof.
+      intros. hnf in *. destruct H as [H11 [H12 [k [H13 H14]]]].
+      repeat split; auto. exists (/k). split; auto.
+      apply field_inv_neq0_iff; auto.
+      rewrite <- H14. rewrite vcmul_assoc. rewrite field_mulInvL; auto.
+      apply vcmul_1_l.
     Qed.
 
-    (** u // v => ∃! k, k * u = v *)
-    Lemma vpara_imply_uniqueK : forall {n} (u v : vec n),
-        u // v -> (exists ! k, k \.* u = v).
+    (** u // v -> v // w -> u // w *)
+    Lemma vcoll_trans : forall {n} (u v w: vec n), u // v -> v // w -> u // w.
     Proof.
-      intros. destruct H as [H1 [H2 [k H3]]]. exists k. split; auto.
-      intros. rewrite <- H3 in H. apply vcmul_sameV_imply_eqK in H; auto.
+      intros. hnf in *.
+      destruct H as [H11 [H12 [k1 [H13 H14]]]].
+      destruct H0 as [H21 [H22 [k2 [H23 H24]]]].
+      repeat split; auto. exists (k2 * k1).
+      split. apply field_mul_neq0_iff; auto.
+      rewrite <- H24, <- H14. rewrite vcmul_assoc. auto.
+    Qed.
+
+    (** u // v => ∃! k, k <> 0 /\ k * u = v *)
+    Lemma vcoll_imply_uniqueK : forall {n} (u v : vec n),
+        u // v -> (exists ! k, k <> 0 /\ k \.* u = v).
+    Proof.
+      intros. destruct H as [H1 [H2 [k [H3 H4]]]]. exists k. split; auto.
+      intros j [H5 H6]. rewrite <- H4 in H6.
+      apply vcmul_sameV_imply_eqK in H6; auto.
     Qed.
 
     (** u // v -> (k \.* u) // v *)
-    Lemma vcmul_vpara_l : forall {n} k (u v : vec n),
+    Lemma vcoll_vcmul_l : forall {n} k (u v : vec n),
         k <> 0 -> u // v -> k \.* u // v.
     Proof.
-      intros. destruct H0 as [H1 [H2 [k1 H3]]]. repeat split; auto.
+      intros. hnf in *. destruct H0 as [H1 [H2 [k1 [H3 H4]]]].
+      repeat split; auto.
       - intro. apply vcmul_eq0_imply_k0_or_v0 in H0. destruct H0; auto.
-      - exists (k1/k); simpl. rewrite <- H3. rewrite vcmul_assoc. f_equal.
-        cbv. field. auto.
+      - exists (k1/k); simpl. split.
+        apply field_mul_neq0_iff. split; auto. apply field_inv_neq0_iff; auto.
+        rewrite <- H4. rewrite vcmul_assoc. f_equal. field. auto.
     Qed.
 
     (** u // v -> u // (k \.* v) *)
-    Lemma vcmul_vpara_r : forall {n} k (u v : vec n),
+    Lemma vcoll_vcmul_r : forall {n} k (u v : vec n),
         k <> 0 -> u // v -> u // (k \.* v).
     Proof.
-      intros. apply vpara_sym. apply vcmul_vpara_l; auto.
-      apply vpara_sym; auto.
+      intros. apply vcoll_sym in H0. apply vcoll_sym. apply vcoll_vcmul_l; auto.
     Qed.
     
-  End Field_Dec.
-End vpara.
+  End vcoll.
+  
+
+  (** *** Properties about //+ *)
+  Section vpara.
+    
+    (** Two non-zero vectors are parallel, if positive proportional *)
+    Definition vpara {n} (u v : vec n) : Prop :=
+      u <> vzero /\ v <> vzero /\ exists k : A, 0 < k /\ k \.* u = v.
+    Infix "//+" := vpara : vec_scope.
+    
+    (** v //+ v *)
+    Lemma vpara_refl : forall {n} (v : vec n), v <> vzero -> v //+ v.
+    Proof.
+      intros. hnf. repeat split; auto. exists 1. split. apply lt_0_1. apply vcmul_1_l.
+    Qed.
+    
+    (** u //+ v -> v //+ u *)
+    Lemma vpara_sym : forall {n} (u v : vec n), u //+ v -> v //+ u.
+    Proof.
+      intros. hnf in *. destruct H as [H11 [H12 [k [H13 H14]]]].
+      repeat split; auto. exists (/k). split; auto. apply inv_gt0; auto.
+      rewrite <- H14. rewrite vcmul_assoc. rewrite field_mulInvL; auto.
+      apply vcmul_1_l. symmetry. apply lt_not_eq; auto.
+    Qed.
+
+    (** u //+ v -> v //+ w -> u //+ w *)
+    Lemma vpara_trans : forall {n} (u v w: vec n), u //+ v -> v //+ w -> u //+ w.
+    Proof.
+      intros. hnf in *.
+      destruct H as [H11 [H12 [k1 [H13 H14]]]].
+      destruct H0 as [H21 [H22 [k2 [H23 H24]]]].
+      repeat split; auto. exists (k2 * k1). split. apply mul_gt0_if_gt0_gt0; auto.
+      rewrite <- H24, <- H14. rewrite vcmul_assoc. auto.
+    Qed.
+
+    (** u //+ v => ∃! k, 0 < k /\ k * u = v *)
+    Lemma vpara_imply_uniqueK : forall {n} (u v : vec n),
+        u //+ v -> (exists ! k, 0 < k /\ k \.* u = v).
+    Proof.
+      intros. destruct H as [H1 [H2 [k [H3 H4]]]]. exists k. split; auto.
+      intros j [H5 H6]. rewrite <- H4 in H6.
+      apply vcmul_sameV_imply_eqK in H6; auto.
+    Qed.
+
+    (** u //+ v -> (k \.* u) //+ v *)
+    Lemma vpara_vcmul_l : forall {n} k (u v : vec n),
+        0 < k -> u //+ v -> k \.* u //+ v.
+    Proof.
+      intros. hnf in *. destruct H0 as [H1 [H2 [k1 [H3 H4]]]].
+      repeat split; auto.
+      - intro. apply vcmul_eq0_imply_k0_or_v0 in H0. destruct H0; auto.
+        apply lt_not_eq in H. rewrite H0 in H. easy.
+      - exists (k1/k); simpl. split.
+        + apply mul_gt0_if_gt0_gt0; auto. apply inv_gt0; auto.
+        + rewrite <- H4. rewrite vcmul_assoc. f_equal. field.
+          symmetry. apply lt_not_eq. auto.
+    Qed.
+
+    (** u //+ v -> u //+ (k \.* v) *)
+    Lemma vpara_vcmul_r : forall {n} k (u v : vec n),
+        0 < k -> u //+ v -> u //+ (k \.* v).
+    Proof.
+      intros. apply vpara_sym in H0. apply vpara_sym. apply vpara_vcmul_l; auto.
+    Qed.
+    
+  End vpara.
+
+
+  (** *** Properties about //- *)
+  Section vantipara.
+  
+    (** Two non-zero vectors are antiparallel, if negative proportional *)
+    Definition vantipara {n} (u v : vec n) : Prop :=
+      u <> vzero /\ v <> vzero /\ exists k : A, k < 0 /\ k \.* u = v.
+    Infix "//-" := vantipara : vec_scope.
+    
+    (** v //- v *)
+    Lemma vantipara_refl : forall {n} (v : vec n), v <> vzero -> v //- v.
+    Proof.
+      intros. hnf. repeat split; auto. exists (-(1))%A. split.
+      apply gt0_iff_neg. apply lt_0_1.
+      (* Note that, this is not true *)
+    Abort.
+    
+    (** u //- v -> v //- u *)
+    Lemma vantipara_sym : forall {n} (u v : vec n), u //- v -> v //- u.
+    Proof.
+      intros. hnf in *. destruct H as [H11 [H12 [k [H13 H14]]]].
+      repeat split; auto. exists (/k). split; auto.
+      apply inv_lt0; auto.
+      rewrite <- H14. rewrite vcmul_assoc. rewrite field_mulInvL; auto.
+      apply vcmul_1_l. apply lt_not_eq; auto.
+    Qed.
+
+    (** u //- v -> v //- w -> u //- w *)
+    Lemma vantipara_trans : forall {n} (u v w: vec n), u //- v -> v //- w -> u //- w.
+    Proof.
+      intros. hnf in *.
+      destruct H as [H11 [H12 [k1 [H13 H14]]]].
+      destruct H0 as [H21 [H22 [k2 [H23 H24]]]].
+      repeat split; auto. exists (k2 * k1). split.
+      2:{ rewrite <- H24, <- H14. rewrite vcmul_assoc. auto. }
+      (* Note that, this is not true *)
+    Abort.
+
+    (** u //- v => ∃! k, k < 0 /\ k * u = v *)
+    Lemma vantipara_imply_uniqueK : forall {n} (u v : vec n),
+        u //- v -> (exists ! k, k < 0 /\ k \.* u = v).
+    Proof.
+      intros. destruct H as [H1 [H2 [k [H3 H4]]]]. exists k. split; auto.
+      intros j [H5 H6]. rewrite <- H4 in H6.
+      apply vcmul_sameV_imply_eqK in H6; auto.
+    Qed.
+
+    (** u //- v -> (k \.* u) //- v *)
+    Lemma vantipara_vcmul_l : forall {n} k (u v : vec n),
+        0 < k -> u //- v -> k \.* u //- v.
+    Proof.
+      intros. hnf in *. destruct H0 as [H1 [H2 [k1 [H3 H4]]]].
+      repeat split; auto.
+      - intro. apply vcmul_eq0_imply_k0_or_v0 in H0. destruct H0; auto.
+        apply lt_not_eq in H. rewrite H0 in H. easy.
+      - exists (k1/k); simpl. split.
+        + apply mul_lt0_if_lt0_gt0; auto. apply inv_gt0; auto.
+        + rewrite <- H4. rewrite vcmul_assoc. f_equal. field.
+          symmetry. apply lt_not_eq. auto.
+    Qed.
+
+    (** u //- v -> u //- (k \.* v) *)
+    Lemma vantipara_vcmul_r : forall {n} k (u v : vec n),
+        0 < k -> u //- v -> u //- (k \.* v).
+    Proof.
+      intros. apply vantipara_sym in H0. apply vantipara_sym.
+      apply vantipara_vcmul_l; auto.
+    Qed.
+    
+  End vantipara.
+  
+  Infix "//" := vcoll : vec_scope.
+  Infix "//+" := vpara : vec_scope.
+  Infix "//-" := vantipara : vec_scope.
+
+  
+  (** *** Convert between //, //+, and //-  *)
+  Section convert.
+    
+    (** u //+ v -> u // v *)
+    Lemma vpara_imply_vcoll : forall {n} (u v : vec n), u //+ v -> u // v.
+    Proof.
+      intros. hnf in *. destruct H as [H11 [H12 [k [H13 H14]]]].
+      repeat split; auto. exists k. split; auto. symmetry. apply lt_imply_neq; auto.
+    Qed.
+    
+    (** u //- v -> u // v *)
+    Lemma vantipara_imply_vcoll : forall {n} (u v : vec n), u //- v -> u // v.
+    Proof.
+      intros. hnf in *. destruct H as [H11 [H12 [k [H13 H14]]]].
+      repeat split; auto. exists k. split; auto. apply lt_imply_neq; auto.
+    Qed.
+    
+    (** u //+ v -> (-u) //- v *)
+    Lemma vpara_imply_vantipara_opp_l : forall {n} (u v : vec n), u //+ v -> (-u) //- v.
+    Proof.
+      intros. hnf in *. destruct H as [H11 [H12 [k [H13 H14]]]].
+      repeat split; auto. apply group_opp_neq0_iff; auto.
+      exists (- k)%A. split. apply gt0_iff_neg; auto.
+      rewrite vcmul_opp, vcmul_vopp, <- H14. rewrite vopp_vopp. auto.
+    Qed.
+    
+    (** u //+ v -> u //- (-v)*)
+    Lemma vpara_imply_vantipara_opp_r : forall {n} (u v : vec n), u //+ v -> u //- (-v).
+    Proof.
+      intros. hnf in *. destruct H as [H11 [H12 [k [H13 H14]]]].
+      repeat split; auto. apply group_opp_neq0_iff; auto.
+      exists (- k)%A. split. apply gt0_iff_neg; auto.
+      rewrite vcmul_opp. rewrite H14. auto.
+    Qed.
+    
+    (** u // v -> (u //+ v) \/ (u //- v) *)
+    Lemma vpara_imply_vpara_or_vantipara : forall {n} (u v : vec n),
+        u // v -> u //+ v \/ u //- v.
+    Proof.
+      intros. hnf in *. destruct H as [H11 [H12 [k [H13 H14]]]].
+      destruct (lt_cases k 0) as [[Hlt|Hgt]|Heq0].
+      - right. hnf. repeat split; auto. exists k; auto.
+      - left. hnf. repeat split; auto. exists k; auto.
+      - easy.
+    Qed.
+    
+  End convert.
+
+End vcoll_vpara_vantipara.

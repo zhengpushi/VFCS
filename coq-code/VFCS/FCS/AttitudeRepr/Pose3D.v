@@ -24,72 +24,6 @@ Open Scope vec_scope.
 (* ########################################################################### *)
 (** * Preliminary math *)
 
-(* ======================================================================= *)
-(** ** Skew-symmetric matrix of 3-dimensions *)
-Section skew3.
-
-  (** Equivalent form of skewP of 3D vector *)
-  Lemma skewP3_eq : forall M : mat 3 3,
-      skewP M <->
-      (M.11 = 0) /\ (M.22 = 0) /\ (M.33 = 0) /\
-        (M.12 = -M.21 /\ M.13 = -M.31 /\ M.23 = -M.32)%R.
-  Proof.
-    intros. split; intros.
-    - hnf in H. assert (m2l (- M)%M = m2l (M\T)). rewrite H. auto.
-      cbv in H0. list_eq. cbv. ra.
-    - hnf. cbv in H. meq; ra.
-  Qed.
-
-  (** Convert a vector to its corresponding skew-symmetric matrix *)
-  Definition skew3 (v : vec 3) : mat 3 3 :=
-    l2m [[0; -v.3; v.2];
-         [v.3; 0; -v.1];
-         [-v.2; v.1; 0]]%R.
-  Notation "`| v |x" := (skew3 v).
-
-  Lemma skew3_spec : forall a, skewP (skew3 a).
-  Proof. intros. rewrite skewP3_eq. cbv. lra. Qed.
-
-  (** Convert a skew-symmetric matrix to its corresponding vector *)
-  Definition vex3 (M : mat 3 3) : vec 3 := l2v [M.32; M.13; M.21].
-
-  Lemma skew3_vex3 : forall (m : mat 3 3), skewP m -> skew3 (vex3 m) = m.
-  Proof. intros. apply skewP3_eq in H. cbv in H. meq; ra. Qed.
-
-  Lemma vex3_skew3 : forall (v : vec 3), vex3 (skew3 v) = v.
-  Proof. intros. veq. Qed.
-
-  Lemma v3cross_eq_skew_mul_vec : forall (u v : vec 3),
-      u \x v = `|u|x * v.
-  Proof. intros; veq; ra. Qed.
-
-  Lemma v3cross_eq_skew_mul_cvec : forall (u v : vec 3),
-      u \x v = `|u|x * v.
-  Proof. intros; veq; ra. Qed.
-
-  Section examples.
-    
-    (** Example 4, page 19, 高等数学，第七版 *)
-    Example v3cross_example1 : (l2v [2;1;-1]) \x (l2v [1;-1;2]) = l2v [1;-5;-3].
-    Proof. veq; ra. Qed.
-
-    (** Example 5, page 19, 高等数学，第七版 *)
-    (** 根据三点坐标求三角形面积 *)
-    Definition area_of_triangle (A B C : vec 3) :=
-      let AB := B - A in
-      let AC := C - A in
-      ((1/2) * ||AB \x AC||)%R.
-
-    (** Example 6, page 20, 高等数学，第七版 *)
-    (** 刚体绕轴以角速度 ω 旋转，某点M（OM为向量r⃗）处的线速度v⃗，三者之间的关系*)
-    Definition v3_rotation_model (ω r v : vec 3) := v = ω \x r.
-    
-  End examples.
-
-End skew3.
-
-Notation "`| v |x" := (skew3 v).
-
 
 (* ########################################################################### *)
 (** * Axis-angle representation *)
@@ -151,7 +85,7 @@ Section AxisAngle.
     intros. rewrite rotaa_form1. unfold aa2mat.
     rewrite !mmulv_madd. rewrite mmulv_1_l.
     rewrite !mmulv_mcmul. rewrite mmulv_assoc.
-    rewrite <- !v3cross_eq_skew_mul_cvec.
+    rewrite <- !v3cross_eq_skew_mul_vec.
     move2h (sin θ \.* (n \x a)). symmetry. move2h (sin θ \.* (n \x a)). elimh.
     rewrite (commutative (<a,n>)). rewrite <- vcmul_assoc.
     rewrite v3cross_u_uv_eq_minus.

@@ -98,6 +98,7 @@
   Gram-Schmidt: 施密特正交化。以2维为例，该算法保持r1不变，r3的改变最多。
     有一种无偏差的递增正交化算法，不偏向特定轴，需要多次迭代（比如10次），然后用1次
     标准的Gram-Schmidt算法来保证完全正交。
+  GL(n): 一般线性群，是n阶可逆矩阵的集合。
   O(n): Orthogonal Group 正交群（保距，行列式为±1）
   SO(n): Special Orthogonal Group 特殊正交群（保持手性，行列式为1）
     Proper rotation:  适当的旋转 (行列式为1)
@@ -153,17 +154,21 @@ Open Scope mat_scope.
 
 (* ======================================================================= *)
 (** ** Orthonormal vectors 标准正交的向量组 *)
-Section mcolsOrthonormal.
+Section mcolsOrthonormal_mrowsOrthonormal.
   Context `{HField:Field}.
   Notation mat r c := (mat A r c).
   Notation vunit := (@vunit _ Aadd Azero Amul Aone).
   Notation vorth := (@vorth _ Aadd Azero Amul).
   Infix "_|_" := vorth : vec_scope.
 
-  (** All (different) column-vectors of a matrix are orthogonal each other.
+  (** All (different) columns of a matrix are orthogonal each other.
       For example: [v1;v2;v3] => u_|_v2 && u_|_v3 && v_|_v3. *)
-  Definition mcolsOrth {r c} (m : mat r c) : Prop :=
-    forall j1 j2, j1 <> j2 -> mcol m j1 _|_ mcol m j2.
+  Definition mcolsOrth {r c} (M : mat r c) : Prop :=
+    forall j1 j2, j1 <> j2 -> mcol M j1 _|_ mcol M j2.
+
+  (** All (different) rows of a matrix are orthogonal each other. *)
+  Definition mrowsOrth {r c} (M : mat r c) : Prop :=
+    forall i1 i2, i1 <> i2 -> mrow M i1 _|_ mrow M i2.
 
   (*
   (** bool version *)
@@ -188,9 +193,11 @@ Section mcolsOrthonormal.
   End test.
    *)
 
-  (** All column-vectors of a matrix are unit vector.
+  (** All columns of a matrix are unit vector.
       For example: [v1;v2;v3] => unit u && unit v && unit v3 *)
   Definition mcolsUnit {r c} (m : mat r c) : Prop := forall j, vunit (mcol m j).
+  (** All rows of a matrix are unit vector. *)
+  Definition mrowsUnit {r c} (m : mat r c) : Prop := forall i, vunit (mrow m i).
 
   (*
   (** bool version *)
@@ -204,10 +211,12 @@ Section mcolsOrthonormal.
    *)
 
   (** The columns of a matrix is orthogomal *)
-  Definition mcolsOrthonormal {r c} (m : mat r c) : Prop :=
-    mcolsOrth m /\ mcolsUnit m.
+  Definition mcolsOrthonormal {r c} (m : mat r c) : Prop := mcolsOrth m /\ mcolsUnit m.
 
-End mcolsOrthonormal.
+  (** The rows of a matrix is orthogomal *)
+  Definition mrowsOrthonormal {r c} (m : mat r c) : Prop := mrowsOrth m /\ mrowsUnit m.
+
+End mcolsOrthonormal_mrowsOrthonormal.
 
 
 (* ======================================================================= *)
@@ -219,7 +228,9 @@ Section morth.
   
   Notation vdot := (@vdot _ Aadd Azero Amul).
   Notation "< u , v >" := (vdot u v) : vec_scope.
-  
+
+  Notation vec n := (@vec A n).
+  Notation vzero := (vzero Azero).
   Notation smat n := (smat A n).
   Notation mat1 n := (@mat1 _ Azero Aone n).
   Notation mmul := (@mmul _ Aadd Azero Amul).
@@ -229,6 +240,7 @@ Section morth.
   Notation mdet := (@mdet _ Aadd Azero Aopp Amul Aone _).
   Notation minvertible := (@minvertible _ Aadd Azero Amul Aone _).
   Notation mcolsOrthonormal := (@mcolsOrthonormal _ Aadd Azero Amul Aone).
+  Notation mrowsOrthonormal := (@mrowsOrthonormal _ Aadd Azero Amul Aone).
   Notation "M \-1" := (@minvAM _ Aadd Azero Aopp Amul Aone Ainv _ M) : mat_scope.
 
   (** An orthogonal matrix *)
@@ -302,12 +314,11 @@ Section morth.
     symmetry in H0. apply ring_sqr_eq1_imply_1_neg1 in H0. auto.
   Qed.
   
-  (** matrix m is orthogonal <-> columns of m are orthogomal *)
-  Lemma morth_iff_mcolsOrthonormal : forall {n} (m : smat n),
-      morth m <-> mcolsOrthonormal m.
+  (** matrix M is orthogonal <-> columns of M are orthogomal *)
+  Lemma morth_iff_mcolsOrthonormal : forall {n} (M : smat n),
+      morth M <-> mcolsOrthonormal M.
   Proof.
-    intros.
-    unfold morth,mcolsOrthonormal. unfold mcolsOrth, mcolsUnit. unfold vorth, vunit.
+    intros. unfold mcolsOrthonormal, mcolsOrth, mcolsUnit, vorth, vunit.
     split; intros.
     - split; intros.
       + rewrite vdot_col_col; auto. rewrite H; auto. rewrite mnth_mat1_diff; auto.
@@ -317,6 +328,31 @@ Section morth.
       destruct (i ??= j)%fin.
       + subst. rewrite mnth_mat1_same; auto.
       + rewrite mnth_mat1_diff; auto.
+  Qed.
+  
+  (** matrix M is orthogonal <-> rows of M are orthogomal *)
+  Lemma morth_iff_mrowsOrthonormal : forall {n} (M : smat n),
+      morth M <-> mrowsOrthonormal M.
+  Proof.
+    intros. unfold mrowsOrthonormal, mrowsOrth, mrowsUnit, vorth, vunit.
+    split; intros.
+    - split; intros.
+      + rewrite vdot_row_row; auto. rewrite morth_iff_mul_trans_r in H.
+        rewrite H, mnth_mat1_diff; auto.
+      + rewrite vdot_row_row; auto. rewrite morth_iff_mul_trans_r in H.
+        rewrite H, mnth_mat1_same; auto.
+    - (* 这一步不能直接证明，因为 morth 定义为 M\T*M=mat1，而不是 M*M\T=mat1。
+         可借助已证明的列的性质。*)
+      destruct H as [H1 H2].
+      apply morth_mtrans. apply morth_iff_mcolsOrthonormal. hnf. split; auto.
+  Qed.
+  
+  (** columns of M are orthonormal <-> rows of M are orthonormal *)
+  Lemma mcolsOrthonormalorth_iff_mrowsOrthonormal : forall {n} (M : smat n),
+      mcolsOrthonormal M <-> mrowsOrthonormal M.
+  Proof.
+    intros. rewrite <- morth_iff_mrowsOrthonormal, <- morth_iff_mcolsOrthonormal.
+    easy.
   Qed.
 
   (** Transformation by orthogonal matrix will keep inner-product *)
@@ -339,6 +375,16 @@ Section morth.
       morth M -> ||(M * v)%V|| = ||v||.
   Proof.
     intros. rewrite vlen_eq_iff_dot_eq. apply morth_keep_dot. auto.
+  Qed.
+
+  (** Transformation by orthogonal matrix will keep zero. *)
+  Lemma morth_keep_nonzero : forall {n} (M : smat n) (v : vec n),
+      v <> vzero -> morth M -> (M * v)%V <> vzero.
+  Proof.
+    intros. intro.
+    pose proof (morth_keep_length M v H0). rewrite H1 in H2.
+    rewrite vlen_vzero in H2. symmetry in H2.
+    rewrite vlen_eq0_iff_eq0 in H2. easy.
   Qed.
 
 (** 由于正交矩阵可保持变换向量的长度和角度，它可保持坐标系的整体结构不变。

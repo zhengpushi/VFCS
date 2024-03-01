@@ -113,6 +113,15 @@ Module BasicMatrixTheory (E : ElementType).
   (** ** Convert between vector and list *)
   Definition v2l {n} (v : vec n) : list A := v2l v.
   Definition l2v {n} (l : list A) : vec n := l2v 0 _ l.
+
+  (** (l2v l).i = nth i l *)
+  Lemma vnth_l2v : forall {n} (l : list A) i, (@l2v n l) $ i = nth (fin2nat i) l Azero.
+  Proof. intros. apply vnth_l2v. Qed.
+    
+  (** nth i (v2l v) = v.i *)
+  Lemma nth_v2l : forall {n} (v : vec n) (i : nat) (H: i < n),
+      i < n -> nth i (v2l v) Azero = v (nat2fin i H).
+  Proof. intros. apply nth_v2l; auto. Qed.
   
   Lemma v2l_length : forall {n} (v : vec n), length (v2l v) = n.
   Proof. intros. apply v2l_length. Qed.
@@ -375,7 +384,31 @@ Module BasicMatrixTheory (E : ElementType).
     mkmat_4_4
       a11 a12 a13 a14 a21 a22 a23 a24
       a31 a32 a33 a34 a41 a42 a43 a44 (Azero:=0).
-  
+
+  (* ======================================================================= *)
+  (** ** Get row and column of a matrix *)
+
+  (* (* Note that, the notations such as M.1, M.x can be denoted mrow *) *)
+
+  Notation "M &1" := (mcol M (nat2finS 0)) : mat_scope.
+  Notation "M &2" := (mcol M (nat2finS 1)) : mat_scope.
+  Notation "M &3" := (mcol M (nat2finS 2)) : mat_scope.
+  Notation "M &4" := (mcol M (nat2finS 3)) : mat_scope.
+
+  (* (* Definition mrow {r c} (M : mat r c) (i : fin r) : vec c := mrow M i. *) *)
+
+  (* (* (** (mrow M i).j = M.i.j *) *) *)
+  (* (* Lemma vnth_mrow : forall {r c} (M : mat r c) (i : fin r) (j : fin c), *) *)
+  (* (*     (mrow M i) $ j = M $ i $ j. *) *)
+  (* (* Proof. intros. auto. Qed. *) *)
+    
+  (* (* Definition mcol {r c} (M : mat r c) (j : fin c) : vec r := mcol M j. *) *)
+
+  (* (** (mcol M j).i = M.i.j *) *)
+  (* Lemma vnth_mcol : forall {r c} (M : mat r c) (i : fin r) (j : fin c), *)
+  (*     (mcol M j) $ i = M $ i $ j. *)
+  (* Proof. intros. auto. Qed. *)
+    
   (* ======================================================================= *)
   (** ** Mapping of matrix *)
 
@@ -837,21 +870,6 @@ Module RingMatrixTheory (E : RingElementType).
   Lemma vorth_comm : forall {n} (u v : vec n), u _|_ v -> v _|_ u.
   Proof. intros. apply vorth_comm; auto. Qed.
 
-  (* ======================================================================= *)
-  (** ** Parallel vectors (or called collinear) *)
-
-  (** Two non-zero vectors are parallel, when their components are proportional *)
-  Definition vpara {n} (u v : vec n) : Prop := @vpara _ 0 Amul _ u v.
-  Infix "//" := vpara : vec_scope.
-
-  (** v // v *)
-  Lemma vpara_refl : forall {n} (v : vec n), v <> vzero -> v // v.
-  Proof. intros. apply vpara_refl; auto. Qed.
-
-  (** u // v -> v // w -> u // w *)
-  Lemma vpara_trans : forall {n} (u v w: vec n), u // v -> v // w -> u // w.
-  Proof. intros. apply vpara_trans with v; auto. Qed.
-
   Open Scope mat_scope.
 
   (* ======================================================================= *)
@@ -1296,17 +1314,17 @@ Module RingMatrixTheory (E : RingElementType).
   Definition mdet2 (M : smat 2) := @mdet2 _ Aadd Aopp Amul M.
   Definition mdet3 (M : smat 3) := @mdet3 _ Aadd Aopp Amul M.
 
-  (** |M_1x1| = mdet1 M *)
-  Lemma mdet_eq_mdet1 : forall M, mdet M = mdet1 M.
-  Proof. intros. apply mdet_eq_mdet1. Qed.
+  (** mdet1 M = |M| *)
+  Lemma mdet1_eq_mdet : forall M, mdet1 M = mdet M.
+  Proof. intros. apply mdet1_eq_mdet. Qed.
   
   (** |M| <> 0 <-> mdet_exp <> 0 *)
   Lemma mdet1_neq0_iff : forall (M : smat 1), mdet M <> 0 <-> M.11 <> 0.
   Proof. intros. apply mdet1_neq0_iff. Qed.
 
   (** mdet2 M = |M| *)
-  Lemma mdet_eq_mdet2 : forall M, mdet M = mdet2 M.
-  Proof. intros. apply mdet_eq_mdet2. Qed.
+  Lemma mdet2_eq_mdet : forall M, mdet2 M = mdet M.
+  Proof. intros. apply mdet2_eq_mdet. Qed.
 
   (** |M| <> 0 <-> mdet_exp <> 0 *)
   Lemma mdet2_neq0_iff : forall (M : smat 2),
@@ -1314,8 +1332,8 @@ Module RingMatrixTheory (E : RingElementType).
   Proof. intros. apply mdet2_neq0_iff. Qed.
 
   (** mdet3 M = |M| *)
-  Lemma mdet_eq_mdet3 : forall M, mdet M = mdet3 M.
-  Proof. intros. apply mdet_eq_mdet3. Qed.
+  Lemma mdet3_eq_mdet : forall M, mdet3 M = mdet M.
+  Proof. intros. apply mdet3_eq_mdet. Qed.
   
   (** |M| <> 0 <-> mdet_exp <> 0 *)
   Lemma mdet3_neq0_iff : forall (M : smat 3),
@@ -1468,25 +1486,6 @@ Module FieldMatrixTheory (E : FieldElementType).
   Lemma vorth_vcmul_r : forall {n} k (u v : vec n),
       k <> 0 -> (u _|_ (k \.* v) <-> u _|_ v).
   Proof. intros. apply vorth_vcmul_r; auto. Qed.
-
-  (* ======================================================================= *)
-  (** ** Properties for parallel vector *)
-  
-  (** u // v -> v // u *)
-  Lemma vpara_sym : forall {n} (u v : vec n), u // v -> v // u.
-  Proof. intros. apply vpara_sym; auto. Qed.
-
-  (** u // v => ∃! k, k * u = v *)
-  Lemma vpara_imply_uniqueK : forall {n} (u v : vec n), u // v -> (exists ! k, k \.* u = v).
-  Proof. intros. apply vpara_imply_uniqueK; auto. Qed.
-
-  (** u // v -> (k \.* u) // v *)
-  Lemma vcmul_vpara_l : forall {n} k (u v : vec n), k <> 0 -> u // v -> k \.* u // v.
-  Proof. intros. apply vcmul_vpara_l; auto. Qed.
-
-  (** u // v -> u // (k \.* v) *)
-  Lemma vcmul_vpara_r : forall {n} k (u v : vec n), k <> 0 -> u // v -> u // (k \.* v).
-  Proof. intros. apply vcmul_vpara_r; auto. Qed.
 
   (* ======================================================================= *)
   (** ** Projection component of a vector onto another *)
@@ -1697,12 +1696,35 @@ Module FieldMatrixTheory (E : FieldElementType).
   (** |M| <> 0 -> minv4 M = inv M *)
   Lemma minv4_eq_inv : forall M, mdet M <> 0 -> minv4 M = minv M.
   Proof. intros. apply AM_minv4_eq_inv; auto. Qed.
+
+  (* ======================================================================= *)
+  (** ** Orthonormal vectors 标准正交的向量组 *)
+  
+  (** All (different) column-vectors of a matrix are orthogonal each other.
+      For example: [v1;v2;v3] => u_|_v2 && u_|_v3 && v_|_v3. *)
+  Definition mcolsOrth {r c} (M : mat r c) : Prop :=
+    @mcolsOrth _ Aadd 0 Amul _ _ M.
+
+  (** All column-vectors of a matrix are unit vector.
+      For example: [v1;v2;v3] => unit u && unit v && unit v3 *)
+  Definition mcolsUnit {r c} (M : mat r c) : Prop :=
+    @mcolsUnit _ Aadd 0 Amul 1 _ _ M.
+
+  (** The columns of a matrix is orthogomal *)
+  Definition mcolsOrthonormal {r c} (M : mat r c) : Prop :=
+    @mcolsOrthonormal _ Aadd 0 Amul 1 _ _ M.
+  
   
   (* ======================================================================= *)
   (** ** Orthogonal matrix *)
 
   (** An orthogonal matrix *)
   Definition morth {n} (M : smat n) : Prop := @morth _ Aadd 0 Amul 1 _ M.
+  
+  (** matrix M is orthogonal <-> columns of M are orthogomal *)
+  Lemma morth_iff_mcolsOrthonormal : forall {n} (M : smat n),
+      morth M <-> mcolsOrthonormal M.
+  Proof. intros. apply morth_iff_mcolsOrthonormal. Qed.
 
   (** orthogonal M -> invertible M *)
   Lemma morth_invertible : forall {n} (M : smat n), morth M -> minvertible M.
@@ -1743,6 +1765,11 @@ Module FieldMatrixTheory (E : FieldElementType).
   (** orthogonal M -> |M| = ± 1 *)
   Lemma morth_mdet : forall {n} (M : smat n), morth M -> mdet M = 1 \/ mdet M = (- (1))%A.
   Proof. intros. apply morth_mdet; auto. Qed.
+
+  (** Transformation by orthogonal matrix will keep inner-product *)
+  Lemma morth_keep_dot : forall {n} (M : smat n) (u v : vec n),
+      morth M -> <M * u, M * v>%V = <u, v>.
+  Proof. intros. apply morth_keep_dot; auto. Qed.
 
   (* ======================================================================= *)
   (** ** O(n): General Orthogonal Group, General Linear Group *)
@@ -1881,9 +1908,9 @@ Module OrderedFieldMatrixTheory (E : OrderedFieldElementType).
 
   Include (FieldMatrixTheory E).
 
+  Open Scope vec_scope.
+
   Section THESE_CODE_ARE_COPIED_FROM_OrderedRingMatrixTheroy.
-    
-    Open Scope vec_scope.
     
     (** 0 <= <v, v> *)
     Lemma vdot_ge0 : forall {n} (v : vec n), 0 <= (<v, v>).
@@ -1929,7 +1956,7 @@ Module OrderedFieldMatrixTheory (E : OrderedFieldElementType).
   Proof. intros. apply vdot_same_neq0_then_vnonzero; auto. Qed.
 
   (** 0 < <v, v> *)
-  Lemma vdot_gt0 : forall {n} (v : vec n), v <> vzero -> Alt 0 (<v, v>).
+  Lemma vdot_gt0 : forall {n} (v : vec n), v <> vzero -> 0 < (<v, v>).
   Proof. intros. apply vdot_gt0; auto. Qed.
   
   (** <u, v>² / (<u, u> * <v, v>) <= 1. *)
@@ -1939,12 +1966,12 @@ Module OrderedFieldMatrixTheory (E : OrderedFieldElementType).
 
   (** vproj (u + v) w = vproj u w + vproj v w *)
   Lemma vproj_vadd : forall {n} (u v w : vec n),
-      w <> vzero -> (vproj (u + v) w = vproj u w + vproj v w)%V.
+      w <> vzero -> vproj (u + v) w = vproj u w + vproj v w.
   Proof. intros. apply vproj_vadd; auto. Qed.
   
   (** vproj (k \.* u) v = k * (vproj u v) *)
   Lemma vproj_vcmul : forall {n} (u v : vec n) k,
-      v <> vzero -> (vproj (k \.* u) v = k \.* (vproj u v))%V.
+      v <> vzero -> vproj (k \.* u) v = k \.* (vproj u v).
   Proof. intros. apply vproj_vcmul; auto. Qed.
 
   (** vproj v v = v *)
@@ -1957,17 +1984,133 @@ Module OrderedFieldMatrixTheory (E : OrderedFieldElementType).
 
   (** vperp (u + v) w = vperp u w + vperp v w *)
   Lemma vperp_vadd : forall {n} (u v w : vec n),
-      w <> vzero -> (vperp (u + v) w = vperp u w + vperp v w)%V.
+      w <> vzero -> vperp (u + v) w = vperp u w + vperp v w.
   Proof. intros. apply vperp_vadd; auto. Qed.
 
   (** vperp (k * u) v = k * (vperp u v) *)
   Lemma vperp_vcmul : forall {n} (k : A) (u v : vec n),
-      v <> vzero -> (vperp (k \.* u) v = k \.* (vperp u v))%V.
+      v <> vzero -> vperp (k \.* u) v = k \.* (vperp u v).
   Proof. intros. apply vperp_vcmul; auto. Qed.
 
   (** vperp v v = vzero *)
   Lemma vperp_same : forall {n} (v : vec n), v <> vzero -> vperp v v = vzero.
   Proof. intros. apply vperp_same; auto. Qed.
+
+  (* ======================================================================= *)
+  (** ** Two vectors are collinear *)
+
+  (** Two non-zero vectors are collinear, if the components are proportional *)
+  Definition vcoll {n} (u v : vec n) : Prop := @vcoll _ 0 Amul _ u v.
+  Infix "//" := vcoll : vec_scope.
+
+  (** v // v *)
+  Lemma vcoll_refl : forall {n} (v : vec n), v <> vzero -> v // v.
+  Proof. intros; apply vcoll_refl; auto. Qed.
+  
+  (** u // v -> v // u *)
+  Lemma vcoll_sym : forall {n} (u v : vec n), u // v -> v // u.
+  Proof. intros; apply vcoll_sym; auto. Qed.
+
+  (** u // v -> v // w -> u // w *)
+  Lemma vcoll_trans : forall {n} (u v w: vec n), u // v -> v // w -> u // w.
+  Proof. intros; apply vcoll_trans with v; auto. Qed.
+
+  (** u // v => ∃! k, k <> 0 /\ k * u = v *)
+  Lemma vcoll_imply_uniqueK : forall {n} (u v : vec n),
+      u // v -> (exists ! k, k <> 0 /\ k \.* u = v).
+  Proof. intros; apply vcoll_imply_uniqueK; auto. Qed.
+
+  (** u // v -> (k \.* u) // v *)
+  Lemma vcoll_vcmul_l : forall {n} k (u v : vec n), k <> 0 -> u // v -> k \.* u // v.
+  Proof. intros; apply vcoll_vcmul_l; auto. Qed.
+
+  (** u // v -> u // (k \.* v) *)
+  Lemma vcoll_vcmul_r : forall {n} k (u v : vec n), k <> 0 -> u // v -> u // (k \.* v).
+  Proof. intros; apply vcoll_vcmul_r; auto. Qed.
+
+  (* ======================================================================= *)
+  (** ** Two vectors are parallel (i.e., collinear with same direction) *)
+
+  (** Two non-zero vectors are parallel, if positive proportional *)
+  Definition vpara {n} (u v : vec n) : Prop := @vpara _ 0 Amul Alt _ u v.
+  Infix "//+" := vpara : vec_scope.
+
+  (** v //+ v *)
+  Lemma vpara_refl : forall {n} (v : vec n), v <> vzero -> v //+ v.
+  Proof. intros. apply vpara_refl; auto. Qed.
+  
+  (** u //+ v -> v //+ u *)
+  Lemma vpara_sym : forall {n} (u v : vec n), u //+ v -> v //+ u.
+  Proof. intros. apply vpara_sym; auto. Qed.
+
+  (** u //+ v -> v //+ w -> u //+ w *)
+  Lemma vpara_trans : forall {n} (u v w: vec n), u //+ v -> v //+ w -> u //+ w.
+  Proof. intros. apply vpara_trans with v; auto. Qed.
+
+  (** u //+ v => ∃! k, 0 < k /\ k * u = v *)
+  Lemma vpara_imply_uniqueK : forall {n} (u v : vec n),
+      u //+ v -> (exists ! k, 0 < k /\ k \.* u = v).
+  Proof. intros. apply vpara_imply_uniqueK; auto. Qed.
+
+  (** u //+ v -> (k \.* u) //+ v *)
+  Lemma vpara_vcmul_l : forall {n} k (u v : vec n),
+      0 < k -> u //+ v -> k \.* u //+ v.
+  Proof. intros. apply vpara_vcmul_l; auto. Qed.
+
+  (** u //+ v -> u //+ (k \.* v) *)
+  Lemma vpara_vcmul_r : forall {n} k (u v : vec n),
+      0 < k -> u //+ v -> u //+ (k \.* v).
+  Proof. intros. apply vpara_vcmul_r; auto. Qed.
+
+  (* ======================================================================= *)
+  (** ** Two vectors are antiparallel (i.e., collinear with opposite direction) *)
+  
+  (** Two non-zero vectors are antiparallel, if negative proportional *)
+  Definition vantipara {n} (u v : vec n) : Prop := @vantipara _ 0 Amul Alt _ u v.
+  Infix "//-" := vantipara : vec_scope.
+
+  (** u //- v -> v //- u *)
+  Lemma vantipara_sym : forall {n} (u v : vec n),  u //- v -> v //- u.
+  Proof. intros. apply vantipara_sym; auto. Qed.
+
+  (** u //- v => ∃! k, k < 0 /\ k * u = v *)
+  Lemma vantipara_imply_uniqueK : forall {n} (u v : vec n),
+      u //- v -> (exists ! k, k < 0 /\ k \.* u = v).
+  Proof. intros. apply vantipara_imply_uniqueK; auto. Qed.
+
+  (** u //- v -> (k \.* u) //- v *)
+  Lemma vantipara_vcmul_l : forall {n} k (u v : vec n),
+      0 < k -> u //- v -> k \.* u //- v.
+  Proof. intros. apply vantipara_vcmul_l; auto. Qed.
+
+  (** u //- v -> u //- (k \.* v) *)
+  Lemma vantipara_vcmul_r : forall {n} k (u v : vec n),
+      0 < k -> u //- v -> u //- (k \.* v).
+  Proof. intros. apply vantipara_vcmul_r; auto. Qed.
+  
+  (* ======================================================================= *)
+  (** ** Convert between //, //+, and //-  *)
+  
+  (** u //+ v -> u // v *)
+  Lemma vpara_imply_vcoll : forall {n} (u v : vec n), u //+ v -> u // v.
+  Proof. intros. apply vpara_imply_vcoll; auto. Qed.
+  
+  (** u //- v -> u // v *)
+  Lemma vantipara_imply_vcoll : forall {n} (u v : vec n), u //- v -> u // v.
+  Proof. intros. apply vantipara_imply_vcoll; auto. Qed.
+  
+  (** u //+ v -> (-u) //- v *)
+  Lemma vpara_imply_vantipara_opp_l : forall {n} (u v : vec n), u //+ v -> (-u) //- v.
+  Proof. intros. apply vpara_imply_vantipara_opp_l; auto. Qed.
+  
+  (** u //+ v -> u //- (-v)*)
+  Lemma vpara_imply_vantipara_opp_r : forall {n} (u v : vec n), u //+ v -> u //- (-v).
+  Proof. intros. apply vpara_imply_vantipara_opp_r; auto. Qed.
+  
+  (** u // v -> (u //+ v) \/ (u //- v) *)
+  Lemma vcoll_imply_vpara_or_vantipara : forall {n} (u v : vec n),
+      u // v -> u //+ v \/ u //- v.
+  Proof. intros. apply vpara_imply_vpara_or_vantipara; auto. Qed.
   
 End OrderedFieldMatrixTheory.
 
@@ -2064,6 +2207,22 @@ Module NormedOrderedFieldMatrixTheory (E : NormedOrderedFieldElementType).
   (** Verify the definition is reasonable *)
   Lemma vunit_spec : forall {n} (v : vec n), vunit v <-> ||v|| = 1%R.
   Proof. intros. apply vunit_spec. Qed.
+
+  (* Context `{HOrderedField : OrderedField A Aadd Azero Aopp Amul Aone Ainv}. *)
+  (* Context `{HConvertToR *)
+  (*     : ConvertToR A Aadd Azero Aopp Amul Aone Ainv Alt Ale Altb Aleb a2r}. *)
+  (* Notation vlen := (@vlen _ Aadd Azero Amul a2r). *)
+  (* Notation "|| v ||" := (vlen v) : vec_scope. *)
+
+  (** Transformation by orthogonal matrix will keep length. *)
+  Lemma morth_keep_length : forall {n} (M : smat n) (v : vec n),
+      morth M -> ||(M * v)%V|| = ||v||.
+  Proof. intros. apply morth_keep_length. auto. Qed.
+  
+  (** Transformation by orthogonal matrix will keep zero. *)
+  Lemma morth_keep_nonzero : forall {n} (M : smat n) (v : vec n),
+      v <> vzero -> morth M -> (M * v)%V <> vzero.
+  Proof. intros. apply morth_keep_nonzero; auto. Qed.
 
 End NormedOrderedFieldMatrixTheory.
 

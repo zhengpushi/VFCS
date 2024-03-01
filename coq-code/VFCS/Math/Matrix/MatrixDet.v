@@ -277,26 +277,26 @@ Section mdet.
     (** Determinant of a matrix of dimension-1 *)
     Definition mdet1 (M : smat A 1) := M.11.
 
-    (** |M| = mdet1 M *)
-    Lemma mdet_eq_mdet1 : forall M, mdet M = mdet1 M.
+    (** mdet1 M = |M| *)
+    Lemma mdet1_eq_mdet : forall M, mdet1 M = mdet M.
     Proof. intros. cbv. ring. Qed.
     
     (** |M| <> 0 <-> mdet_exp <> 0 *)
     Lemma mdet1_neq0_iff : forall (M : smat A 1),
         mdet M <> Azero <-> M.11 <> Azero.
-    Proof. intros. rewrite mdet_eq_mdet1; easy. Qed.
+    Proof. intros. rewrite <- mdet1_eq_mdet; easy. Qed.
 
     (** Determinant of a matrix of dimension-2 *)
     Definition mdet2 (M : smat A 2) := (M.11*M.22 - M.12*M.21)%A.
 
-    (** |M| = mdet2 M *)
-    Lemma mdet_eq_mdet2 : forall M, mdet M = mdet2 M.
+    (** mdet2 M = |M| *)
+    Lemma mdet2_eq_mdet : forall M, mdet2 M = mdet M.
     Proof. intros. cbv. ring. Qed.
 
     (** |M| <> 0 <-> mdet_exp <> 0 *)
     Lemma mdet2_neq0_iff : forall (M : smat A 2),
         mdet M <> Azero <-> (M.11*M.22 - M.12*M.21)%A <> Azero.
-    Proof. intros. rewrite mdet_eq_mdet2; easy. Qed.
+    Proof. intros. rewrite <- mdet2_eq_mdet; easy. Qed.
 
     (** Determinant of a matrix of dimension-3 *)
     Definition mdet3 (M : smat A 3) :=
@@ -304,8 +304,8 @@ Section mdet.
          M.12 * M.21 * M.33 + M.12 * M.23 * M.31 + 
          M.13 * M.21 * M.32 - M.13 * M.22 * M.31)%A.
 
-    (** mdet M = mdet3 M *)
-    Lemma mdet_eq_mdet3 : forall M, (mdet M = mdet3 M).
+    (** mdet3 M = mdet M *)
+    Lemma mdet3_eq_mdet : forall M, mdet3 M = mdet M.
     Proof. intros. cbv. ring. Qed.
     
     (** |M| <> 0 <-> mdet_exp <> 0 *)
@@ -314,7 +314,7 @@ Section mdet.
           (M.11 * M.22 * M.33 - M.11 * M.23 * M.32 - 
              M.12 * M.21 * M.33 + M.12 * M.23 * M.31 + 
              M.13 * M.21 * M.32 - M.13 * M.22 * M.31)%A <> Azero.
-    Proof. intros. rewrite mdet_eq_mdet3; easy. Qed.
+    Proof. intros. rewrite <- mdet3_eq_mdet; easy. Qed.
 
     (** Determinant of a matrix of dimension-4 *)
     Definition mdet4 (M : smat A 4) :=
@@ -331,8 +331,8 @@ Section mdet.
          M.14*M.22*M.31*M.43 - M.14*M.22*M.33*M.41 -
          M.14*M.23*M.31*M.42 + M.14*M.23*M.32*M.41)%A.
 
-    (** mdet m = mdet4 m *)
-    Lemma mdet_eq_mdet4 : forall M, (mdet M = mdet4 M).
+    (** mdet4 M = mdet M *)
+    Lemma mdet4_eq_mdet : forall M, mdet4 M = mdet M.
     Proof. intros. cbv. ring. Qed.
     
     (** |M| <> 0 <-> mdet_exp <> 0 *)
@@ -350,7 +350,7 @@ Section mdet.
              M.14*M.21*M.32*M.43 + M.14*M.21*M.33*M.42 +
              M.14*M.22*M.31*M.43 - M.14*M.22*M.33*M.41 -
              M.14*M.23*M.31*M.42 + M.14*M.23*M.32*M.41)%A <> Azero.
-    Proof. intros. rewrite mdet_eq_mdet4. easy. Qed.
+    Proof. intros. rewrite <- mdet4_eq_mdet. easy. Qed.
   End mdet_concrete.
 
 End mdet.

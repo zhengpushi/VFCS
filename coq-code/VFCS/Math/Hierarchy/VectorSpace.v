@@ -1249,7 +1249,7 @@ Section ldep.
         rewrite <- e in *.
         exists i. rewrite vnth_vadd. rewrite vnth_vset_eq. rewrite identityLeft.
         rewrite vnth_vcmul. rewrite vnth_vzero in *.
-        apply field_mul_neq0_if_neq0_neq0; auto.
+        apply field_mul_neq0_iff; auto.
       + (* if i <> j, case (ds.i =? 0) *)
         destruct (Aeqdec (ds$i) Azero).
         * (* if ds.i = 0, ds.j <> 0, then: ds.j + 0 <> 0 *)
@@ -1257,7 +1257,7 @@ Section ldep.
           rewrite vnth_vset_neq; auto.
         * (* if ds.i <> 0, then: 0 + ds.i*cs.i <> 0 *)
           exists i. rewrite vnth_vadd. rewrite vnth_vset_eq. rewrite vnth_vcmul.
-          monoid. apply field_mul_neq0_if_neq0_neq0; auto.
+          monoid. apply field_mul_neq0_iff; auto.
     - rewrite <- H2 at 2.
       rewrite lcomb_coef_add. rewrite lcomb_coef_cmul. rewrite lcomb_coef_vset.
       rewrite lcomb_vec_vset. rewrite vs_vcmul_vadd. asemigroup.
@@ -1479,7 +1479,6 @@ Section ltrans.
   Qed.
   
 End ltrans.
-
+*)
 
 (** ** 向量的范数，赋范向量空间 *)
-*)

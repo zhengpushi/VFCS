@@ -1182,7 +1182,7 @@ Section lcmul_lmulc.
     specialize (IHl H2).
     destruct IHl; auto.
     - subst. left. ring.
-    - apply field_mul_eq0_reg in H1; auto. destruct H1.
+    - apply field_mul_eq0_iff in H1; auto. destruct H1.
       + left. subst. ring.
       + right. subst. f_equal; try ring.
         rewrite <- H0 in H2. auto.

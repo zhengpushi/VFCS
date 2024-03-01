@@ -1310,12 +1310,17 @@ Section GroupTheory.
     rewrite inverseRight. rewrite <- associative. rewrite (associative a b). group.
   Qed.
 
-  (** a <> 0 -> - a <> 0 *)
-  Lemma group_opp_neq0 : forall a : A, a <> 0 -> - a <> 0.
+  (** - a = 0 <-> a = 0 *)
+  Lemma group_opp_eq0_iff : forall a : A, - a = 0 <-> a = 0.
   Proof.
-    intros. intro. destruct H.
-    rewrite <- group_opp_opp at 1. rewrite H0. apply group_opp_0.
+    intros. split; intros.
+    - apply group_cancel_l with (-a). group.
+    - subst. rewrite group_opp_0. auto.
   Qed.
+
+  (** - a <> 0 <-> a <> 0 *)
+  Lemma group_opp_neq0_iff : forall a : A, - a <> 0 <-> a <> 0.
+  Proof. intros. rewrite group_opp_eq0_iff. easy. Qed.
     
   (* Theorem 14.2 *)
   (** a + b = c -> a = c + (-b) *)
@@ -2371,17 +2376,12 @@ Section Theory.
   Proof. intros. simpl. group. apply field_mulInvR. auto. Qed.
 
   (** a <> 0 -> / a <> 0 *)
-  Lemma field_inv_neq0 : forall a : A, a <> 0 -> / a <> 0.
+  Lemma field_inv_neq0_if_neq0 : forall a : A, a <> 0 -> / a <> 0.
   Proof.
     intros. intro.
     pose proof (field_mulInvL H). rewrite H0 in H1. rewrite ring_mul_0_l in H1.
     apply field_1_neq_0. auto.
   Qed.
-
-  (* / a <> 0 -> a <> 0 *)
-  Lemma field_inv_neq0_rev : forall a : A, / a <> 0 -> a <> 0.
-  Proof.
-    intros. intro. Abort.
 
   (** - 1 <> 0 *)
   Lemma field_neg1_neq_0 : - (1) <> 0.
@@ -2431,7 +2431,7 @@ Section Theory.
   (** / / a = a *)
   Lemma field_inv_inv : forall a : A, a <> 0 -> / / a = a.
   Proof.
-    intros. pose proof (field_inv_neq0 H).
+    intros. pose proof (field_inv_neq0_if_neq0 H).
     apply field_mul_cancel_l with (/ a); auto.
     rewrite field_mulInvL; auto. rewrite field_mulInvR; auto.
   Qed.
@@ -2446,30 +2446,55 @@ Section Theory.
   (** / (- a) = - (/ a) *)
   Lemma field_inv_opp : forall a : A, a <> 0 -> / (- a) = - (/ a).
   Proof.
-    intros. apply field_inv_eq_l. apply group_opp_neq0; auto.
+    intros. apply field_inv_eq_l. apply group_opp_neq0_iff; auto.
     rewrite ring_mul_opp_opp. apply field_mulInvR; auto.
   Qed.
 
   
   Context {AeqDec : Dec (@eq A)}.
   
-  (** a * b = 0 -> a = 0 \/ b = 0 *)
-  Lemma field_mul_eq0_reg : forall a b : A, a * b = 0 -> a = 0 \/ b = 0.
+  (** a * b = 0 <-> a = 0 \/ b = 0 *)
+  Lemma field_mul_eq0_iff : forall a b : A, a * b = 0 <-> a = 0 \/ b = 0.
   Proof.
-    intros. destruct (Aeqdec b 0); auto.
-    assert (a * b * /b = 0 * /b). rewrite H. auto.
-    assert (0 * /b = 0). apply ring_mul_0_l. rewrite H1 in H0.
-    rewrite associative in H0. rewrite field_mulInvR in H0; auto.
-    rewrite identityRight in H0. auto.
+    intros. split; intros.
+    - destruct (Aeqdec a 0), (Aeqdec b 0); auto.
+      assert ((/a * a) * (b * /b) = /a * (a * b) * /b). asemigroup.
+      rewrite H, field_mulInvL, field_mulInvR, identityLeft in H0; auto.
+      rewrite ring_mul_0_r in H0 at 1.
+      rewrite ring_mul_0_l in H0 at 1.
+      exfalso. apply field_1_neq_0; auto.
+    - destruct H; subst.
+      rewrite ring_mul_0_l; auto. rewrite ring_mul_0_r; auto.
   Qed.
   
-  (** a <> 0 -> b <> 0 -> a * b <> 0 *)
-  Lemma field_mul_neq0_if_neq0_neq0 : forall a b : A, a <> 0 -> b <> 0 -> a * b <> 0.
-  Proof. intros. intro. apply field_mul_eq0_reg in H1. destruct H1; auto. Qed.
+  (** a * b <> 0 <-> (a <> 0 /\ b <> 0) *)
+  Lemma field_mul_neq0_iff : forall a b : A, a * b <> 0 <-> (a <> 0 /\ b <> 0).
+  Proof. intros. rewrite field_mul_eq0_iff. tauto. Qed.
+    
+  (** / a <> 0 -> a <> 0 *)
+  Lemma field_inv_neq0_imply_neq0 : forall a : A, / a <> 0 -> a <> 0.
+  Proof.
+    intros. intro.
+    (* 备注：
+       1. 我暂时无法证明这个引理，但我可能要用到这个性质
+       2. 由反证法，若 a = 0，则 /a = 0，这应该不对。因为：
+          数学上，无穷小的倒数是无穷大。不过 0 还不是无穷小。
+       3. 在 Reals.RIneq 库中，有两个引理如下，我觉得好像有问题，但又无法指正。
+          Lemma Rinv_0 : / 0 = 0.
+          Lemma Rinv_inv r : / / r = r.
+     *)
+  Admitted.
 
-  (* a * a = 0 -> a = 0 *)
+  (** / a <> 0 <-> a <> 0 *)
+  Lemma field_inv_neq0_iff : forall a : A, / a <> 0 <-> a <> 0.
+  Proof.
+    intros; split. apply field_inv_neq0_imply_neq0.
+    apply field_inv_neq0_if_neq0.
+  Qed.
+  
+  (** a * a = 0 -> a = 0 *)
   Lemma field_sqr_eq0_reg : forall a : A, a * a = 0 -> a = 0.
-  Proof. intros. apply field_mul_eq0_reg in H. destruct H; auto. Qed.
+  Proof. intros. apply field_mul_eq0_iff in H. destruct H; auto. Qed.
 
   (** a * b = b -> a = 1 \/ b = 0 *)
   Lemma field_mul_eq_imply_a1_or_b0 : forall (a b : A),

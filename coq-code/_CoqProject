@@ -95,4 +95,4 @@ VFCS/Math/Hierarchy/Fn.v
 VFCS/FCS/AttitudeRepr/Math.v
 VFCS/FCS/AttitudeRepr/Pose2D.v
 VFCS/FCS/AttitudeRepr/Pose3D.v
-VFCS/FCS/AttitudeRepr/eulerangle.v
+VFCS/FCS/AttitudeRepr/EulerAngle.v
