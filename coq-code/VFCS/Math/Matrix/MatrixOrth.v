@@ -547,6 +547,13 @@ Section SOn.
   Lemma SOnP_spec : forall {n} (x : @SOn n), SOnP x.
   Proof. intros. hnf. destruct x. split; auto. apply SOn_GOn0. Qed.
 
+  (** The transpose also keep SOn *)
+  Lemma SOnP_mtrans : forall {n} (M : smat n), SOnP M -> SOnP (M\T).
+  Proof.
+    intros. hnf in *. destruct H. split.
+    apply morth_mtrans; auto. rewrite mdet_mtrans; auto.
+  Qed.
+
   (** Create a SOn from a matrix satisfing `SOnP` *)
   Definition mkSOn {n} (m : smat n) (H : SOnP m) : @SOn n.
     refine (Build_SOn (Build_GOn _ m _) _). apply H.

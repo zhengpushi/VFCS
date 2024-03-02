@@ -503,27 +503,13 @@ Proof.
   - apply vantipara_imply_vangle_PI in H1; auto.
 Qed.
 
-(* (* I can't prove it now (WRONG AXIOMS!!) *) *)
-(* Axiom vdot_eq_mul_vlen_imply_vnorm_eq : forall {n} (u v : vec n), *)
-(*     <u,v> = (||u|| * ||v||)%R -> vnorm u = vnorm v. *)
-(* Axiom vdot_eq_mul_vlen_imply_vnorm_eq_neg : forall {n} (u v : vec n), *)
-(*     <u,v> = (- (||u|| * ||v||))%R -> vnorm u = - vnorm v. *)
-
 (* u /_ v = 0 -> u //+ v *)
 Lemma vangle_0_imply_vpara : forall {n} (u v : vec n),
     u <> vzero -> v <> vzero -> u /_ v = 0 -> u //+ v.
 Proof.
   intros.
-  (* apply vangle_0_iff in H1; auto. *)
-  (* hnf in *. hnf in H1. unfold vangle in H1. *)
+  apply vangle_0_iff in H1; auto.
   unfold vpara. repeat split; auto.
-  unfold vangle in H1.
-  rewrite vdot_vnorm in H1; auto.
-(*   apply vdot_eq_mul_vlen_imply_vnorm_eq in H1. *)
-(*   unfold vnorm in H1. exists (||v|| * / ||u||). rewrite <- vcmul_assoc. *)
-(*   rewrite !Rdiv_1_l in H1. rewrite H1. rewrite vcmul_assoc. *)
-(*   rewrite Rinv_r. apply vcmul_1_l. apply vlen_neq0_iff_neq0; auto. *)
-  (* Qed. *)
 Abort.
 
 (* u /_ v = π -> u //- v *)
@@ -532,12 +518,6 @@ Lemma vangle_PI_imply_vantipara : forall {n} (u v : vec n),
 Proof.
   intros. unfold vpara. repeat split; auto.
   apply vangle_PI_iff in H1; auto.
-(*   apply vdot_eq_mul_vlen_imply_vnorm_eq_neg in H1. *)
-(*   unfold vnorm in H1. exists ((- ||v||) * / ||u||)%R. rewrite <- vcmul_assoc. *)
-(*   rewrite !Rdiv_1_l in H1. rewrite H1. rewrite <- vcmul_opp. rewrite vcmul_assoc. *)
-(*   rewrite <- Rinv_opp. rewrite Rinv_r. apply vcmul_1_l. *)
-(*   apply Ropp_neq_0_compat. apply vlen_neq0_iff_neq0; auto. *)
-  (* Qed. *)
 Abort.
 
 (* (u /_ v = 0 \/ u /_ v = π) -> u // v *)
@@ -563,7 +543,7 @@ Abort.
 Lemma vangle_add : forall {n} (u v w : vec n), u /_ w = ((u /_ v) + (v /_ w))%R.
 Proof.
 (* 由于目前 vangle 只是夹角，没有区分起始和结束向量，所以该性质不成立。
-       在2D和3D中有带方向的 vangle2, vangle3。并且在3D中，还需要共面条件。 *)
+   在2D和3D中有带方向的 vangle2, vangle3。并且在3D中，还需要共面条件。 *)
 Abort.
 
 (** 给定两个向量，若将这两个向量同时旋转θ角，则向量之和在旋转前后的夹角也是θ。*)
@@ -1010,25 +990,44 @@ Qed.
 Lemma vcoll_if_vorth_both : forall {n} (u v w1 w2 : vec n),
     ~(u // v) -> u _|_ w1 -> v _|_ w1 -> u _|_ w2 -> v _|_ w2 -> w1 // w2.
 Proof.
-Admitted.
+Abort.
 
-(* 两个平行向量u和v若长度相等，则 u = v *)
+(** 两个平行向量u和v若长度相等，则 u = v *)
 Lemma vpara_and_same_len_imply : forall {n} (u v : vec n),
     u //+ v -> ||u|| = ||v|| -> u = v.
 Proof.
-Admitted.
+  intros. destruct H as [H1 [H2 [k [H3 H4]]]].
+  destruct (Aeqdec u vzero), (Aeqdec v vzero); try easy.
+  assert (k = 1).
+  { rewrite <- H4 in H0. rewrite vlen_vcmul in H0. unfold a2r,id in H0.
+    symmetry in H0. apply Rmult_eq_r_reg in H0; auto.
+    autounfold with A in *. unfold Aabs in H0. destruct (_<=?_); lra.
+    apply vlen_neq0_iff_neq0; auto. }
+  rewrite H in H4. rewrite vcmul_1_l in H4; auto.
+Qed.
 
-(* 两个反平行向量u和v若长度相等，则 u = - v *)
+(** 两个反平行向量u和v若长度相等，则 u = - v *)
 Lemma vantipara_and_same_len_imply : forall {n} (u v : vec n),
-    u // v -> ||u|| = ||v|| -> u = -v.
+    u //- v -> ||u|| = ||v|| -> u = -v.
 Proof.
-Admitted.
+  intros. destruct H as [H1 [H2 [k [H3 H4]]]].
+  destruct (Aeqdec u vzero), (Aeqdec v vzero); try easy.
+  assert (k = - (1))%R.
+  { rewrite <- H4 in H0. rewrite vlen_vcmul in H0. unfold a2r,id in H0.
+    symmetry in H0. apply Rmult_eq_r_reg in H0; auto.
+    autounfold with A in *. unfold Aabs in H0. destruct (_<=?_); lra.
+    apply vlen_neq0_iff_neq0; auto. }
+  rewrite H in H4. rewrite vcmul_neg1_l in H4. rewrite <- H4, vopp_vopp. auto.
+Qed.
 
-(* 两个共线向量u和v若长度相等，则 u = ± v *)
+(** 两个共线向量u和v若长度相等，则 u = ± v *)
 Lemma vcoll_and_same_len_imply : forall {n} (u v : vec n),
     u // v -> ||u|| = ||v|| -> u = v \/ u = -v.
 Proof.
-Admitted.
+  intros. destruct (vcoll_imply_vpara_or_vantipara u v H).
+  - left. apply vpara_and_same_len_imply; auto.
+  - right. apply vantipara_and_same_len_imply; auto.
+Qed.
 
 (* ======================================================================= *)
 (** ** The cross product (vector product) of two 3-dim vectors *)
@@ -1146,6 +1145,14 @@ Lemma v3cross_u_uv_eq_minus : forall u v : vec 3,
     u \x (u \x v) = <u,v> \.* u - <u,u> \.* v.
 Proof. intros. apply v3eq_iff; cbv; ra. Qed.
 
+(** <a×b, c×d> = <a,c> * <b,d> - <a,d> * <b,c> *)
+Lemma v3cross_dot_v3cross : forall (a b c d : vec 3),
+    (<a \x b, c \x d > = (<a, c> * <b, d>) - (<a, d> * <b, c>))%R.
+Proof.
+  (* 我尚未完成推理，先暴力证明 *)
+  intros. cbv; ra.
+Qed.
+
 (** (u × v) ⟂ u *)
 Lemma v3cross_orth_l : forall u v : vec 3, (u \x v) _|_ u.
 Proof. intros. unfold vorth. apply v3cross_vdot_same_l. Qed.
@@ -1193,6 +1200,15 @@ Proof.
   intros. rewrite <- vlen_v3cross_eq0_iff_angle_0_pi; auto.
   rewrite vlen_eq0_iff_eq0. easy.
 Qed.
+
+(** u × v = vzero <-> u // v *)
+Lemma v3cross_eq0_iff_vcoll : forall (u v : vec 3),
+    u <> vzero -> v <> vzero -> (u \x v = vzero <-> u // v).
+Proof.
+  intros. rewrite v3cross_eq0_iff_angle_0_pi; auto. split; intros.
+  2:{ apply vcoll_imply_vangle_0_or_PI; auto. }
+  -
+Abort.
 
 (** u × v = (sin (u ∠ v) * ||u|| * ||v||) \.* vnorm (u × v) *)
 Lemma v3cross_eq_vcmul : forall (u v : vec 3),
@@ -1446,6 +1462,21 @@ Lemma v3cross_ji : v3j \x v3i = - v3k. Proof. apply v3eq_iff; cbv; ra. Qed.
 Lemma v3cross_kj : v3k \x v3j = - v3i. Proof. apply v3eq_iff; cbv; ra. Qed.
 Lemma v3cross_ik : v3i \x v3k = - v3j. Proof. apply v3eq_iff; cbv; ra. Qed.
 
+(** 矩阵乘以标准基向量得到列向量 *)
+Lemma mmulv_v3i : forall (M : smat 3), M * v3i = M&1. Proof. intros; veq; ra. Qed.
+Lemma mmulv_v3j : forall (M : smat 3), M * v3j = M&2. Proof. intros; veq; ra. Qed.
+Lemma mmulv_v3k : forall (M : smat 3), M * v3k = M&3. Proof. intros; veq; ra. Qed.
+
+(** 矩阵的列向量等于矩阵乘以标准基向量 *)
+Lemma mcol_eq_mul_v3i : forall (M : smat 3), M&1 = M * v3i. Proof. intros; veq; ra. Qed.
+Lemma mcol_eq_mul_v3j : forall (M : smat 3), M&2 = M * v3j. Proof. intros; veq; ra. Qed.
+Lemma mcol_eq_mul_v3k : forall (M : smat 3), M&3 = M * v3k. Proof. intros; veq; ra. Qed.
+
+(** 矩阵的行向量等于矩阵乘以标准基向量 *)
+Lemma mrow_eq_mul_v3i : forall (M : smat 3), M.1 = M\T * v3i. Proof. intros; veq; ra. Qed.
+Lemma mrow_eq_mul_v3j : forall (M : smat 3), M.2 = M\T * v3j. Proof. intros; veq; ra. Qed.
+Lemma mrow_eq_mul_v3k : forall (M : smat 3), M.3 = M\T * v3k. Proof. intros; veq; ra. Qed.
+
 (** 标准基向量的夹角 *)
 Lemma v3angle_i_j : v3i /_ v3j = PI/2.
 Proof. cbv. match goal with |- context[acos ?a] => replace a with 0 end; ra. Qed.
@@ -1517,20 +1548,32 @@ Qed.
 (* ======================================================================= *)
 (** ** The triple scalar product (or called Mixed products) of 3-D vectors *)
 
-(** 几何意义：绝对值表示以向量a,b,c为棱的平行六面体的体积，另外若a,b,c组成右手系，
-      则混合积的符号为正；若组成左手系，则符号为负。*)
-Definition v3mixed (u v w : vec 3) := <u \x v, w>.
+(** [u v w] = <u×v, w>
+    几何意义：绝对值表示以向量a,b,c为棱的平行六面体的体积，另外若a,b,c组成右手系，
+    则混合积的符号为正；若组成左手系，则符号为负。*)
+Definition v3mixed (u v w : vec 3) : R := <u \x v, w>.
+Notation "`[ u v w ]" :=
+  (v3mixed u v w) (at level 1, u, v at level 9, format "`[ u  v  w ]") : vec_scope.
 
-(*
-  (** The mixed product is equal to the determinant *)
-  Lemma v3mixed_eq_det : forall u v w : vec 3,
-      v3mixed a b c = mdet3 (mconsc a (mconsc b c)).
-  Proof. intros [a] [b] [c]. cbv. ring. Qed.
- *)
+(* alternate definition of v3mixed *)
+Lemma v3mixed_swap_op : forall (u v w : vec 3), <u, v \x w> = <u \x v, w>.
+Proof. intros. cbv. ring. Qed.
+
+(** The mixed product with columns is equal to the determinant *)
+Lemma v3mixed_eq_det_cols : forall u v w : vec 3, `[u v w] = mdet (cvl2m [u;v;w]).
+Proof. intros. cbv. ring. Qed.
+
+(** The mixed product with rows is equal to the determinant *)
+Lemma v3mixed_eq_det_rows : forall u v w : vec 3, `[u v w] = mdet (rvl2m [u;v;w]).
+Proof. intros. cbv. ring. Qed.
+
+(** [u v w] = [v w u] *)
+Lemma v3mixed_comm : forall (u v w : vec 3), `[u v w] = `[v w u].
+Proof. intros. cbv. ring. Qed.
 
 (** 若混合积≠0，则三向量可构成平行六面体，即三向量不共面，反之也成立。
     所以：三向量共面的充要条件是混合积为零。*)
-Definition v3coplanar (u v w : vec 3) := v3mixed u v w = 0.
+Definition v3coplanar (u v w : vec 3) : Prop := `[u v w] = 0.
 
 (** (u,v)的法向量和(v,v3)的法向量相同，则u,v,v3共面 *)
 Lemma v3cross_same_v3coplanar : forall u v w : vec 3,
@@ -1546,7 +1589,7 @@ Definition v3_volume_of_tetrahedron (A B C D : vec 3) :=
   let AB := B - A in
   let AC := C - A in
   let AD := D - A in
-  ((1/6) * (v3mixed AB AC AD))%R.
+  ((1/6) * `[AB AC AD])%R.
 
 (** u,v,w ∈ one-plane, u ∠ w = (u ∠ v) + (v ∠ w) *)
 Lemma v3angle_add : forall (u v w : vec 3),
@@ -1572,11 +1615,10 @@ Definition v4k : vec 4 := mkvec4 0 0 1 0.
 Definition v4l : vec 4 := mkvec4 0 0 0 1.
 
 
-Open Scope mat_scope.
-
-
 (* ======================================================================= *)
 (** ** matrix norm *)
+
+Open Scope mat_scope.
 
 (** norm space *)
 Class Norm `{Ring} (f : A -> R) (cmul : R -> A -> A) := {
@@ -1640,8 +1682,7 @@ Admitted.
 (** ** Orthogonal matrix *)
 
 (** orthogonal M -> |M| = ± 1 *)
-Lemma morth_mdet : forall {n} (M : smat n),
-    morth M -> (mdet M = 1 \/ mdet M = -1).
+Lemma morth_mdet : forall {n} (M : smat n), morth M -> (mdet M = 1 \/ mdet M = -1).
 Proof.
   intros. rewrite morth_iff_mul_trans_l in H.
   assert (mdet (M\T * M) = mdet (@mat1 n)). rewrite H. auto.
@@ -1724,148 +1765,150 @@ Proof.
   rewrite morth_imply_sin_vangle_cols_diff; auto. ra.
 Qed.
 
+(* https://en.wikipedia.org/wiki/Cross_product#Algebraic&02AProperties   *)
+Goal forall (M : smat 3) (u v : vec 3),
+    mdet M <> 0 -> (M * u)%V \x (M * v)%V = ((mdet M) \.* (M\-1\T * (u \x v)))%V.
+Proof.
+  intros. rewrite <- mmulv_mcmul.
+  (* rewrite <- mcomat_eq; auto. *)
+  (* rewrite !v3cross_eq_skew_mul_vec. *)
+  (* rewrite <- !mmulv_assoc. f_equal. *)
+  (* apply meq_iff_mnth; intros. *)
+  (* rewrite !mnth_mmul. *)
+Abort.
+
 (** if M is orthogonal, then M&1×M&2 //+ M&3 *)
 Lemma morth_imply_vpara_v3cross_12 : forall (M : smat 3),
     morth M -> M&1 \x M&2 //+ M&3.
 Proof.
   intros.
-  Admitted.
+  pose proof (v3cross_eq0_iff_angle_0_pi (M&1 \x M&2) (M&3)).
+  assert (M&1 \x M&2 /_ M&3 = 0 \/ M&1 \x M&2 /_ M&3 = PI). admit.
+  apply H0 in H1.
+Abort.
 
-  
-(** if M is orthogonal, then M&1×M&2=M&3, M&2×M&3=M&1, M&3×M&1=M&2 *)
-Lemma morth_v3cross_c12 : forall (M : smat 3), morth M -> M&1 \x M&2 = M&3.
-Proof.
-  intros. apply vpara_and_same_len_imply.
-  - apply morth_imply_vpara_v3cross_12; auto.
-  - rewrite morth_imply_vlen_col; auto.
-    rewrite morth_imply_vlen_v3cross_cols_diff; auto.
-    intro. apply sig_eq_iff in H0. easy.
-Qed.
-
-(* 来自 stackexchange 的一个证明 *)
-Section morth_keep_v3cross.
+Section SO3_keep_v3cross.
+  (* 参考了 stackexchange, user1551 的证明思路 *)
+  (* https://math.stackexchange.com/questions/2534923/does-so3-preserve-the-cross-product *)
   Open Scope vec_scope.
-  
-  (* https://math.stackexchange.com/questions/279173/rotational-invariance-of-cross-product *)
 
-  (* https://en.wikipedia.org/wiki/Cross_product 
+  (** morth(M) -> det(M) = 1 -> [Mu Mv Mw] = <Mu, M(v×w)> *)
+  Lemma morth_keep_v3cross_det1_aux : forall (M : smat 3) (u v w : vec 3),
+      morth M -> mdet M = 1 ->
+      `[(M*u) (M*v) (M*w)] = <M*u, M*(v\x w)>.
+  Proof.
+    intros.
+    rewrite morth_keep_dot; auto. rewrite v3mixed_swap_op. fold (v3mixed u v w).
+    rewrite !v3mixed_eq_det_cols.
+    replace (@cvl2m 3 3 [M * u; M * v; M * w])
+      with (M * @cvl2m 3 3 [u;v;w])%M by meq.
+    rewrite mdet_mmul. rewrite H0. autounfold with A. ring.
+  Qed.
+
+  (** morth(M) -> det(M) = -1 -> [Mu Mv Mw] = -<Mu, M(v×w)> *)
+  Lemma morth_keep_v3cross_detNeg1_aux : forall (M : smat 3) (u v w : vec 3),
+      morth M -> mdet M = (-1)%R ->
+      `[(M*u) (M*v) (M*w)] = (- (<M*u, M*(v\x w)>)%V)%R.
+  Proof.
+    intros.
+    rewrite morth_keep_dot; auto. rewrite v3mixed_swap_op. fold (v3mixed u v w).
+    rewrite !v3mixed_eq_det_cols.
+    replace (@cvl2m 3 3 [M * u; M * v; M * w])
+      with (M * @cvl2m 3 3 [u;v;w])%M by meq.
+    rewrite mdet_mmul. rewrite H0. autounfold with A. ring.
+  Qed.
+    
+  (** morth(M) -> det(M) = 1 -> Mu × Mv = M(u×v) *)
+  (** orthogonal matrix keep v3cross *)
+  Lemma morth_keep_v3cross_det1 : forall (M : smat 3) (u v : vec 3),
+      morth M -> mdet M = 1 -> (M * u) \x (M * v) = (M * (u \x v)).
+  Proof.
+    intros.
+    pose proof (morth_keep_v3cross_det1_aux M).
+    apply vdot_cancel_l; intros.
+    rewrite !v3mixed_swap_op. fold (v3mixed c (M*u) (M*v)).
+    specialize (H1 (M\T*c) u v H H0).
+    replace (M * (M \T * c)) with c in H1; auto.
+    rewrite <- mmulv_assoc. rewrite morth_iff_mul_trans_r in H.
+    rewrite H; auto. rewrite mmulv_1_l. auto.
+  Qed.
+
+  (** SO(3) keep v3cross *)
+  Corollary SO3_keep_v3cross : forall (M : smat 3) (u v : vec 3),
+      SOnP M -> (M * u) \x (M * v) = M * (u \x v).
+  Proof. intros. hnf in H. destruct H. apply morth_keep_v3cross_det1; auto. Qed.
+
+  (** morth(M) -> det(M) = -1 -> Mu × Mv = -M(u×v) *)
+  Lemma morth_keep_v3cross_detNeg1 : forall (M : smat 3) (u v : vec 3),
+      morth M -> mdet M = (-1)%R -> (M * u) \x (M * v) = -(M * (u \x v)).
+  Proof.
+    intros.
+    pose proof (morth_keep_v3cross_detNeg1_aux M).
+    apply vdot_cancel_l; intros.
+    rewrite !v3mixed_swap_op. fold (v3mixed c (M*u) (M*v)).
+    specialize (H1 (M\T*c) u v H H0).
+    replace (M * (M \T * c)) with c in H1; auto.
+    - rewrite H1. rewrite vdot_vopp_r. auto.
+    - rewrite <- mmulv_assoc. rewrite morth_iff_mul_trans_r in H.
+      rewrite H; auto. rewrite mmulv_1_l. auto.
+  Qed.
+  
+  (** Cross product invariant for columns of SO(3) : M&1 × M&2 = M&3 *)
+  Lemma SO3_v3cross_c12 : forall (M : smat 3), SOnP M -> M&1 \x M&2 = M&3.
+  Proof.
+    intros. rewrite mcol_eq_mul_v3i, mcol_eq_mul_v3j, mcol_eq_mul_v3k.
+    rewrite SO3_keep_v3cross; auto. f_equal. apply v3cross_ij.
+  Qed.
+  
+  (** Cross product invariant for columns of SO(3) : M&2 × M&3 = M&1 *)
+  Lemma SO3_v3cross_c23 : forall (M : smat 3), SOnP M -> M&2 \x M&3 = M&1.
+  Proof.
+    intros. rewrite mcol_eq_mul_v3i, mcol_eq_mul_v3j, mcol_eq_mul_v3k.
+    rewrite SO3_keep_v3cross; auto. f_equal. apply v3cross_jk.
+  Qed.
+  
+  (** Cross product invariant for columns of SO(3) : M&3 × M&1 = M&2 *)
+  Lemma SO3_v3cross_c31 : forall (M : smat 3), SOnP M -> M&3 \x M&1 = M&2.
+  Proof.
+    intros. rewrite mcol_eq_mul_v3i, mcol_eq_mul_v3j, mcol_eq_mul_v3k.
+    rewrite SO3_keep_v3cross; auto. f_equal. apply v3cross_ki.
+  Qed.
+
+  (** Cross product invariant for rows of SO(3) : M.1 × M.2 = M.3 *)
+  Lemma SO3_v3cross_r12 : forall (M : smat 3), SOnP M -> M.1 \x M.2 = M.3.
+  Proof.
+    intros. rewrite mrow_eq_mul_v3i, mrow_eq_mul_v3j, mrow_eq_mul_v3k.
+    rewrite SO3_keep_v3cross; auto. f_equal. apply v3cross_ij. apply SOnP_mtrans; auto.
+  Qed.
+  
+  (** Cross product invariant for rows of SO(3) : M.2 × M.3 = M.1 *)
+  Lemma SO3_v3cross_r23 : forall (M : smat 3), SOnP M -> M.2 \x M.3 = M.1.
+  Proof.
+    intros. rewrite mrow_eq_mul_v3i, mrow_eq_mul_v3j, mrow_eq_mul_v3k.
+    rewrite SO3_keep_v3cross; auto. f_equal. apply v3cross_jk. apply SOnP_mtrans; auto.
+  Qed.
+  
+  (** Cross product invariant for rows of SO(3) : M.3 × M.1 = M.2 *)
+  Lemma SO3_v3cross_r31 : forall (M : smat 3), SOnP M -> M.3 \x M.1 = M.2.
+  Proof.
+    intros. rewrite mrow_eq_mul_v3i, mrow_eq_mul_v3j, mrow_eq_mul_v3k.
+    rewrite SO3_keep_v3cross; auto. f_equal. apply v3cross_ki. apply SOnP_mtrans; auto.
+  Qed.
+
+  (* 其他证明思路，暂时走不通
+     https://math.stackexchange.com/questions/279173/rotational-invariance-of-cross-product *)
+
+End SO3_keep_v3cross.
+
+
+(* https://en.wikipedia.org/wiki/Cross_product 
    当 a = c, b = d 时，这就是叉乘直接分量形式，即
              [ î  ĵ  k̂ ]
    a×b = det [ a1 a2 a3]
              [ b1 b2 b3]
    这是 Binet–Cauchy identity 的 n = 3 的情形，需要先证明一般情形，但比较复杂。
    见 https://en.wikipedia.org/wiki/Binet%E2%80%93Cauchy_identity。
-   *)
-  (** <a×b, c×d> = <a,c> * <b,d> - <a,d> * <b,c> *)
-  Lemma v3cross_dot_v3cross : forall (a b c d : vec 3),
-      <a \x b, c \x d> = ((<a, c> * <b, d>) - (<a, d> * <b, c>))%R.
-  Proof.
-    (* 我尚未完成推理，先暴力证明 *)
-    intros. cbv; ra.
-  Qed.
-
-  (* 一个变体公式，保持右侧 b, d 的位置不变 *)
-  Lemma v3cross_dot_v3cross_var : forall (a b c d : vec 3),
-      <a \x b, c \x d> = ((<a, c> * <b, d>) - (<b, c> * <a, d>))%R.
-  Proof. intros. rewrite v3cross_dot_v3cross. f_equal. ring. Qed.
-
-  (** det(M) = (M1×M2)⋅M3 = (M2×M3)⋅M1 = (M3×M1)⋅M2 *)
-  Lemma mdet_eq_dot_v3cross_123 : forall (M : smat 3), mdet M = <M.1 \x M.2, M.3>.
-  Proof. intros. rewrite <- mdet3_eq_mdet; cbv; ra. Qed.
-  Lemma mdet_eq_dot_v3cross_231 : forall (M : smat 3), mdet M = <M.2 \x M.3, M.1>.
-  Proof. intros. rewrite <- mdet3_eq_mdet; cbv; ra. Qed.
-  Lemma mdet_eq_dot_v3cross_312 : forall (M : smat 3), mdet M = <M.3 \x M.1, M.2>.
-  Proof. intros. rewrite <- mdet3_eq_mdet; cbv; ra. Qed.
-
-  (** The angle between two orthogonal nonzero 3D vectors is PI/2 *)
-  Lemma vorth_vangle_pi2 : forall (u v : vec 3),
-      u <> vzero -> v <> vzero -> u _|_ v -> u /_ v = PI / 2.
-  Proof. intros. apply vangle_PI2_iff; auto. Qed.
-
-  (** The sin of angle between two orthogonal nonzero 3D vectors is 1 *)
-  Lemma vorth_sin_vangle : forall (u v : vec 3),
-      u <> vzero -> v <> vzero -> u _|_ v -> sin (u /_ v) = 1.
-  Proof. intros. rewrite vorth_vangle_pi2; auto. req. Qed.
-
-  Lemma nat2fin_eq_nat2finS : forall n i (H : (i < S n)%nat),
-      @nat2fin (S n) i H = nat2finS i.
-  Proof. intros. rewrite nat2finS_eq with (H:=H). apply sig_eq_iff; auto. Qed.
-  
-  (** if M is orthogonal, then M&1×M&2=M&3, M&2×M&3=M&1, M&3×M&1=M&2 *)
-  Lemma morth_v3cross_12 : forall (M : smat 3), morth M -> M&1 \x M&2 = M&3.
-  Proof.
-    intros.
-    pose proof (morth_mdet M H).
-    rewrite <- mdet3_eq_mdet in H0.
-    unfold mdet3, MatrixDet.mdet3 in H0.
-    assert (m2l (M\T * M)%M = m2l (@mat1 3)). rewrite H. auto. cbn in H1.
-    unfold ff2f in H1. repeat destruct dec in H1.
-    unfold Vector.vmap2 in H1. unfold mtrans,Matrix.mtrans in H1.
-    autounfold with A in *.
-    rewrite !nat2fin_eq_nat2finS in H1. autorewrite with R in H1.
-    apply v3eq_iff; repeat split; cbn; simpl; unfold mcol.
-    all: 
-      remember (M (nat2finS 0) (nat2finS 0)) as a11;
-      remember (M (nat2finS 0) (nat2finS 1)) as a12;
-      remember (M (nat2finS 0) (nat2finS 2)) as a13;
-      remember (M (nat2finS 1) (nat2finS 0)) as a21;
-      remember (M (nat2finS 1) (nat2finS 1)) as a22;
-      remember (M (nat2finS 1) (nat2finS 2)) as a23;
-      remember (M (nat2finS 2) (nat2finS 0)) as a31;
-      remember (M (nat2finS 2) (nat2finS 1)) as a32;
-      remember (M (nat2finS 2) (nat2finS 2)) as a33.
-    (* 
-       [a11 a12 a13]
-       [a21 a22 a23]
-       [a31 a32 a33]
-       ----------------
-       a13 * (a21 * a32 - a31 * a22)%R = a13 * a13
-       a23 * (a31 * a12 - a11 * a32)%R = a23 * a23
-       a33 * (a11 * a22 - a21 * a12)%R = a33 * a33
-       ----------------
-       c3 ⋅ (c1 × c2) = 1
-
-       R={c1,c2,c3}
-       Re1=c1, Re2=c2, Re3=c3
-       Re3 ⋅ (Re1 × Re2) = 1 
-     *)
-    Abort.
-
-  (** orthogonal matrix keep v3cross *)
-  Lemma morth_keep_v3cross : forall (M : smat 3) (u v : vec 3),
-      u <> vzero -> v <> vzero -> morth M ->
-      (M * u) \x (M * v) = (M * (u \x v)).
-  Proof.
-    intros.
-    remember (mrow M (nat2finS 0)) as M1.
-    remember (mrow M (nat2finS 1)) as M2.
-    remember (mrow M (nat2finS 2)) as M3.
-    assert ((M * u)%V = l2v [<M1,u>; <M2,u>; <M3,u>]).
-    { apply v3eq_iff. rewrite !vnth_mmulv, !vnth_l2v; simpl; subst; auto. }
-    assert ((M * v)%V = l2v [<M1,v>; <M2,v>; <M3,v>]).
-    { apply v3eq_iff. rewrite !vnth_mmulv, !vnth_l2v; simpl; subst; auto. }
-    assert (((M * u) \x (M * v))%V =
-              l2v [
-                  (<M2,u>*<M3,v>) - (<M3,u>*<M2,v>);
-                  (<M3,u>*<M1,v>) - (<M1,u>*<M3,v>);
-                  (<M1,u>*<M2,v>) - (<M2,u>*<M1,v>)
-                ]%R).
-    { rewrite H2,H3. veq. }
-    assert (@l2v 3 [
-                (<M2,u>*<M3,v>) - (<M3,u>*<M2,v>);
-                (<M3,u>*<M1,v>) - (<M1,u>*<M3,v>);
-                (<M1,u>*<M2,v>) - (<M2,u>*<M1,v>)
-              ]%R =
-              l2v [
-                  <M2 \x M3, u \x v> ;
-                  <M3 \x M1, u \x v> ;
-                  <M1 \x M2, u \x v>
-           ]).
-    { rewrite <- !v3cross_dot_v3cross_var. auto. }
-    rewrite H4. rewrite H5.
-    assert (M2 \x M3 = M1).
-  Abort.
-End morth_keep_v3cross.
+ *)
 
 (* ======================================================================= *)
 (** ** SO2 and SO3 *)

@@ -2133,6 +2133,10 @@ Section vcmul.
   Lemma vcmul_1_l : forall {n} (v : vec n), Aone \.* v = v.
   Proof. intros. apply veq_iff_vnth; intros. cbv. ring. Qed.
   
+  (** - 1 \.* A = - A *)
+  Lemma vcmul_neg1_l : forall {n} (v : vec n), (- Aone)%A \.* v = - v.
+  Proof. intros. apply veq_iff_vnth; intros. cbv. ring. Qed.
+  
   (** (-a) * v = - (a * v) *)
   Lemma vcmul_opp : forall {n} a (v : vec n), (- a)%A \.* v = - (a \.* v).
   Proof. intros. apply veq_iff_vnth; intros. cbv. ring. Qed.
@@ -2251,7 +2255,6 @@ Section vcmul.
 End vcmul.
 
 
-
 (** ** Dot product *)
 Section vdot.
   
@@ -2333,7 +2336,19 @@ Section vdot.
   Proof.
     intros. rewrite vdot_comm. rewrite vdot_vcmul_l. f_equal; apply vdot_comm.
   Qed.
+  
+  (** <a, veye i> = a i *)
+  Lemma vdot_veye_r : forall {n} (a : vec n) i, <a, veye 0 1 i> = a i.
+  Proof.
+    intros. apply vsum_unique with (i:=i).
+    - rewrite vnth_vmap2. rewrite vnth_veye_eq. rewrite identityRight; auto.
+    - intros. rewrite vnth_vmap2. rewrite vnth_veye_neq; auto.
+      rewrite ring_mul_0_r; auto.
+  Qed.
 
+  (** <veye i, a> = a i *)
+  Lemma vdot_veye_l : forall {n} (a : vec n) i, <veye 0 1 i, a> = a i.
+  Proof. intros. rewrite vdot_comm. apply vdot_veye_r. Qed.
   
   (* If (@eq A) is decidable *)
   Section AeqDec.
@@ -2350,6 +2365,23 @@ Section vdot.
     Proof.
       intros. destruct (Aeqdec v vzero); auto. subst. rewrite vdot_0_r in H. easy.
     Qed.
+  
+    (** (∀ c, <a,c> = <b,c>) -> a = b *)
+    Lemma vdot_cancel_r : forall {n} (a b : vec n),
+        (forall c : vec n, <a,c> = <b,c>) -> a = b.
+    Proof.
+      intros. destruct (Aeqdec a b) as [H1|H1]; auto. exfalso.
+      apply vneq_iff_exist_vnth_neq in H1. destruct H1 as [i H1].
+      specialize (H (veye 0 1 i)). rewrite !vdot_veye_r in H. easy.
+    Qed.
+    
+    (** (∀ c, <c,a> = <c,b>) -> a = b *)
+    Lemma vdot_cancel_l : forall {n} (a b : vec n),
+        (forall c : vec n, <c,a> = <c,b>) -> a = b.
+    Proof.
+      intros. apply vdot_cancel_r. intros. rewrite !(vdot_comm _ c). auto.
+    Qed.
+    
   End AeqDec.
 
 
@@ -2624,12 +2656,13 @@ Section vlen.
     Proof. intros. pose proof (vdot_abs_le u v). apply Rabs_le_rev in H. ra. Qed.
 
     (** - ||u|| * ||v|| <= <u, v> *)
-    Lemma vdot_ge_mul_vlen_neg : forall {n} (u v : vec n), (- (||u|| * ||v||) <= a2r (<u, v>))%R.
+    Lemma vdot_ge_mul_vlen_neg : forall {n} (u v : vec n),
+        (- (||u|| * ||v||) <= a2r (<u, v>))%R.
     Proof. intros. pose proof (vdot_abs_le u v). apply Rabs_le_rev in H. ra. Qed.
 
-    (* 任意维度“三角形”两边长度之和大于第三边长度 *)
+    (* 任意维度“三角形”的任意一边的长度小于等于两边长度之和 *)
     (** ||u + v|| <= ||u|| + ||v|| *)
-    Lemma vlen_vadd_le : forall {n} (u v : vec n), (||(u + v)%V|| <= ||u|| + ||v||)%R.
+    Lemma vlen_le_add : forall {n} (u v : vec n), (||(u + v)%V|| <= ||u|| + ||v||)%R.
     Proof.
       intros. apply Rsqr_incr_0_var.
       2:{ unfold vlen; ra. }
@@ -2640,6 +2673,22 @@ Section vlen.
           rewrite (vdot_comm v u). rewrite !a2r_add at 1. ra. }
       apply Rplus_le_compat_l.
       rewrite !associative. apply Rmult_le_compat_l; ra.
+      pose proof (vdot_abs_le u v). unfold Rabs in H.
+      destruct Rcase_abs; ra.
+    Qed.
+
+    (* 任意维度“三角形”的任意一边的长度大于等于两边长度之差 *)
+    (** ||u|| - ||v|| <= ||u + v|| *)
+    Lemma vlen_ge_sub : forall {n} (u v : vec n), ((||u|| - ||v||) <= ||(u + v)%V||)%R.
+    Proof.
+      intros. apply Rsqr_incr_0_var.
+      2:{ unfold vlen; ra. }
+      rewrite Rsqr_minus. rewrite <- !vdot_same.
+      replace (a2r (<u + v, u + v>))
+        with (a2r (<u, u>) + a2r (<v, v>) + (2 * a2r (<u, v>)))%R.
+      2:{ rewrite vdot_vadd_l,!vdot_vadd_r.
+          rewrite (vdot_comm v u). rewrite !a2r_add at 1. ra. }
+      apply Rplus_le_compat_l.
       pose proof (vdot_abs_le u v). unfold Rabs in H.
       destruct Rcase_abs; ra.
     Qed.

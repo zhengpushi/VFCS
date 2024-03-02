@@ -595,6 +595,32 @@ Module RingMatrixTheory (E : RingElementType).
   Open Scope vec_scope.
 
   (* ======================================================================= *)
+  (** ** 自然基的基向量 *)
+
+  Definition veye {n} (i : fin n) : vec n := veye 0 1 i.
+
+  (** (veye i).i = 1 *)
+  Lemma vnth_veye_eq : forall {n} i, (@veye n i) $ i = 1.
+  Proof. intros. apply vnth_veye_eq. Qed.
+
+  (** (veye i).j = 0 *)
+  Lemma vnth_veye_neq : forall {n} i j, i <> j -> (@veye n i) $ j = 0.
+  Proof. intros. apply vnth_veye_neq; auto. Qed.
+
+  (* ======================================================================= *)
+  (** ** natural basis, 自然基（最常见的一种标准正交基) *)
+  
+  Definition veyes (n : nat) : @Vector.vec (@Vector.vec A n) n := veyes 0 1 n.
+
+  (** veyes.ii = 1 *)
+  Lemma vnth_veyes_eq : forall {n} i, (veyes n) $ i $ i = 1.
+  Proof. intros. apply vnth_veyes_eq. Qed.
+
+  (** veyes.ij = 0 *)
+  Lemma vnth_veyes_neq : forall {n} i j, i <> j -> (veyes n) $ i $ j = 0.
+  Proof. intros. apply vnth_veyes_neq; auto. Qed.
+
+  (* ======================================================================= *)
   (** ** Vector opposition *)
 
   Definition vopp {n} (v : vec n) : vec n := vopp (Aopp:=Aopp) v.
@@ -761,6 +787,14 @@ Module RingMatrixTheory (E : RingElementType).
   (** <u, a \.* v> = a * <u, v> *)
   Lemma vdot_vcmul_r : forall {n} (u v : vec n) (a : A), <u, a \.* v> = a * <u, v>.
   Proof. intros. apply vdot_vcmul_r. Qed.
+
+  (** <a, veye i> = a i *)
+  Lemma vdot_veye_r : forall {n} (a : vec n) i, <a, veye i> = a i.
+  Proof. intros. apply vdot_veye_r. Qed.
+
+  (** <veye i, a> = a i *)
+  Lemma vdot_veye_l : forall {n} (a : vec n) i, <veye i, a> = a i.
+  Proof. intros. apply vdot_veye_l. Qed.
   
   (** <u, v> <> 0 -> u <> 0 *)
   Lemma vdot_neq0_imply_neq0_l : forall {n} (u v : vec n), <u, v> <> 0 -> u <> vzero.
@@ -769,6 +803,17 @@ Module RingMatrixTheory (E : RingElementType).
   (** <u, v> <> 0 -> v <> 0 *)
   Lemma vdot_neq0_imply_neq0_r : forall {n} (u v : vec n), <u, v> <> 0 -> v <> vzero.
   Proof. intros. apply vdot_neq0_imply_neq0_r in H; auto. Qed.
+
+  (** (∀ c, <a,c> = <b,c>) -> a = b *)
+  Lemma vdot_cancel_r : forall {n} (a b : vec n),
+      (forall c : vec n, <a,c> = <b,c>) -> a = b.
+  Proof. intros. apply vdot_cancel_r in H; auto. Qed.
+  
+  (** (∀ c, <c,a> = <c,b>) -> a = b *)
+  Lemma vdot_cancel_l : forall {n} (a b : vec n),
+      (forall c : vec n, <c,a> = <c,b>) -> a = b.
+  Proof. intros. apply vdot_cancel_l in H; auto. Qed.
+  
 
   (* ======================================================================= *)
   (** ** vsum *)
@@ -1079,6 +1124,16 @@ Module RingMatrixTheory (E : RingElementType).
   Definition mmul {r c s : nat} (M : mat r c) (N : mat c s) : mat r s :=
     mmul M N (Amul:=Amul)(Azero:=0)(Aadd:=Aadd).
   Infix "*" := mmul : mat_scope.
+  
+  (** (M * N)[i,j] = <row M i, col N j> *)
+  Lemma mnth_mmul : forall {r c t} (M : mat r c) (N : mat c t) i j,
+      (M * N) $ i $ j = <M $ i, (fun k => N $ k $ j)>.
+  Proof. intros. auto. Qed.
+
+  (** (M * N)[i] = <row M i, col N j> *)
+  Lemma vnth_mmul : forall {r c t} (M : mat r c) (N : mat c t) i,
+      (M * N) $ i = Vector.vmap (fun v => <M $ i, v>) (N\T).
+  Proof. intros. auto. Qed.
 
   (** N is cvec -> M * N = fun i => (vdot N) (M $ i) *)
   Lemma mmul_cvec : forall {r c} (M : mat r c) (N : cvec c),
@@ -1423,6 +1478,14 @@ Module FieldMatrixTheory (E : FieldElementType).
   Include (RingMatrixTheory E).
 
   Open Scope vec_scope.
+
+  (* ======================================================================= *)
+  (** ** Properties about veye *)
+    
+  (** veye <> 0 *)
+  Lemma veye_neq0 : forall {n} i, @veye n i <> vzero.
+  Proof. intros. apply veye_neq0. apply field_1_neq_0. Qed.
+
 
   (* ======================================================================= *)
   (** ** Properties about vcmul *)
@@ -1847,6 +1910,10 @@ Module FieldMatrixTheory (E : FieldElementType).
   Lemma SOnP_spec : forall {n} (x : @SOn n), SOnP x.
   Proof. intros. apply SOnP_spec. Qed.
 
+  (** The transpose also keep SOn *)
+  Lemma SOnP_mtrans : forall {n} (M : smat n), SOnP M -> SOnP (M\T).
+  Proof. intros. apply SOnP_mtrans; auto. Qed.
+
   (** Create a SOn from a matrix satisfing `SOnP` *)
   Definition mkSOn {n} (m : smat n) (H : SOnP m) : @SOn n := mkSOn m H.
 
@@ -2185,8 +2252,13 @@ Module NormedOrderedFieldMatrixTheory (E : NormedOrderedFieldElementType).
 
   (* 任意维度“三角形”两边长度之和大于第三边长度 *)
   (** ||u + v|| <= ||u|| + ||v|| *)
-  Lemma vlen_vadd_le : forall {n} (u v : vec n), (||(u + v)%V|| <= ||u|| + ||v||)%R.
-  Proof. intros. apply vlen_vadd_le. Qed.
+  Lemma vlen_le_add : forall {n} (u v : vec n), (||(u + v)%V|| <= ||u|| + ||v||)%R.
+  Proof. intros. apply vlen_le_add. Qed.
+
+  (* 任意维度“三角形”的任意一边的长度大于等于两边长度之差 *)
+  (** ||u|| - ||v|| <= ||u + v|| *)
+  Lemma vlen_ge_sub : forall {n} (u v : vec n), ((||u|| - ||v||) <= ||(u + v)%V||)%R.
+  Proof. intros. apply vlen_ge_sub. Qed.
 
   (** ||v|| = 0 <-> v = 0 *)
   Lemma vlen_eq0_iff_eq0 : forall {n} (v : vec n), ||v|| = 0%R <-> v = vzero.

@@ -180,7 +180,26 @@ Section minvAM.
 
 
   (** *** Adjoint matrix (Adjugate matrix, adj(A), A* ) *)
+
+  (** The sign of algebraic remainder of A[i,j], i.e., (-1)^(i+j) *)
+  Definition madjSign {n} (i j : fin n) : A := 
+    if Nat.even (fin2nat i + fin2nat j) then Aone else (-Aone)%A.
+
+  (** madjSign i j = madjSign j i *)
+  Lemma madjSign_comm : forall {n} (i j : fin n), madjSign i j = madjSign j i.
+  Proof. intros. unfold madjSign. rewrite Nat.add_comm. auto. Qed.
+
+  (** Cofactor matrix *)
+  Definition mcomat {n} : smat n -> smat n := 
+    match n with
+    | O => fun M => M 
+    | S n' =>
+        fun (M : smat (S n')) =>
+        fun (i:fin (S n')) (j:fin (S n')) =>
+          (madjSign i j * mdet (msubmat M i j))%A
+    end.
   
+  (** Adjoint matrix A = Transpose of Cofactor Matrix *)
   (* adj(A)[i,j] = algebraic remainder of A[j,i]. *)
   Definition madj {n} : smat n -> smat n := 
     match n with
@@ -188,13 +207,33 @@ Section minvAM.
     | S n' =>
         fun (M : smat (S n')) =>
         fun (i:fin (S n')) (j:fin (S n')) =>
-          let s :=
-            if Nat.even (fin2nat i + fin2nat j)
-            then Aone
-            else (-Aone)%A in
-          let d := mdet (msubmat M j i) in 
-          (s * d)%A
+          (madjSign i j * mdet (msubmat M j i))%A
     end.
+
+  (** (madj M).ij = (-1)^(i+j) * det(submat M i j) *)
+  Lemma mnth_madj : forall {n} (M : smat (S n)) i j,
+      (madj M) i j = (madjSign i j * mdet (msubmat M j i))%A.
+  Proof. intros. auto. Qed.
+  
+  (** (madj M) $ i $ j = (mcomat M) $ j $ i. *)
+  Lemma mnth_madj_eq_mnth_mcomat_swap : forall {n} (M : smat n) i j,
+      (madj M) $ i $ j = (mcomat M) $ j $ i.
+  Proof.
+    intros. destruct n.
+    - exfalso. apply fin0_False; auto.
+    - simpl. f_equal. apply madjSign_comm.
+  Qed.
+
+  (** (madj M)\T = mcomat M *)
+  Lemma mtrans_madj : forall {n} (M : smat n), (madj M)\T = mcomat M.
+  Proof.
+    intros. apply meq_iff_mnth; intros. rewrite mnth_mtrans.
+    apply mnth_madj_eq_mnth_mcomat_swap.
+  Qed.
+
+  (** (mcomat M)\T = madj M *)
+  Lemma mtrans_mcomat : forall {n} (M : smat n), (mcomat M)\T = madj M.
+  Proof. intros. rewrite <- mtrans_madj, mtrans_mtrans. auto. Qed.
 
   
   (** *** Cramer rule *)
@@ -211,6 +250,14 @@ Section minvAM.
   (** Inverse matrix by adjoint matrix method *)
   Definition minvAM {n} (M : smat n) := (Aone / mdet M) \.* (madj M).
   Notation "M \-1" := (minvAM M) : mat_scope.
+  
+  (** mcomat M = (det M) .* (M\-1\T) *)
+  Lemma mcomat_eq : forall (M : smat 3), mdet M <> Azero -> mcomat M = mdet M \.* (M\-1\T).
+  Proof.
+    intros. unfold minvAM. rewrite mtrans_mcmul. rewrite mcmul_assoc.
+    rewrite identityLeft at 1. rewrite field_mulInvR; auto.
+    rewrite mcmul_1_l. rewrite mtrans_madj. auto.
+  Qed.
 
   (** M * M\-1 = mat1 *)
   Lemma AM_mmul_minv_r : forall {n} (M : smat n), minvertible M -> M * M\-1 = mat1.
