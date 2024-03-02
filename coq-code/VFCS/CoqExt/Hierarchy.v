@@ -2309,6 +2309,8 @@ End theories.
 (* ######################################################################### *)
 (** * Field *)
 
+(* Tips: 也许还遗漏了一个条件，即：0 没有逆元。但此处不知如何修复 *)
+
 (** ** Class *)
 Class Field {A} Aadd (Azero:A) Aopp Amul Aone Ainv := {
     fieldRing :: ARing Aadd Azero Aopp Amul Aone;

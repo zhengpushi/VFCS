@@ -43,11 +43,11 @@ Section vsum.
   Context `{AMonoid : Monoid A Aadd Azero}.
   Context `{BMonoid : Monoid B Badd Bzero}.
 
-  (** ∑(f v.i) = f (∑v) *)
-  Lemma vsum_vmap : forall {n} (f : A -> B) (v : @vec A n),
+  (** ∑(f a.i) = f (∑a) *)
+  Lemma vsum_vmap : forall {n} (f : A -> B) (a : @vec A n),
       (f Azero = Bzero) ->
       (forall a b : A, f (Aadd a b) = Badd (f a) (f b)) ->
-      @vsum _ Badd Bzero _ (vmap f v) = f (@vsum _ Aadd Azero _ v).
+      @vsum _ Badd Bzero _ (vmap f a) = f (@vsum _ Aadd Azero _ a).
   Proof.
     intros. unfold vmap. unfold vec in *. induction n.
     - cbv. auto.
@@ -422,7 +422,7 @@ Section lcomb.
   Lemma lcomb_coef_cmul : forall {n} (vs : @vec V n) a c,
       lcomb (a \.* c)%V vs = a \.* (lcomb c vs).
   Proof.
-    intros. unfold lcomb. apply vsum_cmul_extK; intros.
+    intros. unfold lcomb. apply vsum_cmul_extX; intros.
     - apply vs_vcmul_0_r.
     - apply vs_vcmul_vadd.
     - rewrite !vnth_vmap2. rewrite vnth_vcmul. apply vs_vcmul_assoc.
@@ -606,9 +606,9 @@ Section lcomb.
     match goal with
     | H: ?a1 = ?a2 |- ?b1 = ?b2 => replace b1 with a2; [replace b2 with a1|]; auto
     end.
-    - f_equal. extensionality i. apply vsum_cmul_extK; intros.
+    - f_equal. extensionality i. apply vsum_cmul_extX; intros.
       apply vs_vcmul_0_r. apply vs_vcmul_vadd. apply vs_vcmul_assoc.
-    - f_equal. extensionality i. apply vsum_cmul_extA; intros; auto.
+    - f_equal. extensionality i. apply vsum_cmul_extV; intros; auto.
       apply vs_vcmul_0_l. apply vs_vcmul_aadd.
   Qed.
 

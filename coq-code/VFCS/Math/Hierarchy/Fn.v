@@ -67,24 +67,24 @@ Section props.
   Notation lindep := (@lindep _ Azero _ vadd vzero vcmul).
 
   (** (lcomb cs vs).i = ∑(vmap2 Amul cs (vcol vs i)) *)
-  Lemma vnth_lcomb : forall {n r} (cs : @vec A r) (vs : @vec (@vec A n) r) (i : fin n),
-      (lcomb cs vs) $ i = vsum (vmap2 Amul cs (vcol vs i)).
+  Lemma vnth_lcomb : forall {n r} (cs : @vec A r) (vs : @mat A r n) (i : fin n),
+      (lcomb cs vs) $ i = vsum (vmap2 Amul cs (mcol vs i)).
   Proof. intros. unfold lcomb. rewrite vnth_vsum. auto. Qed.
 
   (** lcomb over vectors from `vmap2 vapp us vs` *)
   Lemma lcomb_vec_vmap2_vapp :
     forall (m n r : nat) (cs : @vec A r)
-      (us : @vec (@vec A m) r) (vs : @vec (@vec A n) r) (i : fin (m + n)),
+      (us : @mat A r m) (vs : @mat A r n) (i : fin (m + n)),
       lcomb cs (vmap2 vapp us vs) i = vapp (lcomb cs us) (lcomb cs vs) i.
   Proof.
     intros. rewrite vnth_lcomb. destruct (fin2nat i ??< m).
     - rewrite vnth_vapp_L with (H:=l). unfold lcomb.
       rewrite vnth_vsum. apply vsum_eq; intros j.
-      rewrite !vnth_vmap2. rewrite !vnth_vcmul. f_equal. rewrite !vnth_vcol.
+      rewrite !vnth_vmap2. rewrite !vnth_vcmul. f_equal. rewrite !vnth_mcol.
       rewrite vnth_vmap2. rewrite vnth_vapp_L with (H:=l); auto.
     - assert (m <= fin2nat i). lia. rewrite vnth_vapp_R with (H:=H). unfold lcomb.
       rewrite vnth_vsum. apply vsum_eq; intros j.
-      rewrite !vnth_vmap2. rewrite !vnth_vcmul. f_equal. rewrite !vnth_vcol.
+      rewrite !vnth_vmap2. rewrite !vnth_vcmul. f_equal. rewrite !vnth_mcol.
       rewrite vnth_vmap2. rewrite vnth_vapp_R with (H:=H). auto.
   Qed.
 
@@ -199,11 +199,11 @@ Section props.
       destruct (fin2nat j ??< fin2nat i).
       - specialize (H0 (fin2SuccRange j)).
         rewrite vnth_vzero in *. rewrite <- H0 at 2. rewrite !vnth_lcomb.
-        apply vsum_eq; intros k. rewrite !vnth_vmap2. f_equal. unfold vcol.
+        apply vsum_eq; intros k. rewrite !vnth_vmap2. f_equal. unfold mcol.
         rewrite !vnth_vmap. rewrite (@vnth_vinsert_lt _ Azero) with (j:=j); auto.
       - specialize (H0 (fin2SuccRangeSucc j)).
         rewrite vnth_vzero in *. rewrite <- H0 at 2. rewrite !vnth_lcomb.
-        apply vsum_eq; intros k. rewrite !vnth_vmap2. f_equal. unfold vcol.
+        apply vsum_eq; intros k. rewrite !vnth_vmap2. f_equal. unfold mcol.
         rewrite !vnth_vmap. rewrite (@vnth_vinsert_gt _ Azero) with (j:=j); auto.
         lia. apply fin2nat_lt.
     Qed.
@@ -246,13 +246,13 @@ Section props.
       - specialize (H0 (fin2SuccRange j)).
         rewrite vnth_vzero in *. rewrite <- H0 at 2. rewrite !vnth_lcomb.
         apply vsum_eq; intros k. f_equal. apply veq_iff_vnth; intros s.
-        rewrite !vnth_vcol. rewrite !vnth_vmap.
+        rewrite !vnth_mcol. rewrite !vnth_vmap.
         rewrite (@vnth_vremove_lt _ Azero); auto. erewrite nth_v2f. f_equal.
         apply fin2nat_imply_nat2fin. rewrite fin2nat_fin2SuccRange. auto.
       - specialize (H0 (fin2SuccRangeSucc j)).
         rewrite vnth_vzero in *. rewrite <- H0 at 2. rewrite !vnth_lcomb.
         apply vsum_eq; intros k. f_equal. apply veq_iff_vnth; intros s.
-        rewrite !vnth_vcol. rewrite !vnth_vmap.
+        rewrite !vnth_mcol. rewrite !vnth_vmap.
         rewrite (@vnth_vremove_ge _ Azero); auto; try lia.
         + erewrite nth_v2f. f_equal. apply fin2nat_imply_nat2fin.
           rewrite fin2nat_fin2SuccRangeSucc. auto.

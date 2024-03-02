@@ -232,7 +232,7 @@ Section morth.
   Notation vec n := (@vec A n).
   Notation vzero := (vzero Azero).
   Notation smat n := (smat A n).
-  Notation mat1 n := (@mat1 _ Azero Aone n).
+  Notation mat1 := (@mat1 _ Azero Aone _).
   Notation mmul := (@mmul _ Aadd Azero Amul).
   Infix "*" := mmul  : mat_scope.
   Notation mmulv := (@mmulv _ Aadd Azero Amul).
@@ -244,7 +244,7 @@ Section morth.
   Notation "M \-1" := (@minvAM _ Aadd Azero Aopp Amul Aone Ainv _ M) : mat_scope.
 
   (** An orthogonal matrix *)
-  Definition morth {n} (M : smat n) : Prop := M\T * M = mat1 n.
+  Definition morth {n} (M : smat n) : Prop := M\T * M = mat1.
 
   (** orthogonal M -> invertible M *)
   Lemma morth_invertible : forall {n} (M : smat n),
@@ -263,12 +263,12 @@ Section morth.
 
   (** orthogonal M <-> M\T * M = mat1 *)
   Lemma morth_iff_mul_trans_l : forall {n} (M : smat n),
-      morth M <-> M\T * M = mat1 n.
+      morth M <-> M\T * M = mat1.
   Proof. intros. red. auto. Qed.
 
   (** orthogonal M <-> M * M\T = mat1 *)
   Lemma morth_iff_mul_trans_r : forall {n} (M : smat n),
-      morth M <-> M * M\T = mat1 n.
+      morth M <-> M * M\T = mat1.
   Proof.
     intros. split; intros H.
     - pose proof (morth_invertible M H).
@@ -277,7 +277,7 @@ Section morth.
   Qed.
 
   (** orthogonal mat1 *)
-  Lemma morth_mat1 : forall {n}, morth (mat1 n).
+  Lemma morth_mat1 : forall {n}, @morth n mat1.
   Proof. intros. red. rewrite mtrans_mat1, mmul_1_r. easy. Qed.
 
   (** orthogonal M -> orthogonal p -> orthogonal (m * p) *)

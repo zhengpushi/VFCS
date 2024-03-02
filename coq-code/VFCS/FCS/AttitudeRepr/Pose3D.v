@@ -88,7 +88,7 @@ Section AxisAngle.
     rewrite <- !v3cross_eq_skew_mul_vec.
     move2h (sin θ \.* (n \x a)). symmetry. move2h (sin θ \.* (n \x a)). elimh.
     rewrite (commutative (<a,n>)). rewrite <- vcmul_assoc.
-    rewrite v3cross_u_uv_eq_minus.
+    rewrite v3cross_a_ab_eq_minus.
     rewrite H. rewrite vdot_comm. unfold vsub.
     rewrite vcmul_vadd. asemigroup. unfold Rminus.
     rewrite vcmul_add. rewrite !vcmul_1_l.
