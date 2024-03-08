@@ -525,7 +525,7 @@ Section vinsert.
     intros j. destruct (lt_eq_lt_dec (fin2nat j) (fin2nat i)) as [[H|]|H].
     - refine (a $ (fin2PredRange j _)).
       apply Nat.lt_le_trans with (fin2nat i); auto.
-      apply PeanoNat.lt_n_Sm_le. apply fin2nat_lt.
+      apply Arith_prebase.lt_n_Sm_le. apply fin2nat_lt.
     - apply x.
     - refine (a $ (fin2PredRangePred j _)).
       apply Nat.lt_lt_0 in H; auto.
