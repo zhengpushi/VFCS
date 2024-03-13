@@ -1,0 +1,19 @@
+# ===================================================================
+# Copyright 2024 ZhengPu Shi
+#  This file is part of CoqMatrix. It is distributed under the MIT
+#  "expat license". You should have recieved a LICENSE file with it.
+# ===================================================================
+
+-I .
+-R ./ ""
+
+# -arg -w -arg -notation-overridden
+# -arg -w -arg -notation-incompatible-format
+# -arg -w -arg -deprecated-hint-without-locality
+# -arg -w -arg -redundant-canonical-projection
+# -arg -w -arg -ambiguous-paths
+# -arg -w -arg -local-declaration
+# -arg -w -arg -hiding-delimiting-key
+
+
+MatrixInv.v
