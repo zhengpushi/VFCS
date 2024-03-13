@@ -1196,19 +1196,7 @@ MA[i, n-i]
       - simpl. lia.
       - simpl. destruct (decidable (MA&[n - S i, j]) 0); lia. 
     Qed.
-
-    (*   Lemma  get_first_none_zero_help:
-    forall (A0 : smat n) (i j : nat), 
-      get_first_none_zero A0 i j < n -> A0&[get_first_none_zero A0 i j, j] <> e0.
-  Proof.
-    intros.
-    induction i.
-    - simpl. simpl in H. lia.
-    - simpl; mytauto.
-      simpl in H.
-      mytauto.
-  Qed. *)
-
+    
     Lemma row_echelon_form_mult_eq:
       forall (MA : smat n) (i : nat) (E EA : smat n),
         i <= n -> row_echelon_form MA i = Some (E, EA) -> 
