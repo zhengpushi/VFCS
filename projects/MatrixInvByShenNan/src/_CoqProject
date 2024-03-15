@@ -5,7 +5,7 @@
 # ===================================================================
 
 -I .
--R ./ ""
+# -R ./ ""
 
 # -arg -w -arg -notation-overridden
 # -arg -w -arg -notation-incompatible-format
@@ -16,5 +16,5 @@
 # -arg -w -arg -hiding-delimiting-key
 
 
-MatrixInv.v
+# MatrixInv.v
 MatrixInv_v1.v

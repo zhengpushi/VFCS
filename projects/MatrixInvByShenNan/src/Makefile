@@ -19,10 +19,4 @@ cleanall: $(COQMAKEFILE)
 	$(MAKE) -f $^ cleanall
 	$(RM) $^ $^.conf
 
-install: $(COQMAKEFILE)
-	$(MAKE) -f $^ install
-
-uninstall: $(COQMAKEFILE)
-	$(MAKE) -f $^ uninstall
-
 .PHONY: all clean cleanall install uninstall

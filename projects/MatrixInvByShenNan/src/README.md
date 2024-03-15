@@ -9,6 +9,11 @@
 * 增加更多注释，方便理解。
 * 使用 Hierarchy 中的 Ring, Field 等抽象结构，已经 ring, field 等策略帮助证明。
 
-## 2. 逆矩阵的证明
-* 第一部分，大量参考了 nat_fun 的设计
+## 2. 逆矩阵的实现和证明
+* 第一部分，大量参考了 nat_fun 的设计，比如 sum, sum_eq, sum_add, sum_single 等
+* rowSwap, rowK, rowAdd 分别是三个单独的矩阵；
+  而我的实现中它们是函数作用，并非单独矩阵。
+  我是另外做了RowOp2Mat的转换，即 rowSwap(mat1) 的结果。
+
+* 
 
