@@ -1,3 +1,7 @@
+(* 
+   purpose  : 使用 DepPair 模型，能够运行。
+ *)
+
 From CoqMatrix Require Import DepRec.Matrix.
 From CoqMatrix Require Import MatrixTheoryDR.
 

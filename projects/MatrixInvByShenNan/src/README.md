@@ -17,9 +17,14 @@
 * 由于“基于记录”和“基于函数”这两个模型的差异，遗留了很多公理。
 
 ## 3. 文件列表
-* MatrixInv.v         : 无法运行的版本，因Matrix库和omega库导致。
-* MatrixInv_v1.v      : 适配了CoqMatrix的能够运行的版本，少量调整代码顺序
-* MatrixInv_v11.v     : 在 v1 基础上大量改动，统一命名，简化证明，改进注释，便于理解。
-* MatrixInv_v111.v    : 在 v11 基础上改用 SafeNatFun 模型，进一步简化证明（去掉公理部分）
-* MatrixInv_v12.v     : 在 v1 基础上切换其他矩阵模型立即能够编译。(目前是SafeNatFun，其余模型需要增加一个 f2m 的接口)
+* MatrixInv.v
+  无法运行的版本，因Matrix库和omega库导致。
+* MatrixInv_v1.v
+  适配了CoqMatrix的能够运行的版本，少量调整代码顺序。该版本有很多公理，且代码较为冗长。
+* MatrixInv_v11.v
+  在 v1 基础上大量改动，统一命名，简化证明，改进注释，便于理解。
+* MatrixInv_v111.v
+  在 v11 基础上改用 SafeNatFun 模型，进一步简化证明（公理部分）。
+* MatrixInv_v12.v
+  在 v1 基础上切换其他矩阵模型立即能够编译。(目前是SafeNatFun，其余模型需要增加一个 f2m 的接口)
 

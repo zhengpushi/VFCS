@@ -1,16 +1,12 @@
 (*
-   Remark   :
-   1. 使用 FieldMatrixTheoryDR，也就是基于记录的矩阵实现方式。
+   purpose  : 使用不同模型，测试适用性。
 
-   Changelog:
-   1. v1 
-      (1) 使用 DecidableFieldMatrixTheoryDR 代替 EqDecidableFieldMatrixTheoryDR。
-          目的是，使用 setoid 代替 eq，以便支持 Q 类型。
-      (2) 简化代码，统一命名，以便理解。
-   2. v2
-      测试用 DR, DP, DL, NF 等不同方法时的适用性。
-      目前，因为缺少 f2m 函数，所以暂时不能使用
-
+   1. 各模型的适用性
+      DepRec 可直接使用
+      SafeNatFun 可直接使用
+      NatFun 需要补充矩阵维数参数
+      DepPair 缺少 f2m 接口
+      DepList 缺少 f2m 接口
  *)
 
 (* ------------ DepRec ----------- *)

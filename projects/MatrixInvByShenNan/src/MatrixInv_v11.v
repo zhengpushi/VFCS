@@ -1,10 +1,5 @@
 (*
-   Remark   :
-   1. 使用 FieldMatrixTheoryDR，也就是基于记录的矩阵实现方式。
-
-   Changelog:
-   v0 能够在CoqMatrix库下编译成功
-   v1 简化代码，统一命名，以便理解。
+   purpose  : 使用 DepPair 模型，简化代码，以便理解
  *)
 From CoqMatrix Require Import DepRec.Matrix.
 From CoqMatrix Require Import MatrixTheoryDR.
