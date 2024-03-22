@@ -100,12 +100,12 @@ Section minvGE.
   Notation minEchelon :=
     (@minEchelon _ Aadd Azero Aopp Amul Aone Ainv AeqDec).
   Notation Aeqb := (Acmpb AeqDec).
-  Notation vfirstNonZero := (@vfirstNonZero _ _ Azero).
+  Notation vpivot := (@vpivot _ _ Azero).
   Notation rowOpList2mat := (@rowOpList2mat _ Aadd Azero Amul Aone).
 
   (* 计算阶梯形矩阵的行秩 = 非零行的个数 *)
   Definition mrowRankOfEchelon {r c} (M : @mat A r c) : nat :=
-    let v1 := vmap vfirstNonZero M in
+    let v1 := vmap vpivot M in
     let v2 := vmap (fun o => match o with Some _ => 1 | _ => O end) v1 in
     @vsum _ add 0 _ v2.
 

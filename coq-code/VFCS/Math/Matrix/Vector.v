@@ -49,6 +49,15 @@ Definition vec {A : Type} (n : nat) := fin n -> A.
 
 
 (* ======================================================================= *)
+
+(** ** Cast between two [vec] type with actual equal range *)
+
+(** Cast from [vec n] type to [vec m] type if [n = m] *)
+Definition cast_vec : forall {A} n m, n = m -> @vec A n = @vec A m.
+Proof. intros. subst. auto. Qed.
+
+
+(* ======================================================================= *)
 (** ** Get element of a vector *)
 
 (** v.i *)
@@ -83,13 +92,13 @@ Proof. intros. unfold vec in *. apply ffeq_iff_nth_nat. Qed.
 
 (** a[(i,H1)] = b[(i,H2)] -> a[(i,H3)] = b[(i,H4)] *)
 Lemma vnth_sameIdx_imply : forall {A n} {a b : @vec A n} {i} {H1 H2 H3 H4 : i < n},
-    a (exist _ i H1) = b (exist _ i H2) ->
-    a (exist _ i H3) = b (exist _ i H4).
+    a (Fin i H1) = b (Fin i H2) ->
+    a (Fin i H3) = b (Fin i H4).
 Proof.
   intros.
-  replace (exist _ i H3:fin n) with (exist _ i H1:fin n).
-  replace (exist _ i H4:fin n) with (exist _ i H2:fin n); auto.
-  apply sig_eq_iff; auto. apply sig_eq_iff; auto.
+  replace (Fin i H3:fin n) with (Fin i H1:fin n).
+  replace (Fin i H4:fin n) with (Fin i H2:fin n); auto.
+  apply Fin_eq_iff; auto. apply Fin_eq_iff; auto.
 Qed.
 
 (** {u = v} + {u <> v} *)
@@ -220,7 +229,7 @@ Section f2v_v2f.
 
   (** a [|i] = v2f a i *)
   Lemma vnth_eq_nth : forall {n} (a : vec n) (i : nat) (H : i < n),
-      a (exist _ i H) = v2f a i.
+      a (Fin i H) = v2f a i.
   Proof. intros. rewrite nth_v2f with (H:=H). f_equal. Qed.
 
   (** f2v (v2f a) = a *)
@@ -256,20 +265,20 @@ End test.
 Section l2v_v2l.
   Context {A} (Azero : A).
 
-  Definition l2v (n : nat) (l : list A) : vec n := @l2ff _ Azero _ l.
+  Definition l2v {n : nat} (l : list A) : vec n := @l2ff _ Azero _ l.
   Definition v2l {n} (a : vec n) : list A := ff2l a.
 
   (** (l2v l).i = nth i l *)
-  Lemma vnth_l2v : forall {n} (l : list A) i, (l2v n l) $ i = nth (fin2nat i) l Azero.
+  Lemma vnth_l2v : forall {n} (l : list A) i, (@l2v n l) $ i = nth (fin2nat i) l Azero.
   Proof. intros. unfold l2v. rewrite nth_l2ff. auto. Qed.
 
   (** l2v l1 = l2v l2 -> l1 = l2 *)
   Lemma l2v_inj : forall {n} (l1 l2 : list A),
-      length l1 = n -> length l2 = n -> l2v n l1 = l2v n l2 -> l1 = l2.
+      length l1 = n -> length l2 = n -> @l2v n l1 = @l2v n l2 -> l1 = l2.
   Proof. intros. unfold l2v. apply l2ff_inj in H1; auto. Qed.
 
   (** ∀ v, (∃ l, l2v l = a) *)
-  Lemma l2v_surj : forall {n} (a : vec n), (exists l, l2v n l = a).
+  Lemma l2v_surj : forall {n} (a : vec n), (exists l, @l2v n l = a).
   Proof. intros. unfold l2v,vec in *. apply l2ff_surj. Qed.
 
   (** length (v2l a) = n *)
@@ -307,10 +316,10 @@ Section vec_specific.
   Variable a1 a2 a3 a4 : A.
   
   Definition mkvec0 : @vec A 0 := fun _ => Azero. (* anything is ok *)
-  Definition mkvec1 : @vec A 1 := l2v Azero _ [a1].
-  Definition mkvec2 : @vec A 2 := l2v Azero _ [a1;a2].
-  Definition mkvec3 : @vec A 3 := l2v Azero _ [a1;a2;a3].
-  Definition mkvec4 : @vec A 4 := l2v Azero _ [a1;a2;a3;a4].
+  Definition mkvec1 : @vec A 1 := l2v Azero [a1].
+  Definition mkvec2 : @vec A 2 := l2v Azero [a1;a2].
+  Definition mkvec3 : @vec A 3 := l2v Azero [a1;a2;a3].
+  Definition mkvec4 : @vec A 4 := l2v Azero [a1;a2;a3;a4].
 End vec_specific.
 
 
@@ -417,81 +426,6 @@ End vmap2_sametype.
 
 
 (* ======================================================================= *)
-(** ** A proposition which all elements of the vector hold *)
-Section vforall.
-  Context {A : Type}.
-
-  (** Every element of `a` satisfy the `P` *)
-  Definition vforall {n} (a : @vec A n) (P : A -> Prop) : Prop := forall i, P (a $ i).
-  
-End vforall.
-
-
-(* ======================================================================= *)
-(** ** A proposition which at least one element of the vector holds *)
-Section vexist.
-  Context {A : Type}.
-
-  (** There exist element of `v` satisfy the `P` *)
-  Definition vexist {n} (a : @vec A n) (P : A -> Prop) : Prop := exists i, P (a $ i).
-  
-End vexist.
-
-
-(* ======================================================================= *)
-(** ** An element belongs to the vector *)
-Section vmem.
-  Context {A : Type}.
-
-  (** Element `x` belongs to the vector `a` *)
-  Definition vmem {n} (a : @vec A n) (x : A) : Prop := vexist a (fun x0 => x0 = x).
-  
-End vmem.
-
-
-(* ======================================================================= *)
-(** ** An vector belongs to another vector *)
-Section vmems.
-  Context {A : Type}.
-
-  (** Every element of vector `a` belongs to vector `b` *)
-  Definition vmems {r s} (a : @vec A r) (b : @vec A s) : Prop :=
-    vforall a (fun x => vmem b x).
-  
-End vmems.
-
-
-(* (* ======================================================================= *) *)
-(* (** ** An vector belongs to one but not belong to another *) *)
-(* Section vdiff. *)
-(*   Context {A : Type}. *)
-
-(*   (** Elements belong to vector `u` but not belongs to vector `v` *) *)
-(*   Definition vdiff {r s} (a : @vec A r) (b : @vec A s) : Prop. *)
-(*     Check fun i => vmem  *)
-(*     vforall a (fun x => vmem b x). *)
-  
-(* End vmems. *)
-
-
-(* (* ======================================================================= *) *)
-(* (** ** Get column of a 2D vector *) *)
-(* Section vcol. *)
-(*   Context {A} {Azero : A}. *)
-
-(*   (** Get i-th column of vectors set i-th element vector `a` *) *)
-(*   Definition vcol {n r} (a : @vec (@vec A n) r) (i : fin n) : @vec A r := *)
-(*     vmap (fun v => v $ i) a. *)
-
-(*   (** (vcol a i).j = a.j.i *) *)
-(*   Lemma vnth_vcol : forall {n r} (a : @vec (@vec A n) r) (i : fin n) (j : fin r), *)
-(*       (vcol a i) $ j = a $ j $ i. *)
-(*   Proof. intros. unfold vcol. auto. Qed. *)
-  
-(* End vcol. *)
-
-
-(* ======================================================================= *)
 (** ** Set element of a vector *)
 Section vset.
   Context {A} {Azero : A}.
@@ -511,6 +445,42 @@ Section vset.
   Proof. intros. unfold vset. destruct (_??=_); auto. subst. easy. Qed.
   
 End vset.
+
+
+(* ======================================================================= *)
+(** ** Swap two element of a vector *)
+Section vswap.
+  Context {A : Type}.
+  
+  (* Swap the i-th and j-th element of vector `a` *)
+  Definition vswap {n} (a : @vec A n) (i j : fin n) : @vec A n :=
+    fun k => if k ??= i then a$j else (if k ??= j then a$i else a$k).
+
+  Lemma vnth_vswap_i : forall {n} (a : @vec A n) (i j : fin n),
+      (vswap a i j) $ i = a $ j.
+  Proof. intros. unfold vswap. destruct (_ ??= _); auto. easy. Qed.
+
+  Lemma vnth_vswap_j : forall {n} (a : @vec A n) (i j : fin n),
+      (vswap a i j) $ j = a $ i.
+  Proof.
+    intros. unfold vswap. destruct (_ ??= _); subst; try easy.
+    destruct (_ ??= _); subst; try easy.
+  Qed.
+
+  Lemma vnth_vswap_other : forall {n} (a : @vec A n) (i j k : fin n),
+      i <> k -> j <> k -> (vswap a i j) $ k = a $ k.
+  Proof.
+    intros. unfold vswap. destruct (_ ??= _); subst; try easy.
+    destruct (_ ??= _); subst; try easy.
+  Qed.
+
+  Lemma vswap_vswap : forall {n} (a : @vec A n) (i j : fin n), vswap (vswap a i j) j i = a.
+  Proof.
+    intros. unfold vswap. apply veq_iff_vnth; intros k.
+    repeat (destruct (_??=_); subst; try easy).
+  Qed.
+
+End vswap.
 
 
 (* ======================================================================= *)
@@ -548,10 +518,10 @@ Section vinsert.
     unfold fin2PredRange, fin2PredRangePred.
     destruct i as [i Hi], j as [j Hj]; simpl.
     destruct (lt_eq_lt_dec j i) as [[H|H]|H]; simpl.
-    - destruct (_??<_), (_??<_); try lia. f_equal. apply sig_eq_iff; auto.
+    - destruct (_??<_), (_??<_); try lia. f_equal. apply Fin_eq_iff; auto.
     - destruct (_??<_); try lia. destruct (_??=_)%nat; try lia. auto.
     - destruct (_??<_); try lia. destruct (_??=_)%nat; try lia.
-      destruct (_??<_); try lia. f_equal. apply sig_eq_iff; auto.
+      destruct (_??<_); try lia. f_equal. apply Fin_eq_iff; auto.
   Qed.
 
   (** j < i -> (vinsert a i x).j = a.i *)
@@ -613,7 +583,7 @@ Section vinsert.
     assert (S (fin2nat j) <= n). pose proof (fin2nat_lt j); lia.
     specialize (H1 H2 H3). clear H2 H3. simpl in *. v2f Azero.
     rewrite ff2f_fin2nat in H1. rewrite <- H1.
-    erewrite <- !nth_ff_eq_nth_f. f_equal. destruct j. cbv. apply sig_eq_iff; auto.
+    erewrite <- !nth_ff_eq_nth_f. f_equal. destruct j. cbv. apply Fin_eq_iff; auto.
     Unshelve. pose proof (fin2nat_lt j). lia.
   Qed.
 
@@ -660,7 +630,7 @@ Section vinsert.
         destruct (_??<_); try lia.
         destruct (_??=_)%nat; try lia.
         destruct (_??<_); try lia.
-        rewrite <- H. f_equal. cbv. apply sig_eq_iff; auto.
+        rewrite <- H. f_equal. cbv. apply Fin_eq_iff; auto.
   Qed.
 
   (** (a <<- x) = vzero <-> a = vzero /\ x = Azero  *)
@@ -691,7 +661,7 @@ End vinsert.
 
 Section test.
   Let n := 5.
-  Let a := l2v 9 n [1;2;3;4;5].
+  Let a : vec n := l2v 9 [1;2;3;4;5].
   (* Compute v2l (vinsert a (nat2finS 1) 7). *)
   (* Compute v2l (vinsert a (nat2finS 5) 7). *)
 End test.    
@@ -721,7 +691,7 @@ Section vremove.
     unfold vremove, vremove', f2v, f2ff, v2f,ff2f.
     unfold fin2SuccRange, fin2SuccRangeSucc. erewrite nat2finS_eq.
     destruct i as [i Hi], j as [j Hj]; simpl.
-    destruct (_??<_), (_??<_); cbv; try lia; f_equal; cbv; apply sig_eq_iff; auto.
+    destruct (_??<_), (_??<_); cbv; try lia; f_equal; cbv; apply Fin_eq_iff; auto.
     Unshelve. pose proof (fin2nat_lt j). lia.
   Qed.
 
@@ -771,9 +741,9 @@ Section vremove.
     destruct i as [i Hi], j as [j Hj].
     unfold vremove',vinsert',f2v,v2f,f2ff,ff2f; simpl in *.
     destruct (_??<_),(_??<_); try lia.
-    - destruct (_??<_); try lia. f_equal. cbv. apply sig_eq_iff; auto.
+    - destruct (_??<_); try lia. f_equal. cbv. apply Fin_eq_iff; auto.
     - destruct (_??<_); try lia. destruct (_??=_)%nat; try lia.
-      destruct (_??<_); try lia. f_equal. cbv. apply sig_eq_iff; auto.
+      destruct (_??<_); try lia. f_equal. cbv. apply Fin_eq_iff; auto.
   Qed.
   
   (** vinsert (vremove a i) (a $ i) = a *)
@@ -785,12 +755,12 @@ Section vremove.
     destruct i as [i Hi], j as [j Hj].
     unfold vremove',vinsert',f2v,v2f,f2ff,ff2f; simpl in *.
     destruct (_??<_),(_??<_); try lia.
-    - destruct (_??<_); try lia. f_equal. cbv. apply sig_eq_iff; auto.
+    - destruct (_??<_); try lia. f_equal. cbv. apply Fin_eq_iff; auto.
     - destruct (_??=_)%nat; try lia.
-      + subst. f_equal. cbv. apply sig_eq_iff; auto.
+      + subst. f_equal. cbv. apply Fin_eq_iff; auto.
       + destruct (_??<_); try lia. destruct (_??<_); try lia.
-        f_equal. cbv. apply sig_eq_iff; auto. destruct j; lia.
-    - destruct (_??=_)%nat; try lia. f_equal. cbv. apply sig_eq_iff; auto.
+        f_equal. cbv. apply Fin_eq_iff; auto. destruct j; lia.
+    - destruct (_??=_)%nat; try lia. f_equal. cbv. apply Fin_eq_iff; auto.
   Qed.
 
   (* (** i <> j -> vremove (vset v i a) j = vremove a j *) *)
@@ -807,7 +777,7 @@ Section vremove.
   (*     rewrite nat2fin_fin2nat. *)
   (*     unfold vset. *)
   (*     rewrite vnth_vset_neq; auto. *)
-  (*     destruct i, j, k. simpl in *. intro. apply sig_eq_iff in H4. subst. lia. *)
+  (*     destruct i, j, k. simpl in *. intro. apply Fin_eq_iff in H4. subst. lia. *)
   (*     ? *)
   (*     rewrite nat2fin_fin2nat. *)
   (*   H2 : i <> j *)
@@ -852,7 +822,7 @@ Section vmap_vinsert_vremove.
       rewrite (@vnth_vremove_ge _ Bzero); simpl in *; try lia.
       destruct j as [j Hj]. simpl.
       assert (S (pred j) < S n). lia. rewrite nth_v2f with (H:=H3). f_equal.
-      apply sig_eq_iff. rewrite Nat.succ_pred_pos; auto.
+      apply Fin_eq_iff. rewrite Nat.succ_pred_pos; auto.
   Qed.
     
   (** vmap2 a (vinsert b i x) = vinsert (vmap2 (vremove a i) b) i (f a.i x) *)
@@ -885,7 +855,7 @@ Section vmap_vinsert_vremove.
       rewrite (@vnth_vremove_ge _ Azero); simpl in *; try lia.
       destruct j as [j Hj]. simpl.
       assert (S (pred j) < S n). lia. rewrite nth_v2f with (H:=H3). f_equal.
-      apply sig_eq_iff. rewrite Nat.succ_pred_pos; auto.
+      apply Fin_eq_iff. rewrite Nat.succ_pred_pos; auto.
   Qed.
 
   (** vmap f (vremove a i) = vremove (vmap f v) i *)
@@ -937,7 +907,7 @@ Section vhead_vtail.
   Lemma vhead_spec : forall {n} (a : @vec A (S n)), vhead a = (v2f Azero a) 0.
   Proof.
     intros. unfold vhead. erewrite nth_v2f. f_equal.
-    apply sig_eq_iff; auto. Unshelve. lia.
+    apply Fin_eq_iff; auto. Unshelve. lia.
   Qed.
 
   (** vhead a = a $ 0 *)
@@ -952,14 +922,14 @@ Section vhead_vtail.
   Lemma vtail_spec : forall {n} (a : @vec A (S n)), vtail a = (v2f Azero a) n.
   Proof.
     intros. unfold vtail. erewrite nth_v2f. erewrite nat2finS_eq. f_equal.
-    apply sig_eq_iff; auto. Unshelve. all: lia.
+    Unshelve. lia.
   Qed.
 
   (** vtail a = a $ (n - 1) *)
   Lemma vtail_eq : forall {n} (a : @vec A (S n)), vtail a = a $ (nat2finS n).
   Proof.
     intros. rewrite vtail_spec. erewrite nth_v2f. erewrite nat2finS_eq. f_equal.
-    apply sig_eq_iff; auto. Unshelve. all: lia.
+    Unshelve. all: lia.
   Qed.
 
 End vhead_vtail.
@@ -1028,7 +998,7 @@ Section vremoveH_vremoveT.
       i < n -> v2f (vremoveH a) i = v2f a (S i).
   Proof.
     intros. unfold vremoveH,v2f,ff2f.
-    destruct (_??<_),(_??<_); auto; try lia. f_equal. apply sig_eq_iff; auto.
+    destruct (_??<_),(_??<_); auto; try lia. f_equal. apply Fin_eq_iff; auto.
   Qed.
   
   (** (vremoveH a).i = a.(S i) *)
@@ -1044,13 +1014,18 @@ Section vremoveH_vremoveT.
     rewrite veq_iff_vnth in H1. unfold vremoveH in H1. rewrite vhead_eq in H0.
     destruct (fin2nat i ??= 0)%nat.
     - assert (i = fin0).
-      { eapply fin2nat_imply_nat2fin in e. rewrite <- e. apply sig_eq_iff; auto. }
+      { eapply fin2nat_imply_nat2fin in e. rewrite <- e. apply Fin_eq_iff; auto. }
       rewrite H,H0. cbv. auto.
     - assert (0 < fin2nat i). pose proof (fin2nat_lt i). lia.
       specialize (H1 (fin2PredRangePred i H)).
       rewrite fin2SuccRangeSucc_fin2PredRangePred in H1. rewrite H1. cbv. auto.
       Unshelve. lia.
   Qed.
+
+  (** vremoveH also hold, if hold for all elements *)
+  Lemma vremoveH_hold : forall {n} (a : @vec A (S n)) (P : A -> Prop),
+      (forall i, P (a $ i)) -> (forall i, P ((vremoveH a) $ i)).
+  Proof. intros. unfold vremoveH. auto. Qed.
 
   
   (** *** vremoveT *)
@@ -1065,7 +1040,7 @@ Section vremoveH_vremoveT.
   Proof.
     intros. unfold vremoveT,v2f,ff2f.
     destruct (_??<_),(_??<_); auto; try lia. f_equal.
-    rewrite fin2SuccRange_nat2fin with (H0:=l0). apply sig_eq_iff; auto.
+    rewrite fin2SuccRange_nat2fin with (H0:=l0). apply Fin_eq_iff; auto.
   Qed.
   
   (** (vremoveT a).i = a.i *)
@@ -1083,13 +1058,18 @@ Section vremoveH_vremoveT.
     destruct (fin2nat i ??= n)%nat.
     - assert (i = nat2finS n).
       { eapply fin2nat_imply_nat2fin in e. rewrite <- e.
-        erewrite nat2finS_eq. apply sig_eq_iff; auto. }
+        erewrite nat2finS_eq. apply Fin_eq_iff; auto. }
       rewrite H,H0. cbv. auto.
     - assert (fin2nat i < n). pose proof (fin2nat_lt i). lia.
       specialize (H1 (fin2PredRange i H)).
       rewrite fin2SuccRange_fin2PredRange in H1. rewrite H1. cbv. auto.
       Unshelve. all: lia.
   Qed.
+
+  (** vremoveT also hold, if hold for all elements *)
+  Lemma vremoveT_hold : forall {n} (a : @vec A (S n)) (P : A -> Prop),
+      (forall i, P (a $ i)) -> (forall i, P ((vremoveT a) $ i)).
+  Proof. intros. unfold vremoveT. auto. Qed.
 
 End vremoveH_vremoveT.
 
@@ -1149,7 +1129,7 @@ Section vremoveHN_vremoveTN.
       i < m -> v2f (vremoveTN a) i = v2f a i.
   Proof.
     intros. unfold vremoveTN,v2f,ff2f.
-    destruct (_??<_),(_??<_); auto; try lia. f_equal. apply sig_eq_iff; auto.
+    destruct (_??<_),(_??<_); auto; try lia. f_equal. apply Fin_eq_iff; auto.
   Qed.
   
   (** (vremoveTN a).i = a.i *)
@@ -1203,7 +1183,7 @@ Section vconsH_vconsT.
   Proof.
     intros. unfold vconsH,v2f,ff2f; simpl. 
     destruct (_??<_),(_??<_); try lia. destruct (_??=_)%nat; try lia.
-    f_equal. apply sig_eq_iff. simpl. auto.
+    f_equal. apply Fin_eq_iff. simpl. auto.
   Qed.
 
   (** i = 0 -> [x; a].i = a *)
@@ -1216,7 +1196,7 @@ Section vconsH_vconsT.
       (vconsH x a) $ i = a $ (fin2PredRangePred i H).
   Proof.
     intros. unfold vconsH. destruct (_??=_)%nat; try lia. f_equal.
-    apply sig_eq_iff; auto.
+    apply Fin_eq_iff; auto.
   Qed.
 
   (** [x; a] = 0 <-> x = 0 /\ v = 0 *)
@@ -1231,7 +1211,7 @@ Section vconsH_vconsT.
         rewrite fin2PredRangePred_fin2SuccRangeSucc. auto.
     - destruct H. subst. destruct (fin2nat i ??= 0)%nat.
       + rewrite vnth_vconsH_0; auto. rewrite <- nat2fin_iff_fin2nat in e.
-        rewrite <- e. apply sig_eq_iff. auto.
+        rewrite <- e. apply Fin_eq_iff. auto.
       + erewrite vnth_vconsH_gt0; auto.
         Unshelve. all: try lia. rewrite fin2nat_fin2SuccRangeSucc. lia.
   Qed.
@@ -1241,65 +1221,40 @@ Section vconsH_vconsT.
       vconsH x a <> vzero <-> x <> Azero \/ a <> vzero.
   Proof. intros. rewrite vconsH_eq0_iff. tauto. Qed.
 
-  (** v = vconsH (vhead a) (vremoveH a) *)
+  (** vconsH (vhead a) (vremoveH a) = a *)
   Lemma vconsH_vhead_vremoveH : forall {n} (a : @vec A (S n)),
-      a = vconsH (vhead a) (vremoveH a).
+      vconsH (vhead a) (vremoveH a) = a.
   Proof.
     intros. apply veq_iff_vnth; intros. destruct (fin2nat i ??= 0)%nat as [H|H].
     - destruct i as [i Hi]. simpl in *. subst. rewrite vnth_vconsH_0.
-      + rewrite vhead_eq. f_equal. apply sig_eq_iff; auto.
-      + apply sig_eq_iff; auto.
+      + rewrite vhead_eq. f_equal. apply Fin_eq_iff; auto.
+      + apply Fin_eq_iff; auto.
     - erewrite vnth_vconsH_gt0. rewrite vnth_vremoveH. f_equal.
       rewrite fin2SuccRangeSucc_fin2PredRangePred. auto.
       Unshelve. lia.
   Qed.
 
-  (** {x ∈ a} + {x ∉ a} *)
-  Lemma vmem_dec : forall {AeqDec:Dec (@eq A)} {n} (a : @vec A n) (x : A),
-      {vmem a x} + {~vmem a x}.
+  (** vremoveH (vconsH a x) = a *)
+  Lemma vremoveH_vconsH : forall {n} x (a : @vec A n), vremoveH (vconsH x a) = a.
   Proof.
-    intros. unfold vmem. unfold vexist. induction n.
-    - right. intro. destruct H as [i H]. apply fin0_False; auto.
-    - rewrite (vconsH_vhead_vremoveH a).
-      destruct (Aeqdec (vhead a) x) as [H|H].
-      + left. exists fin0. rewrite vnth_vconsH_0; auto.
-      + destruct (IHn (vremoveH a)) as [H1|H1].
-        * left. destruct H1 as [i H1]. exists (fin2SuccRangeSucc i).
-          erewrite vnth_vconsH_gt0.
-          rewrite fin2PredRangePred_fin2SuccRangeSucc. auto.
-        * right. intro. destruct H1. destruct H0 as [i H0].
-          destruct (i ??= fin0).
-          ** rewrite vnth_vconsH_0 in H0; auto. easy.
-          ** erewrite vnth_vconsH_gt0 in H0.
-             eexists (fin2PredRangePred i _). apply H0.
-             Unshelve. rewrite fin2nat_fin2SuccRangeSucc. lia.
-             destruct i. simpl in *. assert (x0 <> 0); try lia.
-             intro. destruct n0. apply sig_eq_iff; auto.
+    intros. apply veq_iff_vnth; intros i. rewrite vnth_vremoveH.
+    erewrite vnth_vconsH_gt0. f_equal. apply fin2PredRangePred_fin2SuccRangeSucc.
+    Unshelve. rewrite fin2nat_fin2SuccRangeSucc. lia.
   Qed.
+    
+  (** vhead (vconsH a x) = x *)
+  Lemma vhead_vconsH : forall {n} (a : @vec A n) x, vhead (vconsH x a) = x.
+  Proof. intros. unfold vhead. rewrite vnth_vconsH_0; auto. Qed.
 
-  (** {a ⊆ b} + {~(a ⊆ b)} *)
-  Lemma vmems_dec : forall {AeqDec:Dec (@eq A)} {r s} (a : @vec A r) (b : @vec A s),
-      {vmems a b} + {~vmems a b}.
+  (** [0; vzero] = vzero *)
+  Lemma vconsH_0_vzero : forall {n}, @vconsH n Azero vzero = vzero.
   Proof.
-    intros. unfold vmems. unfold vforall.
-  (*   induction n. *)
-  (*   - right. intro. destruct H as [i H]. apply fin0_False; auto. *)
-  (*   - rewrite (vconsH_vhead_vremoveH a). *)
-  (*     destruct (Aeqdec (vhead a) a) as [H|H]. *)
-  (*     + left. exists fin0. rewrite vnth_vconsH_0; auto. *)
-  (*     + destruct (IHn (vremoveH a)) as [H1|H1]. *)
-  (*       * left. destruct H1 as [i H1]. exists (fin2SuccRangeSucc i). *)
-  (*         erewrite vnth_vconsH_gt0. rewrite fin2PredRangePred_fin2SuccRangeSucc. auto. *)
-  (*       * right. intro. destruct H1. destruct H0 as [i H0]. *)
-  (*         destruct (i ??= fin0). *)
-  (*         ** rewrite vnth_vconsH_0 in H0; auto. easy. *)
-  (*         ** erewrite vnth_vconsH_gt0 in H0. *)
-  (*            eexists (fin2PredRangePred i _). apply H0. *)
-  (*            Unshelve. rewrite fin2nat_fin2SuccRangeSucc. lia. *)
-  (*            destruct i. simpl in *. assert (x <> 0); try lia. *)
-  (*            intro. destruct n0. apply sig_eq_iff; auto. *)
-    (* Qed. *)
-  Abort.
+    intros. apply veq_iff_vnth; intros. destruct (i ??= fin0) as [H|H].
+    - rewrite vnth_vconsH_0; auto.
+    - apply fin2nat_neq0_imply_gt0 in H.
+      rewrite vnth_vconsH_gt0 with (H:=H); auto.
+  Qed.
+  
   
   (** *** vconsT *)
 
@@ -1334,7 +1289,7 @@ Section vconsH_vconsT.
       (vconsT a x) $ i = a (fin2PredRange i H).
   Proof.
     intros. unfold vconsT. destruct (_??<_); try lia. f_equal.
-    apply sig_eq_iff; auto.
+    apply Fin_eq_iff; auto.
   Qed.
 
   (** [a; x] = 0 <-> a = 0 /\ x = 0*)
@@ -1363,95 +1318,44 @@ Section vconsH_vconsT.
     apply not_and_or in H; auto. apply or_not_and; auto.
   Qed.
 
-  (** a = vconsT (vremoveT a) (vtail a) *)
+  (** vconsT (vremoveT a) (vtail a) = a *)
   Lemma vconsT_vremoveT_vtail : forall {n} (a : @vec A (S n)),
-      a = vconsT (vremoveT a) (vtail a).
+      vconsT (vremoveT a) (vtail a) = a.
   Proof.
     intros. apply veq_iff_vnth; intros. destruct (fin2nat i ??= n)%nat as [H|H].
     - destruct i as [i Hi]. simpl in *. subst. rewrite vnth_vconsT_n; auto.
       rewrite (vtail_eq (Azero:=Azero)). f_equal. erewrite nat2finS_eq.
-      apply sig_eq_iff; auto.
+      apply Fin_eq_iff; auto.
     - erewrite vnth_vconsT_lt. rewrite vnth_vremoveT. f_equal.
       rewrite fin2SuccRange_fin2PredRange. auto.
       Unshelve. all: try lia. pose proof (fin2nat_lt i). lia.
   Qed.
+
+  (** vremoveT (vconsT a x) = a *)
+  Lemma vremoveT_vconsT : forall {n} (a : @vec A n) x, vremoveT (vconsT a x) = a.
+  Proof.
+    intros. apply veq_iff_vnth; intros i. rewrite vnth_vremoveT.
+    erewrite vnth_vconsT_lt. f_equal. apply fin2PredRange_fin2SuccRange.
+    Unshelve. rewrite fin2nat_fin2SuccRange. apply fin2nat_lt.
+  Qed.
     
+  (** vtail (vconsT a x) = x *)
+  Lemma vtail_vconsT : forall {n} (a : @vec A n) x, vtail (vconsT a x) = x.
+  Proof.
+    intros. unfold vtail. rewrite vnth_vconsT_n; auto.
+    rewrite fin2nat_nat2finS; auto.
+  Qed.
+
+  (** [vzero; 0] = vzero *)
+  Lemma vconsT_vzero_0 : forall {n}, @vconsT n vzero Azero = vzero.
+  Proof.
+    intros. apply veq_iff_vnth; intros. destruct (i ??= nat2finS n) as [H|H].
+    - rewrite vnth_vconsT_n; auto. subst. apply fin2nat_nat2finS. auto.
+    - apply nat2finS_neq_imply_lt in H.
+      rewrite vnth_vconsT_lt with (H:=H). auto.
+  Qed.
+  
 End vconsH_vconsT.
-
-
-(* ======================================================================= *)
-(** * 找出向量中从第i个元素开始起的第1个满足谓词P的元素的序号 *)
-Section vfirstIdx.
-  Context {A : Type}.
-  
-  Fixpoint vfirstIdxFromAux {n} (P : A -> bool) (a : @vec A n) (i : fin n) (fuel : nat)
-    : option (fin n) :=
-    match fuel with
-    | O => None
-    | S fuel' =>
-        if P (a $ i)
-        then Some i
-        else
-          if S (fin2nat i) ??< n
-          then vfirstIdxFromAux P a (fin2SameRangeSucc i) fuel'
-          else None
-    end.
-
-  Lemma vfirstIdxFromAux_spec_Some
-    : forall (fuel : nat) (n : nat) (P : A -> bool) (a : @vec A n) (i j : fin n),
-      fuel >= n ->
-      (forall k : fin n, fin2nat i <= fin2nat k < fin2nat j -> ~ P (a $ k)) /\ P (a $ j) ->
-      vfirstIdxFromAux P a i fuel = Some j.
-  Proof.
-  Admitted.
-
-  Lemma vfirstIdxFromAux_spec_None
-    : forall (fuel : nat) (n : nat) (P : A -> bool) (a : @vec A n) (i : fin n),
-      (forall k : fin n, fin2nat i <= fin2nat k -> P (a $ k) = false) ->
-      vfirstIdxFromAux P a i fuel = None.
-  Proof.
-  Admitted.
-  
-  Definition vfirstIdxFrom {n} (P : A -> bool) (a : @vec A n) (i : fin n)
-    : option (fin n) :=
-    vfirstIdxFromAux P a i n.
-
-  Lemma vfirstIdxFrom_spec_None : forall {n} (P : A -> bool) (a : @vec A n) (i : fin n),
-      (forall k : fin n, fin2nat i <= fin2nat k -> P (a $ k) = false) ->
-      vfirstIdxFrom P a i = None.
-  Proof. intros. unfold vfirstIdxFrom. apply vfirstIdxFromAux_spec_None; auto. Qed.
-
-  Lemma vfirstIdxFrom_spec_Some : forall {n} (P : A -> bool) (a : @vec A n) (i j : fin n),
-      (forall k : fin n, fin2nat i <= fin2nat k < fin2nat j ->
-                    ~ P (a $ k)) /\ P (a $ j) ->
-      vfirstIdxFrom P a i = Some j.
-  Proof. intros. unfold vfirstIdxFrom. apply vfirstIdxFromAux_spec_Some; auto. Qed.
-
-  Definition vfirstIdx {n} (P : A -> bool) (a : @vec A n) : option (fin n).
-    destruct n.
-    - exact None.
-    - exact (vfirstIdxFrom P a fin0).
-  Defined.
-  
-End vfirstIdx.
-
-(* ======================================================================= *)
-(** ** Index of first nonzero element *)
-Section vfirstNonZero.
-  Context `{AeqDec : Dec _ (@eq A)}.
-  Context {Azero : A}.
-
-  Notation Aeqb := (@Acmpb _ (@eq A) _).
-  
-  (* 计算从第i个元素开始起的第1个非零元素的序号 *)
-  Definition vfirstNonZeroFrom {n} (a : @vec A n) (i : fin n) : option (fin n) :=
-    vfirstIdxFrom (fun a => negb (Aeqb a Azero)) a i.
-  
-  (* 计算第1个非零元素的序号 *)
-  Definition vfirstNonZero {n} (a : @vec A n) : option (fin n) :=
-    vfirstIdx (fun a => negb (Aeqb a Azero)) a.
-
-End vfirstNonZero.
 
 
 (* ======================================================================= *)
@@ -1475,7 +1379,7 @@ Section vapp.
     intros. unfold vapp.
     assert (i < m + n). lia.
     rewrite nth_v2f with (H:=H0). rewrite nth_v2f with (H:=H).
-    destruct (_ ??< _); simpl in *; try lia. f_equal. apply sig_eq_iff; auto.
+    destruct (_ ??< _); simpl in *; try lia. f_equal. apply Fin_eq_iff; auto.
   Qed.
   
   (** m <= i -> i < m + n -> a&b.i = a.(i - m) *)
@@ -1486,7 +1390,7 @@ Section vapp.
     rewrite nth_v2f with (H:=H0).
     assert (i - m < n). lia. rewrite nth_v2f with (H:=H1).
     destruct (_ ??< _); simpl in *; try lia. f_equal.
-    apply sig_eq_iff; auto.
+    apply Fin_eq_iff; auto.
   Qed.
     
   (** i < m -> a&b.i = a.i *)
@@ -1494,7 +1398,7 @@ Section vapp.
       (vapp a b) $ i = a $ (fin2AddRangeR' i H).
   Proof.
     intros. destruct i as [i Hi]. unfold vapp.
-    destruct (_??<_); simpl in *; try lia. f_equal. apply sig_eq_iff; auto.
+    destruct (_??<_); simpl in *; try lia. f_equal. apply Fin_eq_iff; auto.
   Qed.
       
   (** m <= i -> a&b.i = b.i *)
@@ -1502,7 +1406,7 @@ Section vapp.
       (vapp a b) $ i = b $ (fin2AddRangeAddL' i H).
   Proof.
     intros. destruct i as [i Hi]. unfold vapp.
-    destruct (_??<_); simpl in *; try lia. f_equal. apply sig_eq_iff; auto.
+    destruct (_??<_); simpl in *; try lia. f_equal. apply Fin_eq_iff; auto.
   Qed.
 
   (** a@b = 0 <-> a = 0 /\ b = 0 *)
@@ -1587,9 +1491,192 @@ End vslice.
 
 Section test.
   Let n := 5.
-  Let a := l2v 9 n [1;2;3;4;5].
+  Let a : vec n := l2v 9 [1;2;3;4;5].
   (* Compute v2l (vslice a (nat2finS 1) (nat2finS 3)). *)
 End test.
+
+
+
+
+(* ======================================================================= *)
+(** ** A proposition which all elements of the vector hold *)
+Section vforall.
+  Context {A : Type}.
+
+  (** Every element of `a` satisfy the `P` *)
+  Definition vforall {n} (a : @vec A n) (P : A -> Prop) : Prop := forall i, P (a $ i).
+  
+End vforall.
+
+
+(* ======================================================================= *)
+(** ** A proposition which at least one element of the vector holds *)
+Section vexist.
+  Context {A : Type}.
+
+  (** There exist element of `v` satisfy the `P` *)
+  Definition vexist {n} (a : @vec A n) (P : A -> Prop) : Prop := exists i, P (a $ i).
+  
+End vexist.
+
+
+(* ======================================================================= *)
+(** ** An element belongs to the vector *)
+Section vmem.
+  Context {A : Type}.
+
+  (** Element `x` belongs to the vector `a` *)
+  Definition vmem {n} (a : @vec A n) (x : A) : Prop := vexist a (fun x0 => x0 = x).
+
+  Lemma vmem_vnth : forall {n} (a : @vec A n) (i : fin n), vmem a (a$i).
+  Proof. intros. hnf. exists i; auto. Qed.
+
+  (* If we have AeqDec *)
+  Section AeqDec.
+    Context {AeqDec : Dec (@eq A)}.
+    
+    (** {x ∈ a} + {x ∉ a} *)
+    Lemma vmem_dec : forall {n} (a : @vec A n) (x : A), {vmem a x} + {~vmem a x}.
+    Proof.
+      intros. unfold vmem, vexist. induction n.
+      - right. intro. destruct H. apply fin0_False; auto.
+      - rewrite <- (vconsH_vhead_vremoveH a).
+        destruct (Aeqdec (vhead a) x) as [H|H].
+        + left. exists fin0. rewrite vnth_vconsH_0; auto.
+        + destruct (IHn (vremoveH a)) as [H1|H1].
+          * left. destruct H1 as [i H1]. exists (fin2SuccRangeSucc i).
+            erewrite vnth_vconsH_gt0.
+            rewrite fin2PredRangePred_fin2SuccRangeSucc. auto.
+          * right. intro. destruct H1. destruct H0 as [i H0].
+            destruct (i ??= fin0).
+            ** rewrite vnth_vconsH_0 in H0; auto. easy.
+            ** erewrite vnth_vconsH_gt0 in H0.
+               eexists (fin2PredRangePred i _). apply H0.
+               Unshelve. rewrite fin2nat_fin2SuccRangeSucc. lia.
+               destruct i. simpl in *. assert (x0 <> 0); try lia.
+               intro. destruct n0. apply Fin_eq_iff; auto.
+    Qed.
+  End AeqDec.
+    
+End vmem.
+
+
+(* ======================================================================= *)
+(** ** An vector belongs to another vector *)
+Section vmems.
+  Context {A : Type}.
+
+  (** Every element of vector `a` belongs to vector `b` *)
+  Definition vmems {r s} (a : @vec A r) (b : @vec A s) : Prop :=
+    vforall a (fun x => vmem b x).
+
+  Lemma vmems_refl : forall {n} (a : @vec A n), vmems a a.
+  Proof. intros. unfold vmems, vforall. apply vmem_vnth. Qed.
+
+  Lemma vmems_trans : forall {r s t} (a : @vec A r) (b : @vec A s) (c : @vec A t),
+      vmems a b -> vmems b c -> vmems a c.
+  Proof.
+    intros. unfold vmems, vforall in *. intros.
+    specialize (H i). destruct H as [j H]. rewrite <- H. auto.
+  Qed.
+
+  (* If we have AeqDec *)
+  Section AeqDec.
+    Context {AeqDec : Dec (@eq A)}.
+
+    (** {a ⊆ b} + {~(a ⊆ b)} *)
+    Lemma vmems_dec : forall {r s} (a : @vec A r) (b : @vec A s),
+        {vmems a b} + {~vmems a b}.
+    Proof.
+      intros. unfold vmems, vforall. induction r.
+      - left. intro. exfalso. apply fin0_False; auto.
+      - rewrite <- (vconsH_vhead_vremoveH a).
+        specialize (IHr (vremoveH a)). destruct IHr as [H|H].
+        + destruct (vmem_dec b (vhead a)) as [H1|H1].
+          * left. intros. destruct (i ??= fin0) as [H2|H2].
+            ** subst. rewrite vnth_vconsH_0; auto.
+            ** apply fin2nat_neq0_imply_gt0 in H2.
+               rewrite vnth_vconsH_gt0 with (H:=H2). auto.
+          * right. apply ex_not_not_all. exists fin0. rewrite vnth_vconsH_0; auto.
+        + right. intro. destruct H. intro.
+          specialize (H0 (fin2SuccRangeSucc i)).
+          assert (0 < fin2nat (fin2SuccRangeSucc i)).
+          apply fin2nat_fin2SuccRangeSucc_gt0.
+          rewrite vnth_vconsH_gt0 with (H:=H) in H0.
+          rewrite fin2PredRangePred_fin2SuccRangeSucc in H0. auto.
+    Qed.
+  End AeqDec.
+  
+End vmems.
+
+
+(* ======================================================================= *)
+(** ** Two vectors are equivalent (i.e., contain each other) *)
+Section vequiv.
+  Context {A : Type}.
+
+  (** Two vectors are equivalent (i.e., contain each other) *)
+  Definition vequiv {r s} (a : @vec A r) (b : @vec A s) : Prop :=
+    vmems a b /\ vmems b a.
+
+  Lemma vequiv_refl : forall {n} (a : @vec A n), vequiv a a.
+  Proof. intros. unfold vequiv. split; apply vmems_refl. Qed.
+  
+  Lemma vequiv_syms : forall {r s} (a : @vec A r) (b : @vec A s), vequiv a b -> vequiv b a.
+  Proof. intros. unfold vequiv in *. tauto. Qed.
+  
+  Lemma vequiv_trans : forall {r s t} (a : @vec A r) (b : @vec A s) (c : @vec A t),
+      vequiv a b -> vequiv b c -> vequiv a c.
+  Proof.
+    intros. unfold vequiv in *. destruct H as [H1 H2], H0 as [H3 H4]. split.
+    apply vmems_trans with b; auto.
+    apply vmems_trans with b; auto.
+  Qed.
+
+  (* If we have AeqDec *)
+  Section AeqDec.
+    Context {AeqDec : Dec (@eq A)}.
+
+    (** {a ∼ b} + {~(a ∼ b)} *)
+    Lemma vequiv_dec : forall {r s} (a : @vec A r) (b : @vec A s),
+        {vequiv a b} + {~ vequiv a b}.
+    Proof.
+      intros. unfold vequiv. destruct (vmems_dec a b), (vmems_dec b a); try tauto.
+    Qed.
+  End AeqDec.
+  
+End vequiv.
+
+Section test.
+
+  Let a : vec 2 := l2v 9 [1;2].
+  Let b : vec 3 := l2v 9 [1;2;1].
+  Example vequiv_example1 : vequiv a b.
+  Proof.
+    unfold a, b, vequiv, vmems, vmem, vforall, vexist. split.
+    - intros. destruct i as [i Hi].
+      repeat (destruct i; try lia); try rewrite vnth_l2v; simpl.
+      exists (nat2finS 0); auto. exists (nat2finS 1); auto.
+    - intros. destruct i as [i Hi].
+      repeat (destruct i; try lia); try rewrite vnth_l2v; simpl.
+      exists (nat2finS 0); auto. exists (nat2finS 1); auto. exists (nat2finS 0); auto.
+  Qed.
+End test.
+
+
+(* (* ======================================================================= *) *)
+(* (** ** An vector belongs to one but not belong to another *) *)
+(* Section vdiff. *)
+(*   Context {A : Type}. *)
+
+(*   (** Elements belong to vector `u` but not belongs to vector `v` *) *)
+(*   Definition vdiff {r s} (a : @vec A r) (b : @vec A s) : Prop. *)
+(*     Check fun i => vmem  *)
+(*     vforall a (fun x => vmem b x). *)
+  
+(* End vmems. *)
+
+
 
 (* ======================================================================= *)
 (** ** Folding of a vector *)
@@ -1810,7 +1897,7 @@ Section vsum_vinsert_vremove.
         rewrite vnth_f2v. simpl.
         destruct (_??<_); try lia. destruct (_??=_)%nat; try lia.
         assert (pred (fin2nat i + S j) < n) by lia.
-        rewrite nth_v2f with (H:=H3). f_equal. apply sig_eq_iff. lia.
+        rewrite nth_v2f with (H:=H3). f_equal. apply Fin_eq_iff. lia.
       + rewrite Heqg. rewrite nth_ff2f with (H:=H). rewrite vnth_f2v. simpl.
         destruct (_??<_); try lia. destruct (_??=_)%nat; auto. lia.
   Qed.
@@ -1836,7 +1923,7 @@ Section vsum_vinsert_vremove.
         assert (fin2nat i + j < n) by lia. rewrite nth_ff2f with (H:=H2).
         rewrite vnth_f2v. simpl. destruct (_??<_); try lia.
         assert (S (fin2nat i + j) < S n) by lia. rewrite nth_v2f with (H:=H3).
-        f_equal. apply sig_eq_iff. lia.
+        f_equal. apply Fin_eq_iff. lia.
       + rewrite nth_ff2f with (H:=H). rewrite nat2fin_fin2nat. group.
   Qed.
   

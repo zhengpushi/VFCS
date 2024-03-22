@@ -125,7 +125,6 @@ Section seq2eq.
 End seq2eq.
 
 
-
 (* ======================================================================= *)
 (** ** Folding of a sequence *)
 Section seqfold.
@@ -172,6 +171,289 @@ Section seqfold.
 
 End seqfold.
 
+(* ? *)
+(* (* ======================================================================= *) *)
+(* (** ** Find from first element of a sequence *) *)
+(* Section seqfirst. *)
+(*   Context {A : Type} (P : A -> bool). *)
+
+(*   (** 从偏移量ofs开始向后查找的辅助函数 *) *)
+(*   Fixpoint seqfirstFromAux (n : nat) (ofs : nat) (s : nat -> A) (i : nat) : option nat := *)
+(*     match n with *)
+(*     | O => None *)
+(*     | S n' => *)
+(*         if ofs <=? i *)
+(*         then (if P (s i) *)
+(*               then Some i *)
+(*               else seqfirstFromAux n' ofs s (S i)) *)
+(*         else seqfirstFromAux n' ofs s (S i) *)
+(*     end. *)
+  
+(*   Lemma seqfirstFromAux_None : *)
+(*     forall (n : nat) (ofs : nat) (s : nat -> A) k, *)
+(*       (* (forall j, ofs <= j < n -> P (s j) = false) -> *) *)
+(*       (forall j, ofs <= j < n -> P (s j) = false) -> *)
+(*         seqfirstFromAux n ofs s k = None. *)
+(*   Proof. *)
+(*     induction n; intros; auto. *)
+(*     simpl. bdestruct (k >=? ofs). *)
+(*     + rewrite H. rewrite IHn; auto. intros; auto. apply H; try lia. *)
+(*       (*  *)
+(*          n  ofs i *)
+(*          5  2   0 *)
+(*          4  2   1 *)
+(*          3  2   2 .. *)
+(*          2  2   3 .. *)
+(*          1  2   4 .. *)
+(*          0   *)
+ 
+
+(*  *) *)
+(*     2:{ rewrite IHn; auto. intros. apply H. lia. *)
+(*     + rewrite H; try lia. *)
+(*     + rewrite IHn; auto. *)
+(*   Qed. *)
+  
+(*   Lemma seqfirstFromAux_None : *)
+(*     forall (n : nat) (ofs : nat) (s : nat -> A) k, *)
+(*       (* (forall j, ofs <= j < n -> P (s j) = false) -> *) *)
+(*       (forall j, ofs <= j -> P (s j) = false) -> *)
+(*         seqfirstFromAux n ofs s k = None. *)
+(*   Proof. *)
+(*     induction n; intros; auto. *)
+(*     simpl. bdestruct (k >=? ofs). *)
+(*     + rewrite H; auto. *)
+(*     + rewrite IHn; auto. *)
+(*   Qed. *)
+  
+(*   Lemma seqfirstFromAux_Some : *)
+(*     forall (n : nat) (ofs : nat) (s : nat -> A) k i, *)
+(*       (ofs <= i /\ P (s i) /\ (forall j, ofs <= j < i -> P (s j) = false)) -> *)
+(*         seqfirstFromAux n ofs s k = Some i. *)
+(*   Proof. *)
+(*     intros. split; intros. *)
+(*     2:{ repeat split. *)
+(*         + induction n; simpl in *; auto. easy. *)
+          
+(*     - destruct H as [H0 [H1 H2]]. *)
+(*       revert ofs s i H H0 H1 H2. induction n. *)
+(*       + intros; simpl; auto. lia. *)
+(*       + intros. simpl. *)
+(*         destruct i; try lia. *)
+(*         specialize (IHn ofs s i). *)
+(*         assert (i < n) by lia. specialize (IHn H3). *)
+(*         destruct ofs; try lia. *)
+(*         2:{ assert (o *)
+(*         * simpl. *)
+(*         (S i)). *)
+(*         bdestruct (0 >=? ofs); simpl. *)
+(*         * *)
+    
+(*       ((forall j, ofs <= j < n -> P (s j) = false) ->  *)
+(*   Proof. *)
+
+(*   (** 所有元素都不满足P，则查找结果是None *) *)
+(*   Lemma seqfirstFromAux_None_if_all_false : *)
+(*     forall (n : nat) (ofs : nat) (s : nat -> A), *)
+(*       ((forall j, ofs <= j < n -> P (s j) = false) -> seqfirstFromAux n ofs s 0 = None). *)
+(*   Proof. *)
+(*     induction n; intros; auto. *)
+(*     simpl. bdestruct (0 >=? ofs); simpl. *)
+(*     - rewrite H; try lia. rewrite IHn; auto. *)
+    
+(*     unfold seqfirstFrom. generalize 0 as j. intros j n. revert j. *)
+(*     induction n. *)
+(*     - intros; auto. *)
+(*     - intros. simpl. *)
+(*       bdestruct (j >=? ofs); simpl. *)
+(*       + rewrite H; try lia. *)
+(*       induction j. *)
+(*       + intros. simpl. bdestruct (0>=?ofs); simpl. *)
+(*         * rewrite H; try lia. *)
+(*           rewrite IHn; auto. intros. apply H. lia. *)
+(*         * rewrite IHn; auto. intros. apply H. lia. *)
+(*       + intros. *)
+(*     induction *)
+(*     induction n; intros. *)
+(*     intros. destruct n; auto. unfold seqfirst. simpl. *)
+(*     (* rewrite H; try lia. *) *)
+(*   (*   (* pose (seqfirstFromAux (S n) 0 s 0). *) *) *)
+(*   (*   (* simpl in o. *) *) *)
+
+
+(*   (** 从偏移量ofs开始向后查找 *) *)
+(*   Definition seqfirstFrom (n : nat) (ofs : nat) (s : nat -> A) : option nat := *)
+(*     seqfirstFromAux n ofs s 0. *)
+
+(*   (* 等价形式 *) *)
+(*   Fixpoint seqfirstFrom' forall {n ofs : nat} (s : nat -> A), *)
+(*       seqfirstFrom n ofs s = *)
+(*         fix F  *)
+
+(*   (** 所有元素都不满足P，则查找结果是None *) *)
+(*   Lemma seqfirstFrom_None_if_all_false : forall (n : nat) (ofs : nat) (s : nat -> A), *)
+(*       (forall i, ofs <= i < n -> P (s i) = false) -> seqfirstFrom n ofs s = None. *)
+(*   Proof. *)
+(*     unfold seqfirstFrom. generalize 0 as j. intros j n. revert j. *)
+(*     induction n. *)
+(*     - intros; auto. *)
+(*     - intros. simpl. *)
+(*       bdestruct (j >=? ofs); simpl. *)
+(*       + rewrite H; try lia. *)
+(*       induction j. *)
+(*       + intros. simpl. bdestruct (0>=?ofs); simpl. *)
+(*         * rewrite H; try lia. *)
+(*           rewrite IHn; auto. intros. apply H. lia. *)
+(*         * rewrite IHn; auto. intros. apply H. lia. *)
+(*       + intros. *)
+(*     induction  *)
+(*     induction n; intros. *)
+(*     intros. destruct n; auto. unfold seqfirst. simpl. *)
+(*     (* rewrite H; try lia. *) *)
+(*     (* pose (seqfirstFromAux (S n) 0 s 0). *) *)
+(*     (* simpl in o. *) *)
+
+(*     unfold seqfirst. induction n; intros; auto. *)
+(*     simpl. rewrite H; try lia. *)
+(*     (* seqfirstFromAux n 0 s 1 = None *) *)
+(*     destruct n; auto; simpl. rewrite H; try lia. *)
+
+(*     unfold seqfirstFromAux. *)
+    
+(*     apply IHn. *)
+(*     unfold seqfirst in *. simpl.  *)
+(*     specialize (IHn s). (fun x => s (S x))). *)
+    
+(*     replace  *)
+(*     rewrite IHn; auto. intros. specialize (H (S i)). apply H. lia. *)
+(*   Qed. *)
+(*     Admitted. *)
+  
+(*   (* 从头开始向后查找 *) *)
+(*   Definition seqfirst (n : nat) (s : nat -> A) : option nat := *)
+(*     seqfirstFrom n 0 s. *)
+
+(*   (** 所有元素都不满足P，则查找结果是None *) *)
+(*   Lemma seqfirst_None_if_all_false : forall (n : nat) (s : nat -> A), *)
+(*       (forall i, i < n -> P (s i) = false) -> seqfirst n s = None. *)
+(*   Proof. *)
+(*     intros. unfold seqfirst. apply seqfirstFrom_None_if_all_false. *)
+(*     intros. apply H. lia. *)
+(*   Qed. *)
+  
+(* End seqfirst. *)
+  
+
+(* (* ======================================================================= *) *)
+(* (** ** Find from tail element of a sequence *) *)
+(* Section seqlast. *)
+(*   Context {A : Type} (P : A -> bool). *)
+
+
+(*   (* 从偏移量ofs开始向前查找 *) *)
+(*   Fixpoint seqlastFrom (n : nat) (ofs : nat) (s : nat -> A) : option nat := *)
+(*     match n with *)
+(*     | O => None *)
+(*     | S n' => *)
+(*         if (n' <=? ofs) && (P (s n')) then Some n' *)
+(*         else seqlastFrom n' ofs s *)
+(*     end. *)
+
+(*   (* 从末尾开始向前查找 *) *)
+(*   Definition seqlast (n : nat) (s : nat -> A) : option nat := *)
+(*     seqlastFrom n n s. *)
+  
+(* End seqfirst_seqlast. *)
+
+(* Section test. *)
+(*   Open Scope nat_scope. *)
+(*   Let s (n : nat) := n. (* Example sequence: the identity function *) *)
+(*   Let P (n : nat) := if (2 <=? n) && (n <=? 4) then true else false. *)
+
+(*   (* Compute (seqfirst P 10 s). *) *)
+(*   (* Compute (seqlast P 10 s). *) *)
+(*   (* Compute (seqfirstFrom P 10 0 s). *) *)
+(*   (* Compute (seqfirstFrom P 10 4 s). *) *)
+(*   (* Compute (seqlastFrom P 10 5 s). *) *)
+(*   (* Compute (seqlastFrom P 10 3 s). *) *)
+(* End test. *)
+
+(*   (** Find from end to begin *) *)
+(*   Fixpoint seqlast (n : nat) (s : nat -> A) : option nat := *)
+(*     match n with *)
+(*     | O => None *)
+(*     | S n' => *)
+(*         if P (s n') then Some n' *)
+(*         else seqlast n' s *)
+(*     end. *)
+  
+(*     match n with *)
+(*     | O, _ => None *)
+(*     | S n', S i' => None *)
+(*     | S n', S i' => *)
+(*         if P (s 0) then Some 0 *)
+(*         else *)
+(*           match seqfirst n' (fun x => s (S x)) with *)
+(*           | Some i => Some (S i) *)
+(*           | None => None *)
+(*           end *)
+(*     end. *)
+  
+(*   Fixpoint seqfirstFrom (n : nat) (i : nat) (s : nat -> A) : option nat := *)
+(*     match n, ofs with *)
+(*     | O, _ => None *)
+(*     | S n', S i' => None *)
+(*     | S n', S i' => *)
+(*         if P (s 0) then Some 0 *)
+(*         else *)
+(*           match seqfirst n' (fun x => s (S x)) with *)
+(*           | Some i => Some (S i) *)
+(*           | None => None *)
+(*           end *)
+(*     end. *)
+  
+
+(*   (** Find from begin to end *) *)
+(*   (* 递归中的序列变化：0,1,2,3,4 => 1,2,3,4 => 2,3,4 => 3,4 => 4 *) *)
+(*   Fixpoint seqfirst (n : nat) (s : nat -> A) : option nat := *)
+(*     match n with *)
+(*     | O => None *)
+(*     | S n' => *)
+(*         if P (s 0) then Some 0 *)
+(*         else *)
+(*           match seqfirst n' (fun x => s (S x)) with *)
+(*           | Some i => Some (S i) *)
+(*           | None => None *)
+(*           end *)
+(*     end. *)
+
+(*   (** Find from end to begin *) *)
+(*   (* 递归中的序列变化：0,1,2,3,4 => 0,1,2,3 => 0,1,2 => 0,1 => 0 *) *)
+(*   Fixpoint seqlast (n : nat) (s : nat -> A) : option nat := *)
+(*     match n with *)
+(*     | O => None *)
+(*     | S n' => *)
+(*         if P (s n') then Some n' *)
+(*         else seqlast n' s *)
+(*     end. *)
+
+(*   (** Find from given index to end *) *)
+(*   Definition seqfirstFrom (n : nat) (ofs : nat) (s : nat -> A) : option nat := *)
+(*     seqfirst (n - ofs) (fun i => s (i + ofs)). *)
+  
+(* End seqfirst_seqlast. *)
+
+(* Section test. *)
+(*   Open Scope nat_scope. *)
+(*   Let s (n : nat) := n. (* Example sequence: the identity function *) *)
+(*   Let P (n : nat) := if (2 <=? n) && (n <=? 4) then true else false. *)
+
+(*   Compute (seqfirst P 10 s). *)
+(*   Compute (seqlast P 10 s). *)
+(*   Compute (seqfirstFrom P 10 0 s). *)
+(*   Compute (seqfirstFrom P 10 1 s). *)
+(* End test. *)
+(* ? *)
 
 (* ======================================================================= *)
 (** ** Sum of a sequence *)
@@ -235,6 +517,14 @@ Section seqsum.
     rewrite IHn; auto. asemigroup. rewrite H; auto.
   Qed.
 
+  (** Sum with plus of two sequence equal to plus with two sum (simple form). *)
+  Lemma seqsum_add' : forall (f g : nat -> A) (n : nat),
+      seqsum (fun i => f i + g i) n = seqsum f n + seqsum g n.
+  Proof.
+    intros. induction n; simpl. monoid.
+    rewrite IHn; auto. asemigroup.
+  Qed.
+
   (** Sum a sequence which only one item is nonzero, then got this item. *)
   Lemma seqsum_unique : forall (f : nat -> A) (a : A) (n i : nat), 
       i < n -> f i = a -> (forall j, i <> j -> f j = Azero) -> seqsum f n = a.
@@ -282,20 +572,10 @@ Section seqsum.
       seqsum (fun i => seqsum (fun j => f i j) c) r =
         seqsum (fun j => seqsum (fun i => f i j) r) c.
   Proof.
-    intros f. induction r.
-    - destruct c; simpl; auto. rewrite seqsum_eq0; auto. monoid.
-    - destruct c; simpl; auto. rewrite seqsum_eq0; auto. monoid.
-      replace (seqsum (fun i : nat => seqsum (fun j : nat => f i j) c + f i c) r)
-        with ((seqsum (fun i : nat => seqsum (fun j : nat => f i j) c) r) +
-                (seqsum (fun i : nat => f i c) r)).
-      replace (seqsum (fun j : nat => seqsum (fun i : nat => f i j) r + f r j) c)
-        with ((seqsum (fun j : nat => seqsum (fun i : nat => f i j) r) c) +
-                (seqsum (fun j : nat => f r j) c)).
-      rewrite IHr. asemigroup.
-      symmetry. apply seqsum_add; auto.
-      symmetry. apply seqsum_add; auto.
+    induction r.
+    - intros. simpl. rewrite seqsum_eq0; auto.
+    - intros. simpl. rewrite IHr. rewrite seqsum_add'. auto.
   Qed.
-
   
   (** Let's have a group structure *)
   Context `{G : Group A Aadd Azero Aopp}.
@@ -310,6 +590,15 @@ Section seqsum.
     intros. induction n; simpl. group. (* not so smart *)
     rewrite group_opp_0; auto.
     rewrite H,IHn; auto. rewrite group_opp_distr. amonoid.
+  Qed.
+  
+  (** Opposition of the sum of a sequence (simple form). *)
+  Lemma seqsum_opp' : forall (f : nat -> A) (n : nat),
+      (seqsum (fun i => - f i) n) = - (seqsum f n).
+  Proof.
+    intros. induction n; simpl. group. (* not so smart *)
+    rewrite group_opp_0; auto.
+    rewrite IHn; auto. rewrite group_opp_distr. amonoid.
   Qed.
 
   
@@ -327,6 +616,20 @@ Section seqsum.
     intros. induction n; simpl. ring. rewrite H, IHn; auto. ring.
   Qed.
 
+  (** Scalar multiplication of the sum of a sequence (simple form). *)
+  Lemma seqsum_cmul_l : forall k (f : nat -> A) (n : nat),
+      seqsum (fun i => k * f i) n = k * seqsum f n.
+  Proof.
+    intros. induction n; simpl. ring. rewrite IHn; auto. ring.
+  Qed.
+
+  (** Scalar multiplication of the sum of a sequence (simple form). *)
+  Lemma seqsum_cmul_r : forall k (f : nat -> A) (n : nat),
+      seqsum (fun i => f i * k) n = k * seqsum f n.
+  Proof.
+    intros. induction n; simpl. ring. rewrite IHn; auto. ring.
+  Qed.
+  
   (** Product two sum equal to sum of products.
       Σ[i,0,m] f(i) * Σ[i,0,n] g(i) = Σ[i,0,m*n] f(i/n)*g(i%n).
     
@@ -566,10 +869,12 @@ Section seqsumb.
     intros f lor loc. induction r.
     - destruct c; simpl; auto. rewrite seqsumb_eq0; auto. monoid.
     - destruct c; simpl; auto. rewrite seqsumb_eq0; auto. monoid.
-      replace (seqsumb (fun i : nat => seqsumb (fun j : nat => f i j) loc c + f i (loc+c)%nat) lor r)
+      replace (seqsumb (fun i : nat => seqsumb (fun j : nat => f i j) loc c
+                                   + f i (loc+c)%nat) lor r)
         with ((seqsumb (fun i : nat => seqsumb (fun j : nat => f i j) loc c) lor r) +
                 (seqsumb (fun i : nat => f i (loc + c)%nat) lor r)).
-      replace (seqsumb (fun j : nat => seqsumb (fun i : nat => f i j) lor r + f (lor+r)%nat j) loc c)
+      replace (seqsumb (fun j : nat => seqsumb (fun i : nat => f i j) lor r
+                                   + f (lor+r)%nat j) loc c)
         with ((seqsumb (fun j : nat => seqsumb (fun i : nat => f i j) lor r) loc c) +
                 (seqsumb (fun j : nat => f (lor+r)%nat j) loc c)).
       rewrite IHr. asemigroup.

@@ -20,54 +20,505 @@ Require QcExt RExt.
 Generalizable Variable A Aadd Azero Aopp Amul Aone Ainv.
 
 
-(* ======================================================================= *)
-(** ** 初等行变换 *)
-
-(** 初等行变换的操作 *)
-Inductive RowOp {A} {r:nat} :=
-| RowOp_Swap (i j : fin r)          (* 交换 i, j 两行，记作 <i,j> *)
-| RowOp_K (i : fin r) (k : A)       (* 用非零数 k 乘以第 i 行，记作 k * i *)
-| RowOp_KAdd (i j : fin r) (k : A)  (* 第 i 行的 k 倍加到第 j 行，记作 j + k * i *)
-.
+(* ############################################################################ *)
+(** * 补充性质 *)
 
 (* ======================================================================= *)
-(** ** Gauss elimination. *)
+(** ** 找出序列后一段中第1个为真的项 *)
+
+(* 找出序列 P 中末尾 i 个元素 P(n-i), P(n-i+1), ..., P(n-1) 中的第1个为真的序号 *)
+Fixpoint seqFirst (n i : nat) (P : nat -> bool) : option nat :=
+  match i with
+  | O => None
+  | S i' =>
+      (* 递归顺序：  i,   i-1, ... ,   1, (0)
+         实际顺序：n-i, n-i+1, ... , n-1, (n) *)
+      if P (n - i)
+      then Some (n - i)
+      else seqFirst n i' P
+  end.
+
+(* (* 若返回 None，则都不满足 *) *)
+(* Lemma seqFirst_spec_None : forall {n i : nat} (P : nat -> bool) j, *)
+(*     seqFirst n i P = None -> j < n -> P j = false. *)
+(* Proof. *)
+(*   intros n i. revert n. induction i; intros; simpl in *. 2:{  easy. *)
+(*   destruct (P (n - S i)) eqn:E1. *)
+(*   - inversion H; auto. *)
+(*   - apply IHi in H; auto. *)
+(* Qed. *)
+
+(* (* 若返回 Some r，则第 r 个满足 *) *)
+(* Lemma seqFirst_spec1 : forall {n i : nat} (P : nat -> bool) r, *)
+(*     seqFirst n i P = Some r -> P r = true. *)
+(* Proof. *)
+(*   intros n i. revert n. induction i; intros; simpl in *. easy. *)
+(*   destruct (P (n - S i)) eqn:E1. *)
+(*   - inversion H; auto. *)
+(*   - apply IHi in H; auto. *)
+(* Qed. *)
+
+
+(* Lemma seqFirst_spec2 : forall {n i : nat} (P : nat -> bool) r, *)
+(*     seqFirst n i P = Some r -> (forall j, j < r -> P j = false). *)
+(* Proof. *)
+(*   intros n i. revert n. induction i; intros; simpl in *. easy. *)
+(*   destruct (P (n - S i)) eqn:E1. *)
+(*   - inversion H. split; auto. lia. *)
+(*   - apply IHi in H; auto. lia. *)
+(* Qed. *)
+
+Lemma seqFirst_min : forall {n i : nat} (P : nat -> bool) r,
+    seqFirst n i P = Some r -> n - i <= r.
+Proof.
+  intros n i. revert n. induction i; intros; simpl in *. easy.
+  destruct (P (n - S i)).
+  - inversion H. lia.
+  - apply IHi in H; auto. lia.
+Qed.
+
+Lemma seqFirst_max : forall {n i : nat} (P : nat -> bool) r,
+    0 < n -> seqFirst n i P = Some r -> r < n.
+Proof.
+  intros n i. revert n. induction i; intros; simpl in *. easy.
+  destruct (P (n - S i)).
+  - inversion H0. lia.
+  - apply IHi in H0; auto.
+Qed.
+
+
+(* ############################################################################ *)
+(** * Gauss elimination. *)
 Section GaussElim.
   Context `{Field} `{Dec _ (@eq A)}.
 
-  Notation mat r c := (mat A r c).
-  Notation smat n := (smat A n).
-  Notation mmul := (@mmul _ Aadd Azero Amul).
-  Notation mat1 := (@mat1 _ Azero Aone).
-  Notation mrowSwap := (@mrowSwap A).
-  Notation mrowK := (@mrowK _ Amul).
-  Notation mrowKAdd := (@mrowKAdd _ Aadd Amul).
-  Notation mrow := (@mrow _ Azero).
-  Notation Aeqb := (@Acmpb _ (@eq A) _).
-  Notation vfirstNonZeroFrom := (@vfirstNonZeroFrom _ _ Azero).
-  Notation vfirstNonZero := (@vfirstNonZero _ _ Azero).
-  Notation RowOp := (@RowOp A).
-
+  Notation "0" := Azero : A_scope.
+  Notation "1" := Aone : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
   Infix "*" := Amul : A_scope.
   Notation "/ a" := (Ainv a) : A_scope.
   Infix "/" := (fun a b => a * / b) : A_scope.
+  Notation Aeqb := (@Acmpb _ (@eq A) _).
+  
+  Notation mat r c := (mat A r c).
+  Notation smat n := (smat A n).
+  Notation mat1 := (@mat1 _ Azero Aone).
+  Notation mmul := (@mmul _ Aadd Azero Amul).
   Infix "*" := mmul : mat_scope.
+  Notation matRowSwap := (@matRowSwap _ 0 1 _).
+  Notation matRowScale := (@matRowScale _ 0 1 _).
+  Notation matRowAdd := (@matRowAdd _ Aadd 0 1 _).
+  Notation mrowSwap := (@mrowSwap A).
+  Notation mrowScale := (@mrowScale _ Amul).
+  Notation mrowAdd := (@mrowAdd _ Aadd Amul).
+  Notation mrow := (@mrow _ Azero).
 
-  (* 行变换操作转为矩阵 *)
-  Definition rowOp2mat {r:nat} (ro : RowOp) : smat r :=
-    match ro with
-    | RowOp_Swap i j => mrowSwap mat1 i j
-    | RowOp_K i k => mrowK mat1 i k
-    | RowOp_KAdd i j k => mrowKAdd mat1 i j k
+  (* 为避免逆矩阵计算时的大量计算，使用抽象表示，可提高计算效率 *)
+  Inductive RowOp {n} :=
+  | ROnop
+  | ROswap (i j : fin (S n))
+  | ROscale (i : fin (S n)) (c : A)
+  | ROadd (i j : fin (S n)) (c : A).
+
+  Definition rowOps2mat {n} (l : list (@RowOp n)) : smat (S n) :=
+    fold_right (fun op M =>
+                 match op with
+                 | ROnop => M
+                 | ROswap i j => mrowSwap i j M
+                 | ROscale i c => mrowScale i c M
+                 | ROadd i j c => mrowAdd i j c M
+                 end) mat1 l.
+
+  (* ======================================================================= *)
+  (** ** 某列的第一个非零元的行号 *)
+
+  (** 第 j 列的从第 n-i 行开始往下的第 1 个非零元的行号 *)
+
+  Definition firstNonzero {n} (M : smat (S n)) (i j : fin (S n))
+    : option (fin (S n)) :=
+    match seqFirst (S n) (S (fin2nat i))
+            (fun i0 => if Aeqdec (M #i0 j) 0
+                     then false else true) with
+    | Some r => Some #r
+    | _ => None
+    end.
+
+(* End GaussElim. *)
+(* Section test. *)
+(*   Let M : smat nat 3 := l2m 0 [[1;0;0];[0;1;0];[0;0;1]]. *)
+(*   Notation firstNonzero := (@firstNonzero nat 0). *)
+(*   Compute firstNonzero M #2 #0. *)
+(*   Compute firstNonzero M #2 #1. *)
+(*   Compute firstNonzero M #2 #2. *)
+(*   Compute firstNonzero M #1 #0. *)
+(*   Compute firstNonzero M #1 #1. *)
+(*   Compute firstNonzero M #1 #2. *)
+(*   Compute firstNonzero M #0 #0. *)
+(*   Compute firstNonzero M #0 #1. *)
+(*   Compute firstNonzero M #0 #2. *)
+(* End test. *)
+  
+  (* (* 非零元行号最大不超过 n *) *)
+  (* Lemma firstNonzero_max: forall {n} (M : smat (S n)) (i j r : fin (S n)), *)
+  (*     firstNonzero M i j = Some r -> fin2nat r < S n. *)
+  (* Proof. *)
+  (*   intros. unfold firstNonzero in H1. destruct seqFirst as [r'|] eqn: Hr; try easy. *)
+  (*   apply seqFirst_max in Hr; auto; try lia. inversion H1. *)
+  (*   rewrite fin2nat_nat2finS; auto. *)
+  (* Qed. *)
+  
+  (* (* 非零元行号最小值是 n - i *) *)
+  (* Lemma firstNonzero_min: forall {n} (M : smat (S n)) (i j r : fin (S n)), *)
+  (*     firstNonzero M i j = Some r -> S n - fin2nat i <= fin2nat r. *)
+  (* Proof. *)
+  (*   intros. unfold firstNonzero in H1. destruct seqFirst as [r'|] eqn: Hr; try easy. *)
+  (*   inversion H1. *)
+  (*   pose proof (seqFirst_max _ r' (Nat.lt_0_succ _) Hr). *)
+  (*   pose proof (seqFirst_min _ r' Hr). *)
+  (*   pose proof (fin2nat_lt (@nat2finS n r')). *)
+  (*   rewrite fin2nat_nat2finS; auto. lia. *)
+  (* Qed. *)
+
+
+  (* ******************************************************************* *)
+  (** ** 向下消元 *)
+  
+  (* 对矩阵M第j列的从(维数-i)的行开始向下消元，返回(变换阵,变换结果)，i初始为(维数-1) *)
+  Fixpoint elimDown {n} (M : smat (S n)) (i : nat) (j : fin (S n))
+    : list RowOp * smat (S n) :=
+    match i with
+    | O => ([], M)
+    | S i' =>
+        (* 递归时 i 从大到小，而 fi 是从小到大 *)
+        let fi : fin (S n) := #(S n - i) in
+        (* 是0则直接递归，不是0则消元后递归 *)
+        let x : A := M $ fi $ j in
+        if Aeqdec x 0
+        then elimDown M i' j
+        else
+          (let M1 := mrowAdd fi j (-x)%A M in
+           let (l', M2) := elimDown M1 i' j in
+           (l' ++ [ROadd fi j (-x)%A], M2))
     end.
   
-  (* 行变换操作的列表转为单个矩阵。
-     eg: [op1;op2;op3] => m(op1)*m(op2)*m(op3)*mat1  *)
-  Definition rowOpList2mat {r:nat} (ops : list RowOp) : smat r :=
-    fold_right (fun op M => (rowOp2mat op) * M) mat1 ops.
+(* End GaussElim. *)
+(* Section test. *)
+(*   Import QcExt. *)
+(*   Notation elimDown := (@elimDown _ Qcplus 0 Qcopp Qcmult 1 _). *)
+  
+(*   (* 化阶梯形测试 *) *)
+(* (*     [[  0; -2;  1];     [[  1;  0;  -2/3]; *) *)
+(* (*      [  3;  0; -2];  =>  [  0;  1;  -1/2]; *) *)
+(* (*      [ -2;  3;  0]]      [  0;  0;   1/6]] *) *)
+(*   Let M : smat Qc 3 := l2m 0 (Q2Qc_dlist [[1;2;3];[4;5;6];[7;8;9]]%Q). *)
+(*   Compute m2l (snd (elimDown M 2 #0)). *)
+(* End test. *)
 
-  (* 第j列的第i行以下元素都是0 *)
+
+  (* ******************************************************************* *)
+  (** ** 化为行阶梯形 *)
+  
+  (* 将矩阵M化为行阶梯形，参数 i 初始为维数，递归时 i 递减，而 (维数-i) 递增。*)
+  Fixpoint rowEchelon {n} (M : smat (S n)) (i : nat)
+    : option (list RowOp * smat (S n)) :=
+    match i with
+    | O => Some ([], M)
+    | S i' =>
+        let fi : fin (S n) := #(S n - i) in
+        (* 找出主元 *)
+        match firstNonzero M #(i - 1) fi with
+        | None => None (* 没有非零元，则该矩阵不可逆 *)
+        | Some r =>
+            (* 使主元行在当前行 *)
+            let (op1, M1) :=
+              (if r ??= fi
+               then (ROnop, M)
+               else (ROswap fi r, mrowSwap fi r M)) in
+            (* 使主元是 1 *)
+            let (op2, M2) :=
+              (let c : A := M1 $ fi $ fi in
+               if Aeqdec c 0
+               then (ROnop, M1)
+               else (ROscale fi (/c), mrowScale fi (/c) M1)) in
+            (* 使主元以下都是 0 *)
+            let (l3, M3) := elimDown M2 i' fi in
+            (* 递归 *)
+            match rowEchelon M3 i' with
+            | None => None
+            | Some (l4, M4) => Some (l4 ++ l3 ++ [op2; op1], M4)
+            end
+        end
+    end.
+  
+(* End GaussElim. *)
+(* Section test. *)
+
+(*   Import QcExt. *)
+(*   Notation firstNonzero := (firstNonzero (Azero:=0)). *)
+(*   Notation rowEchelon := (@rowEchelon _ Qcplus 0 Qcopp Qcmult 1 Qcinv _). *)
+(*   Notation rowEchelon2 := (@rowEchelon2 _ Qcplus 0 Qcopp Qcmult Qcinv _). *)
+(*   Notation elimDown := (@elimDown _ Qcplus 0 Qcopp Qcmult 1 _). *)
+(*   Notation rowOps2mat := (@rowOps2mat _ Qcplus 0 Qcmult 1 _). *)
+(*   Notation mmul := (@mmul _ Qcplus 0 Qcmult). *)
+(*   Infix "*" := mmul : mat_scope. *)
+
+  (* 行阶梯形
+     [  0 -2  1]     [0    1/3  0]   [1 0 -2/3]
+     [  3  0 -2]  => [-1/2   0  0] * [0 1 -1/2]
+     [ -2  3  0]     [9      4  6]   [0 0    1] *)
+(*   Let M : smat Qc 3 := l2m 0 (Q2Qc_dlist [[0;-2;1];[3;0;-2];[-2;3;0]]%Q). *)
+(*   Let M1 : smat Qc 3 := l2m 0 (Q2Qc_dlist [[1;0;-2/3];[0;1;-1/2];[0;0;1]]%Q). *)
+(*   Let E1 : smat Qc 3 := l2m 0 (Q2Qc_dlist [[0;1/3;0];[-1/2;0;0];[9;4;6]]%Q). *)
+
+(*   (* 使用抽象表示速度会比较快 *) *)
+(*   Goal match rowEchelon2 M 3 with *)
+(*        | Some (l1',M1') => m2l (rowOps2mat l1') = m2l E1 *)
+(*                           /\ m2l M1' = m2l M1 *)
+(*        | _ => True *)
+(*        end. *)
+(*   Proof. *)
+(*     Time cbv; split; list_eq; f_equal; apply proof_irrelevance. *)
+(*   Qed. *)
+
+(*   (* 具体矩阵表示速度较慢 *) *)
+(*   Goal match rowEchelon M 3 with *)
+(*        | Some (E1',M1') => m2l E1' = m2l E1 *)
+(*                           (* /\ m2l M1' = m2l M1 *) *)
+(*        | _ => True *)
+(*        end. *)
+(*   Proof. *)
+(*     (* Time cbv. *) *)
+(*   Abort. *)
+
+(*   (* 验证 E1 将 M 变换到了 M1 *) *)
+(*   Goal (E1 * M)%M = M1. *)
+(*   Proof. apply m2l_inj. cbv. list_eq; f_equal. Qed. *)
+
+(* End test. *)
+
+  (* ******************************************************************* *)
+  (** ** 向上消元 *)
+  
+  (* 对矩阵M第j列的从i行开始向上消元，返回(变换阵,变换结果)，i初始为(维数-1) *)
+  Fixpoint elimUp {n} (M : smat (S n)) (i : nat) (j : fin (S n))
+    : list RowOp * smat (S n) :=
+    match i with
+    | O => ([], M)
+    | S i' =>
+        (* 如果 M[i',j] <> 0，则 j 行的 -M[i',j] 倍加到 i' 行 *)
+        let fi : fin (S n) := #i' in
+        let x : A := (M $ fi $ j) in
+        if Aeqdec x 0
+        then elimUp M i' j
+        else
+          let (op1, M1) := (ROadd fi j (-x)%A, mrowAdd fi j (-x)%A M) in
+          let (l2, M2) := elimUp M1 i' j in
+          (l2 ++ [op1], M2)
+    end.
+  
+(* End GaussElim. *)
+(* Section test. *)
+
+(*   Import QcExt. *)
+(*   Notation elimUp := (@elimUp _ Qcplus 0 Qcopp Qcmult 1 _). *)
+  
+(*   Let M : smat Qc 3 := l2m 0 (Q2Qc_dlist [[1;2;3];[4;5;6];[7;8;1]]%Q). *)
+(*   Compute m2l (snd (elimUp M 2 #2)). *)
+(* End test. *)
+  
+
+  (* ******************************************************************* *)
+  (** ** 最简行阶梯形矩阵 *)
+
+  (* 将矩阵M化为行最简阶梯形，参数 i 初始为维数 *)
+  Fixpoint minRowEchelon {n} (M : smat (S n)) (i : nat) : list RowOp * smat (S n) :=
+    match i with
+    | O => ([], M)
+    | S i' =>
+        let fi : fin (S n) := #i' in
+        let (l1, M1) := elimUp M i' fi in
+        let (l2, M2) := minRowEchelon M1 i' in
+        (l2 ++ l1, M2)
+    end.
+  
+(* End GaussElim. *)
+(* Section test. *)
+(*   Import QcExt. *)
+(*   Notation minRowEchelon := (@minRowEchelon _ Qcplus 0 Qcopp Qcmult 1 _). *)
+(*   Notation minRowEchelon2 := (@minRowEchelon _ Qcplus 0 Qcopp Qcmult _). *)
+(*   Notation elimUp := (@elimUp _ Qcplus 0 Qcopp Qcmult 1 _). *)
+(*   Notation mmul := (@mmul _ Qcplus 0 Qcmult). *)
+(*   Infix "*" := mmul : mat_scope. *)
+(*   Notation mat1 := (@mat1 _ 0 1). *)
+  
+(*   (* 简化行阶梯形 *)
+(*      [1 0 -2/3]     [1  0  2/3]   [1 0 0] *)
+(*      [0 1 -1/2]  => [0  1  1/2] * [0 1 0] *)
+(*      [0 0    1]     [0  0    1]   [0 0 1] *) *)
+(*   Let M : smat Qc 3 := l2m 0 (Q2Qc_dlist [[1;0;-2/3];[0;1;-1/2];[0;0;1]]%Q). *)
+(*   Let E1 := fst (minRowEchelon M 3). *)
+(*   Let M1 := snd (minRowEchelon M 3). *)
+
+(*   Goal (E1 * M)%M = M1. *)
+(*   Proof. apply m2l_inj. cbv. list_eq. Qed. *)
+(* End test. *)
+  
+  (* ******************************************************************* *)
+  (** ** 计算逆矩阵 *)
+
+  (* 计算逆矩阵(option版本) *)
+  Definition minvGEo {n} : smat n -> option (smat n) :=
+    match n with
+    | O => fun _ => None           (* 0级矩阵不可逆 *)
+    | S n' =>
+        fun (M : smat (S n')) =>
+          match rowEchelon M (S n') with
+          | None => None
+          | Some (l1, M1) =>
+              let (l2, M2) := minRowEchelon M1 (S n') in
+              Some (rowOps2mat (l2 ++ l1))
+          end
+    end.
+  
+  (* 计算逆矩阵(默认值是mat1的版本) *)
+  Definition minvGE {n} : smat n -> smat n :=
+    match n with
+    | O => fun M => M              (* 0级矩阵，返回自身 *)
+    | S n' =>
+        fun (M : smat (S n')) =>
+          match rowEchelon M n with
+          | None => M            (* 不可逆矩阵，返回自身 *)
+          | Some (l1, M1) =>
+              let (l2, M2) := minRowEchelon M1 n in
+              rowOps2mat (l2 ++ l1)
+          end
+    end.
+
+(* 抽取代码测试 *)
+End GaussElim.
+
+Definition minvGE_R := @minvGE _ Rplus R0 Ropp Rmult R1 Rinv R_eq_Dec.
+Require Import ExtrOcamlBasic ExtrOcamlNatInt.
+Require Import MyExtrOCamlR.
+
+(** two float numbers are comparison decidable *)
+Extract Constant total_order_T => "fun r1 r2 ->
+  let c = Float.compare r1 r2 in
+  if c < 0 then Some true
+  else (if c = 0 then None else Some false)".
+
+Extract Constant Req_dec_T => "fun r1 r2 ->
+  let c = Float.compare r1 r2 in
+  if c = 0 then true
+  else false".
+
+Recursive Extraction minvGE_R.
+  Extraction "ocaml_test/matrix.ml" minvGE_R m2l l2m.
+  
+?
+(* Print sumbool. *)
+Check total_order_T.
+Check Req_dec_T.
+
+Check minvGE.
+ 
+End A.
+Sect
+
+  (* 在Coq中直接计算逆矩阵的测试 *)
+End GaussElim.
+Section test.
+  Import QcExt.
+  Notation mat1 := (@mat1 _ 0 1).
+  Notation mmul := (@mmul _ Qcplus 0 Qcmult).
+  Infix "*" := mmul : mat_scope.
+  Notation minvGE := (@minvGE _ Qcplus 0 Qcopp Qcmult 1 Qcinv _).
+
+  (* 输入和输出都是 list 的逆矩阵求解 *)
+  Definition minvGE_Qclist (n : nat) (l : list (list Q)) : list (list Q) :=
+    Qc2Q_dlist (m2l (@minvGE n (l2m 0 (Q2Qc_dlist l)))).
+
+  Open Scope Q_scope.
+  
+  (* [ 1  2]     [ 3  2]
+     [-1 -3] <-> [-1 -1] *)
+  (* Compute minvGE_Qclist 2 [[1;2];[-1;-3]]. *)
+  
+  (* [1 3 1]     [-1 -1  2]
+     [2 1 1] <-> [ 0 -1  1]
+     [2 2 1]     [ 2  4 -5] *)
+  (* Compute minvGE_Qclist 3 [[1;3;1];[2;1;1];[2;2;1]]. *)
+
+  (* [  0 -2  1]     [6 3 4]
+     [  3  0 -2] <-> [4 2 3]
+     [ -2  3  0]     [9 4 6] *)
+  (* Compute minvGE_Qclist 3 [[0;-2;1];[3;0;-2];[-2;3;0]]. *)
+
+  (* 一个8阶矩阵，手动构造的 *)
+  (* Compute minvGE_Qclist 8 *)
+  (*   [[1;2;3;4;5;6;7;8]; *)
+  (*    [2;4;5;6;7;8;9;1]; *)
+  (*    [3;5;7;6;8;4;2;1]; *)
+  (*    [4;5;7;6;9;8;3;2]; *)
+  (*    [5;4;3;7;9;6;8;1]; *)
+  (*    [6;5;3;4;7;8;9;2]; *)
+  (*    [7;8;6;5;9;2;1;3]; *)
+  (*    [8;9;6;3;4;5;2;1]]. *)
+  (* 在 matlab 中，输入以下指令计算逆矩阵
+     M = [1 2 3 4 5 6 7 8; ...
+          2 4 5 6 7 8 9 1; ...
+          3 5 7 6 8 4 2 1; ...
+          4 5 7 6 9 8 3 2; ...
+          5 4 3 7 9 6 8 1; ...
+          6 5 3 4 7 8 9 2; ...
+          7 8 6 5 9 2 1 3; ...
+          8 9 6 3 4 5 2 1]
+     M' = inv(M)
+     使用如下指令切换分数格式，以便与Coq中的结果对比
+     format rat
+     format short
+     看起来与Coq的结果不同。比如 M'(0,2)，在Coq中是41846/50943, matlab中是23/28 
+     可能的原因是，matlab以浮点数计算，再将不精确的结果转换为分数也无法弥补差异。
+     相反，Coq的精确结果或许有潜在的好处，暂未知。*)
+
+  (* 可证明这两个值不相同 *)
+  Goal ~(Qmake 41846 50943 == Qmake 23 28).
+  Proof. intro. cbv in H. easy. Qed.
+
+  (* 再测试一个带有小数的复杂矩阵 *)
+  (* 使用matlab来生成随机矩阵：
+     format short
+     M = rand(8,8)
+     或者等价于以下结果
+     M = [0.8001  0.5797  0.0760  0.9448  0.3897  0.0598  0.7317  0.1835; ...
+  0.4314  0.5499  0.2399  0.4909  0.2417  0.2348  0.6477  0.3685; ...
+  0.9106  0.1450  0.1233  0.4893  0.4039  0.3532  0.4509  0.6256; ...
+  0.1818  0.8530  0.1839  0.3377  0.0965  0.8212  0.5470  0.7802; ...
+  0.2638  0.6221  0.2400  0.9001  0.1320  0.0154  0.2963  0.0811; ...
+  0.1455  0.3510  0.4173  0.3692  0.9421  0.0430  0.7447  0.9294; ...
+  0.1361  0.5132  0.0497  0.1112  0.9561  0.1690  0.1890  0.7757; ...
+  0.8693  0.4018  0.9027  0.7803  0.5752  0.6491  0.6868  0.4868]
+     然后计算逆矩阵
+     M' = inv(M)
+
+ *)
+
+  (* 计算逆矩阵耗时18s，验证“M*M'=mat1”，耗时约1分钟 *)
+  (* Compute minvGE_Qclist 8 *)
+  (*   [[0.8001;0.5797;0.0760;0.9448;0.3897;0.0598;0.7317;0.1835]; *)
+  (*    [0.4314;0.5499;0.2399;0.4909;0.2417;0.2348;0.6477;0.3685]; *)
+  (*    [0.9106;0.1450;0.1233;0.4893;0.4039;0.3532;0.4509;0.6256]; *)
+  (*    [0.1818;0.8530;0.1839;0.3377;0.0965;0.8212;0.5470;0.7802]; *)
+  (*    [0.2638;0.6221;0.2400;0.9001;0.1320;0.0154;0.2963;0.0811]; *)
+  (*    [0.1455;0.3510;0.4173;0.3692;0.9421;0.0430;0.7447;0.9294]; *)
+  (*    [0.1361;0.5132;0.0497;0.1112;0.9561;0.1690;0.1890;0.7757]; *)
+  (*    [0.8693;0.4018;0.9027;0.7803;0.5752;0.6491;0.6868;0.4868]]. *)
+End test.
+
+(*
+
+?
+.  (* 第j列的第i行以下元素都是0 *)
   (* Definition belowElemsAllZero {r c} (M : mat r c) (i : fin r) (j : fin c) : bool := *)
   (*   @vsum _ andb true _ *)
   (*     (fun k => *)
@@ -88,7 +539,7 @@ Section GaussElim.
           (* 若元素为0，则不需要变换 *)
           if Aeqb coef Azero
           then F fuel' p (fin2SameRangeSucc k)
-          else F fuel' (RowOp_KAdd i k coef :: fst p, mrowKAdd (snd p) i k coef)
+          else F fuel' (RTadd i k coef :: fst p, mrowAdd (snd p) i k coef)
                  (fin2SameRangeSucc k)
       end in
     F r p (fin2SameRangeSucc i).
@@ -114,7 +565,7 @@ Section GaussElim.
             | Some i' => 
                 let coef := - ele in
                 F fuel' 
-                  (RowOp_KAdd i' i coef :: fst p, mrowKAdd (snd p) i' i coef)
+                  (RTadd i' i coef :: fst p, mrowAdd (snd p) i' i coef)
                   (fin2SameRangeSucc k)
             end
       end in
@@ -159,7 +610,7 @@ Section GaussElim.
   
   (** 是否为(行)阶梯形矩阵 *)
   Definition MatEchelon {r c} (M : mat r c) : bool :=
-    vidxStrictInc (vmap (vfirstIdx (fun x => negb (Aeqb x Azero))) M).
+    vidxStrictInc (vmap (vfirst (fun x => negb (Aeqb x Azero))) M).
   
   (** 转换为阶梯形矩阵
       步骤：
@@ -198,7 +649,7 @@ Section GaussElim.
                       let p1 : list RowOp * mat (S r) (S c) :=
                         if i ??= i'
                         then p
-                        else (RowOp_Swap i i' :: (fst p),
+                        else (ROswap i i' :: (fst p),
                                mrowSwap (snd p) i i') in
                       (* 第j列的第i行以下所有元素进行消元 *)
                       let p2 : list RowOp * mat (S r) (S c) :=
@@ -225,7 +676,7 @@ Section GaussElim.
       a. 找出第i行的第1个非零元，
       b. 若没有非零元，则使用pred i递归
       c. 否则在(i,j)找到了非零元。
-      d. 若(i,j)处不是1，则使用 mrowK 变换为1
+      d. 若(i,j)处不是1，则使用 mrowScale 变换为1
       e. 把第i行的第j列右侧的所有元素进行消元
       消元时的做法：数组pivots记录了每列的主元编号，初始为None，随着递归而逐步填充。
       f. 用(pred i)递归
@@ -244,7 +695,7 @@ Section GaussElim.
             | O => p
             | S fuel' =>
                 (* 找出第i行第1个非零元 *)
-                match vfirstNonZero (m $ i) with
+                match vpivot (m $ i) with
                 | None =>
                     (* 若本行全部为零，则向上一行 *)
                     if Nat.eqb (fin2nat i) 0 then p else
@@ -258,7 +709,7 @@ Section GaussElim.
                       | true => p 
                       | _ =>
                           let coef : A := Aone / pivot in
-                          (RowOp_K i coef :: fst p, mrowK (snd p) i coef)
+                          (ROscale i coef :: fst p, mrowScale (snd p) i coef)
                       end in
                     (* 对第i行的第j列右侧消元 *)
                     let p2 : list RowOp * mat (S r) (S c) :=
@@ -267,7 +718,7 @@ Section GaussElim.
                       F fuel' p2 pivots' (fin2SameRangePred i)
                 end
             end in
-          F (S r) ([], m) (vzero None) (nat2finS r)
+          F (S r) ([], m) (vzero None) #r
     end.
   
 End GaussElim.
@@ -468,3 +919,4 @@ Section test.
 End test.
 
 (* Recursive Extraction echelon minEchelon. *)
+*)

@@ -112,7 +112,7 @@ Module BasicMatrixTheory (E : ElementType).
   (* ======================================================================= *)
   (** ** Convert between vector and list *)
   Definition v2l {n} (a : vec n) : list A := v2l a.
-  Definition l2v {n} (l : list A) : vec n := l2v 0 _ l.
+  Definition l2v {n} (l : list A) : vec n := l2v 0 l.
 
   (** (l2v l).i = nth i l *)
   Lemma vnth_l2v : forall {n} (l : list A) i, (@l2v n l) $ i = nth (fin2nat i) l Azero.
@@ -485,19 +485,17 @@ Module BasicMatrixTheory (E : ElementType).
   (* ======================================================================= *)
   (** ** Un-sorted operations for matrix *)
 
-  (** Construct a matrix by rows *)
-  Definition mconsr {r c} (a : vec c) (M : mat r c) : mat (S r) c := mconsr a M.
+  (** Construct a matrix with a row vector and a matrix *)
+  Definition mconsrH {r c} (a : vec c) (M : mat r c) : mat (S r) c := mconsrH a M.
 
-  (** Construct a matrix by columns *)
-  Definition mconsc {r c} (a : vec r) (M : mat r c) : mat r (S c) := mconsc a M.
-  
-  (** Append matrix by row *)
-  Definition mappr {r1 r2 c} (M : mat r1 c) (N : mat r2 c) : mat (r1 + r2) c :=
-    mappr (Azero:=0) M N.
-  
-  (** Append matrix by column *)
-  Definition mappc {r c1 c2} (M : mat r c1) (N : mat r c2) : mat r (c1 + c2) :=
-    mappc (Azero:=0) M N.
+  (** Construct a matrix with a matrix and a row vector *)
+  Definition mconsrT {r c} (M : mat r c) (a : vec c) : mat (S r) c := mconsrT M a.
+
+  (** Construct a matrix with a column vector and a matrix *)
+  Definition mconscH {r c} (a : vec r) (M : mat r c) : mat r (S c) := mconscH a M.
+
+  (** Construct a matrix with a matrix and a column vector *)
+  Definition mconscT {r c} (M : mat r c) (a : vec r) : mat r (S c) := mconscT M a.
 
   (* ======================================================================= *)
   (** ** Automation for matrix equality proofs *)
@@ -1602,9 +1600,9 @@ Module FieldMatrixTheory (E : FieldElementType).
   Definition vfirstNonZeroFrom {n} (a : vec n) (i : fin n) : option (fin n) :=
     vfirstNonZeroFrom (Azero:=0) a i.
   
-  (** Index of first nonzero element in a vector *)
-  Definition vfirstNonZero {n} (a : vec n) : option (fin n) :=
-    vfirstNonZero a (Azero:=0).
+  (** Get pivot of a vector (i.e., index of first nonzero element) *)
+  Definition vpivot {n} (a : vec n) : option (fin n) :=
+    vpivot a (Azero:=0).
 
   Open Scope mat_scope.
   
