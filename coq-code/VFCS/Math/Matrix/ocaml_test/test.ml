@@ -51,7 +51,7 @@ let float_trim (x : float) (n : int) : float =
 
 (** Generate a float number with default precision *)
 let gen_float () : float =
-  float_trim (Random.float 1.0) 4
+  float_trim (Random.float 1.0) 3
 
 (** aa : float array array *)
 type aa = float array array;;
@@ -114,11 +114,17 @@ let ff2str (r:int) (c:int) (ff:int->int->float) : string =
 (** Print a `matrix` *)
 let prt_mat (prefix:string) (m:matrix) : unit =
   let (r,c,ff) = m in
-  let s = Printf.sprintf "%s matrix (%dx%d):\n%s" prefix r c (ff2str r c ff) in
+  let s = Printf.sprintf "%s matrix_%dx%d:\n%s" prefix r c (ff2str r c ff) in
   print_endline s;;
 
-(** Experinemt for matrix inversion *)
-let minv (m:matrix) : matrix =
+(** matrix multiplication *)
+let mmulR (m1:matrix) (m2:matrix) : matrix =
+  let (r1,c1,f1) = m1 in
+  let (r2,c2,f2) = m2 in
+  (r1,c2, mmul_R r1 c1 c2 f1 f2);;
+
+(** matrix inversion *)
+let minvR (m:matrix) : matrix =
   let (r,c,f) = m in
   (r,c, minvGE_R r f);;
 
@@ -146,18 +152,40 @@ let show_hello_msg () =
   let hello_msg = "Program for test matrix." in
   print_endline hello_msg
 
+(* 测试矩阵乘法 *)
+let test_mmul (n:int) : unit =
+  let m1 = gen_mat n n in
+  let m2 = gen_mat n n in
+  let m3 = mmulR m1 m2 in
+  
+  (* let (r,c,ff) = m3 in
+   * print_endline (Printf.sprintf "m3(0,0)=%s" (float2str (ff 0 0)));; *)
+
+  print_endline "Test matrix multiplication:";
+  prt_mat "m1=" m1;
+  prt_mat "m2=" m2;
+  prt_mat "m1*m2=" m3;;
+
+(* 测试矩阵求逆 *)
+let test_minv (n:int) : unit =
+  let m = gen_mat n n in
+  let m' = minvR m in
+  print_endline "Test matrix inversion:";
+  prt_mat "m=" m;
+  prt_mat "m'" m';;
+  
 let main () =
   let _ = read_options () in
   let n = !cmdopt_matrix_size in
-  let is_print = !cmdopt_show_matrix in
-  let m = gen_mat n n in
-  let m' = minv m in
+  (* let is_print = !cmdopt_show_matrix in *)
   show_hello_msg ();
-  if is_print then
-    (
-      prt_mat "ORIGINAL" m;
-      prt_mat "INVERSE" m'
-    );;
+  test_mmul n;;
+  (* test_minv n;; *)
+  (* if is_print then
+   *   (
+   *     prt_mat "ORIGINAL" m;
+   *     prt_mat "INVERSE" m'
+   *   );; *)
   
 main ();;
        

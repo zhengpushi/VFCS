@@ -684,6 +684,16 @@ let fin2nat _ f =
 let nat2finS n i =
   let s = dec0 nat_lt_Dec i (Stdlib.Int.succ n) in if s then i else fin0 n
 
+(** val nat2fin : int -> int -> fin **)
+
+let nat2fin _ i =
+  i
+
+(** val ff2f : 'a1 -> int -> (fin -> 'a1) -> int -> 'a1 **)
+
+let ff2f azero n ff i =
+  let s = dec0 nat_lt_Dec i n in if s then ff (nat2fin n i) else azero
+
 (** val finseq : int -> fin list **)
 
 let finseq n =
@@ -701,6 +711,19 @@ let l2ff azero n l f =
 
 let ff2l n ff =
   map ff (finseq n)
+
+(** val seqsum : ('a1 -> 'a1 -> 'a1) -> 'a1 -> (int -> 'a1) -> int -> 'a1 **)
+
+let rec seqsum aadd azero f n =
+  (fun fO fS n -> if n=0 then fO () else fS (n-1))
+    (fun _ -> azero)
+    (fun n' -> aadd (seqsum aadd azero f n') (f n'))
+    n
+
+(** val fseqsum : ('a1 -> 'a1 -> 'a1) -> 'a1 -> int -> (fin -> 'a1) -> 'a1 **)
+
+let fseqsum aadd azero n f =
+  seqsum aadd azero (ff2f azero n f) n
 
 type 'a vec = fin -> 'a
 
@@ -724,6 +747,22 @@ let l2v =
 let v2l =
   ff2l
 
+(** val vmap2 : ('a1 -> 'a2 -> 'a3) -> int -> 'a1 vec -> 'a2 vec -> 'a3 vec **)
+
+let vmap2 f _ a b i =
+  f (a i) (b i)
+
+(** val vsum : ('a1 -> 'a1 -> 'a1) -> 'a1 -> int -> 'a1 vec -> 'a1 **)
+
+let vsum =
+  fseqsum
+
+(** val vdot :
+    ('a1 -> 'a1 -> 'a1) -> 'a1 -> ('a1 -> 'a1 -> 'a1) -> int -> 'a1 vec -> 'a1 vec -> 'a1 **)
+
+let vdot aadd azero amul n a b =
+  vsum aadd azero n (vmap2 amul n a b)
+
 (** val m2l : int -> int -> 'a1 vec vec -> 'a1 list list **)
 
 let m2l r c m =
@@ -738,6 +777,13 @@ let l2m azero r c d =
 
 let mat1 azero aone n i j =
   if fin_eq_dec n i j then aone else azero
+
+(** val mmul :
+    ('a1 -> 'a1 -> 'a1) -> 'a1 -> ('a1 -> 'a1 -> 'a1) -> int -> int -> int -> 'a1 vec vec ->
+    'a1 vec vec -> 'a1 vec vec **)
+
+let mmul aadd azero amul _ c _ m n i j =
+  vdot aadd azero amul c (m i) (fun k -> n k j)
 
 (** val mrowScale :
     ('a1 -> 'a1 -> 'a1) -> int -> fin -> 'a1 -> 'a1 vec vec -> 'a1 vec vec **)
@@ -897,6 +943,13 @@ let minvGE aadd azero aopp amul aone ainv h0 n m =
       rowOps2mat aadd azero amul aone n' (app l2 l1)
     | None -> m)
     n
+
+(** val mmul_R :
+    int -> int -> int -> RbaseSymbolsImpl.coq_R vec vec -> RbaseSymbolsImpl.coq_R vec vec ->
+    RbaseSymbolsImpl.coq_R vec vec **)
+
+let mmul_R =
+  mmul RbaseSymbolsImpl.coq_Rplus RbaseSymbolsImpl.coq_R0 RbaseSymbolsImpl.coq_Rmult
 
 (** val minvGE_R :
     int -> RbaseSymbolsImpl.coq_R vec vec -> RbaseSymbolsImpl.coq_R vec vec **)

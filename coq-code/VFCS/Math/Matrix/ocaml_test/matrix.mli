@@ -201,11 +201,19 @@ val fin2nat : int -> fin -> int
 
 val nat2finS : int -> int -> fin
 
+val nat2fin : int -> int -> fin
+
+val ff2f : 'a1 -> int -> (fin -> 'a1) -> int -> 'a1
+
 val finseq : int -> fin list
 
 val l2ff : 'a1 -> int -> 'a1 list -> fin -> 'a1
 
 val ff2l : int -> (fin -> 'a1) -> 'a1 list
+
+val seqsum : ('a1 -> 'a1 -> 'a1) -> 'a1 -> (int -> 'a1) -> int -> 'a1
+
+val fseqsum : ('a1 -> 'a1 -> 'a1) -> 'a1 -> int -> (fin -> 'a1) -> 'a1
 
 type 'a vec = fin -> 'a
 
@@ -217,11 +225,22 @@ val l2v : 'a1 -> int -> 'a1 list -> 'a1 vec
 
 val v2l : int -> 'a1 vec -> 'a1 list
 
+val vmap2 : ('a1 -> 'a2 -> 'a3) -> int -> 'a1 vec -> 'a2 vec -> 'a3 vec
+
+val vsum : ('a1 -> 'a1 -> 'a1) -> 'a1 -> int -> 'a1 vec -> 'a1
+
+val vdot :
+  ('a1 -> 'a1 -> 'a1) -> 'a1 -> ('a1 -> 'a1 -> 'a1) -> int -> 'a1 vec -> 'a1 vec -> 'a1
+
 val m2l : int -> int -> 'a1 vec vec -> 'a1 list list
 
 val l2m : 'a1 -> int -> int -> 'a1 list list -> 'a1 vec vec
 
 val mat1 : 'a1 -> 'a1 -> int -> 'a1 vec vec
+
+val mmul :
+  ('a1 -> 'a1 -> 'a1) -> 'a1 -> ('a1 -> 'a1 -> 'a1) -> int -> int -> int -> 'a1 vec vec ->
+  'a1 vec vec -> 'a1 vec vec
 
 val mrowScale : ('a1 -> 'a1 -> 'a1) -> int -> fin -> 'a1 -> 'a1 vec vec -> 'a1 vec vec
 
@@ -264,5 +283,9 @@ val minRowEchelon :
 val minvGE :
   ('a1 -> 'a1 -> 'a1) -> 'a1 -> ('a1 -> 'a1) -> ('a1 -> 'a1 -> 'a1) -> 'a1 -> ('a1 -> 'a1)
   -> 'a1 dec -> int -> 'a1 vec vec -> 'a1 vec vec
+
+val mmul_R :
+  int -> int -> int -> RbaseSymbolsImpl.coq_R vec vec -> RbaseSymbolsImpl.coq_R vec vec ->
+  RbaseSymbolsImpl.coq_R vec vec
 
 val minvGE_R : int -> RbaseSymbolsImpl.coq_R vec vec -> RbaseSymbolsImpl.coq_R vec vec

@@ -38,15 +38,15 @@ Section fseqeq.
     - left. extensionality i. exfalso. apply fin0_False; auto.
     - destruct (IHn (ffS2ff f) (ffS2ff g)) as [H1|H1].
       + destruct (H (f (nat2finS n)) (g (nat2finS n))) as [H2|H2].
-        * left. extensionality i. destruct (fin2nat i ??< n).
-          ** pose proof (equal_f H1) as H3. specialize (H3 (fin2PredRange i l)).
-             unfold ffS2ff in H3. rewrite fin2nat_fin2PredRange in H3.
-             rewrite nat2finS_fin2nat in H3. auto.
+        * left. extensionality i. destruct (fin2nat i ??< n) as [H3|H3].
+          ** pose proof (equal_f H1) as H4. specialize (H4 (fin2PredRange i H3)).
+             unfold ffS2ff in H4. rewrite fin2nat_fin2PredRange in H4.
+             rewrite nat2finS_fin2nat in H4. auto.
           ** assert (fin2nat i = n). pose proof (fin2nat_lt i). lia.
              replace (@nat2finS n n) with i in H2; auto.
              rewrite <- (nat2fin_fin2nat (S n) i (fin2nat_lt _)).
              rewrite (nat2finS_eq n n (Nat.lt_succ_diag_r _)).
-             apply Fin_eq_iff; auto.
+             apply fin_eq_iff; auto.
         * right. intro. destruct H2. subst. auto.
       + right. intro. destruct H1. subst. auto.
   Qed.
@@ -99,7 +99,7 @@ Section fseqsum.
       (forall i, f i = Azero) -> fseqsum f = Azero.
   Proof.
     intros. unfold fseqsum. apply seqsum_eq0.
-    intros. unfold ff2f. destruct (_??<_); auto.
+    intros. rewrite nth_ff2f with (E:=H0). auto.
   Qed.
 
   (** Two sequences are equal, imply the sum are equal. *)
@@ -107,7 +107,7 @@ Section fseqsum.
       (forall i, f i = g i) -> fseqsum f = fseqsum g.
   Proof.
     intros. unfold fseqsum. apply seqsum_eq.
-    intros. unfold ff2f. destruct (_??<_); auto.
+    intros. rewrite !nth_ff2f with (E:=H0); auto.
   Qed.
 
   (** Convert `fseqsum` to `seqsum` *)
@@ -116,8 +116,7 @@ Section fseqsum.
   Proof.
     intros. unfold fseqsum. apply seqsum_eq; intros.
     specialize (H (nat2fin i H0)). simpl in *.
-    unfold ff2f. destruct (_??<_); try lia.
-    rewrite <- H. f_equal. apply Fin_eq_iff; auto.
+    rewrite nth_ff2f with (E:=H0); auto.
   Qed.
 
   (** Convert `fseqsum` to `seqsum` (succ form) *)
@@ -125,7 +124,8 @@ Section fseqsum.
       fseqsum f = seqsum (fun i => f (nat2finS i)) n + f (nat2finS n).
   Proof.
     intros. unfold fseqsum. simpl. f_equal.
-    - apply seqsum_eq; intros. unfold ff2f,nat2finS. destruct (_??<_); auto. lia.
+    - apply seqsum_eq; intros. unfold ff2f,nat2finS.
+      destruct (_??<_); auto. lia.
     - unfold ff2f,nat2finS. destruct (_??<_); auto. lia.
   Qed.
   
@@ -140,12 +140,12 @@ Section fseqsum.
   Proof.
     intros. unfold fseqsum. rewrite seqsumS_tail. f_equal.
     - apply seqsum_eq. intros. specialize (H (nat2fin i H0)).
-      rewrite nth_ff2f with (H:=H0). rewrite <- H.
+      rewrite nth_ff2f with (E:=H0). rewrite <- H.
       erewrite nth_ff2f. f_equal. rewrite nat2fin_iff_fin2nat.
       rewrite fin2nat_fin2SuccRange. rewrite fin2nat_nat2fin. auto.
       Unshelve. lia.
     - erewrite nth_ff2f. f_equal.
-      erewrite nat2finS_eq. apply Fin_eq_iff; auto.
+      erewrite nat2finS_eq. apply fin_eq_iff; auto.
       Unshelve. apply Nat.lt_succ_diag_r. apply Nat.lt_succ_diag_r.
   Qed.
 
@@ -155,8 +155,8 @@ Section fseqsum.
       fseqsum f = f (nat2finS O) + fseqsum g.
   Proof.
     intros. unfold fseqsum. rewrite seqsumS_head. f_equal.
-    apply seqsum_eq. intros.
-    rewrite nth_ff2f with (H:=H0). rewrite <- H.
+    apply seqsum_eq; intros.
+    rewrite nth_ff2f with (E:=H0). rewrite <- H.
     erewrite nth_ff2f. f_equal. rewrite nat2fin_iff_fin2nat.
     rewrite fin2nat_fin2SuccRangeSucc. rewrite fin2nat_nat2fin. auto.
     Unshelve. lia.
@@ -191,9 +191,9 @@ Section fseqsum.
   Proof.
     intros. unfold fseqsum. apply seqsum_plusIdx_ext.
     - intros. unfold ff2f. destruct (_??<_), (_??<_); try lia.
-      rewrite <- H. f_equal. apply Fin_eq_iff. rewrite fin2nat_nat2fin; auto.
+      rewrite <- H. f_equal. apply fin_eq_iff. rewrite fin2nat_nat2fin; auto.
     - intros. unfold ff2f. destruct (_??<_), (_??<_); try lia.
-      rewrite <- H0. f_equal. apply Fin_eq_iff. rewrite fin2nat_nat2fin; auto.
+      rewrite <- H0. f_equal. apply fin_eq_iff. rewrite fin2nat_nat2fin; auto.
   Qed.
 
   (** The order of two nested summations can be exchanged.
@@ -218,12 +218,12 @@ Section fseqsum.
       match goal with
       | H: ?a1 = ?b1 |- ?a2 = ?b2 => replace a2 with a1;[replace b2 with b1|]; auto
       end.
-      + apply seqsum_eq; intros. rewrite nth_ff2f with (H:=H0).
-        apply seqsum_eq; intros. rewrite nth_ff2f with (H:=H1).
-        f_equal; apply nat2finS_eq; apply Fin_eq_iff.
-      + apply seqsum_eq; intros. rewrite nth_ff2f with (H:=H0).
-        apply seqsum_eq; intros. rewrite nth_ff2f with (H:=H1).
-        f_equal; apply nat2finS_eq; apply Fin_eq_iff.
+      + apply seqsum_eq; intros. rewrite nth_ff2f with (E:=H0).
+        apply seqsum_eq; intros. rewrite nth_ff2f with (E:=H1).
+        f_equal; apply nat2finS_eq; apply fin_eq_iff.
+      + apply seqsum_eq; intros. rewrite nth_ff2f with (E:=H0).
+        apply seqsum_eq; intros. rewrite nth_ff2f with (E:=H1).
+        f_equal; apply nat2finS_eq; apply fin_eq_iff.
   Qed.
 
   
