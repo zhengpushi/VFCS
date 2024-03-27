@@ -88,6 +88,11 @@ Lemma proof_irrelevance : forall (P:Prop) (p1 p2:P), p1 = p2.
 
 (** ** 新的性质 *)
 
+
+(* P \/ P = P *)
+Lemma or_same : forall (P : Prop), P \/ P -> P.
+Proof. intros. destruct H; auto. Qed.
+
 (* (A -> B \/ C) <-> (A -> B) \/ (A -> C). *)
 Lemma impl_or_distr : forall A B C : Prop, (A -> B \/ C) <-> (A -> B) \/ (A -> C).
 Proof.

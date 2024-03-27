@@ -8,6 +8,8 @@
   date      : 2023.12
 
   remark    :
+  1. First stage, we use a simple case of `n × n` matrix
+  2. Second stage, we should consider the case of `m × n` matrix
  *)
 
 Require Import NatExt.
@@ -18,22 +20,6 @@ Require Import Utils.           (* LDict *)
 Require QcExt RExt.
 
 Generalizable Variable A Aadd Azero Aopp Amul Aone Ainv.
-
-
-(* ############################################################################ *)
-(** * 补充性质 *)
-
-
-(* ======================================================================= *)
-(** ** 未分类的 *)
-
-(* ab = (a, b) -> a = fst ab *)
-Lemma pair_eq_imply_fst : forall {A B} {ab} {a : A} {b : B}, ab = (a, b) -> a = fst ab.
-Proof. intros. subst. auto. Qed.
-
-(* ab = (a, b) -> b = snd ab *)
-Lemma pair_eq_imply_snd : forall {A B} {ab} {a : A} {b : B}, ab = (a, b) -> b = snd ab.
-Proof. intros. subst. auto. Qed.
 
 
 (* ############################################################################ *)
@@ -890,14 +876,76 @@ Section GaussElim.
 (*   Goal (rowOps2mat l1 * M)%M = M1. *)
 (*   Proof. apply m2l_inj. cbv. list_eq. Qed. *)
 (* End test. *)
+
+End GaussElim.
+
+
+(* ############################################################################ *)
+(** * Inverse matrix based on Gauss elimination *)
+Section minvGE.
+  Context `{HField : Field} `{HAeqDec : Dec _ (@eq A)}.
+  Add Field field_inst : (make_field_theory HField).
+
+  Notation "0" := Azero : A_scope.
+  Notation "1" := Aone : A_scope.
+  (* Notation "- a" := (Aopp a) : A_scope. *)
+  (* Infix "*" := Amul : A_scope. *)
+  (* Notation "/ a" := (Ainv a) : A_scope. *)
+  (* Infix "/" := (fun a b => a * / b) : A_scope. *)
+  (* Notation Aeqb := (@Acmpb _ (@eq A) _). *)
+  
+  (* Notation mat r c := (mat A r c). *)
+  Notation smat n := (smat A n).
+  Notation mat1 := (@mat1 _ Azero Aone).
+  Notation mmul := (@mmul _ Aadd Azero Amul).
+  Infix "*" := mmul : mat_scope.
+  (* Notation matRowSwap := (@matRowSwap _ 0 1 _). *)
+  (* Notation matRowScale := (@matRowScale _ 0 1 _). *)
+  (* Notation matRowAdd := (@matRowAdd _ Aadd 0 1 _). *)
+  (* Notation mrowSwap := (@mrowSwap A). *)
+  (* Notation mrowScale := (@mrowScale _ Amul). *)
+  (* Notation mrowAdd := (@mrowAdd _ Aadd Amul). *)
+  (* Notation mrow := (@mrow _ Azero). *)
+
+  Notation rowEchelon := (@rowEchelon _ Aadd 0 Aopp Amul Ainv _).
+  Notation minRowEchelon := (@minRowEchelon _ Aadd 0 Aopp Amul _).
+  Notation rowOps2mat := (@rowOps2mat _ Aadd 0 Amul 1).
   
   (* ******************************************************************* *)
-  (** ** 计算逆矩阵 *)
+  (** ** If a matrix is invertible *)
 
+  (** If the matrix `M` is invertible *)
+  Definition minvertibleGE {n} : smat n -> bool :=
+    match n with
+    | O => fun _ => false   (* zero-dims matrix is not invertible *)
+    | S n' =>
+        fun (M : smat (S n')) =>
+          match rowEchelon M (S n') with
+          | None => false
+          | Some (l1, M1) => true
+          end
+    end.
+
+  (* From `M * N = mat1`, the `minvertibleGE M` return true *)
+  Lemma mmul_eq1_imply_invertibleGE_true_l : forall {n} (M N : smat n),
+    M * N = mat1 -> minvertibleGE M = true.
+  Proof.
+  Admitted.
+
+  (* From `M * N = mat1`, the `minvertibleGE N` return true *)
+  Lemma mmul_eq1_imply_invertibleGE_true_r : forall {n} (M N : smat n),
+    M * N = mat1 -> minvertibleGE N = true.
+  Proof.
+  Admitted.
+
+
+  (* ******************************************************************* *)
+  (** ** Inverse matrix (option version) *)
+  
   (** 计算逆矩阵(option版本) *)
   Definition minvGEo {n} : smat n -> option (smat n) :=
     match n with
-    | O => fun _ => None           (* 0级矩阵不可逆 *)
+    | O => fun _ => None
     | S n' =>
         fun (M : smat (S n')) =>
           match rowEchelon M (S n') with
@@ -908,277 +956,401 @@ Section GaussElim.
           end
     end.
 
-  (** minvGEo 的结果左乘原矩阵等于单位阵 *)
-  Theorem minvGEo_spec : forall {n} (M M' : smat n),
+  (** If `minvGEo M` return `Some M'`, then `M'` is left inverse of `M` *)
+  Theorem minvGEo_imply_eq : forall {n} (M M' : smat n),
       minvGEo M = Some M' -> M' * M = mat1.
   Proof.
     intros. unfold minvGEo in H. destruct n; try easy.
     destruct rowEchelon as [[l1 M1]|] eqn:T1; try easy.
     destruct minRowEchelon as [l2 M2] eqn:T2. inv H.
-    pose proof (rowEchelon_imply_eq _ _ _ _ T1).
-    pose proof (minRowEchelon_imply_eq _ _ _ _ T2).
-    rewrite rowOps2mat_app. rewrite mmul_assoc. rewrite H, H0.
-    apply minRowEchelon_imply_mat1 in T2; auto.
-    apply rowEchelon_NormedLowerTriangle in T1; auto.
+    copy T1. copy T2.
+    apply rowEchelon_imply_eq in T1.
+    apply minRowEchelon_imply_eq in T2.
+    rewrite rowOps2mat_app. rewrite mmul_assoc. rewrite T1,T2.
+    apply minRowEchelon_imply_mat1 in HC0; auto.
+    apply rowEchelon_NormedLowerTriangle in HC; auto.
   Qed.
+
+  (** `minvGEo` return `Some`, iff, `minvertibleGE` return true *)
+  Lemma minvGEo_Some_iff_invertibleGE_true : forall {n} (M : smat n),
+      (exists M', minvGEo M = Some M') <-> minvertibleGE M = true.
+  Proof.
+    intros. unfold minvGEo, minvertibleGE in *.
+    destruct n; split; intros; try easy.
+    - destruct H. easy.
+    - destruct H. destruct rowEchelon as [[l1 M1]|]; try easy.
+    - destruct rowEchelon as [[l1 M1]|] eqn:T1; try easy.
+      destruct (minRowEchelon M1 (S n)) as [l2 M2] eqn:T2.
+      exists (rowOps2mat (l2 ++ l1)). auto.
+  Qed.
+
+  (** `minvGEo` return `None`, iff, `minvertibleGE` return false *)
+  Lemma minvGEo_None_iff_invertibleGE_false : forall {n} (M : smat n),
+      minvGEo M = None <-> minvertibleGE M = false.
+  Proof.
+    intros. unfold minvGEo, minvertibleGE in *.
+    destruct n; split; intros; try easy.
+    - destruct rowEchelon as [[l1 M1]|]; try easy.
+      destruct minRowEchelon as [l2 M2] eqn:T2; try easy.
+    - destruct rowEchelon as [[l1 M1]|]; try easy.
+  Qed.
+
+
+  (* ******************************************************************* *)
+  (** ** Inverse matrix (default value version) *)
   
-  (* 计算逆矩阵(默认值是mat1的版本) *)
+  (** Inverse matrix (default value is identity matrix) *)
   Definition minvGE {n} : smat n -> smat n :=
      match n with
-    | O => fun M => M              (* 0级矩阵，返回自身 *)
+    | O => fun _ => mat1
     | S n' =>
         fun (M : smat (S n')) =>
           match rowEchelon M n with
-          | None => M            (* 不可逆矩阵，返回自身 *)
+          | None => mat1
           | Some (l1, M1) =>
               let (l2, M2) := minRowEchelon M1 n in
               rowOps2mat (l2 ++ l1)
           end
     end.
-
-  (* minvGEo 算出的结果与 minvGE 的结果相等 *)
-  Theorem minvGE_spec : forall {n} (M M' : smat (S n)),
+  Notation "M \-1" := (minvGE M) : mat_scope.
+  
+  (* If `minvGEo M` return `Some M'`, then `minvGE M` return same output `M'` *)
+  Lemma minvGE_eq_minvGEo : forall {n} (M M' : smat n),
       minvGEo M = Some M' -> minvGE M = M'.
   Proof.
-    intros. unfold minvGEo, minvGE in *.
+    intros. unfold minvGEo, minvGE in *. destruct n; try easy.
     destruct rowEchelon as [[l1 M1]|] eqn:T1; try easy.
     destruct minRowEchelon as [l2] eqn:T2.
     inv H. auto.
   Qed.
+
+  (** If `minvertibleGE M` return `false`, then `minvGE M` return identity matrix *)
+  Lemma minvertibleGE_false_imply_minvGE_eq_I : forall {n} (M : smat n),
+      minvertibleGE M = false -> minvGE M = mat1.
+  Proof.
+    intros. unfold minvertibleGE, minvGE in *. destruct n; try easy.
+    destruct rowEchelon as [[l1 M1]|] eqn:T1; try easy.
+  Qed.
+  
+  (** M\-1 * M = mat1 *)
+  Lemma mmul_minvGE_l : forall {n} (M : smat n),
+      minvertibleGE M = true -> M\-1 * M = mat1.
+  Proof.
+    intros. unfold minvertibleGE, minvGE in *. destruct n; try easy.
+    destruct rowEchelon as [[l1 M1]|] eqn:T1; try easy.
+    destruct minRowEchelon as [l2 M2] eqn:T2.
+    rewrite rowOps2mat_app. rewrite mmul_assoc.
+    copy T1. apply rowEchelon_imply_eq in T1. rewrite T1.
+    copy T2. apply minRowEchelon_imply_eq in T2. rewrite T2.
+    apply minRowEchelon_imply_mat1 in HC0; auto.
+    apply rowEchelon_NormedLowerTriangle in HC; auto.
+  Qed.
+
+  (** M * M\-1 = mat1 *)
+  Lemma mmul_minvGE_r : forall {n} (M : smat n),
+      minvertibleGE M = true -> M * M\-1 = mat1.
+  Proof.
+  Admitted.
+  
+  (** M * N = mat1 -> M \-1 = N *)
+  Lemma mmul_eq1_imply_minvGE_l : forall {n} (M N : smat n), M * N = mat1 -> M\-1 = N.
+  Proof.
+  Admitted.
+
+  (** M * N = mat1 -> N \-1 = M *)
+  Lemma mmul_eq1_imply_minvGE_r : forall {n} (M N : smat n), M * N = mat1 -> N\-1 = M.
+  Proof.
+  Admitted.
+
+  (* (** M * N = mat1 <-> M \-1 = N *) *)
+  (* Lemma mmul_eq1_iff_minvGE_l : forall {n} (M N : smat n), M * N = mat1 <-> M\-1 = N. *)
+  (* Proof. *)
+  (*   intros. split; intros. *)
+  (*   -  *)
+  (* Admitted. *)
+
+  (* (** M * N = mat1 <-> N \-1 = M *) *)
+  (* Lemma mmul_eq1_iff_minvGE_r : forall {n} (M N : smat n), M * N = mat1 <-> N\-1 = M. *)
+  (* Proof. *)
+  (* Admitted. *)
   
 
   (* ******************************************************************* *)
-  (** ** 可逆的矩阵 *)
-
-  (** The matrix `N` is the left inverse of matrix `M` *)
-  Definition minverseL {n} (M N : smat n) : Prop := N * M = mat1.
-
-  (** The matrix `M` has a left inverse under matrix multiplication *)
-  Definition minvertibleL {n} (M : smat n) : Prop := exists N, minverseL M N.
+  (** ** Inverse matrix with lists for input and output *)
   
-  (* 左逆是唯一的 *)
-  Lemma minverseL_unique : forall {n} (M N1 N2 : smat n),
-      minverseL M N1 -> minverseL M N2 -> N1 = N2.
+  (** Check matrix invertibility with lists as input *)
+  Definition minvertibleGE_list (n : nat) (dl : dlist A) : bool :=
+    @minvertibleGE n (l2m 0 dl).
+
+  (** Inverse matrix with lists for input and output *)
+  Definition minvGE_list (n : nat) (dl : dlist A) : dlist A :=
+    m2l (@minvGE n (l2m 0 dl)).
+
+  (** `minvertibleGE_list` is equal to `minvertibleGE`, by definition *)
+  Lemma minvertibleGE_list_spec : forall (n : nat) (dl : dlist A),
+      minvertibleGE_list n dl = @minvertibleGE n (l2m 0 dl).
+  Proof. intros. auto. Qed.
+
+  (** If the matrix `M` created by [dl] is invertible, then the matrix `M'` 
+      created by [minvGE_list dl] is the left inverse of `M` *)
+  Theorem minvGE_list_spec : forall (n : nat) (dl : dlist A),
+      let M : smat n := l2m 0 dl in
+      let M' : smat n := l2m 0 (minvGE_list n dl) in
+      minvertibleGE_list n dl = true ->
+      M' * M = mat1.
   Proof.
-    intros. hnf in *.
-    Abort.
-
-  (** Left cancellation law of matrix multiplication *)
-  Lemma mmul_cancel_l : forall {r c} (M : smat r) (N1 N2 : mat r c) ,
-      minvertibleL M -> M * N1 = M * N2 -> N1 = N2.
-  Proof.
-    intros. hnf in H. destruct H as [N H].
-    assert (N * M * N1 = N * M * N2). rewrite !mmul_assoc, H0; auto.
-    rewrite H in H1. rewrite !mmul_1_l in H1. auto.
-  Qed.
-
-  (** The matrix `N` is the right inverse of matrix `M` *)
-  Definition minverseR {n} (M N : smat n) : Prop := M * N = mat1.
-
-  (** The matrix `M` has a right inverse under matrix multiplication *)
-  Definition minvertibleR {n} (M : smat n) : Prop := exists N, minverseR M N.
-
-  (** Right cancellation law of matrix multiplication *)
-  Lemma mmul_cancel_r : forall {r c} (M : smat c) (N1 N2 : mat r c) ,
-      minvertibleR M -> N1 * M = N2 * M -> N1 = N2.
-  Proof.
-    intros. hnf in H. destruct H as [N H].
-    assert (N1 * M * N = N2 * M * N). rewrite H0; auto.
-    rewrite !mmul_assoc, H in H1. rewrite !mmul_1_r in H1. auto.
-  Qed.
-
-  (** The matrix `M` is invertible *)
-  Definition minvertible {n} (M : smat n) : Prop := exists N, minverseL M N /\ minverseR M N.
-
-  (** mat1 is invertible *)
-  Lemma mat1_invertible : forall {n}, minvertible (@mat1 n).
-  Proof. intros. hnf. exists mat1. split; hnf; rewrite mmul_1_l; auto. Qed.
-
-  (** 两个可逆矩阵相乘仍可逆 *)
-  Lemma mmul_invertible: forall {n} (M N : smat n), 
-      minvertible M -> minvertible N -> minvertible (M * N).
-  Proof.
-    intros. hnf in *. destruct H as [M' [HL HR]], H0 as [N' [HL1 HR1]]; hnf in *.
-    exists (N' * M'). split; hnf.
-    - rewrite mmul_assoc. rewrite <- (mmul_assoc M' M). rewrite HL, mmul_1_l; auto.
-    - rewrite mmul_assoc. rewrite <- (mmul_assoc N N'). rewrite HR1, mmul_1_l; auto.
+    intros. unfold minvertibleGE_list in H. unfold minvGE_list in M'.
+    unfold M', M. rewrite l2m_m2l. apply mmul_minvGE_l; auto.
   Qed.
   
-  (** The matrix `M` is singular (i.e., not invertible) *)
-  Definition msingular {n} (M : smat n) : Prop := ~(minvertible M).
+End minvGE.
 
-    
-  (* ******************************************************************* *)
-  (** ** minvGE (高斯消元求逆矩阵) 的性质 *)
 
-  (* 如果 minvGEo 算出了结果，则 M 是可逆的 *)
-  Lemma minvGEo_Some_invertible : forall {n} (M M' : smat n),
-      minvGEo M = Some M' -> minvertibleL M.
-  Proof. intros. apply minvGEo_spec in H. hnf. exists M'; auto. Qed.
+(* ############################################################################ *)
+(** * Test and extraction *)
 
-  (* 如果 minvGEo 算出了结果，则 M' 是 M 的左逆 *)
-  Lemma minvGEo_Some_inverseL : forall {n} (M M' : smat n),
-      minvGEo M = Some M' -> minverseL M M'.
-  Proof. intros. apply minvGEo_spec in H. hnf. auto. Qed.
-
-  (* (* 如果 minvGEo 算不出结果，则 M 不可逆 *) *)
-  (* Lemma minvGEo_None_singular : forall {n} (M M' : smat n), *)
-  (*     minvGEo M = None -> msingular M. *)
-  (* Proof. intros. apply minvGEo_spec in H. hnf. exists M'; auto. Qed. *)
+(* ******************************************************************* *)
+(** ** Test inverse matrix on Q *)
+Section test_Q.
+  Import QExt.
   
-  
-(* 抽取代码测试 *)
-(* End GaussElim. *)
-
-(* Definition mmul_R := @mmul _ Rplus R0 Rmult. *)
-(* Definition minvGE_R := @minvGE _ Rplus R0 Ropp Rmult R1 Rinv R_eq_Dec. *)
-(* Require Import ExtrOcamlBasic ExtrOcamlNatInt. *)
-(* Require Import MyExtrOCamlR. *)
-
-(* (** two float numbers are comparison decidable *) *)
-(* Extract Constant total_order_T => "fun r1 r2 -> *)
-(*   let c = Float.compare r1 r2 in *)
-(*   if c < 0 then Some true *)
-(*   else (if c = 0 then None else Some false)". *)
-
-(* Extract Constant Req_dec_T => "fun r1 r2 -> *)
-(*   let c = Float.compare r1 r2 in *)
-(*   if c = 0 then true *)
-(*   else false". *)
-
-(* (* Recursive Extraction minvGE_R. *) *)
-(* Extraction "ocaml_test/matrix.ml" minvGE_R m2l l2m mmul_R. *)
-  
-  (* 在Coq中直接计算逆矩阵的测试 *)
-End GaussElim.
-Section test.
-  Import QcExt.
-  Notation mat1 := (@mat1 _ 0 1).
-  Notation mmul := (@mmul _ Qcplus 0 Qcmult).
+  Notation mmul := (@mmul _ Qplus 0 Qmult).
   Infix "*" := mmul : mat_scope.
-  Notation elimDown := (@elimDown _ Qcplus 0 Qcopp Qcmult).
-  Notation rowEchelon := (@rowEchelon _ Qcplus 0 Qcopp Qcmult Qcinv).
-  Notation minvGE := (@minvGE _ Qcplus 0 Qcopp Qcmult 1 Qcinv _).
+  Notation minvertibleGE_list := (@minvertibleGE_list _ Qplus 0 Qopp Qmult Qinv _).
+  Notation minvGE_list := (@minvGE_list _ Qplus 0 Qopp Qmult 1 Qinv _).
 
-  (* 输入和输出都是 list 的逆矩阵求解 *)
-  Definition minvGE_Qclist (n : nat) (l : list (list Q)) : list (list Q) :=
-    Qc2Q_dlist (m2l (@minvGE n (l2m 0 (Q2Qc_dlist l)))).
-
-  Open Scope Q_scope.
-  
-  (* [ 1  2]     [ 3  2]
-     [-1 -3] <-> [-1 -1] *)
-  Compute minvGE_Qclist 2 [[1;2];[-1;-3]].
-  
-  (* [1 3 1]     [-1 -1  2]
-     [2 1 1] <-> [ 0 -1  1]
-     [2 2 1]     [ 2  4 -5] *)
-  Compute minvGE_Qclist 3 [[1;3;1];[2;1;1];[2;2;1]].
-
-  (* [  0 -2  1]     [6 3 4]
-     [  3  0 -2] <-> [4 2 3]
-     [ -2  3  0]     [9 4 6] *)
-  Compute minvGE_Qclist 3 [[0;-2;1];[3;0;-2];[-2;3;0]].
-
-  (* 一个8阶矩阵，手动构造的 *)
-  Compute minvGE_Qclist 8
-    [[1;2;3;4;5;6;7;8];
-     [2;4;5;6;7;8;9;1];
-     [3;5;7;6;8;4;2;1];
-     [4;5;7;6;9;8;3;2];
-     [5;4;3;7;9;6;8;1];
-     [6;5;3;4;7;8;9;2];
-     [7;8;6;5;9;2;1;3];
-     [8;9;6;3;4;5;2;1]].
-  (* 在 matlab 中，输入以下指令计算逆矩阵
-     M = [1 2 3 4 5 6 7 8; ...
-          2 4 5 6 7 8 9 1; ...
-          3 5 7 6 8 4 2 1; ...
-          4 5 7 6 9 8 3 2; ...
-          5 4 3 7 9 6 8 1; ...
-          6 5 3 4 7 8 9 2; ...
-          7 8 6 5 9 2 1 3; ...
-          8 9 6 3 4 5 2 1]
-     M' = inv(M)
-     使用如下指令切换分数格式，以便与Coq中的结果对比
-     format rat
-     format short
-     看起来与Coq的结果不同。比如 M'(0,2)，在Coq中是41846/50943, matlab中是23/28 
-     可能的原因是，matlab以浮点数计算，再将不精确的结果转换为分数也无法弥补差异。
-     相反，Coq的精确结果或许有潜在的好处，暂未知。*)
-
-  (* 可证明这两个值不相同 *)
-  Goal ~(Qmake 41846 50943 == Qmake 23 28).
-  Proof. intro. cbv in H. easy. Qed.
-
-  (* 再测试一个带有小数的复杂矩阵 *)
-  (* 使用matlab来生成随机矩阵：
-     format short
-     M = rand(8,8)
-     或者等价于以下结果
-     M = [0.8001  0.5797  0.0760  0.9448  0.3897  0.0598  0.7317  0.1835; ...
-  0.4314  0.5499  0.2399  0.4909  0.2417  0.2348  0.6477  0.3685; ...
-  0.9106  0.1450  0.1233  0.4893  0.4039  0.3532  0.4509  0.6256; ...
-  0.1818  0.8530  0.1839  0.3377  0.0965  0.8212  0.5470  0.7802; ...
-  0.2638  0.6221  0.2400  0.9001  0.1320  0.0154  0.2963  0.0811; ...
-  0.1455  0.3510  0.4173  0.3692  0.9421  0.0430  0.7447  0.9294; ...
-  0.1361  0.5132  0.0497  0.1112  0.9561  0.1690  0.1890  0.7757; ...
-  0.8693  0.4018  0.9027  0.7803  0.5752  0.6491  0.6868  0.4868]
-     然后计算逆矩阵
-     M' = inv(M)
- *)
-
-  (* 计算逆矩阵耗时18s，验证“M*M'=mat1”，耗时约1分钟 *)
-  (*
-  Time Compute minvGE_Qclist 8
-    [[0.8001;0.5797;0.0760;0.9448;0.3897;0.0598;0.7317;0.1835];
-     [0.4314;0.5499;0.2399;0.4909;0.2417;0.2348;0.6477;0.3685];
-     [0.9106;0.1450;0.1233;0.4893;0.4039;0.3532;0.4509;0.6256];
-     [0.1818;0.8530;0.1839;0.3377;0.0965;0.8212;0.5470;0.7802];
-     [0.2638;0.6221;0.2400;0.9001;0.1320;0.0154;0.2963;0.0811];
-     [0.1455;0.3510;0.4173;0.3692;0.9421;0.0430;0.7447;0.9294];
-     [0.1361;0.5132;0.0497;0.1112;0.9561;0.1690;0.1890;0.7757];
-     [0.8693;0.4018;0.9027;0.7803;0.5752;0.6491;0.6868;0.4868]].
-   *)
-  
-  Open Scope Qc_scope.
-
-  (* 测试：将第j列的第x行以下全部化为0 *)
+  (** Example 1: a `2x2` matrix *)
   Section ex1.
-    (*
-      来自《线性代数》同济，第5版，P60, B1->B2
-      将 B1 第1列的第1行以下全部化为0，得到B2。
+    
+    (* [ 1  2]     [ 3  2]
+       [-1 -3] <-> [-1 -1] *)
+    Let d1 := [[1;2];[-1;-3]].
+    Let d2 := [[3;2];[-1;-1]].
 
-      B1 = 
-       [[1;  1; -2;  1];
-        [2; -1; -1;  1];
-        [2; -3;  1; -1];
-        [3;  6; -9;  7]]
-
-      B2 = 
-       [[1;  1; -2;  1];
-        [0; -3;  3; -1];
-        [0; -5;  5; -3];
-        [0;  3; -3;  4]]
-     *)
-    Let n : nat := 4.
-    Let M1 : smat Qc n :=
-        l2m 0
-          (Q2Qc_dlist
-             [[1;  1; -2;  1];
-              [2; -1; -1;  1];
-              [2; -3;  1; -1];
-              [3;  6; -9;  7]]%Q).
-    Let M2 : smat Qc n :=
-        l2m 0
-          (Q2Qc_dlist
-             [[1;  1; -2;  1];
-              [0; -3;  3; -1];
-              [0; -5;  5; -3];
-              [0;  3; -3;  4]]%Q).
-    Goal snd (elimDown M1 3 #0) = M2.
-    Proof. apply m2l_inj. cbv. auto. Qed.
+    (* we can get the result immediately *)
+    (* Compute minvertibleGE_list 2 d1. *)
+    (* Compute minvGE_list 2 d1. *)
+    (* Compute minvGE_list 2 d2.   (* note: why the result is complex, see `ex2`. *) *)
+    
+    (* [d1] is invertible *)
+    Goal minvertibleGE_list 2 d1 = true.
+    Proof. simpl. auto. Qed.
+    
+    (* inverse of [d1] is [d2] *)
+    Goal minvGE_list 2 [[1;2];[-1;-3]] = d2.
+    Proof. cbv. auto. Qed.
   End ex1.
-End test.
 
-(* Recursive Extraction echelon minEchelon. *)
+  (** Example 2: a `3x3` matrix *)
+  Section ex2.
+    
+    (* [1 3 1]     [-1 -1  2]
+       [2 1 1] <-> [ 0 -1  1]
+       [2 2 1]     [ 2  4 -5] *)
+    Let d1 := [[1;3;1];[2;1;1];[2;2;1]].
+    Let d2 := [[-1;-1;2];[0;-1;1];[2;4;-5]].
+    
+    (* Compute minvertibleGE_list 3 d1. *)
+    (* Compute minvGE_list 3 d1.   (* the result is complex *) *)
+    (* Compute minvGE_list 3 d2. *)
+    
+    (* Note, the complex result is actually correct, but lacks user-friendless.
+       1. the equality of two Q type values need `Qeq` relation, instead of `eq`
+       2. we can not write a simple equation for two list of Q type
+       3. we can use setoid equality of dlist to check the result  *)
+    Goal dlistSetoidEq Qeq (minvGE_list 3 d1) d2.
+    Proof. Local Opaque Qeq. cbv. repeat constructor. Qed.
+  End ex2.
+
+(* In summary, for computing inverse matrices with Q type in Coq:
+   1. Simple input format, but output format is not the simplest fraction, 
+      which is not user-friendly.
+   2. Leibniz equal cannot be used for equality of two values, lists, or matrix of
+      Q type, but setoid equal is available *)
+End test_Q.
+
+
+(* ******************************************************************* *)
+(** ** Test inverse matrix on Qc *)
+Section test_Qc.
+  Import QcExt.
+
+  Notation minvertibleGE_list := (@minvertibleGE_list _ Qcplus 0 Qcopp Qcmult Qcinv _).
+  Notation minvGE_list := (@minvGE_list _ Qcplus 0 Qcopp Qcmult 1 Qcinv _).
+
+  (** Example 2: a `3x3` matrix *)
+  Section ex2.
+
+    (* [1 3 1]     [-1 -1  2]
+       [2 1 1] <-> [ 0 -1  1]
+       [2 2 1]     [ 2  4 -5] *)
+    Let d1 := Q2Qc_dlist [[1;3;1];[2;1;1];[2;2;1]]%Q.
+    Let d2 := Q2Qc_dlist [[-1;-1;2];[0;-1;1];[2;4;-5]]%Q.
+    (* Note, we need the `Q2Qc` function to typing term of `Qc` type *)
+    
+    (* Compute minvertibleGE_list 3 d1. *)
+    (* Compute minvGE_list 3 d1. *)
+    (* Compute minvGE_list 3 d2. *)
+    
+    (* Note, the `canon` part is unnecessary for users. 
+       But we can remove the proof part easily *)
+    (* Compute Qc2Q_dlist (minvGE_list 3 d1). *)
+
+    (* An advantage is that we can use Leibniz equal *)
+    Goal minvGE_list 3 d1 = d2.
+    Proof. cbv. list_eq; f_equal; apply proof_irrelevance. Qed.
+  End ex2.
+  
+  (* In summary, for computing inverse matrices with Qc type in Coq:
+     1. Complex input format which need Q2Qc function, and complex output format 
+        which contain unnecessary proof, but these difficulties can be overcome easily.
+     2. Built-in Leibniz equal is supported. *)
+End test_Qc.
+
+
+(* ******************************************************************* *)
+(** ** inverse matrix on Q type (enhanced version) *)
+Section minvGE_Qlist.
+
+  (* What is "enhanced" meannig?
+     1. The format of input and ouput is Q type
+     2. The inner computation process use Qc type *)
+  
+  Import QcExt.
+  
+  (* `minvGE_list` on `Qc` type *)
+  Notation minvertibleGE_list := (@minvertibleGE_list _ Qcplus 0 Qcopp Qcmult Qcinv _).
+  Notation minvGE_list := (@minvGE_list _ Qcplus 0 Qcopp Qcmult 1 Qcinv _).
+
+  Import QExt.
+  
+  (** Check matrix invertibility with rational number lists *)
+  Definition minvertibleGE_Qlist (n : nat) (dl : dlist Q) : bool :=
+    minvertibleGE_list n (Q2Qc_dlist dl).
+  
+  (** Inverse matrix with rational number lists *)
+  Definition minvGE_Qlist (n : nat) (dl : dlist Q) : dlist Q :=
+    Qc2Q_dlist (minvGE_list n (Q2Qc_dlist dl)).
+  
+  (** Example 2: a `3x3` matrix *)
+  Section ex2.
+
+    (* [1 3 1]     [-1 -1  2]
+       [2 1 1] <-> [ 0 -1  1]
+       [2 2 1]     [ 2  4 -5] *)
+    Let d1 := [[1;3;1];[2;1;1];[2;2;1]].
+    Let d2 := [[-1;-1;2];[0;-1;1];[2;4;-5]].
+    
+    (* Compute minvertibleGE_Qlist 3 d1. *)
+    (* Compute minvGE_Qlist 3 d1. *)
+    (* Compute minvGE_Qlist 3 d2. *)
+    (* Note, we get a friendly experience for typing and printing *)
+
+    (* An advantage is that we can use Leibniz equal *)
+    Goal minvGE_Qlist 3 d1 = d2.
+    Proof. cbv. auto. Qed.
+  End ex2.
+
+  (* Example 3: a `8x8` matrix *)
+  Section ex3.
+    (* A manually given random `8x8` matrix *)
+    Goal minvGE_Qlist 8
+      [[1;2;3;4;5;6;7;8];
+       [2;4;5;6;7;8;9;1];
+       [3;5;7;6;8;4;2;1];
+       [4;5;7;6;9;8;3;2];
+       [5;4;3;7;9;6;8;1];
+       [6;5;3;4;7;8;9;2];
+       [7;8;6;5;9;2;1;3];
+       [8;9;6;3;4;5;2;1]] = [].
+    Proof.
+      (* cbv. *)
+    Abort.
+    (* Note that many elements are in the fraction format of rational numbers.
+       This is reasonable, as fractions typically do not possess a finite decimal 
+       representation. *)
+    
+    (* In MATLAB, we can use these commands to compute inverse matrix:
+     >> M = [1 2 3 4 5 6 7 8; ...
+             2 4 5 6 7 8 9 1; ...
+             3 5 7 6 8 4 2 1; ...
+             4 5 7 6 9 8 3 2; ...
+             5 4 3 7 9 6 8 1; ...
+             6 5 3 4 7 8 9 2; ...
+             7 8 6 5 9 2 1 3; ...
+             8 9 6 3 4 5 2 1]
+     >> M' = inv(M)
+     Note, we can use following command to switch the format of rational numbers
+     >> format rat
+     >> format short
+     The result looks different with Coq. For example, 
+         M'(0,2)=41846/50943 in Coq,
+         M'(0,2)=23/28 in MATLAB, 
+     and these two values are not equal. *)
+
+    Goal ~(Qmake 41846 50943 == Qmake 23 28).
+    Proof. intro. cbv in H. easy. Qed.
+
+    (* The possible reason is that MATLAB performs calculations using floating-point 
+       numbers, and converting the inaccurate results into fractions cannot compensate
+       for the difference.
+       On the contrary, Coq uses completely precise results.
+       While the exact benefits are unclear, this precision could be beneficial. *)
+  End ex3.
+
+  (* Example 4 : a `8x8` matrix with decimal numbers *)
+  Section ex4.
+  (* In MATLAB, use these commands for comparison experiment:
+     >> format short
+     >> M = rand(8,8)
+     Or, manually use these numbers:
+     >> M = [0.8001  0.5797  0.0760  0.9448  0.3897  0.0598  0.7317  0.1835; ...
+             0.4314  0.5499  0.2399  0.4909  0.2417  0.2348  0.6477  0.3685; ...
+             0.9106  0.1450  0.1233  0.4893  0.4039  0.3532  0.4509  0.6256; ...
+             0.1818  0.8530  0.1839  0.3377  0.0965  0.8212  0.5470  0.7802; ...
+             0.2638  0.6221  0.2400  0.9001  0.1320  0.0154  0.2963  0.0811; ...
+             0.1455  0.3510  0.4173  0.3692  0.9421  0.0430  0.7447  0.9294; ...
+             0.1361  0.5132  0.0497  0.1112  0.9561  0.1690  0.1890  0.7757; ...
+             0.8693  0.4018  0.9027  0.7803  0.5752  0.6491  0.6868  0.4868]
+     Compute the inverse matrix
+     >> M' = inv(M)
+   *)
+    Let d1 := 
+          [[0.8001;0.5797;0.0760;0.9448;0.3897;0.0598;0.7317;0.1835];
+           [0.4314;0.5499;0.2399;0.4909;0.2417;0.2348;0.6477;0.3685];
+           [0.9106;0.1450;0.1233;0.4893;0.4039;0.3532;0.4509;0.6256];
+           [0.1818;0.8530;0.1839;0.3377;0.0965;0.8212;0.5470;0.7802];
+           [0.2638;0.6221;0.2400;0.9001;0.1320;0.0154;0.2963;0.0811];
+           [0.1455;0.3510;0.4173;0.3692;0.9421;0.0430;0.7447;0.9294];
+           [0.1361;0.5132;0.0497;0.1112;0.9561;0.1690;0.1890;0.7757];
+           [0.8693;0.4018;0.9027;0.7803;0.5752;0.6491;0.6868;0.4868]].
+
+    (* Time Compute minvertibleGE_Qlist 8 d1. (* 0.15s *) *)
+    (* Time Compute minvGE_Qlist 8 d1.        (* 19s *) *)
+  End ex4.
+  
+  (* In summary, for computing inverse matrices with Q (with the help of Qc):
+     1. simple input format, and relatively simple output format.
+     2. accuately result compared to MATLAB, but fractions are not intuitive.
+     3. Leibniz equal is supported.
+   *)
+End minvGE_Qlist.
+
+  
+
+(* ******************************************************************* *)
+(** ** Extraction to OCaml *)
+
+Require Import ExtrOcamlBasic ExtrOcamlNatInt.
+Require Import MyExtrOCamlR.
+
+(* Recursive Extraction *)
+(*   rowEchelon minRowEchelon *)
+(*   minvertibleGE minvGEo *)
+(*   minvertibleGE_list minvGE_list. *)
+
+Definition mmul_R := @mmul _ Rplus R0 Rmult.
+Definition minvGE_R := @minvGE _ Rplus R0 Ropp Rmult R1 Rinv R_eq_Dec.
+Definition minvGE_Rlist := @minvGE_list _ Rplus R0 Ropp Rmult R1 Rinv R_eq_Dec.
+(* Recursive Extraction minvGE_R minvGE_Rlist. *)
+(* Extraction "ocaml_test/matrix.ml" m2l l2m mmul_R minvGE_R minvGE_Rlist. *)

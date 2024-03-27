@@ -37,6 +37,18 @@ Extract Constant sqrt => "Float.sqrt".
 Extract Constant atan => "Float.atan".
 Extract Constant acos => "Float.acos".
 
+
+(** two float numbers are comparison decidable *)
+Extract Constant total_order_T => "fun r1 r2 ->
+  let c = Float.compare r1 r2 in
+  if c < 0 then Some true
+  else (if c = 0 then None else Some false)".
+
+Extract Constant Req_dec_T => "fun r1 r2 ->
+  let c = Float.compare r1 r2 in
+  if c = 0 then true
+  else false".
+
 (* Extract Constant pow => 
   "fun r0 n -> if n=0 then 1.0 else (r0 *. (pow r0 (n-1)))". *)
 

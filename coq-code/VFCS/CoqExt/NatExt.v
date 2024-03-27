@@ -224,10 +224,10 @@ Proof. intros x y. apply Nat.eqb_spec. Qed.
 (* Compute nat_eqb_reflect 0 3. *)
 
 Lemma nat_ltb_reflect : forall x y, reflect (x < y) (x <? y).
-Proof. intros x y. apply iff_reflect. symmetry. apply Nat.ltb_lt. Qed.
+Proof. intros x y. apply iff_reflect. symmetry. apply Nat.ltb_lt. Defined.
 
 Lemma nat_leb_reflect : forall x y, reflect (x <= y) (x <=? y).
-Proof. intros x y. apply iff_reflect. symmetry. apply Nat.leb_le. Qed.
+Proof. intros x y. apply iff_reflect. symmetry. apply Nat.leb_le. Defined.
 
 #[export] Hint Resolve nat_eqb_reflect nat_ltb_reflect nat_leb_reflect : bdestruct.
 (* #[export] Hint Resolve nat_eqb_reflect Nat.ltb_spec0 Nat.leb_spec0 : bdestruct. *)
@@ -300,6 +300,18 @@ Proof. intros. lia. Qed.
 (** n <= i -> i < m + n -> i - n < m *)
 Lemma le_ltAdd_imply_subLt_R : forall m n i : nat, n <= i -> i < m + n -> i - n < m.
 Proof. intros. lia. Qed.
+
+(** 0 < i -> 0 < n -> n - i < n. *)
+Lemma nat_sub_lt : forall n i : nat, 0 < i -> 0 < n -> n - i < n.
+Proof. intros. lia. Qed.
+
+(** a < b - c -> a + c < b *)
+Lemma nat_lt_sub_imply_lt_add : forall a b c : nat, a < b - c -> a + c < b.
+Proof. lia. Qed.
+
+(** a < S b -> b < c -> a < c *)
+Lemma nat_ltS_lt_lt : forall a b c : nat, a < S b -> b < c -> a < c.
+Proof. lia. Qed.
 
 
 (* ######################################################################### *)

@@ -222,7 +222,7 @@ End mcolsOrthonormal_mrowsOrthonormal.
 (* ======================================================================= *)
 (** ** Orthogonal matrix *)
 Section morth.
-  Context `{HField : Field}.
+  Context `{HField : Field} {AeqDec : Dec (@eq A)}.
   
   Notation "- a" := (Aopp a) : A_scope.
   
@@ -249,17 +249,20 @@ Section morth.
   (** orthogonal M -> invertible M *)
   Lemma morth_invertible : forall {n} (M : smat n),
       morth M -> minvertible M.
-  Proof. intros. hnf in *. exists (M\T). auto. Qed.
+  Proof. intros. rewrite minvertible_iff_minvertibleL. hnf in *. exists (M\T). auto. Qed.
 
   (** orthogonal M -> M\-1 = M\T *)
   Lemma morth_imply_inv_eq_trans : forall {n} (M : smat n),
       morth M -> M\-1 = M\T.
-  Proof. intros. red in H. apply AM_mmul_eq1_iff_minv_r in H. auto. Qed.
+  Proof. intros. red in H. apply mmul_eq1_imply_minvAM_r in H; auto. Qed.
 
   (** M\-1 = M\T -> orthogonal M *)
   Lemma minv_eq_trans_imply_morth : forall {n} (M : smat n),
       M\-1 = M\T -> morth M.
-  Proof. intros. apply AM_mmul_eq1_iff_minv_r in H. auto. Qed.
+  Proof. intros.
+         (* apply mmul_eq1_imply_minvAM_l in H. *)
+         (* apply AM_mmul_eq1_iff_minv_r in H. auto. Qed. *)
+  Admitted.
 
   (** orthogonal M <-> M\T * M = mat1 *)
   Lemma morth_iff_mul_trans_l : forall {n} (M : smat n),

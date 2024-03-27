@@ -64,6 +64,11 @@ Proof. intros. subst. auto. Qed.
 Notation vnth A n := (fun (a : fin n -> A) (i : fin n) => a i).
 Notation "a $ i " := (vnth _ _ a i) : vec_scope.
 
+(** i = j -> V (Fin i) = V (Fin j) *)
+Lemma vnth_eq : forall {A n} (V : @vec A n) i j (Hi: i < n) (Hj: j < n),
+    i = j -> V (Fin i Hi) = V (Fin j Hj).
+Proof. intros. subst. f_equal. apply fin_eq_iff; auto. Qed.
+
 (* Note that: these notatiosn are dangerous.
    For example, `@nat2finS 3 0` ~ `@nat2finS 3 3` are all expected index.
    but `@nat2finS 3 4` ~ `...` will become `@nat2finS 3 0`, its error index.

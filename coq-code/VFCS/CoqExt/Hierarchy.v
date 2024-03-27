@@ -1685,12 +1685,12 @@ Section Theory.
   Notation Asub a b := (a + -b).
   Infix "*" := Amul.
     
-  (** 0 * a = 0 *)
+  (** a * 0 = 0 *)
   (* 证明思路：a*0 + 0 = a*0 = a*(0+0) = a*0 + a*0，然后消去律 *)
   Lemma ring_mul_0_r : forall a : A, a * 0 = 0.
   Proof. intros. ring. Qed.
 
-  (** a * 0 = 0 *)
+  (** 0 * a = 0 *)
   Lemma ring_mul_0_l : forall a : A, 0 * a = 0.
   Proof. intros. ring. Qed.
 

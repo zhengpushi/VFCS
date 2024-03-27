@@ -4008,11 +4008,19 @@ End test.
 
 
 (* ===================================================================== *)
-(** ** Find first non-zero element from row *)
-Section dlrowFirstNonZero.
-  Context {A : Type} {Azero : A}.
+(** ** Setoid equal of list *)
+Section listSetoidEq.
+  Context {A : Type}.
 
-End dlrowFirstNonZero.
+  (** Two list `l1` and `l2` are setoid equal under `R` relation *)
+  Definition listSetoidEq {A} (R : A -> A -> Prop) (l1 l2 : list A) : Prop :=
+    SetoidList.eqlistA R l1 l2.
+  
+  (** Two dlist `d1` and `d2` are setoid equal under `R` relation *)
+  Definition dlistSetoidEq {A} (R : A -> A -> Prop) (d1 d2 : dlist A) : Prop :=
+    SetoidList.eqlistA (listSetoidEq R) d1 d2.
+  
+End listSetoidEq.
 
 
 (* ======================================================================= *)

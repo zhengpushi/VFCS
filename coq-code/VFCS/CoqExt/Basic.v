@@ -174,6 +174,14 @@ Reserved Notation "M &4"       (at level 25, format "M &4").
 (* ######################################################################### *)
 (** * Customized tactics *)
 
+(* copy a hypothesis *)
+Ltac copy H :=
+  let HC := fresh "HC" in
+  let HCeq := fresh "HCeq" in
+  remember H as HC eqn: HCeq;
+  clear HCeq.
+
+
 (** ** Tactics with a short name *)
 
 (* simplify the equality of two list *)
@@ -268,27 +276,27 @@ Definition option_get {A} (o : option A) (def : A) : A :=
 (* ######################################################################### *)
 (** * Extension for sig type *)
 
-(** projection for sig *)
-Notation "x '.val'" := (proj1_sig x) (at level 1, format "x '.val'").
-Notation "x '.prf'" := (proj2_sig x) (at level 1, format "x '.prf'").
+(* (** projection for sig *) *)
+(* Notation "x '.val'" := (proj1_sig x) (at level 1, format "x '.val'"). *)
+(* Notation "x '.prf'" := (proj2_sig x) (at level 1, format "x '.prf'"). *)
 
-(** {a | P a} = {b | P b} <-> a = b *)
-Lemma sig_eq_iff : forall {A} {P : A -> Prop} a b (Ha : P a) (Hb : P b),
-    (exist _ a Ha = exist _ b Hb) <-> a = b.
-Proof.
-  intros. split; intros.
-  - inversion H. auto.
-  - subst. f_equal. apply proof_irrelevance.
-Qed.
+(* (** {a | P a} = {b | P b} <-> a = b *) *)
+(* Lemma sig_eq_iff : forall {A} {P : A -> Prop} a b (Ha : P a) (Hb : P b), *)
+(*     (exist _ a Ha = exist _ b Hb) <-> a = b. *)
+(* Proof. *)
+(*   intros. split; intros. *)
+(*   - inversion H. auto. *)
+(*   - subst. f_equal. apply proof_irrelevance. *)
+(* Qed. *)
 
-(** {a | P a}.val = a *)
-Lemma sig_val : forall {A} {P : A -> Prop} a (Ha : P a), (exist _ a Ha).val = a.
-Proof. intros. simpl. auto. Qed.
+(* (** {a | P a}.val = a *) *)
+(* Lemma sig_val : forall {A} {P : A -> Prop} a (Ha : P a), (exist _ a Ha).val = a. *)
+(* Proof. intros. simpl. auto. Qed. *)
 
-(** {a.val | P (a.val)} = a *)
-Lemma val_sig_eq : forall {A} {P : A -> Prop} (a : {x | P x}) (H : P (a.val)),
-    exist _ (a.val) H = a.
-Proof. intros. destruct a. simpl. apply sig_eq_iff; auto. Qed.
+(* (** {a.val | P (a.val)} = a *) *)
+(* Lemma val_sig_eq : forall {A} {P : A -> Prop} (a : {x | P x}) (H : P (a.val)), *)
+(*     exist _ (a.val) H = a. *)
+(* Proof. intros. destruct a. simpl. apply sig_eq_iff; auto. Qed. *)
 
 
 (* ######################################################################### *)

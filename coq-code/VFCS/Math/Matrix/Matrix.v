@@ -42,6 +42,13 @@ Notation smat A n := (mat A n n).
 (* Actually, mat A r c = forall A r c, fin r -> fin c -> A  *)
 (* Eval cbv in forall A r c, mat A r c. *)
 
+(** i1 = i2 -> j1 = j2 -> = M (Fin i1) (Fin j1) = M (Fin i2) (Fin j2) *)
+Lemma mnth_eq :
+  forall {A r c} (M : @mat A r c) i1 j1 i2 j2
+    (Hi1: i1 < r) (Hi2: i2 < r) (Hj1: j1 < c) (Hj2: j2 < c),
+    i1 = i2 -> j1 = j2 ->
+    M (Fin i1 Hi1) (Fin j1 Hj1) = M (Fin i2 Hi2) (Fin j2 Hj2).
+Proof. intros. subst. f_equal; apply fin_eq_iff; auto. Qed.
 
 (* Note that: these notatiosn are dangerous.
    The reason can be found in the definition of `V.1` in file `Vector.v`
@@ -257,11 +264,22 @@ Section f2m_m2f.
   Definition m2f {r c} (M : mat A r c) : (nat -> nat -> A) :=
     fun i => @v2f _ Azero c (@v2f _ (vzero Azero) r M i).
   
-  (* M[i,j] = m2f M i j *)
+  (* M[Fin i, Fin j] = m2f M i j *)
   Lemma mnth_eq_nth_m2f : forall {r c} (M : @mat A r c) (i j : nat) (Hi:i < r)(Hj:j < c),
       M (Fin i Hi) (Fin j Hj) = m2f M i j.
   Proof.
     intros. unfold m2f,v2f,ff2f. fin. f_equal; fin.
+  Qed.
+  
+  (* M[i,j] = m2f M i j *)
+  Lemma mnth_eq_nth_m2f' : forall {r c} (M : @mat A r c) i j,
+      M $ i $ j = m2f M (fin2nat i) (fin2nat j).
+  Proof.
+    intros.
+    pose proof (mnth_eq_nth_m2f M
+                  (fin2nat i) (fin2nat j)
+                  (fin2nat_lt _) (fin2nat_lt _)).
+    rewrite !fin_fin2nat in H. auto.
   Qed.
 
   Lemma meq_iff_nth_m2f : forall {r c} (M N : mat A r c),
