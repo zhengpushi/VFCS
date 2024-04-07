@@ -629,7 +629,7 @@ Section lcomb.
   Proof.
     intros. generalize dependent s. induction s; intros.
     - exists (@mkvec0 _ (@Vector.vzero _ Azero r)). apply v0eq.
-    - rewrite (vconsH_vhead_vremoveH vs). 
+    - rewrite <- (vconsH_vhead_vremoveH vs). 
       assert (exists cs : vec r, vhead vs = lcomb cs us).
       { specialize (H fin0). destruct H as [cs H]. exists cs. rewrite H. auto. }
       assert (forall i : fin s, exists cs : vec r, lcomb cs us = vremoveH vs i).
@@ -983,14 +983,14 @@ Section ldep.
   Lemma vremoveH_ldep_imply_ldep : forall {n} (vs : @vec V (S n)),
       ldep (vremoveH vs) -> ldep vs.
   Proof.
-    intros. rewrite vconsH_vhead_vremoveH. apply ldep_imply_vconsH_ldep; auto.
+    intros. rewrite <- vconsH_vhead_vremoveH. apply ldep_imply_vconsH_ldep; auto.
   Qed.
 
   (** vremoveT vs 线性相关，则 vs 线性相关 *)
   Lemma vremoveT_ldep_imply_ldep : forall {n} (vs : @vec V (S n)),
       ldep (vremoveT vs) -> ldep vs.
   Proof.
-    intros. rewrite (vconsT_vremoveT_vtail vs (Azero:=Vzero)).
+    intros. rewrite <- (vconsT_vremoveT_vtail vs (Azero:=Vzero)).
     apply ldep_imply_vconsT_ldep. auto.
   Qed.
 

@@ -1,6 +1,6 @@
 (*
-Copyright 2022 ZhengPu Shi
-This file is part of VFCS. It is distributed under the MIT
+  Copyright 2022 ZhengPu Shi
+  This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
   purpose   : Matrix Determinant
@@ -15,18 +15,7 @@ This file is part of VFCS. It is distributed under the MIT
   1. compute permutation of a list, such as 
      perm [a;b;c] => [[a;b;c]; [a;c;b]; [b;a;c]; [b;c;a]; [c;a;b]; [c;b;a]]
      perm [1;2;3] => [[1;2;3]; [1;3;2]; [2;1;3]; [2;3;1]; [3;1;2]; [3;2;1]]
-  2. what is a matrix with zero rows and zero columns?
-     * 在 python 的 NumPy 库中，
-       ```
-       import numpy as np
-       matrix = np.zeros((0,0))
-       ```
-     * 一个实际的问题
-       用矩阵A表示学生各科的成绩，行数是学生数量，列数是科目数，
-       A(i,j)表示第i个学生第j科目的成绩。
-       那么，初始时，就是一个 0x0 的矩阵。
-     * 还有种说法是，不存在行数为0或列数为0的矩阵。
-  3. 行列式问题
+  2. 行列式问题
 
      行列式的定义：它是一个单项式的求和，每个单项式是矩阵中不同行不同列元素的乘积，并
      冠以逆序数。
@@ -56,175 +45,14 @@ This file is part of VFCS. It is distributed under the MIT
 
  *)
 
+Require Import Extraction.
 Require Import NatExt.
 Require Import Matrix.
-Require Import Extraction.
+Require Import Perm.
 Require ZArith Reals.
 
 
 Generalizable Variable A Aadd Azero Aopp Amul Aone Ainv.
-
-
-(* ############################################################################ *)
-(** * Preparation works *)
-
-
-(* ======================================================================= *)
-(** ** Permutation of a list *)
-Section perm.
-  Context {A : Type} {Azero : A} {Altb : A -> A -> bool}.
-
-  (** Get k-th element and remaining elements from a list *)
-  Fixpoint pick (l : list A) (k : nat) : A * list A :=
-    match k with
-    | 0 => (hd Azero l, tl l)
-    | S k' =>
-        match l with
-        | [] => (Azero, [])
-        | x :: l' =>
-            let (a,l0) := pick l' k' in
-            (a, [x] ++ l0)
-        end
-    end.
-
-  (** Get permutation of a list from its top n elements *)
-  Fixpoint perm_aux (n : nat) (l : list A) : list (list A) :=
-    match n with
-    | 0 => [[]]
-    | S n' =>
-        let d1 := map (fun i => pick l i) (seq 0 n) in
-        let d2 :=
-          map (fun k : A * list A =>
-                 let (x, lx) := k in
-                 let d3 := perm_aux n' lx in
-                 map (fun l1 => [x] ++ l1) d3) d1 in
-        concat d2
-    end.
-
-  (** Get permutation of a list *)
-  Definition perm (l : list A) : list (list A) := perm_aux (length l) l.
-
-  Lemma length_perm_cons : forall l a,
-      length (perm (a :: l)) = length (a :: l) * length (perm l).
-  Proof.
-    intros. unfold perm. induction l.
-    - simpl. auto.
-    - simpl in *.
-  Admitted.
-
-  (** Length of permutation *)
-  Definition Pn (l : list A) := length (perm l).
-
-  (** Pn of cons. 
-      Example: Pn [a;b;c;d] = 4 * Pn [a;b;c] *)
-  Lemma Pn_cons : forall (a : A) (l : list A), Pn (a :: l) = (length (a :: l)) * (Pn l).
-  Proof.
-    intros a l. revert a. induction l; auto. intros. simpl.
-    unfold Pn in *. simpl.
-    rewrite length_perm_cons. rewrite IHl.
-    simpl. lia.
-  Qed.
-
-  (** Length of permutation equal to the factorial of the length *)
-  Lemma Pn_eq : forall l, Pn l = fact (length l).
-  Proof.
-    induction l; simpl; auto.
-    rewrite Pn_cons. rewrite IHl. simpl. auto.
-  Qed.
-
-End perm.
-
-
-Section test.
-  Context {A} (Azero:A) (a b c : A).
-  Let pick := @pick A Azero.
-  
-  (* 从列表 l 中取出：某个元素，以及剩下的列表 *)
-  Let l := [a;b;c].
-  (* Compute pick l 0.     (* = (a, [b; c]) *) *)
-  (* Compute pick l 1.     (* = (b, [a; c]) *) *)
-  (* Compute pick l 2.     (* = (c, [a; b]) *) *)
-  (* Compute pick l 3.     (* = (Azero, [a; b; c]) *) *)
-
-  (* 计算列表的全排列 *)
-  (* Compute perm [a]. *)
-  (* = [[a]] *)
-  (* Compute perm [a;b]. *)
-  (* = [[a; b]; [b; a]] *)
-  (* Compute perm [a;b;c]. *)
-  (* = [[a; b; c]; [a; c; b]; [b; a; c]; [b; c; a]; [c; a; b]; [c; b; a]] *)
-
-  (* 正整数列表的全排列，这是计算行列式的其中一步 *)
-  (* Compute perm [1;2;3]. *)
-  (* = [[1; 2; 3]; [1; 3; 2]; [2; 1; 3]; [2; 3; 1]; [3; 1; 2]; [3; 2; 1]] *)
-End test.
-
-
-(* ======================================================================= *)
-(** ** reverse-order-number (RON) of a list, 逆序数 *)
-Section ronum.
-  Context {A} {Altb : A -> A -> bool}.
-  Infix "<?" := Altb.
-
-  (* The RON of one element respect to a list *)
-  Definition ronum1 (a : A) (l : list A) : nat :=
-    fold_left (fun (n : nat) (b : A) => n + (if b <? a then 1 else 0)) l 0.
-
-  (* The RON of a list *)
-  Fixpoint ronum (l : list A) : nat :=
-    match l with
-    | [] => 0
-    | x :: l' => ronum1 x l' + ronum l'
-    end.
-End ronum.
-
-Section test.
-  Let ronum1 := @ronum1 nat Nat.leb.
-  Let ronum := @ronum nat Nat.leb.
-  (* Compute ronum1 3 [1;2;4]. (* = 2 *) *)
-  (* Compute ronum [2;1;4;3]. (* = 2 *) *)
-  (* Compute ronum [2;3;4;1]. (* = 3 *) *)
-End test.
-
-(* ======================================================================= *)
-(** ** Parity of a permutation, 排列的奇偶性 *)
-Section parity.
-  Context {A} {Altb : A -> A -> bool}.
-
-  (** The RON of a permutation is odd *)
-  Definition oddPerm (l : list A) : bool := odd (ronum (Altb:=Altb) l).
-
-End parity.
-
-
-(* ======================================================================= *)
-(** ** Exchange of a permutation 排列的对换 *)
-Section permExchg.
-  Context {A} {Altb : A -> A -> bool} (Azero : A).
-
-  Notation ronum := (ronum (Altb:=Altb)).
-  Notation oddPerm := (oddPerm (Altb:=Altb)).
-
-  (* 对换第 i0,i1 的元素 *)
-  Definition permExchg (l : list A) (i0 i1 : nat) : list A :=
-    lswap Azero l i0 i1.
-
-  (** 对换相邻位置改变排列的奇偶性 *)
-  Theorem permExchg_parity : forall (l : list A) (n i0 i1 : nat),
-      length l = n -> i0 < n -> i1 < n -> i0 <> i1 ->
-      oddPerm (permExchg l i0 i1) <> oddPerm l.
-  Proof.
-    intros. unfold oddPerm. unfold permExchg.
-    revert l i0 i1 H H0 H1 H2. induction n; intros. lia.
-    destruct l; simpl in *. lia.
-    (* 教科书上的证明很巧妙，难以形式化的描述出来。
-       书上把 l 分解为
-       [...] i [...] j [...]
-       这种形式，然后分情形讨论
-     *)
-    Admitted.
-  
-End permExchg.
 
 
 (* ############################################################################ *)
@@ -249,18 +77,19 @@ Section mdet.
   Notation mmul := (@mmul _ Aadd 0 Amul).
   Infix "*" := mmul : mat_scope.
   Notation mat1 := (@mat1 _ 0 1).
-  
-  (** n+1阶行列式的完全展开式 (在任意矩阵模型上可用，只依赖 mnth 函数) *)
+
+  (** n阶行列式的完全展开式 (在任意矩阵模型上可用，只依赖 mnth 函数) *)
   Definition mdet {n} : smat n -> A :=
     match n with
-    | O => fun _ => 0
+    | O => fun _ => 1        (* the determinant of a empty matrix is 1 *)
     | S n' =>
         fun (M : smat (S n')) =>
           (* 列号 0,1,..,(n-1) 的全排列 *)
-          let colIds := perm (Azero:=0)%nat (seq 0 n)%nat in
+          (* let colIds := perm (Azero:=0)%nat (seq 0 n)%nat in *)
+          let colIds := perm (seq 0 n)%nat in
           (* 一个单项式 *)
           let item (l:list nat) : A :=
-            fold_left Amul (map (fun i => M $ #i $ #(nth i l 0)%nat) (seq 0 n)) 1 in
+            fold_left Amul (map (fun i => M.[#i].[#(nth i l 0)%nat]) (seq 0 n)) 1 in
           (* 是否为偶排列 *)
           let isOdd (l:list nat) : bool := odd (ronum l (Altb:=Nat.ltb)) in
           (* 加总所有带符号的单项式 *)
@@ -275,7 +104,8 @@ Section mdet.
   Admitted.
 
   (* |M*N| = |M| * |N| *)
-  Lemma mdet_mmul : forall {n} (M N : smat n), mdet (M * N) = (mdet M * mdet N)%A.
+  Lemma mdet_mmul : forall {n} (M N : smat n),
+      mdet (M * N) = (mdet M * mdet N)%A.
   Proof.
   Admitted.
 
@@ -471,48 +301,47 @@ Section mdetEx.
   (** Get the sub square matrix by remove i-th row and j-th column. *)
   Definition msubmat {n} (M : smat (S n)) (i0 j0 : fin (S n)) : smat n :=
     fun i j =>
-      let i1 := if fin2nat i <? fin2nat i0
+      let i1 := if (fin2nat i ??< fin2nat i0)%nat
                 then fin2SuccRange i
                 else fin2SuccRangeSucc i in
-      let j1 := if fin2nat j <? fin2nat j0
+      let j1 := if (fin2nat j ??< fin2nat j0)%nat
                 then fin2SuccRange j
                 else fin2SuccRangeSucc j in
-      M $ i1 $ j1.
+      M.[i1].[j1].
 
   (** 按第一行展开的行列式 *)
-  Fixpoint mdetEx {n} : smat (S n) -> A :=
+  Fixpoint mdetEx {n} : smat n -> A :=
     match n with
-    | O => fun M => M.11
+    | O => fun _ => 1
     | S n' =>
         fun M => 
           vsum (fun j =>
                   let a := if Nat.even (fin2nat j)
-                           then (M $ fin0 $ j)
-                           else (-(M $ fin0 $ j))%A in
+                           then (M.[fin0].[j])
+                           else (-(M.[fin0].[j]))%A in
                   let d := mdetEx (msubmat M fin0 j) in
                   a * d)
     end.
 
   Lemma mdetEx_eq_mdet_1 : forall (M : smat 1), mdetEx M = mdet M.
-  Proof. intros. cbn. ring. Qed.
+  Proof. intros. cbv; rewrite <- !(nth_m2f 0). ring. Qed.
 
   Lemma mdetEx_eq_mdet_2 : forall (M : smat 2), mdetEx M = mdet M.
-  Proof. intros. cbv; rewrite !(mnth_eq_nth_m2f 0 M). ring. Qed.
+  Proof. intros. cbv; rewrite <- !(nth_m2f 0). ring. Qed.
 
   Lemma mdetEx_eq_mdet_3 : forall (M : smat 3), mdetEx M = mdet M.
-  Proof. intros. cbv; rewrite !(mnth_eq_nth_m2f 0 M). ring. Qed.
+  Proof. intros. cbv; rewrite <- !(nth_m2f 0). ring. Qed.
 
   Lemma mdetEx_eq_mdet_4 : forall (M : smat 4), mdetEx M = mdet M.
-  Proof.
-    (* intros. cbv; rewrite !(mnth_eq_nth_m2f 0 M). ring. *)
-    (* Qed. *)
+  (* Proof. intros. cbv; rewrite <- !(nth_m2f 0); ring. Qed. *)
+  (* TO SPEED UP THE COMPILATION *)
   Admitted.
   
-  Theorem mdetEx_eq_mdet : forall {n} (M : smat (S n)), mdetEx M = mdet M.
+  Theorem mdetEx_eq_mdet : forall {n} (M : smat n), mdetEx M = mdet M.
   Proof.
     intros.
     unfold mdet. unfold mdetEx.
-    Abort.
+  Admitted.
 
 End mdetEx.
 
@@ -556,6 +385,11 @@ Section minvAM.
   Notation mmul := (@mmul _ Aadd 0 Amul).
   Infix "*" := mmul : mat_scope.
   Notation mdet := (@mdet _ Aadd 0 Aopp Amul 1).
+  Notation mdetEx := (@mdetEx _ Aadd 0 Aopp Amul 1).
+  Notation mdet1 := (@mdet1 A).
+  Notation mdet2 := (@mdet2 _ Aadd Aopp Amul).
+  Notation mdet3 := (@mdet3 _ Aadd Aopp Amul).
+  Notation mdet4 := (@mdet4 _ Aadd Aopp Amul).
 
     
   (* ======================================================================= *)
@@ -569,7 +403,7 @@ Section minvAM.
   Lemma madjSign_comm : forall {n} (i j : fin n), madjSign i j = madjSign j i.
   Proof. intros. unfold madjSign. rewrite Nat.add_comm. auto. Qed.
 
-  
+
   (* ======================================================================= *)
   (** ** Cofactor matrix *)
 
@@ -580,7 +414,7 @@ Section minvAM.
     | S n' =>
         fun (M : smat (S n')) =>
         fun (i:fin (S n')) (j:fin (S n')) =>
-          (madjSign i j * mdet (msubmat M i j))%A
+          (madjSign i j * mdetEx (msubmat M i j))%A
     end.
 
   
@@ -594,17 +428,17 @@ Section minvAM.
     | S n' =>
         fun (M : smat (S n')) =>
         fun (i:fin (S n')) (j:fin (S n')) =>
-          (madjSign i j * mdet (msubmat M j i))%A
+          (madjSign i j * mdetEx (msubmat M j i))%A
     end.
 
   (** (madj M).ij = (-1)^(i+j) * det(submat M i j) *)
   Lemma mnth_madj : forall {n} (M : smat (S n)) i j,
-      (madj M) i j = (madjSign i j * mdet (msubmat M j i))%A.
+      (madj M) i j = (madjSign i j * mdetEx (msubmat M j i))%A.
   Proof. intros. auto. Qed.
   
   (** (madj M) $ i $ j = (mcofactor M) $ j $ i. *)
   Lemma mnth_madj_eq_mnth_mcofactor_swap : forall {n} (M : smat n) i j,
-      (madj M) $ i $ j = (mcofactor M) $ j $ i.
+      (madj M).[i].[j] = (mcofactor M).[j].[i].
   Proof.
     intros. destruct n.
     - exfalso. apply fin0_False; auto.
@@ -629,32 +463,42 @@ Section minvAM.
   (** Cramer rule, which can solving the equation with the form of A*x=b.
       Note, the result is valid only when |A| is not zero *)
   Definition cramerRule {n} (A0 : smat n) (b : @vec A n) : @vec A n :=
-    let D := mdet A0 in
-    fun i => mdet (msetc A0 b i) / D.
+    let D := mdetEx A0 in
+    fun i => mdetEx (msetc A0 b i) / D.
 
 
   (* ======================================================================= *)
   (** ** Invertible matrix by determinant *)
+  
+  (* Note:
+     1. we use `AM` to denote `Adjoint Matrix method`
+     2. we use `mdetEx` in definitions instead of `mdet`, for fast computation 
+     3. we use `mdet` in properties instead of `mdetEx`, for consistency *)
 
-  (** A matrix `M` is invertible, if its determinant is not zero.
-      Note that, we use `AM` to denote `Adjoint Matrix method` *)
+  (** A matrix `M` is invertible, if its determinant is not zero. *)
   Definition minvertibleAM {n} (M : smat n) : bool :=
-    if Aeqdec (mdet M) 0 then false else true.
+    if Aeqdec (mdetEx M) 0 then false else true.
 
   (* `minvertibleAM M` is true, iff the determinant of `M` is not zero *)
   Lemma minvertibleAM_true_iff_mdet_neq0 : forall {n} (M : smat n),
       minvertibleAM M = true <-> mdet M <> 0.
-  Proof. intros. unfold minvertibleAM. destruct Aeqdec; try easy. Qed.
+  Proof.
+    intros. unfold minvertibleAM. rewrite mdetEx_eq_mdet.
+    destruct Aeqdec; try easy.
+  Qed.
 
   (* `minvertibleAM M` is false, iff the determinant of `M` is zero *)
   Lemma minvertibleAM_false_iff_mdet_eq0 : forall {n} (M : smat n),
       minvertibleAM M = false <-> mdet M = 0.
-  Proof. intros. unfold minvertibleAM. destruct Aeqdec; try easy. Qed.
+  Proof.
+    intros. unfold minvertibleAM. rewrite mdetEx_eq_mdet.
+    destruct Aeqdec; try easy.
+  Qed.
 
   (* Identity matrix is invertibleAM *)
   Lemma mat1_invertibleAM_true : forall {n}, minvertibleAM (@mat1 n) = true.
   Proof.
-    intros. unfold minvertibleAM.
+    intros. unfold minvertibleAM. rewrite mdetEx_eq_mdet.
     rewrite mdet_mat1. destruct Aeqdec; auto. apply field_1_neq_0 in e; auto.
   Qed.
 
@@ -665,7 +509,7 @@ Section minvAM.
   (** Inverse matrix by adjoint matrix (option version) *)
   Definition minvAMo {n} (M : smat n) : option (smat n) :=
     if minvertibleAM M
-    then Some ((1 / mdet M) \.* (madj M))
+    then Some ((1 / mdetEx M) \.* (madj M))
     else None.
 
   (** If `minvAMo M` return `Some M'`, then `M'` is left inverse of `M` *)
@@ -681,7 +525,7 @@ Section minvAM.
     intros. unfold minvAMo, minvertibleAM in *. split; intros.
     - destruct H as [M' H]. destruct Aeqdec; try easy.
     - destruct Aeqdec; try easy.
-      exists ((1 / mdet M) \.* (madj M)). auto.
+      exists ((1 / mdetEx M) \.* (madj M)). auto.
   Qed.
 
   (** `minvAMo` return `None`, iff, `minvertibleAM` return false *)
@@ -698,7 +542,7 @@ Section minvAM.
   (** ** Inverse matrix by adjoint matrix (need to check inversibility) *)
   
   (** Inverse matrix by adjoint matrix (need to check inversibility) *)
-  Definition minvAM {n} (M : smat n) := (1 / mdet M) \.* (madj M).
+  Definition minvAM {n} (M : smat n) := (1 / mdetEx M) \.* (madj M).
   Notation "M \-1" := (minvAM M) : mat_scope.
 
   (** If `minvAMo M` return `Some M'`, then `minvAM M` equal to `M'` *)
@@ -722,7 +566,7 @@ Section minvAM.
   Lemma mcofactor_eq : forall (M : smat 3),
       mdet M <> 0 -> mcofactor M = mdet M \.* (M\-1\T).
   Proof.
-    intros. unfold minvAM.
+    intros. unfold minvAM. rewrite mdetEx_eq_mdet.
     rewrite mtrans_mcmul. rewrite mcmul_assoc.
       rewrite identityLeft at 1. rewrite field_mulInvR; auto.
       rewrite mcmul_1_l. rewrite mtrans_madj. auto.
@@ -784,6 +628,18 @@ Section minvAM.
   Proof.
   Admitted.
 
+  (** minvertibleAM M = true -> M \-1 = N -> M * N = mat1 *)
+  Lemma mmul_eq1_if_minvAM_l : forall {n} (M N : smat n),
+      minvertibleAM M = true -> M \-1 = N -> M * N = mat1.
+  Proof.
+  Admitted.
+
+  (** minvertibleAM N = true -> N \-1 = M -> M * N = mat1 *)
+  Lemma mmul_eq1_if_minvAM_r : forall {n} (M N : smat n),
+      minvertibleAM N = true -> N \-1 = M -> M * N = mat1.
+  Proof.
+  Admitted.
+
   (** mat1 \-1 = mat1 *)
   Lemma minvAM_mat1 : forall {n}, minvAM (@mat1 n) = mat1.
   Proof.
@@ -810,24 +666,21 @@ Section minvAM.
     (* We want to simplify it with RAST *)
   End SymbolicMatrix.
 
-  (* 将 a <> 0 |- b <> 0 转换为 b = 0 |- a = 0，并尝试自动证明 *)
+  (* 将 a <> 0 |- b <> 0 转换为 b = 0 |- a = 0 *)
   Ltac solve_neq0_neq0 :=
+    let H1 := fresh "H1" in
     match goal with
     | H: ?e1 <> Azero |- ?e2 <> Azero =>
-        let H1 := fresh "H1" in
-        intros H1; destruct H;
-        (* 尝试自动证明 *)
-        cbn; ring_simplify; auto
+        intros H1; destruct H
     end.
 
   (* 将 a = 0 |- b = 0 转换为 a = b，并尝试证明 *)
   Ltac solve_eq0_eq0 :=
     match goal with
     | H: ?a = Azero |- ?b = Azero =>
-        symmetry; rewrite <- H at 1;
-        (* 尝试自动证明 *)
-        try ring
+        symmetry; rewrite <- H at 1; try ring
     end.
+  
   
   (** *** Inverse matrix of of concrete dimension *)
   Section concrete.
@@ -837,85 +690,354 @@ Section minvAM.
     (** |M| <> 0 -> minv1 M = inv M *)
     Lemma minvAM1_eq_minvAM : forall M, mdet M <> Azero -> minvAM1 M = minvAM M.
     Proof.
-    (*   intros.  *)
-    (*   ring_simplify. *)
-    (*   rewrite (meq_iff_nth_m2f Azero); intros. cbv. *)
-    (*   destruct i,j; auto. field. solve_neq0_neq0. *)
-      (* Qed. *)
-    Admitted.
+      intros. cbn in H; rewrite <- !(nth_m2f_nat2finS 0) in H; auto.
+      apply m2l_inj; cbv; rewrite <- !(nth_m2f 0); list_eq.
+      field; solve_neq0_neq0; solve_eq0_eq0.
+    Qed.
 
-    (*
     Definition minvAM2 (M : smat 2) : smat 2 :=
       let d := mdet2 M in
       l2m 0 [[M.22/d; -M.12/d]; [-M.21/d; M.11/d]].
 
     (** |M| <> 0 -> minv2 M = inv M *)
-    Lemma AM_minv2_eq_inv : forall M, mdet M <> Azero -> minv2AM M = minvAM M.
-    (* Proof. *)
-    (*   intros. rewrite (meq_iff_nth_m2f Azero); intros. *)
-    (*   repeat (try destruct i; try destruct j; try lia); cbv; *)
-    (*     rewrite !(mnth_eq_nth_m2f Azero M) in *; try field. *)
-    (*   all: try solve_neq0_neq0; rewrite !(mnth_eq_nth_m2f Azero M) in *. *)
-    (* Qed. *)
+    Lemma minvAM2_eq_minvAM : forall M, mdet M <> Azero -> minvAM2 M = minvAM M.
+    (* TO SPEED UP THE COMPILATION *)
     Admitted.
+    (* Proof. *)
+    (*   intros. cbn in H; rewrite <- !(nth_m2f_nat2finS 0) in H; auto. *)
+    (*   apply m2l_inj; cbv; rewrite <- !(nth_m2f 0); list_eq. *)
+    (*   all: field; solve_neq0_neq0; solve_eq0_eq0. *)
+    (* Qed. *)
     
     (* Note, this formula come from matlab, needn't manual work *)
-    Definition minv3AM (M : smat 3) : smat 3 :=
+    Definition minvAM3 (M : smat 3) : smat 3 :=
       let d := mdet3 M in
-      (l2m
+      (l2m 0
          [[(M.22*M.33-M.23*M.32)/d; -(M.12*M.33-M.13*M.32)/d; (M.12*M.23-M.13*M.22)/d];
           [-(M.21*M.33-M.23*M.31)/d; (M.11*M.33-M.13*M.31)/d; -(M.11*M.23-M.13*M.21)/d];
           [(M.21*M.32-M.22*M.31)/d; -(M.11*M.32-M.12*M.31)/d; (M.11*M.22-M.12*M.21)/d]])%A.
 
     (** |M| <> 0 -> minv3 M = inv M *)
-    Lemma AM_minv3_eq_inv : forall M, mdet M <> Azero -> minv3AM M = minvAM M.
-    Proof.
-      (* NEED 3 Seconds, JUST TURN OFF TO SPEED UP *)
-      (*
-      intros. rewrite (meq_iff_nth_m2f Azero); intros.
-      repeat (try destruct i; try destruct j; try lia); cbv;
-        rewrite !(mnth_eq_nth_m2f Azero M) in *; try field.
-      all: try solve_neq0_neq0; rewrite !(mnth_eq_nth_m2f Azero M) in *.
-      all: try solve_eq0_eq0.
-    Qed.
-       *)
-      Admitted.
+    Lemma minvAM3_eq_minvAM : forall M, mdet M <> Azero -> minvAM3 M = minvAM M.
+    (* TO SPEED UP THE COMPILATION *)
+    Admitted.
+    (* Proof. *)
+    (*   intros. cbn in H; rewrite <- !(nth_m2f_nat2finS 0) in H; auto. *)
+    (*   apply m2l_inj; cbv; rewrite <- !(nth_m2f 0); list_eq. *)
+    (*   all: field; solve_neq0_neq0; solve_eq0_eq0. *)
+    (* Qed. *)
 
-    Definition minv4AM (M : smat 4) : smat 4 :=
+    Definition minvAM4 (M : smat 4) : smat 4 :=
       let d := mdet4 M in
-      l2m
-        [[(M.22*M.33*M.44 - M.22*M.34*M.43 - M.23*M.32*M.44 + M.23*M.34*M.42 + M.24*M.32*M.43 - M.24*M.33*M.42)/d;
-          -(M.12*M.33*M.44 - M.12*M.34*M.43 - M.13*M.32*M.44 + M.13*M.34*M.42 + M.14*M.32*M.43 - M.14*M.33*M.42)/d;
-          (M.12*M.23*M.44 - M.12*M.24*M.43 - M.13*M.22*M.44 + M.13*M.24*M.42 + M.14*M.22*M.43 - M.14*M.23*M.42)/d;
-          -(M.12*M.23*M.34 - M.12*M.24*M.33 - M.13*M.22*M.34 + M.13*M.24*M.32 + M.14*M.22*M.33 - M.14*M.23*M.32)/d];
-         [-(M.21*M.33*M.44 - M.21*M.34*M.43 - M.23*M.31*M.44 + M.23*M.34*M.41 + M.24*M.31*M.43 - M.24*M.33*M.41)/d;
-          (M.11*M.33*M.44 - M.11*M.34*M.43 - M.13*M.31*M.44 + M.13*M.34*M.41 + M.14*M.31*M.43 - M.14*M.33*M.41)/d;
-          -(M.11*M.23*M.44 - M.11*M.24*M.43 - M.13*M.21*M.44 + M.13*M.24*M.41 + M.14*M.21*M.43 - M.14*M.23*M.41)/d;
-          (M.11*M.23*M.34 - M.11*M.24*M.33 - M.13*M.21*M.34 + M.13*M.24*M.31 + M.14*M.21*M.33 - M.14*M.23*M.31)/d];
-         [(M.21*M.32*M.44 - M.21*M.34*M.42 - M.22*M.31*M.44 + M.22*M.34*M.41 + M.24*M.31*M.42 - M.24*M.32*M.41)/d;
-          -(M.11*M.32*M.44 - M.11*M.34*M.42 - M.12*M.31*M.44 + M.12*M.34*M.41 + M.14*M.31*M.42 - M.14*M.32*M.41)/d;
-          (M.11*M.22*M.44 - M.11*M.24*M.42 - M.12*M.21*M.44 + M.12*M.24*M.41 + M.14*M.21*M.42 - M.14*M.22*M.41)/d;
-          -(M.11*M.22*M.34 - M.11*M.24*M.32 - M.12*M.21*M.34 + M.12*M.24*M.31 + M.14*M.21*M.32 - M.14*M.22*M.31)/d];
-         [-(M.21*M.32*M.43 - M.21*M.33*M.42 - M.22*M.31*M.43 + M.22*M.33*M.41 + M.23*M.31*M.42 - M.23*M.32*M.41)/d;
-          (M.11*M.32*M.43 - M.11*M.33*M.42 - M.12*M.31*M.43 + M.12*M.33*M.41 + M.13*M.31*M.42 - M.13*M.32*M.41)/d;
-          -(M.11*M.22*M.43 - M.11*M.23*M.42 - M.12*M.21*M.43 + M.12*M.23*M.41 + M.13*M.21*M.42 - M.13*M.22*M.41)/d;
-          (M.11*M.22*M.33 - M.11*M.23*M.32 - M.12*M.21*M.33 + M.12*M.23*M.31 + M.13*M.21*M.32 - M.13*M.22*M.31)/d]]%A.
+      l2m 0
+        [[(M.22*M.33*M.44 - M.22*M.34*M.43 - M.23*M.32*M.44 + M.23*M.34*M.42 +
+             M.24*M.32*M.43 - M.24*M.33*M.42)/d;
+          -(M.12*M.33*M.44 - M.12*M.34*M.43 - M.13*M.32*M.44 + M.13*M.34*M.42 +
+              M.14*M.32*M.43 - M.14*M.33*M.42)/d;
+          (M.12*M.23*M.44 - M.12*M.24*M.43 - M.13*M.22*M.44 + M.13*M.24*M.42 +
+             M.14*M.22*M.43 - M.14*M.23*M.42)/d;
+          -(M.12*M.23*M.34 - M.12*M.24*M.33 - M.13*M.22*M.34 + M.13*M.24*M.32 +
+              M.14*M.22*M.33 - M.14*M.23*M.32)/d];
+
+         [-(M.21*M.33*M.44 - M.21*M.34*M.43 - M.23*M.31*M.44 + M.23*M.34*M.41 +
+              M.24*M.31*M.43 - M.24*M.33*M.41)/d;
+          (M.11*M.33*M.44 - M.11*M.34*M.43 - M.13*M.31*M.44 + M.13*M.34*M.41 +
+             M.14*M.31*M.43 - M.14*M.33*M.41)/d;
+          -(M.11*M.23*M.44 - M.11*M.24*M.43 - M.13*M.21*M.44 + M.13*M.24*M.41 +
+              M.14*M.21*M.43 - M.14*M.23*M.41)/d;
+          (M.11*M.23*M.34 - M.11*M.24*M.33 - M.13*M.21*M.34 + M.13*M.24*M.31 +
+             M.14*M.21*M.33 - M.14*M.23*M.31)/d];
+
+         [(M.21*M.32*M.44 - M.21*M.34*M.42 - M.22*M.31*M.44 + M.22*M.34*M.41
+           + M.24*M.31*M.42 - M.24*M.32*M.41)/d;
+          -(M.11*M.32*M.44 - M.11*M.34*M.42 - M.12*M.31*M.44 + M.12*M.34*M.41 +
+              M.14*M.31*M.42 - M.14*M.32*M.41)/d;
+          (M.11*M.22*M.44 - M.11*M.24*M.42 - M.12*M.21*M.44 + M.12*M.24*M.41 +
+             M.14*M.21*M.42 - M.14*M.22*M.41)/d;
+          -(M.11*M.22*M.34 - M.11*M.24*M.32 - M.12*M.21*M.34 + M.12*M.24*M.31 +
+              M.14*M.21*M.32 - M.14*M.22*M.31)/d];
+
+         [-(M.21*M.32*M.43 - M.21*M.33*M.42 - M.22*M.31*M.43 + M.22*M.33*M.41 +
+              M.23*M.31*M.42 - M.23*M.32*M.41)/d;
+          (M.11*M.32*M.43 - M.11*M.33*M.42 - M.12*M.31*M.43 + M.12*M.33*M.41 +
+             M.13*M.31*M.42 - M.13*M.32*M.41)/d;
+          -(M.11*M.22*M.43 - M.11*M.23*M.42 - M.12*M.21*M.43 + M.12*M.23*M.41 +
+              M.13*M.21*M.42 - M.13*M.22*M.41)/d;
+          (M.11*M.22*M.33 - M.11*M.23*M.32 - M.12*M.21*M.33 + M.12*M.23*M.31 +
+             M.13*M.21*M.32 - M.13*M.22*M.31)/d]]%A.
     
     (** |M| <> 0 -> minv4 M = inv M *)
-    Lemma AM_minv4_eq_inv : forall M, mdet M <> Azero -> minv4AM M = minvAM M.
-    Proof.
-      (* NEED 30 Seconds, JUST TURN OFF TO SPEED UP *)
-      (*
-        intros. rewrite (meq_iff_nth_m2f Azero); intros.
-      repeat (try destruct i; try destruct j; try lia); cbv;
-        rewrite !(mnth_eq_nth_m2f Azero M) in *; try field.
-      all: try solve_neq0_neq0; rewrite !(mnth_eq_nth_m2f Azero M) in *.
-      all: try solve_eq0_eq0.
-       *)
+    Lemma minvAM4_eq_minvAM : forall M, mdet M <> Azero -> minvAM4 M = minvAM M.
+    (* TO SPEED UP THE COMPILATION *)
     Admitted.
-
-     *)
+    (* Proof. *)
+    (*   intros. cbn in H; rewrite <- !(nth_m2f_nat2finS 0) in H; auto. *)
+    (*   apply m2l_inj; cbv; rewrite <- !(nth_m2f 0); list_eq. *)
+    (*   all: field; solve_neq0_neq0; solve_eq0_eq0. *)
+    (* Qed. *)
     
   End concrete.
+
+
+  (* ******************************************************************* *)
+  (** ** Inverse matrix with lists for input and output *)
+  
+  (** Check matrix invertibility with lists as input *)
+  Definition minvertibleAM_list (n : nat) (dl : dlist A) : bool :=
+    @minvertibleAM n (l2m 0 dl).
+
+  (** Inverse matrix with lists for input and output *)
+  Definition minvAM_list (n : nat) (dl : dlist A) : dlist A :=
+    m2l (@minvAM n (l2m 0 dl)).
+
+  (** `minvertibleAM_list` is equal to `minvertibleAM`, by definition *)
+  Lemma minvertibleAM_list_spec : forall (n : nat) (dl : dlist A),
+      minvertibleAM_list n dl = @minvertibleAM n (l2m 0 dl).
+  Proof. intros. auto. Qed.
+
+  (** If the matrix `M` created by [dl] is invertible, then the matrix `M'` 
+      created by [minvAM_list dl] is the left inverse of `M` *)
+  Theorem minvAM_list_spec : forall (n : nat) (dl : dlist A),
+      let M : smat n := l2m 0 dl in
+      let M' : smat n := l2m 0 (minvAM_list n dl) in
+      minvertibleAM_list n dl = true ->
+      M' * M = mat1.
+  Proof.
+    intros. unfold minvertibleAM_list in H. unfold minvAM_list in M'.
+    unfold M', M. rewrite l2m_m2l. apply mmul_minvAM_l; auto.
+    apply minvertibleAM_true_iff_mdet_neq0 in H. auto.
+  Qed.  
   
 End minvAM.
+
+
+
+(* ############################################################################ *)
+(** * Test *)
+
+(* ******************************************************************* *)
+(** ** Test inverse matrix on Q *)
+Section test_Q.
+  Import QExt.
+  
+  Notation mmul := (@mmul _ Qplus 0 Qmult).
+  Infix "*" := mmul : mat_scope.
+  
+  Notation minvertibleAM_list := (@minvertibleAM_list _ Qplus 0 Qopp Qmult 1).
+  Notation minvAM_list := (@minvAM_list _ Qplus 0 Qopp Qmult 1 Qinv).
+
+  (** Example 1: a `2x2` matrix *)
+  Section ex1.
+    
+    (* [ 1  2]     [ 3  2]
+       [-1 -3] <-> [-1 -1] *)
+    Let d1 := [[1;2];[-1;-3]].
+    Let d2 := [[3;2];[-1;-1]].
+
+    (* we can get the result immediately *)
+    (* Compute minvertibleAM_list 2 d1. *)
+    (* Compute minvAM_list 2 d1. *)
+    (* Compute minvAM_list 2 d2. *)
+    
+    (* [d1] is invertible *)
+    Goal minvertibleAM_list 2 d1 = true.
+    Proof. simpl. auto. Qed.
+    
+    (* inverse of [d1] is [d2] *)
+    Goal minvAM_list 2 [[1;2];[-1;-3]] = d2.
+    Proof. cbv. auto. Qed.
+  End ex1.
+
+  (** Example 2: a `3x3` matrix *)
+  Section ex2.
+    
+    (* [1 3 1]     [-1 -1  2]
+       [2 1 1] <-> [ 0 -1  1]
+       [2 2 1]     [ 2  4 -5] *)
+    Let d1 := [[1;3;1];[2;1;1];[2;2;1]].
+    Let d2 := [[-1;-1;2];[0;-1;1];[2;4;-5]].
+    
+    (* Compute minvertibleAM_list 3 d1. *)
+    (* Compute minvAM_list 3 d1. *)
+    (* Compute minvAM_list 3 d2. *)
+    
+    Goal dlistSetoidEq Qeq (minvAM_list 3 d1) d2.
+    Proof. Local Opaque Qeq. cbv. repeat constructor. Qed.
+  End ex2.
+
+(* In summary, for computing inverse matrices with Q type in Coq:
+   1. compared to GE method, minvertibleAM needn't Ainv, i.e., the element only need 
+      to be a ring structure is enough to determine if the matrix is invertible.
+   2. need not `AeqDec (@eq A)` relation.
+   3. the Q type also abtained a relative simple output format, compared to GE 
+      method. *)
+End test_Q.
+
+
+(* ******************************************************************* *)
+(** ** Test inverse matrix on Qc *)
+Section test_Qc.
+  Import QcExt.
+
+  Notation minvertibleAM_list := (@minvertibleAM_list _ Qcplus 0 Qcopp Qcmult 1).
+  Notation minvAM_list := (@minvAM_list _ Qcplus 0 Qcopp Qcmult 1 Qcinv).
+
+  (** Example 2: a `3x3` matrix *)
+  Section ex2.
+
+    (* [1 3 1]     [-1 -1  2]
+       [2 1 1] <-> [ 0 -1  1]
+       [2 2 1]     [ 2  4 -5] *)
+    Let d1 := Q2Qc_dlist [[1;3;1];[2;1;1];[2;2;1]]%Q.
+    Let d2 := Q2Qc_dlist [[-1;-1;2];[0;-1;1];[2;4;-5]]%Q.
+    (* Note, we need the `Q2Qc` function to typing term of `Qc` type *)
+    
+    (* Compute minvertibleAM_list 3 d1. *)
+    (* Compute minvAM_list 3 d1. *)
+    (* Compute minvAM_list 3 d2. *)
+    
+    (* Note, the `canon` part is unnecessary for users. 
+       But we can remove the proof part easily *)
+    (* Compute Qc2Q_dlist (minvAM_list 3 d1). *)
+
+    (* An advantage is that we can use Leibniz equal *)
+    Goal minvAM_list 3 d1 = d2.
+    Proof. cbv. list_eq; f_equal; apply proof_irrelevance. Qed.
+  End ex2.
+  
+  (* In summary, for computing inverse matrices with Qc type in Coq:
+     1. Complex input format which need Q2Qc function, and complex output format 
+        which contain unnecessary proof, but these difficulties can be overcome easily.
+     2. Built-in Leibniz equal is supported. *)
+End test_Qc.
+
+
+(* ******************************************************************* *)
+(** ** inverse matrix on Q type (enhanced version) *)
+Section minvAM_Qlist.
+
+  (* What is "enhanced" meannig?
+     1. The format of input and ouput is Q type
+     2. The inner computation process use Qc type *)
+  
+  Import QcExt.
+  
+  (* `minvAM_list` on `Qc` type *)
+  Notation minvertibleAM_list := (@minvertibleAM_list _ Qcplus 0 Qcopp Qcmult 1).
+  Notation minvAM_list := (@minvAM_list _ Qcplus 0 Qcopp Qcmult 1 Qcinv).
+
+  Import QExt.
+  
+  (** Check matrix invertibility with rational number lists *)
+  Definition minvertibleAM_Qlist (n : nat) (dl : dlist Q) : bool :=
+    minvertibleAM_list n (Q2Qc_dlist dl).
+  
+  (** Inverse matrix with rational number lists *)
+  Definition minvAM_Qlist (n : nat) (dl : dlist Q) : dlist Q :=
+    Qc2Q_dlist (minvAM_list n (Q2Qc_dlist dl)).
+  
+  (** Example 2: a `3x3` matrix *)
+  Section ex2.
+
+    (* [1 3 1]     [-1 -1  2]
+       [2 1 1] <-> [ 0 -1  1]
+       [2 2 1]     [ 2  4 -5] *)
+    Let d1 := [[1;3;1];[2;1;1];[2;2;1]].
+    Let d2 := [[-1;-1;2];[0;-1;1];[2;4;-5]].
+    
+    (* Compute minvertibleAM_Qlist 3 d1. *)
+    (* Compute minvAM_Qlist 3 d1. *)
+    (* Compute minvAM_Qlist 3 d2. *)
+    (* Note, we get a friendly experience for typing and printing *)
+
+    (* An advantage is that we can use Leibniz equal *)
+    Goal minvAM_Qlist 3 d1 = d2.
+    Proof. cbv. auto. Qed.
+  End ex2.
+
+  (* Example 3: a `8x8` matrix *)
+  Section ex3.
+    (* A manually given random `8x8` matrix *)
+    Goal minvAM_Qlist 6
+      [[1;2;3;4;5;6;7;8];
+       [2;4;5;6;7;8;9;1];
+       [3;5;7;6;8;4;2;1];
+       [4;5;7;6;9;8;3;2];
+       [5;4;3;7;9;6;8;1];
+       [6;5;3;4;7;8;9;2];
+       [7;8;6;5;9;2;1;3];
+       [8;9;6;3;4;5;2;1]] = [].
+    Proof.
+      (* cbv. *)
+      (* too slow, more than 1 minute. Tips, use a small dimension!! *)
+    Abort.
+    (* Note that many elements are in the fraction format of rational numbers.
+       This is reasonable, as fractions typically do not possess a finite decimal 
+       representation. *)
+    
+    (* In MATLAB, we can use these commands to compute inverse matrix:
+     >> M = [1 2 3 4 5 6 7 8; ...
+             2 4 5 6 7 8 9 1; ...
+             3 5 7 6 8 4 2 1; ...
+             4 5 7 6 9 8 3 2; ...
+             5 4 3 7 9 6 8 1; ...
+             6 5 3 4 7 8 9 2; ...
+             7 8 6 5 9 2 1 3; ...
+             8 9 6 3 4 5 2 1]
+     >> M' = inv(M)
+     Note, we can use following command to switch the format of rational numbers
+     >> format rat
+     >> format short
+     The result looks different with Coq. For example, 
+         M'(0,2)=41846/50943 in Coq,
+         M'(0,2)=23/28 in MATLAB, 
+     and these two values are not equal. *)
+
+    Goal ~(Qmake 41846 50943 == Qmake 23 28).
+    Proof. intro. cbv in H. easy. Qed.
+
+    (* The possible reason is that MATLAB performs calculations using floating-point 
+       numbers, and converting the inaccurate results into fractions cannot compensate
+       for the difference.
+       On the contrary, Coq uses completely precise results.
+       While the exact benefits are unclear, this precision could be beneficial. *)
+  End ex3.
+
+  (* Example 4 : a `8x8` matrix with decimal numbers *)
+  Section ex4.
+  (* In MATLAB, use these commands for comparison experiment:
+     >> format short
+     >> M = rand(8,8)
+     Or, manually use these numbers:
+     >> M = [0.8001  0.5797  0.0760  0.9448  0.3897  0.0598  0.7317  0.1835; ...
+             0.4314  0.5499  0.2399  0.4909  0.2417  0.2348  0.6477  0.3685; ...
+             0.9106  0.1450  0.1233  0.4893  0.4039  0.3532  0.4509  0.6256; ...
+             0.1818  0.8530  0.1839  0.3377  0.0965  0.8212  0.5470  0.7802; ...
+             0.2638  0.6221  0.2400  0.9001  0.1320  0.0154  0.2963  0.0811; ...
+             0.1455  0.3510  0.4173  0.3692  0.9421  0.0430  0.7447  0.9294; ...
+             0.1361  0.5132  0.0497  0.1112  0.9561  0.1690  0.1890  0.7757; ...
+             0.8693  0.4018  0.9027  0.7803  0.5752  0.6491  0.6868  0.4868]
+     Compute the inverse matrix
+     >> M' = inv(M)
+   *)
+    Let d1 := 
+          [[0.8001;0.5797;0.0760;0.9448;0.3897;0.0598;0.7317;0.1835];
+           [0.4314;0.5499;0.2399;0.4909;0.2417;0.2348;0.6477;0.3685];
+           [0.9106;0.1450;0.1233;0.4893;0.4039;0.3532;0.4509;0.6256];
+           [0.1818;0.8530;0.1839;0.3377;0.0965;0.8212;0.5470;0.7802];
+           [0.2638;0.6221;0.2400;0.9001;0.1320;0.0154;0.2963;0.0811];
+           [0.1455;0.3510;0.4173;0.3692;0.9421;0.0430;0.7447;0.9294];
+           [0.1361;0.5132;0.0497;0.1112;0.9561;0.1690;0.1890;0.7757];
+           [0.8693;0.4018;0.9027;0.7803;0.5752;0.6491;0.6868;0.4868]].
+
+    (* Time Compute minvertibleAM_Qlist 8 d1. (* 45s *) *)
+    (* Time Compute minvAM_Qlist 8 d1.        (* too slow *) *)
+  End ex4.
+  
+  (* In summary, for computing inverse matrices with Q (with the help of Qc):
+     1. simple input format, and relatively simple output format.
+     2. accuately result compared to MATLAB, but fractions are not intuitive.
+     3. Leibniz equal is supported.
+   *)
+End minvAM_Qlist.
+

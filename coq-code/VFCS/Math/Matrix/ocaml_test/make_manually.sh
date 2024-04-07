@@ -39,7 +39,6 @@ cp ../matrix.ml ./
 cp ../test.ml ./
 cp ../Makefile ./
 
-# fix these files
 sed -i 's/coq_Rabst : cReal -> coq_R/coq_Rabst : __/' matrix.mli
 sed -i 's/coq_Rrepr : coq_R -> cReal/coq_Rrepr : __/' matrix.mli
 sed -i 's/coq_Rabst : cReal -> coq_R/coq_Rabst : __/' matrix.ml

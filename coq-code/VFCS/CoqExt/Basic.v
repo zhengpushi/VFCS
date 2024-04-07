@@ -112,14 +112,24 @@ Reserved Notation "| r |"   (at level 30, r at level 25, format "| r |").  (* Ra
 (* this level is consistent with Mathcomp.ssreflect.ssrnotations.v *)
 
 (* Get element of a nat-function by index *)
-Reserved Notation "f ! i"
-  (at level 25, i at next level, format "f ! i" ).
-Reserved Notation "f ! i ! j"
-  (at level 25, i, j at next level, format "f ! i ! j" ).
+(* Reserved Notation "f ! i" *)
+(*   (at level 25, i at next level, format "f ! i" ). *)
+(* Reserved Notation "f ! i ! j" *)
+(*   (at level 25, i, j at next level, format "f ! i ! j" ). *)
 
 (* Get element of vector/matrix by index. *)
-Reserved Notation "V $ i"
-  (at level 25, i at next level, format "V $ i" ).
+(* Reserved Notation "V $ i" *)
+(*   (at level 25, i at next level, format "V $ i" ). *)
+
+Reserved Notation "v .[ i ]"
+  (at level 2, i at next level, left associativity, format "v .[ i ]").
+Reserved Notation "v .[ i <- a ]"
+  (at level 2, i at next level, left associativity, format "v .[ i <- a ]").
+Reserved Notation "M .[ i , j ]"
+  (at level 2, i, j at next level, left associativity, format "M .[ i , j ]").
+Reserved Notation "M .[ i , j <- a ]"
+  (at level 2, i, j at next level, left associativity, format "M .[ i , j <- a ]").
+
 
 (* Get element of finite vector/matrix by index.
    Note, there are two style of start number to count index, 0 or 1.
@@ -181,9 +191,6 @@ Ltac copy H :=
   remember H as HC eqn: HCeq;
   clear HCeq.
 
-
-(** ** Tactics with a short name *)
-
 (* simplify the equality of two list *)
 #[global] Ltac list_eq :=
   repeat match goal with
@@ -229,6 +236,53 @@ Ltac copy H :=
   [ try eauto with bdestruct
   | destruct H as [H|H]].
 (* [ | try first [apply not_lt in H | apply not_le in H]]]. *)
+
+(* 使用所有上下文中的等式 *)
+Ltac rw :=
+  (* 只进行有限次，因为这些策略没有消除上下文的假设，可能产生循环 *)
+  do 5
+    (match goal with
+     (* a = b |- a = c ==> b = c *)
+     | [H : ?a = ?b |- ?a = ?c] => rewrite H
+     (* a = b |- c = a ==> c = b *)
+     | [H : ?a = ?b |- ?c = ?a] => rewrite H
+     (* a = b |- c = b ==> c = a *)
+     | [H : ?a = ?b |- ?c = ?b] => rewrite <- H
+     (* a = b |- b = c ==> a = c *)
+     | [H : ?a = ?b |- ?b = ?c] => rewrite <- H
+     end;
+     auto).
+
+(* 自动化简常用命题逻辑形式 *)
+Ltac simp :=
+  repeat
+    (match goal with
+     | [H : ?P |- ?P] => exact H
+     | [|- True] => constructor
+     | [H : False |- _] => destruct H
+                             
+     | [|- _ /\ _ ] => constructor
+     | [|- _ -> _] => intro
+     | [|- _ <-> _ ] => split; intros
+     | [H : _ /\ _ |- _] => destruct H
+     | [H : _ \/ _ |- _] => destruct H
+
+     (* | [H1 : ?P -> ?Q, H2 : ?P |- _] => pose proof (H1 H2) *)
+                                           
+     | [H : ?a = ?b |- _ ]  => try progress (rewrite H)
+     | [H : ?a <> ?b |- False]   => destruct H
+     end;
+     auto).
+
+Section example.
+  Context {A : Type}.
+  
+  (* a = b = c = d = e *)
+  Goal forall a b c d e f g : A, a = b -> c = b -> d = c -> e = d -> a = e.
+  Proof.
+    simp. rw.
+  Qed.
+End example.
 
 
 (* ######################################################################### *)

@@ -94,7 +94,7 @@ End hd_tl.
 (** ** Properties of nth *)
 Section nth.
   
-  Context {A : Type}.
+  Context {A : Type} (Azero : A).
 
   (** nth [] a = a *)
   Lemma nth_nil : forall (a : A) (i : nat), nth i [] a = a.
@@ -102,21 +102,39 @@ Section nth.
     intros. destruct i; simpl; easy.
   Qed.
 
-  (** Two list equal iff all nth visit equal *)
-  Lemma list_eq_iff_nth (Azero : A) :
-    forall n (l1 l2 : list A) (H1 : length l1 = n) (H2 : length l2 = n),
-      l1 = l2 <-> (forall (i : nat), i < n -> nth i l1 Azero = nth i l2 Azero).
+  (** If element-wise equal, then two lists are equal *)
+  Lemma list_eq_ext : forall (n : nat) (l1 l2 : list A),
+      (forall i, i < n -> nth i l1 Azero = nth i l2 Azero) ->
+      length l1 = n -> length l2 = n ->
+      l1 = l2.
   Proof.
     intros n l1. revert n. induction l1; intros; simpl in *; subst.
-    - split; intros; try easy. apply List.length_zero_iff_nil in H2. easy.
-    - split; intros; try easy.
-      + destruct l2; try easy.
-        inversion H. subst. destruct i; simpl; auto.
-      + destruct l2; simpl in *; try easy. f_equal.
-        * specialize (H 0). simpl in H. apply H. lia.
-        * rewrite (IHl1 (length l1)); auto. intros.
-          specialize (H (S i)); simpl in H. apply H. lia.
+    - apply length_zero_iff_nil in H1. auto.
+    - destruct l2; simpl in *; try easy. f_equal.
+      + specialize (H 0); simpl in *. apply H; lia.
+      + apply (IHl1 (length l2)); try lia. intros.
+        specialize (H (S i)); simpl in *. apply H; lia.
   Qed.
+  
+  (* (** Two list equal iff all nth visit equal *) *)
+  (* Lemma list_eq_imply : forall (l1 l2 : list A), *)
+  (*     l1 = l2 -> (forall i, i < length l1 -> nth i l1 Azero = nth i l2 Azero). *)
+  (* Proof. intros; subst; auto. Qed. *)
+  
+  (* Lemma list_eq_iff_nth : *)
+  (*   forall n (l1 l2 : list A) (H1 : length l1 = n) (H2 : length l2 = n), *)
+  (*     l1 = l2 <-> (forall (i : nat), i < n -> nth i l1 Azero = nth i l2 Azero). *)
+  (* Proof. *)
+  (*   intros n l1. revert n. induction l1; intros; simpl in *; subst. *)
+  (*   - split; intros; try easy. apply List.length_zero_iff_nil in H2. easy. *)
+  (*   - split; intros; try easy. *)
+  (*     + destruct l2; try easy. *)
+  (*       inversion H. subst. destruct i; simpl; auto. *)
+  (*     + destruct l2; simpl in *; try easy. f_equal. *)
+  (*       * specialize (H 0). simpl in H. apply H. lia. *)
+  (*       * rewrite (IHl1 (length l1)); auto. intros. *)
+  (*         specialize (H (S i)); simpl in H. apply H. lia. *)
+  (* Qed. *)
 
   (* (repeat a n)[i] = a *)
   Lemma nth_repeat_same : forall (n i : nat) (a def : A),
@@ -161,7 +179,7 @@ Section fold_left.
       fold_left Aadd l (a + b) = (fold_left Aadd l a) + b.
   Proof.
     induction l; intros; simpl; auto.
-    replace (a0 + b + a) with (a0 + a + b). apply IHl. asemigroup.
+    replace (a0 + b + a) with (a0 + a + b). apply IHl. agroup.
   Qed.
 
   Lemma fold_left_rebase_r : forall (l : list A) a b,
@@ -175,7 +193,7 @@ Section fold_left.
       fold_left Aadd (repeat Azero n) a = a.
   Proof.
     induction n; intros; simpl; auto.
-    rewrite fold_left_rebase_r. rewrite IHn. monoid.
+    rewrite fold_left_rebase_r. rewrite IHn. amonoid.
   Qed.
 
   (** Σ(ai+bi) = Σ(ai) + Σ(bi) *)
@@ -185,12 +203,12 @@ Section fold_left.
       fold_left Aadd l Azero = (fold_left Aadd l1 Azero) + (fold_left Aadd l2 Azero).
   Proof.
     induction l; destruct l1,l2; intros; simpl in *; try lia.
-    - monoid.
+    - agroup.
     - destruct n. lia.
       inversion H; clear H. inversion H0; clear H0. inversion H1; clear H1.
       rewrite !fold_left_rebase_l.
       rewrite (IHl l1 l2 n); auto.
-      + asemigroup.
+      + agroup.
         specialize (H2 0). simpl in H2. rewrite H2; auto. lia.
       + intros. specialize (H2 (S i)). simpl in H2. apply H2. lia.
   Qed.
@@ -209,8 +227,7 @@ Section fold_left.
       inversion H; clear H. inversion H0; clear H0.
       rewrite !fold_left_rebase_l.
       rewrite (IHl1 l2 n); auto.
-      + rewrite group_opp_distr. asemigroup.
-        specialize (H1 0). simpl in H1. rewrite H1; auto. lia.
+      + agroup. specialize (H1 0); simpl in H1. rewrite H1; auto; try lia.
       + intros. specialize (H1 (S i)). simpl in H1. apply H1. lia.
   Qed.
 
@@ -230,7 +247,7 @@ Section fold_left.
       inversion H; clear H. inversion H0; clear H0.
       rewrite !fold_left_rebase_l.
       rewrite (IHl1 l2 n a1); auto.
-      + rewrite distributiveLeft. asemigroup.
+      + rewrite distributiveLeft. agroup.
         specialize (H1 0). simpl in H1. rewrite H1; auto. lia.
       + intros. specialize (H1 (S i)). simpl in H1. apply H1. lia.
   Qed.
@@ -248,7 +265,7 @@ Section fold_right.
   Lemma fold_right_rebase_l : forall (l : list A) a b,
       fold_right Aadd (a + b) l = b + (fold_right Aadd a l).
   Proof.
-    induction l; intros; simpl; auto. asemigroup. rewrite IHl. asemigroup.
+    induction l; intros; simpl; auto. agroup. rewrite IHl. agroup.
   Qed.
 
   Lemma fold_right_rebase_r : forall (l : list A) a b,
@@ -260,7 +277,7 @@ Section fold_right.
   (** (a+0+0+0+... = a *)
   Lemma fold_right_lzero : forall n a,
       fold_right Aadd a (repeat Azero n) = a.
-  Proof. induction n; intros; simpl; auto. rewrite IHn. monoid. Qed.
+  Proof. induction n; intros; simpl; auto. rewrite IHn. agroup. Qed.
   
   (** Σ(ai+bi) = Σ(ai) + Σ(bi) *)
   Lemma fold_right_add : forall (l l1 l2:list A) n,
@@ -269,9 +286,9 @@ Section fold_right.
       fold_right Aadd Azero l = (fold_right Aadd Azero l1) +
                                   (fold_right Aadd Azero l2).
   Proof.
-    induction l; destruct l1,l2; intros; simpl in *; try lia. monoid.
+    induction l; destruct l1,l2; intros; simpl in *; try lia. agroup.
     destruct n. lia. rewrite (IHl l1 l2 n); auto.
-    - specialize (H2 0); simpl in H2. rewrite H2; try lia. asemigroup.
+    - specialize (H2 0); simpl in H2. rewrite H2; try lia. agroup.
     - intros. specialize (H2 (S i)); simpl in H2. rewrite H2; auto. lia.
   Qed.
 
@@ -287,7 +304,7 @@ Section fold_right.
     - rewrite group_opp_0; auto.
     - destruct n. lia. rewrite (IHl1 l2 n); auto.
       + specialize (H1 0); simpl in H1.
-        rewrite H1; try lia. rewrite group_opp_distr. asemigroup.
+        rewrite H1; try lia. rewrite group_opp_distr. agroup.
       + intros. specialize (H1 (S i)); simpl in H1. rewrite H1; auto. lia.
   Qed.
 
@@ -303,7 +320,7 @@ Section fold_right.
     induction l1,l2; intros; simpl in *; try lia.
     - rewrite ring_mul_0_r; auto.
     - destruct n. lia. rewrite (IHl1 l2 n a1); auto.
-      + rewrite (distributiveLeft a1). asemigroup.
+      + rewrite (distributiveLeft a1). agroup.
         specialize (H1 0); simpl in H1; rewrite H1; auto. lia.
       + intros. specialize (H1 (S i)); simpl in H1. apply H1. lia.
   Qed.
@@ -493,7 +510,7 @@ Ltac solve_list2elems :=
 
 Section list2elems.
   Context {A} {Azero : A}.
-  Notation "l ! i" := (nth i l Azero).
+  Notation "l ! i" := (nth i l Azero) (at level 2).
 
   (** a list of length 1 *)
   Lemma list2elems_1 : forall (l : list A), length l = 1 -> l = [l!0].
@@ -787,50 +804,32 @@ End map2_dlist.
 (* ===================================================================== *)
 (** ** map2 properties with same base type *)
 Section map2_sametype.
-  Context {A : Type} (Aadd : A -> A -> A) (Aopp : A -> A).
+  Context `{HMonoid : Monoid}.
   Infix "+" := Aadd.
-  Notation "- a" := (Aopp a).
-  Notation Asub := (fun a b => a + (-b)).
-
-  (** l1 . l2 = l2 . l1 *)
-  Context `{Comm:Commutative A Aadd}.
-  Lemma map2_comm : forall (l1 l2 : list A), map2 Aadd l1 l2 = map2 Aadd l2 l1.
-  Proof.
-    induction l1; destruct l2; simpl; try easy. f_equal; auto. apply commutative.
-  Qed.
   
   (** (l1 . l2) . l3 = l1 . (l2 . l3) *)
-  Context {Assoc:Associative Aadd}.
   Lemma map2_assoc : forall (l1 l2 l3 : list A),
       map2 Aadd (map2 Aadd l1 l2) l3 = map2 Aadd l1 (map2 Aadd l2 l3).
   Proof.
-    induction l1; destruct l2,l3; simpl; try easy. f_equal; auto.
-    rewrite associative; auto.
+    induction l1; destruct l2,l3; simpl; try easy. f_equal; monoid.
   Qed.
 
-  (** map2 over map is homorphism *)
-  (* In fact, I don't know how to naming this property yet. *)
-  Lemma map2_map_hom :
-    forall l1 l2 (H : forall a b : A, (Aopp (Aadd a b) = Aadd (Aopp a) (Aopp b))),
-      map2 Aadd (map Aopp l1) (map Aopp l2) = map Aopp (map2 Aadd l1 l2).
-  Proof.
-    intros. revert l2.
-    induction l1; destruct l2; simpl; try easy.
-    f_equal; auto.
-  Qed.
+  (* (** nth (map2 f l1 l2) i = f (nth l1 i) (nth l2 i) *) *)
+  (* Lemma nth_map2_sameType : forall (l1 l2 : list A) n i a, *)
+  (*     length l1 = n -> length l2 = n -> i < n -> *)
+  (*     (nth i (map2 Aadd l1 l2) a = Aadd (nth i l1 a) (nth i l2 a)). *)
+  (* Proof. *)
+  (*   induction l1,l2; intros; simpl in *; destruct i; try lia; auto. *)
+  (*   destruct n. lia. apply IHl1 with (n:=n); lia. *)
+  (* Qed. *)
 
-  (** nth (map2 f l1 l2) i = f (nth l1 i) (nth l2 i) *)
-  Lemma nth_map2_sameType : forall (l1 l2 : list A) n i a,
-      length l1 = n -> length l2 = n -> i < n ->
-      (nth i (map2 Aadd l1 l2) a = Aadd (nth i l1 a) (nth i l2 a)).
-  Proof.
-    induction l1,l2; intros; simpl in *; destruct i; try lia; auto.
-    destruct n. lia. apply IHl1 with (n:=n); lia.
-  Qed.
-  
-  (** *** The properties below, need a monoid structure *)
-
-  Context `{Monoid A Aadd}.
+  (* (** nth (map2 f l1 l2) i = f (nth l1 i) (nth l2 i) *) *)
+  (* Lemma nth_map2_sameType' : forall (l1 l2 : list A) i, *)
+  (*     length l1 = length l2 -> *)
+  (*     (nth i (map2 Aadd l1 l2) Azero = Aadd (nth i l1 Azero) (nth i l2 Azero)). *)
+  (* Proof. *)
+  (*   induction l1,l2; intros; simpl in *; destruct i; monoid; try lia. *)
+  (* Qed. *)
 
   (** map2 lzero l = l *)
   Lemma map2_zero_l : forall l, map2 Aadd (lzero Azero (length l)) l = l.
@@ -844,17 +843,29 @@ Section map2_sametype.
     induction l; intros; simpl. easy. rewrite IHl. monoid.
   Qed.
 
-  (* (** nth (map2 f l1 l2) i = f (nth l1 i) (nth l2 i) *) *)
-  (* Lemma nth_map2' : forall (l1 l2 : list A) i, *)
-  (*     length l1 = length l2 -> *)
-  (*     (nth i (map2 Aadd l1 l2) Azero = Aadd (nth i l1 Azero) (nth i l2 Azero)). *)
-  (* Proof. *)
-  (*   induction l1,l2; intros; simpl in *; destruct i; monoid; try lia. *)
-  (* Qed. *)
+  (** l1 . l2 = l2 . l1 *)
+  Context `{HAMonoid : AMonoid _ Aadd Azero}.
+  Lemma map2_comm : forall (l1 l2 : list A), map2 Aadd l1 l2 = map2 Aadd l2 l1.
+  Proof.
+    induction l1; destruct l2; simpl; try easy. agroup.
+  Qed.
   
   (** *** The properties below, need a group structure *)
 
   Context `{G:Group A Aadd Azero Aopp}.
+  Notation "- a" := (Aopp a) : A_scope.
+  Notation Asub := (fun a b => a + (-b)).
+  
+  (** map2 over map is homorphism *)
+  (* In fact, I don't know how to naming this property yet. *)
+  Lemma map2_map_hom :
+    forall l1 l2 (H : forall a b : A, (Aopp (Aadd a b) = Aadd (Aopp a) (Aopp b))),
+      map2 Aadd (map Aopp l1) (map Aopp l2) = map Aopp (map2 Aadd l1 l2).
+  Proof.
+    intros. revert l2.
+    induction l1; destruct l2; simpl; try easy.
+    f_equal; auto.
+  Qed.
 
   (* l1 - l2 = - (l2 - l1) *)
   Lemma map2_sub_comm : forall (l1 l2 : list A),
@@ -868,17 +879,14 @@ Section map2_sametype.
   Lemma map2_sub_perm : forall (l1 l2 l3 : list A),
       map2 Asub (map2 Asub l1 l2) l3 = map2 Asub (map2 Asub l1 l3) l2.
   Proof.
-    induction l1,l2,l3; simpl; auto. f_equal; auto. group.
-    f_equal. apply commutative.
+    induction l1,l2,l3; simpl; auto. f_equal; auto. agroup.
   Qed.
   
   (** (l1 - l2) - l3 = l1 - (l2 + l3) *)
   Lemma map2_sub_assoc : forall (l1 l2 l3 : list A),
       map2 Asub (map2 Asub l1 l2) l3 = map2 Asub l1 (map2 Aadd l2 l3).
   Proof.
-    induction l1,l2,l3; simpl; auto. f_equal; auto.
-    rewrite associative. f_equal.
-    rewrite group_opp_distr. apply commutative.
+    induction l1,l2,l3; simpl; auto. f_equal; auto. agroup.
   Qed.
 
   (** 0 - l = - l *)
@@ -886,7 +894,7 @@ Section map2_sametype.
       length l = n -> map2 Asub (lzero Azero n) l = map Aopp l.
   Proof.
     induction l; simpl; intros. apply map2_nil_r.
-    induction n ; simpl. lia. f_equal; auto. group.
+    induction n ; simpl. lia. f_equal; auto. agroup.
   Qed.
   
   (** l - 0 = l *)
@@ -894,15 +902,14 @@ Section map2_sametype.
       length l = n -> map2 Asub l (lzero Azero n) = l.
   Proof.
     induction l; simpl; intros; auto. destruct n; simpl. lia.
-    f_equal; auto. rewrite group_opp_0 at 1. group.
+    f_equal; agroup.
   Qed.
   
   (** l - l = 0 *)
   Lemma map2_sub_self : forall l n, 
       length l = n -> map2 Asub l l = (lzero Azero n).
   Proof.
-    induction l; simpl; intros; subst; try easy. simpl lzero.
-    f_equal; auto. group.
+    induction l; simpl; intros; subst; try easy. simpl lzero. f_equal; agroup.
   Qed.
 
 End map2_sametype.
@@ -957,9 +964,6 @@ Section f2l_l2f.
   Definition f2l (n : nat) (f : nat -> A) : list A :=
     map f (seq 0 n).
 
-  Definition l2f (n : nat) (l : list A) : nat -> A :=
-    fun i => nth i l Azero.
-
   Lemma f2l_length : forall n f, length (f2l n f) = n.
   Proof.
     intros. unfold f2l. rewrite map_length. apply seq_length.
@@ -969,15 +973,38 @@ Section f2l_l2f.
   Lemma nth_f2l : forall {n} f a i, i < n -> nth i (f2l n f) a = f i.
   Proof. intros. unfold f2l. rewrite nth_map_seq; auto. Qed.
 
-  Lemma f2l_l2f_id : forall l {n}, length l = n -> f2l n (l2f n l) = l.
+  Lemma f2l_inj : forall n (f1 f2 : nat -> A),
+      f2l n f1 = f2l n f2 -> (forall i, i < n -> f1 i = f2 i).
   Proof.
-    intros. rewrite (list_eq_iff_nth Azero n); auto.
+    intros. unfold f2l in *. apply ext_in_map with (a:=i) in H; auto.
+    apply in_seq; auto. lia.
+  Qed.
+
+  
+  Definition l2f (n : nat) (l : list A) : nat -> A :=
+    fun i => nth i l Azero.
+
+  Lemma l2f_inj : forall n (l1 l2 : list A),
+      (forall i, i < n -> (l2f n l1) i  = (l2f n l2 i)) ->
+      length l1 = n -> length l2 = n -> l1 = l2.
+  Proof. intros. unfold l2f in *. apply list_eq_ext in H; auto. Qed.
+  
+  Lemma f2l_l2f : forall l {n}, length l = n -> f2l n (l2f n l) = l.
+  Proof.
+    intros. apply (list_eq_ext Azero n); auto.
     - intros. rewrite nth_f2l; auto.
     - apply f2l_length.
   Qed.
 
-  Lemma l2f_f2l_id : forall f {n} i, i < n -> l2f n (f2l n f) i = f i.
+  Lemma l2f_f2l : forall f n i, i < n -> l2f n (f2l n f) i = f i.
   Proof. intros. unfold l2f. rewrite nth_f2l; auto. Qed.
+
+  Lemma f2l_surj : forall n (l : list A), length l = n -> exists (f : nat -> A), f2l n f = l.
+  Proof. intros. exists (l2f n l). apply f2l_l2f; auto. Qed.
+
+  Lemma l2f_surj : forall n (f : nat -> A),
+    exists (l : list A), (forall i, i < n -> (l2f n l) i = f i).
+  Proof. intros. exists (f2l n f). intros. apply l2f_f2l; auto. Qed.
 
 End f2l_l2f.
 
@@ -1013,7 +1040,7 @@ Section ladd_opp_sub.
   (** l1 + l2 = l2 + l1 *)
   Lemma ladd_comm : forall l1 l2, l1 + l2 = l2 + l1.
   Proof.
-    apply map2_comm; auto. apply AG.
+    apply map2_comm; auto.
   Qed.
   
   (** [] + l = [] *)
@@ -1034,14 +1061,14 @@ Section ladd_opp_sub.
   Proof.
     induction l; simpl; intros. apply map2_nil_r.
     induction n ; simpl. inversion H.
-    f_equal; auto. group.
+    f_equal; auto. agroup.
   Qed.
   
   (** l + 0 = l *)
   Lemma ladd_zero_r : forall l n, length l = n -> ladd l (lzero Azero n) = l.
   Proof.
     intros. unfold ladd. rewrite map2_comm; auto.
-    apply ladd_zero_l; auto. apply AG.
+    apply ladd_zero_l; auto.
   Qed.
   
   (** - l *)
@@ -1052,10 +1079,7 @@ Section ladd_opp_sub.
 
   (** l1 - l2 = - (l2 - l1) *)
   Lemma lsub_comm : forall (l1 l2 : list A), lsub l1 l2 = lopp (lsub l2 l1).
-  Proof.
-    intros.
-    apply map2_sub_comm with (Azero:=Azero). apply AG.
-  Qed.
+  Proof. intros. apply map2_sub_comm. Qed.
   
   (** (l1 - l2) - l3 = (l1 - l3) - l2 *)
   Lemma lsub_perm : forall (l1 l2 l3 : list A),
@@ -1067,9 +1091,7 @@ Section ladd_opp_sub.
   (** (l1 - l2) - l3 = l1 - (l2 + l3) *)
   Lemma lsub_assoc : forall (l1 l2 l3 : list A),
       lsub (lsub l1 l2) l3 = lsub l1 (ladd l2 l3).
-  Proof.
-    apply map2_sub_assoc with (Azero:=Azero); apply AG.
-  Qed.
+  Proof. apply map2_sub_assoc. Qed.
   
   (** 0 - l = - l *)
   Lemma lsub_zero_l : forall l n, length l = n -> lsub (lzero Azero n) l = lopp l.
@@ -1207,7 +1229,9 @@ Section ldot.
 
   (** l1 . l2 = l2 . l1 *)
   Lemma ldot_comm : forall (l1 l2 : list A), ldot l1 l2 = ldot l2 l1.
-  Proof. intros. unfold ldot. rewrite map2_comm; auto. apply HARing. Qed.
+  Proof.
+    intros. unfold ldot. pose proof (aringAMonoid). rewrite map2_comm. auto.
+  Qed.
   
   (** [] . l = 0 *)
   Lemma ldot_nil_l : forall (l : list A), ldot nil l = Azero.
@@ -1577,7 +1601,7 @@ End width.
 Section dlnth.
   Context {A} {Azero : A}.
 
-  Notation "dl ! i ! j" := (nth j (nth i dl []) Azero).
+  (* Notation "dl ! i ! j" := (nth j (nth i dl []) Azero). *)
 
 End dlnth.
 
@@ -1588,7 +1612,7 @@ End dlnth.
 Section dl2elems.
   Context {A} {Azero : A}.
   
-  Notation "dl ! i ! j" := (nth j (nth i dl []) Azero).
+  Notation "dl ! i ! j" := (nth j (nth i dl []) Azero) (at level 2, i,j at next level).
 
   (* 自动处理前提中含有 width 的简单情形，以自动化 dl2elems 的证明 *)
   Ltac solve_dl2elems :=
@@ -1674,12 +1698,12 @@ Section props_dlist.
                       (nth j (nth i dl1 []) Azero =
                          nth j (nth i dl2 []) Azero)).
   Proof.
-    intros; split; intros.
+    intros; split; intros. 
     - rewrite H. easy.
-    - apply (list_eq_iff_nth [] _ dl1 dl2 H1 H2). intros. subst.
-      rewrite (list_eq_iff_nth) with (n:=c); auto.
-      apply dlist_nth_length; auto.
-      apply dlist_nth_length; auto. lia.
+    - apply (list_eq_ext [] r); auto; intros.
+      apply (list_eq_ext Azero c); auto; intros.
+      apply dlist_nth_length; auto;lia.
+      apply dlist_nth_length; auto;lia.
   Qed.
 
   (** dlist_eq is decidable *)
@@ -2712,26 +2736,15 @@ End dmap2.
 (* ===================================================================== *)
 (** ** dmap2 with same base type *)
 Section dmap2_sametype.
-  Context {A : Type} {Aadd : A -> A -> A}.
+  Context `{HMonoid : Monoid}.
   Infix "+" := Aadd.
-  
-  Context {Comm : Commutative Aadd}.
-  (** dl1 . dl2 = dl2 . dl1 *)
-  Lemma dmap2_comm : forall (dl1 dl2 : dlist A),
-      dmap2 Aadd dl1 dl2 = dmap2 Aadd dl2 dl1.
-  Proof.
-    induction dl1,dl2; simpl; auto. f_equal; auto.
-    apply map2_comm. auto.
-  Qed.
 
   (** (dl1 . dl2) . dl3 = dl1 . (dl2 . dl3) *)
-  Context {Assoc : Associative Aadd}.
   Lemma dmap2_assoc : forall (dl1 dl2 dl3 : dlist A),
       dmap2 Aadd (dmap2 Aadd dl1 dl2) dl3 =
         dmap2 Aadd dl1 (dmap2 Aadd dl2 dl3).
   Proof.
-    induction dl1,dl2,dl3; simpl; auto. f_equal; auto.
-    apply map2_assoc. auto.
+    induction dl1,dl2,dl3; simpl; auto. f_equal; auto. apply map2_assoc.
   Qed.
   
   (** dmap2 with dmap of two components *)
@@ -2752,6 +2765,15 @@ Section dmap2_sametype.
     intros. revert d2.
     induction d1,d2; simpl; try easy. rewrite IHd1. rewrite map2_map_hom. easy.
     easy.
+  Qed.
+
+  Context {HAMonoid : AMonoid Aadd Azero}.
+  
+  (** dl1 . dl2 = dl2 . dl1 *)
+  Lemma dmap2_comm : forall (dl1 dl2 : dlist A),
+      dmap2 Aadd dl1 dl2 = dmap2 Aadd dl2 dl1.
+  Proof.
+    induction dl1,dl2; simpl; auto. f_equal; auto. apply map2_comm.
   Qed.
   
 End dmap2_sametype.
@@ -2812,7 +2834,7 @@ Section dladd.
     - unfold dmap2. apply map2_nil_r.
     - destruct r. easy. inv H. inv H0.
       simpl. f_equal; auto.
-      rewrite map2_zero_l. easy. apply AG.
+      rewrite map2_zero_l. auto.
   Qed.
   
   (** 0 + dl = dl *)
@@ -2843,7 +2865,7 @@ Section dlsub.
       dmap2 Asub dl1 dl2 = dmap Aopp (dmap2 Asub dl2 dl1).
   Proof.
     induction dl1,dl2; simpl; intros; auto. f_equal.
-    - rewrite map2_sub_comm with (Azero:=Azero). easy. apply AG.
+    - rewrite map2_sub_comm. auto.
     - inv H. inv H0. inv H1.
       apply IHdl1 with (c:=length a); auto.
   Qed.
@@ -2857,7 +2879,7 @@ Section dlsub.
         dmap2 Asub dl1 (dmap2 Aadd dl2 dl3).
   Proof.
     induction dl1,dl2,dl3; simpl; intros; auto. f_equal.
-    - apply map2_sub_assoc with (Azero:=Azero); apply AG.
+    - apply map2_sub_assoc.
     - inv H. inv H0. unfold width in *. inv H1. inv H2.
       apply IHdl1 with (c:=length a); auto.
   Qed.
@@ -2897,7 +2919,7 @@ Section dlsub.
     induction dl; simpl; intros; subst; try easy. inv H0.
     rewrite (IHdl (length dl) (length a)); auto.
     unfold dlzero in *. simpl. f_equal; try easy.
-    apply map2_sub_self; auto. apply AG.
+    apply map2_sub_self; auto.
   Qed.
 
 End dlsub.

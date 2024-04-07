@@ -163,8 +163,8 @@ Section GaussElim.
     - unfold mrowAdd; fin. subst.
       rewrite !(H _ j0); auto. ring.
       pose proof (fin2nat_lt j). lia.
-    - unfold mrowAdd; fin. subst.
-      rewrite H1; auto. rewrite (H _ i); auto. ring.
+    - unfold mrowAdd; fin. apply fin2nat_inj in E; rewrite E.
+      rewrite H1; auto; fin. rewrite (H _ i); auto. ring.
   Qed.
   
   
@@ -260,7 +260,7 @@ Section GaussElim.
     | S x' =>
         (* 递归时 x 从大到小，而 fx 是从小到大 *)
         let fx : fin (S n) := #(S n - x) in
-        let x : A := M $ fx $ j in
+        let x : A := M.[fx].[j] in
         (* 如果 M[S n-x,j] <> 0，则 j 行的 -M[S n-x,j] 倍加到 S n-x 行。要求 M[j,j]=1 *)
         if Aeqdec x 0
         then elimDown M x' j
@@ -417,7 +417,7 @@ Section GaussElim.
                else (ROswap j i, mrowSwap j i M)) in
             (* 使主元是 1 *)
             let (op2, M2) :=
-              (let c : A := M1 $ j $ j in
+              (let c : A := M1.[j].[j] in
                (ROscale j (/c), mrowScale j (/c) M1)) in
             (* 使主元以下都是 0 *)
             let (l3, M3) := elimDown M2 x' j in
@@ -481,7 +481,7 @@ Section GaussElim.
         * unfold mrowScale; fin.
           (* 确保元素非零时才能消去除法逆元 *)
           rewrite field_mulInvL; auto.
-          apply firstNonzero_imply_nonzero in Hi. auto.
+          apply firstNonzero_imply_nonzero in Hi. rewrite <- E in *. fin.
         * hnf; intros. unfold mrowScale; fin. rewrite (H1 _ j); fin.
       + destruct elimDown as [l3 M3] eqn:T3.
         destruct rowEchelon as [[l4 M4]|] eqn:T4; try easy.
@@ -494,7 +494,7 @@ Section GaussElim.
           rewrite field_mulInvL; auto.
           unfold mrowSwap; fin. apply firstNonzero_imply_nonzero in Hi. auto.
         * hnf; intros. unfold mrowScale, mrowSwap; fin.
-          ** rewrite (H1 _ j); fin. ring. lia. apply firstNonzero_min in Hi. lia.
+          ** rewrite (H1 _ j); fin. apply firstNonzero_min in Hi. lia.
           ** rewrite (H1 _ j); fin.
   Qed.
 
@@ -533,10 +533,10 @@ Section GaussElim.
              *** rewrite <- E0. fin. rewrite field_mulInvL; auto.
                  rewrite <- E0 in *. fin.
                  apply firstNonzero_imply_nonzero in Hi; auto.
+                 apply fin2nat_inj in E; subst. auto.
              *** rewrite H0; auto. lia.
-          ** unfold mrowScale; fin.
-             rewrite field_mulInvL; auto.
-             apply firstNonzero_imply_nonzero in Hi. auto.
+          ** unfold mrowScale; fin. rewrite field_mulInvL; auto.
+             apply firstNonzero_imply_nonzero in Hi. rewrite <- E in *. fin.
       + destruct elimDown as [l3 M3] eqn:T3.
         destruct rowEchelon as [[l4 M4]|] eqn:T4; try easy.
         apply IHx in T4; clear IHx; try lia.
@@ -630,7 +630,7 @@ Section GaussElim.
     | O => ([], M)
     | S x' =>
         let fx : fin (S n) := #x' in
-        let a : A := (M $ fx $ j) in
+        let a : A := (M.[fx].[j]) in
         (* 如果 M[x',j] <> 0，则 j 行的 -M[x',j] 倍加到 x' 行。要求 M[j,j]=1 *)
         if Aeqdec a 0
         then elimUp M x' j
@@ -842,9 +842,10 @@ Section GaussElim.
       rewrite mat1_mLeftLowerZeros; auto; fin.
       apply minRowEchelon_keep_NormedLowerTriangle in H; auto.
       hnf in H. destruct H. rewrite H; auto; fin.
-    - destruct (j ??= i).
+    - destruct (j ??= i) as [E|E].
       + (* 对角线 *)
-        apply minRowEchelon_keep_NormedLowerTriangle in H; auto. fin.
+        apply minRowEchelon_keep_NormedLowerTriangle in H; auto.
+        apply fin2nat_inj in E; subst.
         rewrite mat1_mDiagonalOne; fin.
         hnf in H. destruct H. rewrite H1; auto; fin.
       + (* 右上角 *)
@@ -1061,18 +1062,18 @@ Section minvGE.
   Lemma mmul_eq1_imply_minvGE_r : forall {n} (M N : smat n), M * N = mat1 -> N\-1 = M.
   Proof.
   Admitted.
+  
+  (** minvertibleGE M = true -> M \-1 = N -> M * N = mat1 *)
+  Lemma mmul_eq1_if_minvGE_l : forall {n} (M N : smat n),
+      minvertibleGE M = true -> M\-1 = N -> M * N = mat1.
+  Proof.
+  Admitted.
 
-  (* (** M * N = mat1 <-> M \-1 = N *) *)
-  (* Lemma mmul_eq1_iff_minvGE_l : forall {n} (M N : smat n), M * N = mat1 <-> M\-1 = N. *)
-  (* Proof. *)
-  (*   intros. split; intros. *)
-  (*   -  *)
-  (* Admitted. *)
-
-  (* (** M * N = mat1 <-> N \-1 = M *) *)
-  (* Lemma mmul_eq1_iff_minvGE_r : forall {n} (M N : smat n), M * N = mat1 <-> N\-1 = M. *)
-  (* Proof. *)
-  (* Admitted. *)
+  (** minvertibleGE N = true -> N \-1 = M -> M * N = mat1 *)
+  Lemma mmul_eq1_if_minvGE_r : forall {n} (M N : smat n),
+      minvertibleGE N = true -> N\-1 = M ->  M * N = mat1.
+  Proof.
+  Admitted.
   
 
   (* ******************************************************************* *)
@@ -1107,7 +1108,7 @@ End minvGE.
 
 
 (* ############################################################################ *)
-(** * Test and extraction *)
+(** * Test *)
 
 (* ******************************************************************* *)
 (** ** Test inverse matrix on Q *)
@@ -1326,7 +1327,10 @@ Section minvGE_Qlist.
            [0.8693;0.4018;0.9027;0.7803;0.5752;0.6491;0.6868;0.4868]].
 
     (* Time Compute minvertibleGE_Qlist 8 d1. (* 0.15s *) *)
-    (* Time Compute minvGE_Qlist 8 d1.        (* 19s *) *)
+    (* Time Compute minvGE_Qlist 5 d1. (* 0.34 *) *)
+    (* Time Compute minvGE_Qlist 6 d1. (* 1.28 *) *)
+    (* Time Compute minvGE_Qlist 7 d1. (* 4.8 *) *)
+    (* Time Compute minvGE_Qlist 8 d1. (* 20.5 *) *)
   End ex4.
   
   (* In summary, for computing inverse matrices with Q (with the help of Qc):
@@ -1335,22 +1339,3 @@ Section minvGE_Qlist.
      3. Leibniz equal is supported.
    *)
 End minvGE_Qlist.
-
-  
-
-(* ******************************************************************* *)
-(** ** Extraction to OCaml *)
-
-Require Import ExtrOcamlBasic ExtrOcamlNatInt.
-Require Import MyExtrOCamlR.
-
-(* Recursive Extraction *)
-(*   rowEchelon minRowEchelon *)
-(*   minvertibleGE minvGEo *)
-(*   minvertibleGE_list minvGE_list. *)
-
-Definition mmul_R := @mmul _ Rplus R0 Rmult.
-Definition minvGE_R := @minvGE _ Rplus R0 Ropp Rmult R1 Rinv R_eq_Dec.
-Definition minvGE_Rlist := @minvGE_list _ Rplus R0 Ropp Rmult R1 Rinv R_eq_Dec.
-(* Recursive Extraction minvGE_R minvGE_Rlist. *)
-(* Extraction "ocaml_test/matrix.ml" m2l l2m mmul_R minvGE_R minvGE_Rlist. *)

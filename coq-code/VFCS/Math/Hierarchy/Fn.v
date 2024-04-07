@@ -292,7 +292,7 @@ Section props.
        (1). 若线性相关，则这n+1个向量是线性相关的；
        (2). 若线性无关，则第n+1个向量可由前n个向量线性表示，于是这n+1个向量线性相关。*)
     intros.
-    rewrite (vconsT_vremoveT_vtail vs (Azero:=vzero)).
+    rewrite <- (vconsT_vremoveT_vtail vs (Azero:=vzero)).
     assert ({ldep (vremoveT vs)} + {~ (ldep (vremoveT vs))}).
     (* 此可判定性也许无法证明，因为涉及到存在量词 *) admit.
     destruct H.

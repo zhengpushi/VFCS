@@ -160,6 +160,8 @@ Section mcolsOrthonormal_mrowsOrthonormal.
   Notation vunit := (@vunit _ Aadd Azero Amul Aone).
   Notation vorth := (@vorth _ Aadd Azero Amul).
   Infix "_|_" := vorth : vec_scope.
+  Notation vdot := (@vdot _ Aadd Azero Amul).
+  Notation "< a , b >" := (vdot a b) : vec_scope.
 
   (** All (different) columns of a matrix are orthogonal each other.
       For example: [v1;v2;v3] => u_|_v2 && u_|_v3 && v_|_v3. *)
@@ -170,16 +172,22 @@ Section mcolsOrthonormal_mrowsOrthonormal.
   Definition mrowsOrth {r c} (M : mat r c) : Prop :=
     forall i1 i2, i1 <> i2 -> mrow M i1 _|_ mrow M i2.
 
+  Lemma mtrans_mcolsOrth : forall {r c} (M : mat r c), mrowsOrth M -> mcolsOrth (M\T).
+  Proof. intros. hnf in *. intros. rewrite !mcol_mtrans_eq_mrow. auto. Qed.
+
+  Lemma mtrans_mrowsOrth : forall {r c} (M : mat r c), mcolsOrth M -> mrowsOrth (M\T).
+  Proof. intros. hnf in *. intros. rewrite !mrow_mtrans_eq_mcol. auto. Qed.
+
   (*
   (** bool version *)
-  Definition mcolsorthb {r c} (m : mat r c) : bool :=
-    let is_orth (i j : nat) : bool := (<mcol m i, mcol m j> =? Azero)%R in
+  Definition mcolsorthb {r c} (M : mat r c) : bool :=
+    let is_orth (i j : nat) : bool := (<mcol M i, mcol M j> =? Azero)%R in
     let cids (i : nat) : list nat := seq (S i) (c - S i) in
     let chk_col (j : nat) : bool := and_blist (map (fun k => is_orth j k) (cids j)) in
     and_blist (map (fun j => chk_col j) (seq 0 c)).
 
-  Lemma mcolsorthb_spec : forall {r c} (m : mat r c),
-      mcolsorthb m <-> mcolsorth m.
+  Lemma mcolsorthb_spec : forall {r c} (M : mat r c),
+      mcolsorthb M <-> mcolsorth M.
   Proof.
   Abort.
   
@@ -195,26 +203,53 @@ Section mcolsOrthonormal_mrowsOrthonormal.
 
   (** All columns of a matrix are unit vector.
       For example: [v1;v2;v3] => unit u && unit v && unit v3 *)
-  Definition mcolsUnit {r c} (m : mat r c) : Prop := forall j, vunit (mcol m j).
+  Definition mcolsUnit {r c} (M : mat r c) : Prop := forall j, vunit (mcol M j).
+
   (** All rows of a matrix are unit vector. *)
-  Definition mrowsUnit {r c} (m : mat r c) : Prop := forall i, vunit (mrow m i).
+  Definition mrowsUnit {r c} (M : mat r c) : Prop := forall i, vunit (mrow M i).
+
+  Lemma mtrans_mcolsUnit : forall {r c} (M : mat r c),
+      mrowsUnit M -> mcolsUnit (M\T).
+  Proof. intros. hnf in *. intros. rewrite mcol_mtrans_eq_mrow. auto. Qed.
+
+  Lemma mtrans_mrowsUnit : forall {r c} (M : mat r c),
+      mcolsUnit M -> mrowsUnit (M\T).
+  Proof. intros. hnf in *. intros. rewrite mrow_mtrans_eq_mcol. auto. Qed.
 
   (*
   (** bool version *)
-  Definition mcolsUnitb {r c} (m : mat r c) : bool :=
-    and_blist (map (fun i => vunitb (mcol m i)) (seq 0 c)).
+  Definition mcolsUnitb {r c} (M : mat r c) : bool :=
+    and_blist (map (fun i => vunitb (mcol M i)) (seq 0 c)).
 
-  Lemma mcolsUnitb_spec : forall {r c} (m : mat r c),
-      mcolsUnitb m <-> mcolsUnit m.
+  Lemma mcolsUnitb_spec : forall {r c} (M : mat r c),
+      mcolsUnitb M <-> mcolsUnit M.
   Proof.
   Abort.
    *)
 
   (** The columns of a matrix is orthogomal *)
-  Definition mcolsOrthonormal {r c} (m : mat r c) : Prop := mcolsOrth m /\ mcolsUnit m.
+  Definition mcolsOrthonormal {r c} (M : mat r c) : Prop := mcolsOrth M /\ mcolsUnit M.
 
   (** The rows of a matrix is orthogomal *)
-  Definition mrowsOrthonormal {r c} (m : mat r c) : Prop := mrowsOrth m /\ mrowsUnit m.
+  Definition mrowsOrthonormal {r c} (M : mat r c) : Prop := mrowsOrth M /\ mrowsUnit M.
+
+  (** mrowsOrthonormal M -> mcolsOrthonormal (M\T)  *)
+  Lemma mtrans_mcolsOrthonormal : forall {r c} (M : mat r c),
+      mrowsOrthonormal M -> mcolsOrthonormal (M\T).
+  Proof.
+    intros. hnf in *. destruct H. split. 
+    apply mtrans_mcolsOrth; auto.
+    apply mtrans_mcolsUnit; auto.
+  Qed.
+
+  (** mcolsOrthonormal M -> mrowsOrthonormal (M\T)  *)
+  Lemma mtrans_mrowsOrthonormal : forall {r c} (M : mat r c),
+      mcolsOrthonormal M -> mrowsOrthonormal (M\T).
+  Proof.
+    intros. hnf in *. destruct H. split. 
+    apply mtrans_mrowsOrth; auto.
+    apply mtrans_mrowsUnit; auto.
+  Qed.
 
 End mcolsOrthonormal_mrowsOrthonormal.
 
@@ -241,7 +276,8 @@ Section morth.
   Notation minvertible := (@minvertible _ Aadd Azero Amul Aone _).
   Notation mcolsOrthonormal := (@mcolsOrthonormal _ Aadd Azero Amul Aone).
   Notation mrowsOrthonormal := (@mrowsOrthonormal _ Aadd Azero Amul Aone).
-  Notation "M \-1" := (@minvAM _ Aadd Azero Aopp Amul Aone Ainv _ M) : mat_scope.
+  Notation minvAM := (@minvAM _ Aadd Azero Aopp Amul Aone Ainv).
+  Notation "M \-1" := (minvAM M) : mat_scope.
 
   (** An orthogonal matrix *)
   Definition morth {n} (M : smat n) : Prop := M\T * M = mat1.
@@ -252,17 +288,19 @@ Section morth.
   Proof. intros. rewrite minvertible_iff_minvertibleL. hnf in *. exists (M\T). auto. Qed.
 
   (** orthogonal M -> M\-1 = M\T *)
-  Lemma morth_imply_inv_eq_trans : forall {n} (M : smat n),
-      morth M -> M\-1 = M\T.
+  Lemma morth_imply_minvAM_eq_trans : forall {n} (M : smat n),
+      morth M -> minvAM M = M\T.
   Proof. intros. red in H. apply mmul_eq1_imply_minvAM_r in H; auto. Qed.
 
   (** M\-1 = M\T -> orthogonal M *)
-  Lemma minv_eq_trans_imply_morth : forall {n} (M : smat n),
-      M\-1 = M\T -> morth M.
-  Proof. intros.
-         (* apply mmul_eq1_imply_minvAM_l in H. *)
-         (* apply AM_mmul_eq1_iff_minv_r in H. auto. Qed. *)
-  Admitted.
+  Lemma minvAM_eq_trans_imply_morth : forall {n} (M : smat n),
+      minvertible M -> minvAM M = M\T -> morth M.
+  Proof.
+    intros. hnf. rewrite <- H0.
+    apply mmul_minvAM_l.
+    apply minvertible_iff_minvertibleAM_true in H.
+    apply minvertibleAM_true_iff_mdet_neq0 in H. auto.
+  Qed.
 
   (** orthogonal M <-> M\T * M = mat1 *)
   Lemma morth_iff_mul_trans_l : forall {n} (M : smat n),
@@ -273,10 +311,15 @@ Section morth.
   Lemma morth_iff_mul_trans_r : forall {n} (M : smat n),
       morth M <-> M * M\T = mat1.
   Proof.
-    intros. split; intros H.
+    intros. red. split; intros H; auto.
     - pose proof (morth_invertible M H).
-      apply AM_mmul_eq1_iff_minv_r in H. rewrite <- H. apply AM_mmul_minv_r; auto.
-    - apply minv_eq_trans_imply_morth. apply AM_mmul_eq1_iff_minv_l. auto.
+      apply morth_imply_minvAM_eq_trans in H. rewrite <- H.
+      apply mmul_minvAM_r.
+      apply minvertible_iff_minvertibleAM_true in H0.
+      apply minvertibleAM_true_iff_mdet_neq0 in H0; auto.
+    - apply minvAM_eq_trans_imply_morth.
+      apply mmul_eq1_imply_invertible_l in H; auto.
+      apply mmul_eq1_imply_minvAM_l in H. auto.
   Qed.
 
   (** orthogonal mat1 *)
@@ -292,21 +335,25 @@ Section morth.
     rewrite H. rewrite mmul_1_l. rewrite H0. easy.
   Qed.
 
-  (** orthogonal M -> orthogonal M\T *)
+  (** orthogonal M -> orthogonal (M\T) *)
   Lemma morth_mtrans : forall {n} (M : smat n), morth M -> morth (M\T).
   Proof.
     intros. red. rewrite mtrans_mtrans.
     apply morth_iff_mul_trans_r in H. auto.
   Qed.
 
+  (** orthogonal (M\T) -> orthogonal M *)
+  Lemma morth_mtrans_inv : forall {n} (M : smat n), morth (M\T) -> morth M.
+  Proof. intros. apply morth_mtrans in H. rewrite mtrans_mtrans in H. auto. Qed.
+  
   (** orthogonal M -> orthogonal M\-1 *)
-  Lemma morth_minv : forall {n} (M : smat n), morth M -> morth (M\-1).
+  Lemma morth_minvAM : forall {n} (M : smat n), morth M -> morth (M\-1).
   Proof.
     intros. red.
-    rewrite morth_imply_inv_eq_trans; auto. rewrite mtrans_mtrans.
+    rewrite morth_imply_minvAM_eq_trans; auto. rewrite mtrans_mtrans.
     apply morth_iff_mul_trans_r; auto.
   Qed.
-
+  
   (** orthogonal M -> |M| = ± 1 *)
   Lemma morth_mdet : forall {n} (M : smat n),
       morth M -> (mdet M = Aone \/ mdet M = (- Aone)%A).
@@ -328,26 +375,20 @@ Section morth.
       + rewrite vdot_col_col; auto. rewrite H; auto. rewrite mnth_mat1_same; auto.
     - destruct H as [H1 H2]. apply meq_iff_mnth; intros.
       rewrite <- vdot_col_col; auto.
-      destruct (i ??= j)%fin.
-      + subst. rewrite mnth_mat1_same; auto.
-      + rewrite mnth_mat1_diff; auto.
+      destruct (fin2nat i ??= fin2nat j)%nat as [E|E].
+      + apply fin2nat_inj in E; subst. rewrite mnth_mat1_same; auto.
+      + apply fin2nat_inj_not in E. rewrite mnth_mat1_diff; auto.
   Qed.
   
   (** matrix M is orthogonal <-> rows of M are orthogomal *)
   Lemma morth_iff_mrowsOrthonormal : forall {n} (M : smat n),
       morth M <-> mrowsOrthonormal M.
   Proof.
-    intros. unfold mrowsOrthonormal, mrowsOrth, mrowsUnit, vorth, vunit.
-    split; intros.
-    - split; intros.
-      + rewrite vdot_row_row; auto. rewrite morth_iff_mul_trans_r in H.
-        rewrite H, mnth_mat1_diff; auto.
-      + rewrite vdot_row_row; auto. rewrite morth_iff_mul_trans_r in H.
-        rewrite H, mnth_mat1_same; auto.
-    - (* 这一步不能直接证明，因为 morth 定义为 M\T*M=mat1，而不是 M*M\T=mat1。
-         可借助已证明的列的性质。*)
-      destruct H as [H1 H2].
-      apply morth_mtrans. apply morth_iff_mcolsOrthonormal. hnf. split; auto.
+    intros. split; intros.
+    - apply morth_mtrans in H. apply morth_iff_mcolsOrthonormal in H.
+      apply mtrans_mrowsOrthonormal in H. rewrite mtrans_mtrans in H. auto.
+    - apply mtrans_mcolsOrthonormal in H.
+      apply morth_iff_mcolsOrthonormal in H. apply morth_mtrans_inv; auto.
   Qed.
   
   (** columns of M are orthonormal <-> rows of M are orthonormal *)
@@ -402,6 +443,7 @@ End morth.
 (* https://en.wikipedia.org/wiki/Orthogonal_group#Special_orthogonal_group *)
 Section GOn.
   Context `{HField:Field}.
+  Context {AeqDec : Dec (@eq A)}.
   
   Notation smat n := (smat A n).
   Notation mat1 n := (@mat1 _ Azero Aone n).
@@ -511,10 +553,10 @@ Section GOn.
   (* Tips: this lemma is useful to get the inversion matrix *)
   
   (** M\-1 = M\T *)
-  Lemma GOn_imply_inv_eq_trans : forall {n} (M : @GOn n), M\-1 = M\T.
+  Lemma GOn_imply_minvAM_eq_trans : forall {n} (M : @GOn n), M\-1 = M\T.
   Proof.
     intros. destruct M as [M H]. simpl in *.
-    rewrite morth_imply_inv_eq_trans; auto.
+    rewrite morth_imply_minvAM_eq_trans; auto.
   Qed.
 
 End GOn.
@@ -525,7 +567,8 @@ End GOn.
 (* https://en.wikipedia.org/wiki/Orthogonal_group#Special_orthogonal_group *)
 Section SOn.
   Context `{HField:Field}.
-  (* Add Field field_inst : (make_field_theory HField). *)
+  Add Field field_inst : (make_field_theory HField).
+  Context {AeqDec : Dec (@eq A)}.
   
   Notation smat n := (smat A n).
   Notation mat1 n := (@mat1 _ Azero Aone n).
@@ -590,7 +633,7 @@ Section SOn.
   Definition SOn_mul {n} (s1 s2 : @SOn n) : @SOn n.
     refine (Build_SOn (GOn_mul s1 s2) _).
     destruct s1 as [[M1 Horth1] Hdet1], s2 as [[M2 Horth2] Hdet2]. simpl in *.
-    rewrite mdet_mmul. rewrite Hdet1,Hdet2. monoid.
+    rewrite mdet_mmul. rewrite Hdet1,Hdet2. field.
   Defined.
 
   Definition SOn_1 {n} : @SOn n.
@@ -660,24 +703,26 @@ Section SOn.
   (** ** Extract the properties of SOn to its carrier *)
 
   (** M\-1 = M\T *)
-  Lemma SOn_inv_eq_trans : forall {n} (M : @SOn n), M\-1 = M\T.
+  Lemma SOn_minvAM_eq_trans : forall {n} (M : @SOn n), M\-1 = M\T.
   Proof.
     intros. destruct M as [[M Horth] Hdet]; simpl.
-    apply morth_imply_inv_eq_trans. auto.
+    apply morth_imply_minvAM_eq_trans. auto.
   Qed.
 
   (** M\T * M = mat1 *)
   Lemma SOn_mul_trans_l_eq1 : forall {n} (M : @SOn n), M\T * M = mat1 n.
   Proof.
-    intros. rewrite <- SOn_inv_eq_trans. apply AM_mmul_minv_l.
-    destruct M as [[M H] H1]. simpl. apply morth_invertible; auto.
+    intros. rewrite <- SOn_minvAM_eq_trans. apply mmul_minvAM_l.
+    destruct M as [[M H] H1]. simpl in *. rewrite H1.
+    intro. apply field_1_neq_0; auto.
   Qed.
 
   (** M * M\T = mat1 *)
   Lemma SOn_mul_trans_r_eq1 : forall {n} (M : @SOn n), M * M\T = mat1 n.
   Proof.
-    intros. rewrite <- SOn_inv_eq_trans. apply AM_mmul_minv_r.
-    destruct M as [[M H] H1]. simpl. apply morth_invertible; auto.
+    intros. rewrite <- SOn_minvAM_eq_trans. apply mmul_minvAM_r.
+    destruct M as [[M H] H1]. simpl in *. rewrite H1.
+    intro. apply field_1_neq_0; auto.
   Qed.
 
 End SOn.

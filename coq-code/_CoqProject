@@ -7,12 +7,13 @@
 -R ./VFCS VFCS
 
 -arg -w -arg -notation-overridden
--arg -w -arg -deprecated-hint-without-locality
--arg -w -arg -redundant-canonical-projection
+# -arg -w -arg -deprecated-hint-without-locality
+# -arg -w -arg -redundant-canonical-projection
 -arg -w -arg -ambiguous-paths
--arg -w -arg -local-declaration
+# -arg -w -arg -local-declaration
 -arg -w -arg -hiding-delimiting-key
 # -arg -w -arg -future-coercion-class-field
+# -arg -w -arg -extraction-logical-axiom
 
 # ====== CoqExt ======================================================
 VFCS/CoqExt/Basic.v
@@ -29,6 +30,7 @@ VFCS/CoqExt/RExt.v
 VFCS/CoqExt/StrExt.v
 VFCS/CoqExt/TupleExt.v
 VFCS/CoqExt/ListExt.v
+VFCS/CoqExt/MyExtrOCamlPArray.v
 VFCS/CoqExt/MyExtrOCamlR.v
 VFCS/CoqExt/Utils.v
 
@@ -42,13 +44,17 @@ VFCS/Math/Calculus/Calculus.v
 
 VFCS/Math/Ratan2.v
 
+# VFCS/Math/PMatrix/Sequence.v
+# VFCS/Math/PMatrix/PMatrix.v
+
 VFCS/Math/Matrix/Fin.v
 VFCS/Math/Matrix/Sequence.v
-VFCS/Math/Matrix/Fsequence.v
+# VFCS/Math/Matrix/Fsequence.v
 VFCS/Math/Matrix/Vector.v
 VFCS/Math/Matrix/Matrix.v
-VFCS/Math/Matrix/MatrixDet.v
 VFCS/Math/Matrix/MatrixGauss.v
+VFCS/Math/Matrix/Perm.v
+VFCS/Math/Matrix/MatrixDet.v
 VFCS/Math/Matrix/MatrixInv.v
 VFCS/Math/Matrix/MatrixOrth.v
 VFCS/Math/Matrix/ElementType.v
@@ -61,9 +67,9 @@ VFCS/Math/Matrix/MatrixR.v
 VFCS/Math/Matrix/MatrixC.v
 VFCS/Math/Matrix/MatrixRFun.v
 
-VFCS/Math/Hierarchy/MetricSpace.v
-VFCS/Math/Hierarchy/VectorSpace.v
-VFCS/Math/Hierarchy/Fn.v
+# VFCS/Math/Hierarchy/MetricSpace.v
+# VFCS/Math/Hierarchy/VectorSpace.v
+# VFCS/Math/Hierarchy/Fn.v
 
 
 # VFCS/Math/LinearAlgebra/PermutationExt.v

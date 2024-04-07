@@ -28,6 +28,76 @@
      (3) 14 Elementary Properties of Groups
          https://faculty.atu.edu/mfinan/4033/absalg14.pdf
      (4) https://math.okstate.edu/people/binegar/3613/3613-l21.pdf
+
+  contents  :
+  1. hierarchy structure
+     Equivalence (built-in)             equivalent relation
+     Dec                                decidable relation
+     Injective phi                      an operation is injective
+     Surjective phi                     an operation is surjective
+     Bijective phi                      an operation is bijective
+     Homomorphic fa fb phi              if `phi (fa a1 a2) = fb (phi a1) (phi a2)`
+     Homomorphism fa fb                 ∃ phi, Homomorphic fa fb phi /\ Surjective phi
+     Homomorphism2 fa fb g gb           ∃ phi, Homomorphic fa fb phi /\ 
+                                        Homomorphic g gb phi /\ Surjective phi
+     Associative f                      an operation is associative
+     Commutative f                      an operation is commutative
+     IdentityLeft f e                   ∀ a, f e a = a
+     IdentityRight f e                  ∀ a, f a e = a
+     DistributiveLeft Aadd Amul         ∀ a b c, a * (b + c) = a * b + a * c
+     DistributiveRight Aadd Amul        ∀ a b c, (a + b) * c = a * c + b * c
+     Order lt le ltb leb                `lt,le` is order relation, and `ltb,leb` 
+                                        reflect `lt,le`
+     SGroup Aadd                        semigroup<+>. Aadd is associative
+     ASGroup Aadd                       abelian semigroup<+>. Aadd is commutative
+     Monoid Aadd Azero                  monoid<+,0>
+     AMonoid Aadd Azeor                 abelian monoid<+,0>
+     Group Aadd Azero Aopp              group<+,0,-a>
+     AGroup Aadd Azero Aopp             abelian group<+,0,-a>
+     SemiRing Aadd Azero Amul Aone      semiring<+,0,*,1>
+     Ring Aadd Azero Aopp Amul Aone     ring<+,0,-a,*,1>
+     ARing Aadd Azero Aopp Amul Aone    abelian-ring<+,0,-a,*,1>
+     OrderedARing Aadd Azero Aopp Amul Aone Alt Ale Altb Aleb
+                                        abelian-ring, along with order relation
+     Field Aadd Azero Aopp Amul Aone Ainv  field<+,0,-a,*,1,/a>
+     OrderedField Aadd Azero Aopp Amul Aone Ainv Alt Ale Altb Aleb
+                                        field, along with order relation
+     ConvertToR Aadd Azero Aopp Amul Aone Ainv Alt Ale Altb Aleb (a2r:A->R)
+                                        The `a2r` operation is consistent
+  
+     ============= The structure of algebraic structure ===============
+
+                  ARing     Field
+                 /     \    /
+              AGroup    Ring
+             /     \    /
+         AMonoid   Group
+         /    \    /
+     ASGroup  Monoid
+        \     /
+        SGroup
+
+  2. tactics
+     * SGroup
+       sgroup             eliminate all same terms at head or tail
+     * ASGroup
+       move2h c           move an term to the head
+       move2t c           move an term to the end
+       asgroup            eliminate all same terms
+     * Monoid, AMonoid
+       monoid             eliminate identity element, and do "sgroup"
+       amonoid            eliminate identity element, and do "asgroup"
+     * Group, AGroup
+       group              simplify equation with group propertity, and do "monoid"
+       agroup             simplify equation with group propertity, and do "amonoid"
+     * Ring, Field
+       (built-in tactics) ring, ring_simplify, field, field_simply, field_simply_eq
+
+  3. important lemmas
+     * Ring
+       make_ring_theory (H:ARing)      make a ring_theory, to use `ring` tactic.
+     * Field
+       make_field_theory (H:Field)     make a field_theory, to use `field` tactic.
  *)
 
 Require Export Coq.Classes.RelationClasses. (* binary_relation *)
@@ -67,6 +137,7 @@ Section test.
   (* Compute iterate f 3 Azero. *)
 End test.
 
+(* type should be: nat ->  *)
 
 
 (* ######################################################################### *)
@@ -150,7 +221,7 @@ End Instances.
 (** ** Extra Theories *)
 Section Dec_theory.
 
-  Context `(Dec).
+  Context `(HDec: Dec).
 
   (** Tips: these theories are useful for R type *)
   
@@ -783,7 +854,7 @@ Class SGroup {A} (Aadd : A -> A -> A) := {
   }.
 
 (** Get parameter of this structure *)
-Definition sgroupAadd `{SG:SGroup} : A -> A -> A := Aadd.
+(* Definition sgroupAadd `{SG:SGroup} : A -> A -> A := Aadd. *)
 
 (** ** Instances *)
 Section Instances.
@@ -798,7 +869,69 @@ End Instances.
 
 (** ** Extra Theories *)
 
+(* 化简半群等式的头部 *)
+Ltac sgroup_head f :=
+  rewrite ?associative;
+  repeat
+    (match goal with
+     | |- f ?a _ = f ?a _ => apply f_equal2; [reflexivity|]
+     end;
+     auto).
+
+(* 化简半群等式的尾部 *)
+Ltac sgroup_tail f :=
+  rewrite <- ?associative;
+  repeat
+    (match goal with
+     | |- f _ ?a = f _ ?a => apply f_equal2; [|reflexivity]
+     end;
+     auto).
+
+(* 化简半群等式 *)
+Ltac sgroup_only f :=
+  try (progress (sgroup_head f));
+  try (progress (sgroup_tail f)).
+Ltac sgroup :=
+  match goal with
+  | SG : SGroup ?f |- _ => sgroup_only f
+  end.
+
 (** ** Examples *)
+
+Section test.
+  Context `{HSGroup : SGroup}. Infix "+" := Aadd.
+
+  (* Test bench *)
+  Variable a b c d e f g h i j k : A.
+                                                                    
+  (* 1 level *)
+  Goal a + b = a + k. progress sgroup. Abort.
+  Goal a + b = k + b. progress sgroup. Abort.
+
+  (* 2 levels *)
+  Goal a + b + c = a + k. progress sgroup. Abort.
+  Goal a + b + c = a + b + k. progress sgroup. Abort.
+  Goal a + b + c = k + c. progress sgroup. Abort.
+  Goal a + b + c = k + b + c. progress sgroup. Abort.
+
+  (* 3 levels *)
+  Goal a + b + c + d = a + k. progress sgroup. Abort.
+  Goal a + b + c + d = a + b + k. progress sgroup. Abort.
+  Goal a + b + c + d = a + b + c + k. progress sgroup. Abort.
+  Goal a + b + c + d = k + d. progress sgroup. Abort.
+  Goal a + b + c + d = k + c + d. progress sgroup. Abort.
+  Goal a + b + c + d = k + b + c + d. progress sgroup. Abort.
+  
+  (* 4 levels *)
+  Goal a + b + c + d + e = a + k. progress sgroup. Abort.
+  Goal a + b + c + d + e = a + b + k. progress sgroup. Abort.
+  Goal a + b + c + d + e = a + b + c + k. progress sgroup. Abort.
+  Goal a + b + c + d + e = a + b + c + d + k. progress sgroup. Abort.
+  Goal a + b + c + d + e = k + e. progress sgroup. Abort.
+  Goal a + b + c + d + e = k + d + e. progress sgroup. Abort.
+  Goal a + b + c + d + e = k + c + d + e. progress sgroup. Abort.
+  Goal a + b + c + d + e = k + b + c + d + e. progress sgroup. Abort.
+End test.
 
 
 (* ######################################################################### *)
@@ -811,7 +944,7 @@ Class ASGroup {A} (Aadd : A -> A -> A) := {
   }.
 
 (** Get parameter of this structure *)
-Definition asgroupAadd `{ASG : ASGroup} : A -> A -> A := Aadd.
+(* Definition asgroupAadd `{ASG : ASGroup} : A -> A -> A := Aadd. *)
 
 (** ** Instances *)
 Section Instances.
@@ -829,9 +962,8 @@ End Instances.
 (** In a commutative semigroup, adjust a term in the equation to the head,
     and use full right associative form for next step of elimination.
     From: a1 + ... + c + ... + an    (with parentheses of any form)
-    To  : c + (a1 + (... + an))
- *)
-(** 在交换半群中，将等式里的一个项调整到头部，并使用完全的右结合形式以便下一步消去。 *)
+    To  : c + (a1 + (... + an)) *)
+(** 在交换半群中，将等式里的一个项调整到头部，并使用完全的右结合形式以便下一步消去。*)
 Ltac move2h c :=
   rewrite <- ?associative;
   try rewrite (commutative _ c);
@@ -840,140 +972,275 @@ Ltac move2h c :=
 (** In a commutative semigroup, adjust a term in the equation to the tail,
     and use full left associative form for next step of elimination.
     From: a1 + ... + c + ... + an    (with parentheses of any form)
-    To  : (...(a1 + ... + an)...) + c 
-*)
-(** 在交换半群中，将等式里的一个项调整到尾部，并使用完全的左结合形式以便下一步消去。 *)
+    To  : (...(a1 + ... + an)...) + c *)
+(** 在交换半群中，将等式里的一个项调整到尾部，并使用完全的左结合形式以便下一步消去。*)
 Ltac move2t c :=
   rewrite ?associative;
   try rewrite (commutative c);
   rewrite <- ?associative.
 
-(** In a commutative semigroup, eliminate first common head.
-    From: c + a1 + ... + an = c + b1 + ... + bm   (with parentheses of any form)
-    To  : a1 + (a2 + (... + an)) = b1 + (b2 + (... + bm))
- *)
-(** 在交换半群中，消去第一个相同的头部。 *)
-Ltac elimh1 :=
-  rewrite ?associative; (* assure fully right-associative form *)
-  match goal with
-  | |- ?aeq (?f ?c ?a) (?f ?c ?b) => f_equiv (* elim head on setoid *)
-  end.
-
-(** In a commutative semigroup, eliminate first common tail.
-    From: c + a1 + ... + an = c + b1 + ... + bm   (with parentheses of any form)
-    To  : ((a1 + a2) + ...) + an = ((b1 + b2) + ...) + bm
- *)
-(** 在交换半群中，消去第一个相同的尾部。 *)
-Ltac elimt1 :=
-  rewrite <- ?associative; (* assure fullly left-associative form *)
-  match goal with
-  | |- ?aeq (?f ?a ?c) (?f ?b ?c) => f_equiv (* elim tail on setoid *)
-  end.
-
-(** In a commutative semigroup, automatically simplify and prove equality.
-    An example shoing the detail process:
-    a0 + a1 + a2 + a3 = a3 + a0 + a2 + a1
-    => a0 + a1 + a2 + a3 = a0 + a3 + a2 + a1
-    => a1 + a2 + a3 = a3 + a2 + a1
-    => a1 + a2 + a3 = a1 + a3 + a2
-    => a2 + a3 = a3 + a2
-    => a2 + a3 = a2 + a3
-    => a3 + a3
-    => True
- *)
-(** 在交换半群中，自动消去左式中所有可能相同的头部 *)
-Ltac elimh :=
-  rewrite ?associative; (* assure fully right-associative form *)
-  repeat match goal with
-    | |- ?aeq (?f ?c _) (?f _ _) => move2h c; elimh1
-    end.
-
-(** 在交换半群中，自动消去左式中所有可能相同的尾部 *)
-Ltac elimt :=
-  rewrite <- ?associative; (* assure fully left-associative form *)
-  repeat match goal with
-    | |- ?aeq (?f _ ?c) (?f _ _) => move2t c; elimt1
-    end.
-
-(** 在交换半群中，自动消去左式和右式中所有可能相同的头部和尾部 *)
-Ltac asemigroup :=
-  elimh; elimt; (* 消去左式的头部和尾部 *)
-  symmetry;
-  elimh; elimt. (* 消去右式的头部和尾部 *)
-
 Section test.
-  Context `{ASG : ASGroup}. Infix "+" := Aadd.
+  Context `{HASGroup : ASGroup}. Infix "+" := Aadd.
   Variable a0 a1 a2 a3 a4 a5 a6 : A.
 
-  (** 第一种情形，等式两侧完全相同 *)
-  Let eq1 : Prop := a0 + (a1 + a2) + a3 = a3 + (a0 + a2) + a1.
-
   (* 这个例子表明，任何的项都可以调整到头部，多步调整后得到了相同形式 *)
-  Goal eq1.
-    unfold eq1. move2h a0. move2h a0. move2h a1. move2h a1.
-    move2h a2. move2h a2.  move2h a3. move2h a3. easy. Qed.
+  Goal a0 + (a1 + a2) + a3 = a3 + (a0 + a2) + a1.
+  Proof. do 2 move2h a0. do 2 move2h a1. do 2 move2h a2. do 2 move2h a3. auto. Qed.
   
   (* 这个例子表明，任何的项都可以调整到尾部，多步调整后得到了相同形式 *)
-  Goal eq1.
-    unfold eq1. move2t a0. move2t a0. move2t a1. move2t a1.
-    move2t a2. move2t a2.  move2t a3. move2t a3. easy. Qed.
-
-  (* 这个例子表明，调整到头部+消去头部，可确保化简能够进行 *)
-  Goal eq1.
-    unfold eq1.
-    do 2 move2h a0; elimh1.
-    do 2 move2h a1; elimh1.
-    do 2 move2h a2; elimh1.
-  Qed.
-
-  (* 这个例子表明，调整到尾部+消去尾部，可确保化简能够进行 *)
-  Goal eq1.
-    unfold eq1.
-    do 2 move2t a0; elimt1.
-    do 2 move2t a1; elimt1.
-    do 2 move2t a2; elimt1.
-  Qed.
-
-  (* 这个例子表明，可自动化（以左式头部消除为例） *)
-  Goal eq1. Proof. unfold eq1. elimh. Qed.
-  (* 这个例子表明，可自动化（以左式尾部消除为例） *)
-  Goal eq1. Proof. unfold eq1. elimt. Qed.
-  (* 这个例子表明，可自动化（以右式头部消除为例） *)
-  Goal eq1. Proof. unfold eq1. symmetry. elimh. Qed.
-  (* 这个例子表明，可自动化（以右式尾部消除为例） *)
-  Goal eq1. Proof. unfold eq1. symmetry. elimt. Qed.
-
-  (** 第二种情形，等式两侧不完全相同，因为可能需要额外的证明 *)
-  Let eq2 : Prop := a0 + (a1 + a2 + a3) + a4 + a5 = a2 + a0 + a6 + a4.
-
-  (* 自动消去所有左式中可能的头部 *)
-  Goal eq2. unfold eq2. elimh. Abort.
-  (* 自动消去所有左式中可能的尾部 *)
-  Goal eq2. unfold eq2. elimt. Abort.
-  (* 自动消去所有右式中可能的头部 *)
-  Goal eq2. unfold eq2. symmetry. elimh. Abort.
-  (* 自动消去所有右式中可能的尾部 *)
-  Goal eq2. unfold eq2. symmetry. elimt. Abort.
-
-  (** 在不确定左右两侧中哪一侧更“合适”时，可以两侧都做一遍。
-      而且需要同时处理头部和尾部。*)
-  Goal eq2. unfold eq2. asemigroup. Abort.
-
-  (** 还有一种可能，某个相同的项出现中中间，既不在头部，也不在尾部 *)
-  Let eq3 : Prop := a1 + a0 + a2 = a3 + a0 + a4.
-
-  (* 可以发现，上面的方法不能处理这种情况 *)
-  Goal eq3. unfold eq3. asemigroup. Abort.
-
-  (* 也许能够设计一种方法来遍历左侧或右侧的所有的项，但暂时可以手工来做。
-     比如，可以手工调用 move2h 或 move2t 来移动一个项，然后调用 elimh 或
-     elimt 或 asemigroup 来消除它 *)
-  Goal eq3. unfold eq3. move2h a0. asemigroup. Abort.
-  Goal eq3. unfold eq3. move2t a0. asemigroup. Abort.
-  
+  Goal a0 + (a1 + a2) + a3 = a3 + (a0 + a2) + a1.
+  Proof. do 2 move2t a0. do 2 move2t a1. do 2 move2t a2. do 2 move2t a3. auto. Qed.
 End test.
 
+(* 尝试自动化简 ASGroup *)
+Section try1.
+  (** In a commutative semigroup, eliminate first common head.
+    From: c + a1 + ... + an = c + b1 + ... + bm   (with parentheses of any form)
+    To  : a1 + (a2 + (... + an)) = b1 + (b2 + (... + bm)) *)
+  (** 在交换半群中，消去第一个相同的头部。 *)
+  Ltac elimh1 :=
+    rewrite ?associative; (* assure fully right-associative form *)
+    match goal with
+    (* | |- ?aeq (?f ?c ?a) (?f ?c ?b) => f_equiv (* elim head on setoid *) *)
+    | |- ?f ?c ?a = ?f ?c ?b => f_equal
+    end.
+
+  (** In a commutative semigroup, eliminate first common tail.
+    From: c + a1 + ... + an = c + b1 + ... + bm   (with parentheses of any form)
+    To  : ((a1 + a2) + ...) + an = ((b1 + b2) + ...) + bm
+   *)
+  (** 在交换半群中，消去第一个相同的尾部。 *)
+  Ltac elimt1 :=
+    rewrite <- ?associative; (* assure fullly left-associative form *)
+    match goal with
+    | |- ?f ?a ?c = ?f ?b ?c => f_equal
+    end.
+  
+  (** 在交换半群中，自动消去左式中所有可能相同的头部 *)
+  Ltac elimh :=
+    rewrite ?associative; (* assure fully right-associative form *)
+    repeat match goal with
+      | |- ?aeq (?f ?c _) (?f _ _) => move2h c; elimh1
+      | |- ?aeq (?f ?c _) (?f _ _) => move2h c; elimh1
+      end.
+
+  (** 在交换半群中，自动消去左式中所有可能相同的尾部 *)
+  Ltac elimt :=
+    rewrite <- ?associative; (* assure fully left-associative form *)
+    repeat match goal with
+      | |- ?aeq (?f _ ?c) (?f _ _) => move2t c; elimt1
+      end.
+
+  (** 在交换半群中，自动消去左式和右式中所有可能相同的头部和尾部 *)
+  Ltac asgroup :=
+    elimh; elimt; (* 消去左式的头部和尾部 *)
+    symmetry;
+    elimh; elimt. (* 消去右式的头部和尾部 *)
+
+  Section test.
+    Context `{HASGroup : ASGroup}. Infix "+" := Aadd.
+    Variable a0 a1 a2 a3 a4 a5 a6 b1 b2 c1 c2 : A.
+
+    (** 第一种情形，等式两侧完全相同 *)
+
+    (* 这个例子表明，调整到头部+消去头部，可实现化简 *)
+    Goal a0 + (a1 + a2) + a3 = a3 + (a0 + a2) + a1.
+    Proof.
+      do 2 move2h a0; elimh1.
+      do 2 move2h a1; elimh1.
+      do 2 move2h a2; elimh1.
+    Qed.
+
+    (* 这个例子表明，调整到尾部+消去尾部，可实现化简 *)
+    Goal a0 + (a1 + a2) + a3 = a3 + (a0 + a2) + a1.
+    Proof.
+      do 2 move2t a0; elimt1.
+      do 2 move2t a1; elimt1.
+      do 2 move2t a2; elimt1.
+    Qed.
+
+    (* 使用左式消去头部 *)
+    Goal a0 + (a1 + a2) + a3 = a3 + (a0 + a2) + a1.  Proof. elimh. Qed.
+    (* 使用左式消去尾部 *)
+    Goal a0 + (a1 + a2) + a3 = a3 + (a0 + a2) + a1.  Proof. elimt. Qed.
+    (* 使用右式消去头部 *)
+    Goal a0 + (a1 + a2) + a3 = a3 + (a0 + a2) + a1.  Proof. symmetry. elimh. Qed.
+    (* 使用右式消去尾部 *)
+    Goal a0 + (a1 + a2) + a3 = a3 + (a0 + a2) + a1.  Proof. symmetry. elimt. Qed.
+
+    (** 第二种情形，等式两侧不完全相同 *)
+    Let eq2 : Prop := a0 + (a1 + a2 + a3) + a4 + a5 = a2 + a0 + a6 + a3 + a4.
+
+    (* 使用左式消去头部，不完整 *)
+    Goal eq2. unfold eq2. elimh. Abort.
+    (* 使用左式消去尾部，不完整 *)
+    Goal eq2. unfold eq2. elimt. Abort.
+    (* 使用右式消去头部，不完整 *)
+    Goal eq2. unfold eq2. symmetry. elimh. Abort.
+    (* 使用右式消去尾部，不完整 *)
+    Goal eq2. unfold eq2. symmetry. elimt. Abort.
+    (* 使用左式及右式消去头部和尾部，完整 *)
+    Goal eq2. unfold eq2. asgroup. Abort.
+
+    (** 第三种情况，某个相同的项出现中中间，既不在头部，也不在尾部 *)
+
+    (* 此时，并没有得到化简，只会不断的交换等式 *)
+    Goal b1 + a0 + a1 + b2 = c1 + a1 + a0 + c2.
+    Proof.
+      progress asgroup.
+      progress asgroup.
+      progress asgroup.
+    Abort.
+
+    (* 也许能够设计一种方法来遍历左侧或右侧的所有的项，但暂时可以手工来做。
+       比如，可以手工调用 move2h 或 move2t 来移动一个项，然后调用 elimh 或
+       elimt 或 asgroup 来消除它 *)
+    Goal b1 + a0 + a1 + b2 = c1 + a1 + a0 + c2.
+    Proof.
+      intros.
+      do 2 move2h a0. asgroup.
+      do 2 move2h a1. asgroup.
+      (* 达到了最简状态 *)
+    Abort.
+  End test.
+
+  (* 总结：
+     1. 当“等式左右两侧既无相同的头部，又无相同的尾部”时（简称，首尾无相同项），
+        比如 b1 + a + b2 = c1 + a + c2 无法消去 a。
+     2. 当首尾有相同项时，都能被消掉。
+     3. 当等式不成立时，没有真正的终止状态，无法使用 repeat。
+     4. 效率较低（数据有待测试）
+   *)
+End try1.
+
+(* 再次尝试自动化简 ASGroup *)
+Section try2.
+  (* 由于上一节中的策略无法化简 b1 + a + b2 = c1 + a + c2 的情形，
+   即，两侧等式的头尾都没有相同元素时，就不会化简。
+   同时，我们又不想手动使用 move2h 或 move2t 等策略来化简，
+   所以设计了新的策略来帮助自动化简。
+   思路：使用模式匹配确保等式两侧有相同的项，然后精确的消掉这个项。*)
+
+  (** 在交换半群中，自动消去等式中相同的项 *)
+  Ltac asgroup :=
+    (* 处理为左结合的形式，消去尾部。（也可以处理为右结合然后消去头部） *)
+    rewrite <- ?associative;
+    (* 找出所有可能的匹配 *)
+    repeat
+      (match goal with
+       (* 1 level *)
+       | |- ?f ?a _ = ?f ?a _ => f_equal
+       | |- ?f _ ?a = ?f _ ?a => f_equal
+       | |- ?f ?a _ = ?f _ ?a => move2t a
+       | |- ?f _ ?a = ?f ?a _ => move2t a
+       (* 2 levels *)
+       | |- ?f (?f ?a _) _ = ?f ?a _ => move2t a
+       | |- ?f (?f ?a _) _ = ?f _ ?a => move2t a
+       | |- ?f (?f _ ?a) _ = ?f ?a _ => move2t a
+       | |- ?f (?f _ ?a) _ = ?f _ ?a => move2t a
+       | |- ?f ?a _ = ?f (?f ?a _) _ => move2t a
+       | |- ?f ?a _ = ?f (?f _ ?a) _ => move2t a
+       | |- ?f _ ?a = ?f (?f ?a _) _ => move2t a
+       | |- ?f _ ?a = ?f (?f _ ?a) _ => move2t a
+       | |- ?f (?f ?a _) _ = ?f (?f ?a _) _ => move2t a
+       | |- ?f (?f ?a _) _ = ?f (?f _ ?a) _ => move2t a
+       | |- ?f (?f _ ?a) _ = ?f (?f ?a _) _ => move2t a
+       | |- ?f (?f _ ?a) _ = ?f (?f _ ?a) _ => move2t a
+       | |- ?f (?f ?a _) _ = ?f _ (?f ?a _) => move2t a
+       | |- ?f (?f ?a _) _ = ?f _ (?f _ ?a) => move2t a
+       | |- ?f (?f _ ?a) _ = ?f _ (?f ?a _) => move2t a
+       | |- ?f (?f _ ?a) _ = ?f _ (?f _ ?a) => move2t a
+       end;
+       auto).
+
+  (* 随着表达式的复杂度提升，需要写的模式会非常多 *)
+  
+  Section test.
+    Context `{HASGroup : ASGroup}. Infix "+" := Aadd.
+    Variable a0 a1 a2 a3 a4 a5 a6 b1 b2 c1 c2 : A.
+    
+    Goal b1 + a0 + b2 = c1 + a0 + c2.
+    Proof. asgroup. Abort.
+  End test.
+End try2.
+
+
+(* 利用 context 的匹配能力，可处理任意情形 *)
+
+(* 交换半群，消去等式中所有可能相同的项 *)
+Ltac asgroup_only f :=
+  (* 处理为左结合的形式，然后每个相同的项可移动至尾部来消去。（类似的，可右结合+头部) *)
+  rewrite <- ?associative;
+  repeat
+    (match goal with
+     | |- ?A = ?B =>
+         (* 找出 A 中所有 a+b 的子表达式 *)
+         match A with
+         | context [f ?a ?b] =>
+             (* 在 B 中找 a+c, c+a, c+b, b+c 这四种模式  *)
+             match B with
+             | context [f a _] => do 2 move2t a; f_equal
+             | context [f _ a] => do 2 move2t a; f_equal
+             | context [f b _] => do 2 move2t b; f_equal
+             | context [f _ b] => do 2 move2t b; f_equal
+             end
+         end
+     end;
+    auto).
+
+Ltac asgroup :=
+  match goal with
+  | ASG : ASGroup ?f |- _ => asgroup_only f
+  end.
+
 (** ** Examples *)
+
+Section test.
+  Context `{HASGroup : ASGroup}. Infix "+" := Aadd.
+
+  (* Test bench *)
+  Variable a b c d e f g h i j k : A.
+                                                                    
+  (* 1 level *)
+  Goal a + b = a + k. progress asgroup. Abort.
+  Goal b + a = k + a. progress asgroup. Abort.
+  Goal a + b = k + a. progress asgroup. Abort.
+  Goal b + a = a + k. progress asgroup. Abort.
+
+  (* 2 levels *)
+  Goal a + b + c = a + k. progress asgroup. Abort.
+  Goal a + b + c = k + a. progress asgroup. Abort.
+  Goal a + b + c = b + k. progress asgroup. Abort.
+  Goal a + b + c = k + b. progress asgroup. Abort.
+
+  (* 3 levels *)
+  Goal a + b + c + d = a + k. progress asgroup. Abort.
+  Goal a + b + c + d = k + a. progress asgroup. Abort.
+  Goal a + b + c + d = b + k. progress asgroup. Abort.
+  Goal a + b + c + d = k + b. progress asgroup. Abort.
+  
+  (* 4 levels *)
+  Goal a + b + c + d + e = a + k. progress asgroup. Abort.
+  Goal a + b + c + d + e = k + a. progress asgroup. Abort.
+  Goal a + b + c + d + e = b + k. progress asgroup. Abort.
+  Goal a + b + c + d + e = k + b. progress asgroup. Abort.
+  
+  (* 5 levels *)
+  Goal a + b + c + d + e + f = a + k. progress asgroup. Abort.
+  Goal a + b + c + d + e + f = k + a. progress asgroup. Abort.
+  Goal a + b + c + d + e + f = b + k. progress asgroup. Abort.
+  Goal a + b + c + d + e + f = k + b. progress asgroup. Abort.
+
+  (* 5 levels，交换顺序 *)
+  Goal a + k = a + b + c + d + e + f. progress asgroup. Abort.
+  Goal k + a = a + b + c + d + e + f. progress asgroup. Abort.
+  Goal b + k = a + b + c + d + e + f. progress asgroup. Abort.
+  Goal k + b = a + b + c + d + e + f. progress asgroup. Abort.
+
+  (* 头部和尾部均不相同时的混合情形 *)
+  Goal forall x1 x2 y1 y2 : A, x1 + a + b + c + x2 = y1 + c + (b + a) + y2.
+  Proof. intros. progress asgroup. Abort.
+End test.
 
 
 (* ######################################################################### *)
@@ -988,8 +1255,8 @@ Class Monoid {A} (Aadd : A -> A -> A) (Azero : A) := {
   }.
 
 (** Get parameter of a monoid *)
-Definition monoidAadd `{M:Monoid} : A -> A -> A := Aadd.
-Definition monoidAzero `{M:Monoid} : A := Azero.
+(* Definition monoidAadd `{M:Monoid} : A -> A -> A := Aadd. *)
+(* Definition monoidAzero `{M:Monoid} : A := Azero. *)
 
 (** ** Instances *)
 Section Instances.
@@ -1023,66 +1290,46 @@ Section Instances.
 End Instances.
 
 (** ** Extra Theories *)
-(* What' a theory? a group of properties related to this sturcture *)
-
-(* deprecated *)
-(** monoid rewriting with given monoid-instance-name.
-    It is strict and powerful (such as "a + (e + b)" could be solved), 
-    but less automated. *)
-Ltac monoid_rw_old M :=
-  rewrite (@associative _ _ _ (@monoidAssoc _ _ _ M)) ||
-    rewrite (@identityLeft _ _ _ _ (@monoidIdL _ _ _ M)) ||
-    rewrite (@identityRight _ _ _ _ (@monoidIdR _ _ _ M)).
-
-Ltac monoid_simpl_old M := intros; repeat monoid_rw_old M; auto.
-
-(** monoid rewriting, automatic inference the Instance. But sometimes it will fail *)
-(* Ltac monoid_rw := *)
-(*   rewrite identityLeft || *)
-(*     rewrite identityRight || *)
-(*     rewrite associative. *)
-
-(* One problem, identityLeft will fail! *)
-Section problem.
-  Context `{M : Monoid A Aadd Azero}.
-  Infix "+" := Aadd.
-  Notation "0" := Azero.
-
-  Goal forall x : A, x + (0 + x) = x + x.
-    intros.
-    Fail rewrite identityLeft.  (* Why this fail? *)
-    rewrite identityLeft at 1.  (* We need explicit "position" annotation *)
-    Abort.
-End problem.
-
-(* So, a newer tactic to automatically use "rewrite identityLeft" *)
-Ltac monoid_rw :=
-  rewrite identityLeft at 1 ||
-  rewrite identityLeft at 2 ||
-  rewrite identityLeft at 3 ||
-    rewrite identityRight at 1||
-    rewrite identityRight at 2||
-    rewrite identityRight at 3||
-    rewrite associative.
-
-Ltac monoid := intros; repeat monoid_rw; try reflexivity; auto.
 
 Section Theory.
-  Context `{M:Monoid}.
+  Context `{HMonoid : Monoid}.
+  Notation "0" := Azero : A_scope.
   Infix "+" := Aadd : A_scope.
 
 End Theory.
 
+Ltac monoid_only f e :=
+  repeat
+    (match goal with
+     (* a + 0 = a *)
+     | [M:Monoid f e |- context [f ?a e]] => rewrite (identityRight a) at 1
+     | [M:Monoid f e, H:context [f ?a e] |- _] => rewrite (identityRight a) in H at 1
+     (* 0 + a = a *)
+     | [M:Monoid f e |- context [f e ?a]] => rewrite (identityLeft a) at 1
+     | [M:Monoid f e, H:context [f e ?a] |- _] => rewrite (identityLeft a) in H at 1
+     end;
+     auto).
+
+Ltac monoid :=
+  try match goal with
+    | M:Monoid ?f ?e |- _ =>
+        monoid_only f e;
+        try pose proof (@monoidSGroup _ f e M) as HSGroup; sgroup
+    end;
+  try match goal with
+    | SG : SGroup ?f |- _ => sgroup
+    end;
+  auto.
+
 (** ** Examples *)
 
 Section Examples.
-  
-  Import Reals.
+  Context `{HMonoid : Monoid}.
+  Notation "0" := Azero : A_scope.
+  Infix "+" := Aadd : A_scope.
 
-  Goal forall a b c : R, ((a * b) * c = a * (b * c))%R.
-  Proof. 
-    apply associative.
-  Qed.
+  Goal forall a b c d : A, 0 + a + 0 + (b + 0 + c) = a + (0 + b) + (c + 0).
+  Proof. intros. monoid. Qed.
 
 End Examples.
 
@@ -1119,35 +1366,32 @@ End Instances.
   
 (** ** Extra Theories *)
 
+Section Theory.
+  Context `(HAMonoid : AMonoid).
+  Infix "*" := Aadd.
+End Theory.
+
 Ltac amonoid :=
-  monoid;
-  try apply commutative.
-
-(* Section Theory. *)
-
-(*   Context `(AM : AMonoid). *)
-(*   Infix "*" := op. *)
-
-(*   Lemma amonoid_comm : forall a b, a * b = b * a. *)
-(*   Proof. apply comm. Qed. *)
-
-(*   Lemma amonoid_comm' : forall a b, a * b = b * a. *)
-(*   Proof. destruct AM. auto. Qed. *)
-
-(* End Theory. *)
+  repeat
+    (match goal with
+     | AM:AMonoid ?f ?e |- _ =>
+         try pose proof (@amonoidMonoid _ f e AM) as HMonoid; try monoid;
+         try pose proof (@amonoidASGroup _ f e AM) as HASGroup; asgroup
+     | [M:Monoid ?f ?e |- _] => monoid
+     | [ASG:ASGroup ?f |- _] => asgroup
+     | [SG:ASGroup ?f |- _] => sgroup
+     end;
+     auto).
 
 (** ** Examples *)
 Section Examples.
+  Context `{HAMonoid : AMonoid}.
+  Infix "+" := Aadd : A_scope.
+  Notation "0" := Azero : A_scope.
 
-  Import Qcanon.
-  
-  Goal forall a b : Qc, a * b = b * a.
-  Proof.
-    amonoid.
-  Qed.
-
+  Goal forall a b c : A, a + (0 + b + c + 0) = 0 + c + (b + a + 0) + 0.
+  Proof. simp. amonoid. Qed.
 End Examples.
-
 
 
 (* ######################################################################### *)
@@ -1177,23 +1421,72 @@ End Instances.
 
 (** ** Extra Theories *)
 
-(** group rewriting, automatic inference the Instance. But sometimes it will fail *)
-Ltac group_rw :=
-  repeat (try rewrite inverseLeft;
-          try rewrite inverseRight).
+Ltac group_basic_only f e inv :=
+  repeat
+    (match goal with
+     (* - a + a *)
+     | [G:Group f e inv, H:context[f (inv ?a) ?a] |-_] => rewrite (inverseLeft a) in H at 1
+     | [G:Group f e inv |- context [f (inv ?a) ?a]] => rewrite (inverseLeft a) at 1
+     (* a + - a *)
+     | [G:Group f e inv, H:context[f ?a (inv ?a)] |-_] => rewrite (inverseRight a) in H at 1
+     | [G:Group f e inv |- context [f ?a (inv ?a)]] => rewrite (inverseRight a) at 1
+     (* -a + (a + b) *)
+     | [G:Group f e inv, H:context[f (inv ?a) (f ?a ?b)] |- _] =>
+         rewrite <- (associative (inv a) a) in H; rewrite (inverseLeft a) in H at 1
+     | [G:Group f e inv |- context[f (inv ?a) (f ?a ?b)] ] =>
+         rewrite <- (associative (inv a) a); rewrite (inverseLeft a) at 1
+     (* a + (-a + b) *)
+     | [G:Group f e inv, H:context[f ?a (f (inv ?a) ?b)] |- _] =>
+         rewrite <- (associative a (inv a)) in H; rewrite (inverseRight a) in H at 1
+     | [G:Group f e inv |- context[f ?a (f (inv ?a) ?b)] ] =>
+         rewrite <- (associative a (inv a)); rewrite (inverseRight a) at 1
+     (* (a + b) + -b *)
+     | [G:Group f e inv, H:context[f (f ?a ?b) (inv ?b)] |- _] =>
+         rewrite (associative a b) in H; rewrite (inverseRight b) in H at 1
+     | [G:Group f e inv |- context[f (f ?a ?b) (inv ?b)] ] =>
+         rewrite (associative a b); rewrite (inverseRight b) at 1
+     (* (a + -b) + b *)
+     | [G:Group f e inv, H:context[f (f ?a (inv ?b)) ?b] |- _] =>
+         rewrite (associative a (inv b)) in H; rewrite (inverseLeft b) in H at 1
+     | [G:Group f e inv |- context[f (f ?a (inv ?b)) ?b] ] =>
+         rewrite (associative a (inv b)); rewrite (inverseLeft b) at 1
+     end;
+     auto).
 
-(** group rewriting with given group-instance-name.
-    It is strict and powerful (such as "a + (-b + b)" could be solved), 
-    but less automated. *)
-Ltac group_rw_strict G :=
-  repeat (try rewrite (@inverseLeft _ _ _ _ _ (@groupInvL _ _ _ _ _ G));
-          try rewrite (@inverseRight _ _ _ _ _ (@groupInvR _ _ _ _ _ G))).
+Ltac group_basic :=
+  repeat
+    (match goal with
+     | G : Group ?f ?e ?inv |- _ =>
+         group_basic_only f e inv;
+         try pose proof (@groupMonoid _ f e inv G) as HMonoid;
+         try pose proof (@monoidSGroup _ f e ?M) as HSGroup;
+         monoid;
+         sgroup
+     | M : Monoid ?f ?e |- _ => monoid
+     | SG : SGroup ?f |- _ => sgroup
+     end;
+     auto).
 
-Ltac group :=
-  intros;
-  repeat (group_rw || monoid_rw || group_rw);
-  try reflexivity;
-  auto.
+Section example.
+
+  Context `{HGroup : Group}.
+  Notation "0" := Azero : A_scope.
+  Infix "+" := Aadd : A_scope.
+  Notation "- a" := (Aopp a) : A_scope.
+
+  (* `group_basic` can finish "monoid" tasks *)
+  Goal forall a b c : A, a + 0 = 0 + a -> (a + b) + 0 + c = 0 + a + 0 + (b + 0 + c).
+  Proof. simp. group_basic. Qed.
+
+  (* `group_basic` can do `group inv` tasks *)
+  Goal forall a b c d e : A, c + -c + - d + d = e -> - a + a + b + - b = e.
+  Proof. simp. group_basic. Qed.
+
+  (* group inverse with associativity *)
+  Goal forall a b : A, -a + (a + b) = b.
+  Proof. simp. group_basic. Qed.
+
+End example.
 
 (*
   Group Theory
@@ -1208,19 +1501,23 @@ Ltac group :=
  *)
 Section GroupTheory.
   
-  Context `{G:Group}.
+  Context `{HGroup : Group}.
   Infix "+" := Aadd.
   Notation "0" := Azero.
   Notation "- a" := (Aopp a).
   Notation Asub a b := (a + -b).
   Infix "-" := Asub.
 
+  (** *** my added lemmas (part 1) *)
+  
   (** - 0 = 0 *)
   Theorem group_opp_0 : - 0 = 0.
   Proof.
     (* -e = -e + e = e *)
     pose proof (inverseLeft 0). rewrite identityRight in H. auto.
   Qed.
+
+  (** *** lemmas from textbook *)
   
   (* Theorem 5.1 *)
   
@@ -1245,9 +1542,8 @@ Section GroupTheory.
   Proof.
     (* -a = -a + 0 = -a + a + b = 0 + b = b *)
     intros.
-    replace (-a) with (-a + 0) by apply G.
-    replace 0 with (a + b).
-    rewrite <- associative. rewrite inverseLeft. amonoid.
+    replace (-a) with (-a + 0) by group_basic.
+    replace 0 with (a + b). group_basic.
   Qed.
   
   (** right inverse element is unique *)
@@ -1256,9 +1552,8 @@ Section GroupTheory.
   Proof.
     (* -b = 0 + -b = a + b + b = a + 0 = a *)
     intros.
-    replace (-b) with (0 + -b) by apply G.
-    replace 0 with (a + b).
-    rewrite associative. rewrite inverseRight. amonoid.
+    replace (-b) with (0 + -b) by group_basic.
+    replace 0 with (a + b). group_basic.
   Qed.
 
   (* Theorem 14.1 *)
@@ -1268,9 +1563,8 @@ Section GroupTheory.
     intros.
     (* a = e+a = (-c+c)+a = (-c)+(c+a) = (-c)+(c+b) = (-c+c)+b = e+b = b*)
     rewrite <- identityLeft at 1.
-    assert (0 = -c + c). group.
-    rewrite H0. rewrite associative. rewrite H.
-    rewrite <- associative. group.
+    assert (0 = -c + c). group_basic.
+    rewrite H0. rewrite associative. rewrite H. group_basic.
   Qed.
 
   (** a + c = b + c -> a = b *)
@@ -1279,20 +1573,17 @@ Section GroupTheory.
     intros.
     (* a = a+e = a+(c+ -c) = (a+c)+(-c) = (b+c)+(-c) = b+(c+ -c) = b+e = b *)
     rewrite <- identityRight at 1.
-    assert (0 = c + (-c)). group.
-    rewrite H0. rewrite <- associative. rewrite H.
-    rewrite associative. group.
+    assert (0 = c + (-c)). group_basic.
+    rewrite H0. rewrite <- associative. rewrite H. group_basic.
   Qed.
-
+  
   (** - - a = a *)
   Theorem group_opp_opp : forall a,  - - a = a.
-  Proof.
-    intros. apply group_cancel_l with (- a). group.
-  Qed.
+  Proof. intros. apply group_cancel_l with (- a). group_basic. Qed.
 
   (** a - a = 0 *)
   Theorem group_sub_self : forall a, a - a = 0.
-  Proof. intros. group. Qed.
+  Proof. intros. group_basic. Qed.
     
   (** - a = - b -> a = b *)
   Lemma group_opp_inj : forall a b : A, - a = - b -> a = b.
@@ -1307,14 +1598,15 @@ Section GroupTheory.
     (* (a+b)+ -(a+b) = e = a+ -a = a+e+ -a = a+(b+ -b)+ -a
       = (a+b)+(-b+ -a), by cancel_l, got it *)
     apply group_cancel_l with (a + b).
-    rewrite inverseRight. rewrite <- associative. rewrite (associative a b). group.
+    rewrite inverseRight. rewrite <- associative. rewrite (associative a b).
+    group_basic.
   Qed.
 
   (** - a = 0 <-> a = 0 *)
   Lemma group_opp_eq0_iff : forall a : A, - a = 0 <-> a = 0.
   Proof.
     intros. split; intros.
-    - apply group_cancel_l with (-a). group.
+    - apply group_cancel_l with (-a). group_basic.
     - subst. rewrite group_opp_0. auto.
   Qed.
 
@@ -1325,18 +1617,20 @@ Section GroupTheory.
   (* Theorem 14.2 *)
   (** a + b = c -> a = c + (-b) *)
   Theorem group_sol_l : forall a b c, a + b = c -> a = c + (- b).
-  Proof. intros. apply group_cancel_r with (b). group. Qed.
+  Proof. intros. apply group_cancel_r with (b). rewrite H. group_basic. Qed.
 
   (** a + b = c -> b = (-a) + c *)
   Theorem group_sol_r : forall a b c, a + b = c -> b = (- a) + c.
-  Proof. intros. apply group_cancel_l with (a). rewrite <- associative. group. Qed.
+  Proof.
+    intros. apply group_cancel_l with (a). rewrite H. group_basic.
+  Qed.
 
   (** a - b = 0 <-> a = b *)
   Theorem group_sub_eq0_iff_eq : forall a b, a - b = 0 <-> a = b.
   Proof.
     intros. split; intros.
-    - apply group_cancel_r with (-b). group.
-    - subst. group.
+    - apply group_cancel_r with (-b). group_basic.
+    - subst. group_basic.
   Qed.
 
   (** Definition 14.1 (multiple operations) *)
@@ -1372,8 +1666,8 @@ Section GroupTheory.
       (group_batch l1) + (group_batch l2) =  group_batch (l1 ++ l2).
     Proof.
       (* reduct to fold_left *)
-      destruct l1,l2; simpl; group.
-      - rewrite app_nil_r. group.
+      destruct l1,l2; simpl; group_basic.
+      - rewrite app_nil_r. auto.
       - rename a into a1, a0 into a2.
         (* H1. forall a l1 l2, Σ a & (l1 ++ l2) = Σ (Σ a & l1) & l2
            H2. forall a b l, a + Σ b & l = Σ (a + b) & l
@@ -1384,19 +1678,19 @@ Section GroupTheory.
               Σ (c + a2) & l2 = Σ c & (a2 :: l2)
            by H3, we got it. *)
         assert (forall a l1 l2, Σ a & (l1 ++ l2) = Σ (Σ a & l1) & l2) as H1.
-        { intros a l0. revert a. induction l0; intros; try reflexivity.
-          simpl. rewrite IHl0. reflexivity. }
+        { intros a l0. revert a. induction l0; intros; auto.
+          simpl. rewrite IHl0. auto. }
         assert (forall a b l, a + Σ b & l = Σ (a + b) & l) as H2.
-        { intros. revert a b. induction l; simpl; intros; try reflexivity.
+        { intros. revert a b. induction l; simpl; intros; auto.
           simpl. rewrite IHl.
           (** fold_left preveres the aeq *)
           assert (forall l a1 a2, a1 = a2 -> Σ a1 & l = Σ a2 & l).
           { induction l0; intros; simpl in *; auto.
-            apply IHl0. rewrite H. easy. }
-          apply H. group. }
+            apply IHl0. rewrite H. auto. }
+          apply H. group_basic. }
         assert (forall a b l, Σ a & (b :: l) = Σ (a + b) & l) as H3.
         { intros. revert a b. induction l; auto. }
-        rewrite H1. rewrite H2. rewrite H3. easy.
+        rewrite H1. rewrite H2. rewrite H3. auto.
     Qed.
     
   End th14_3.
@@ -1448,44 +1742,174 @@ Section GroupTheory.
 
   End th14_4.
 
+  
+  (** *** my added lemmas (part 2) *)
+
+  (* b = 0 -> a + b = a *)
+  Lemma group_add_eq_l : forall a b : A, b = 0 -> a + b = a.
+  Proof. intros. rewrite H. apply identityRight. Qed.
+
+  (* a = 0 -> a + b = b *)
+  Lemma group_add_eq_r : forall a b : A, a = 0 -> a + b = b.
+  Proof. intros. rewrite H. apply identityLeft. Qed.
+
+  (* a + b = a -> b = 0 *)
+  Lemma group_add_eq_l_inv : forall a b : A, a + b = a -> b = 0.
+  Proof.
+    intros.
+    assert (a + b = a + 0). rewrite H. rewrite identityRight; auto.
+    apply group_cancel_l in H0. auto.
+  Qed.
+
+  (* a + b = b -> a = 0 *)
+  Lemma group_add_eq_r_inv : forall a b : A, a + b = b -> a = 0.
+  Proof.
+    intros.
+    assert (a + b = 0 + b). rewrite H. rewrite identityLeft; auto.
+    apply group_cancel_r in H0. auto.
+  Qed.
+
+  (* - a = b -> a = - b *)
+  Lemma group_opp_exchg_l : forall a b : A, - a = b -> a = - b.
+  Proof. intros. rewrite <- H. rewrite group_opp_opp. auto. Qed.
+
+  (* a = - b -> - a = b *)
+  Lemma group_opp_exchg_r : forall a b : A, a = - b -> - a = b.
+  Proof. intros. rewrite H. rewrite group_opp_opp. auto. Qed.
+
 End GroupTheory.
+
+Ltac group_advanced_only f e inv :=
+  repeat
+    (match goal with
+     (* - 0 *)
+     | [G:Group f e inv, H:context [inv e] |- _] => rewrite group_opp_0 in H at 1
+     | [G:Group f e inv |- context [inv e]] => rewrite group_opp_0 at 1
+     (* - - a *)
+     | [G:Group f e inv, H:context [inv (inv ?a)] |- _] =>
+         rewrite (group_opp_opp a) in H
+     | [G:Group f e inv |- context [inv (inv ?a)]] =>
+         rewrite (group_opp_opp a)
+     (* - (a + b) *)
+     | [G:Group f e inv, H:context [inv (f ?a ?b)] |- _] =>
+         rewrite (group_opp_distr a b) in H at 1
+     | [G:Group f e inv |- context [inv (f ?a ?b)]] =>
+         rewrite (group_opp_distr a b) at 1
+     (* - a = - b |- _ *)
+     | [G:Group f e inv, H:context [inv ?a = inv ?b] |- _] =>
+         apply group_opp_inj in H
+     (* - a = b |- a = - b *)
+     | [G:Group f e inv, H:context [inv ?a = ?b] |- ?a = inv ?b] =>
+         apply group_opp_exchg_l
+     (* a = - b |- - a = b *)
+     | [G:Group f e inv, H:context [?a = inv ?b] |- inv ?a = ?b] =>
+         apply group_opp_exchg_r
+     (* - a = 0 ==> a = 0 *)
+     | [G:Group f e inv, H:context [inv ?a = e] |- _] => rewrite (group_opp_eq0_iff a) in H
+     | [G:Group f e inv |- context [inv ?a = e]] => rewrite (group_opp_eq0_iff a)
+
+     (* b = 0 ==> a + b = a *)
+     | [G:Group f e inv |- f ?a ?b = ?a] => apply group_add_eq_l
+     | [G:Group f e inv |- ?a = f ?a ?b] => symmetry
+     (* a = 0 ==> a + b = b *)
+     | [G:Group f e inv |- f ?a ?b = ?b] => apply group_add_eq_r
+     | [G:Group f e inv |- ?b = f ?a ?b] => symmetry
+     (* a + b = a ==> b = 0 *)
+     | [G:Group f e inv, H:f ?a ?b = ?a |- ?b = e] => apply group_add_eq_l_inv in H
+     (* a + b = b ==> a = 0 *)
+     | [G:Group f e inv, H:f ?a ?b = ?b |- ?a = e] => apply group_add_eq_r_inv in H
+
+     (* (a + b) + c = a ==> a + (b + c) = a *)
+     | [G:Group f e inv |- ?f (?f ?a ?b) ?c = ?a] => rewrite (associative a b c)
+     | [G:Group f e inv |- ?a = ?f (?f ?a ?b) ?c] => symmetry
+
+     (* (a + b) + c = b ==> (a + c) + b = b *)
+     | [G:Group f e inv |- ?f (?f ?a ?b) ?c = ?b] =>
+         rewrite (associative a b c); rewrite (commutative b c);
+         rewrite <- (associative a c b)
+     | [G:Group f e inv |- ?b = ?f (?f ?a ?b) ?c] => symmetry
+
+     (* a + (b + c) = b ==> (a + c) + b = b *)
+     | [G:Group f e inv |- ?f ?a (?f ?b ?c) = ?b] =>
+         rewrite (commutative b c); rewrite <- (associative a c b)
+     | [G:Group f e inv |- ?b = ?f ?a (?f ?b ?c)] => symmetry
+
+     (* a + (b + c) = c ==> (a + b) + c = c *)
+     | [G:Group f e inv |- ?f ?a (?f ?b ?c) = ?c] => rewrite <- (associative a b c)
+     | [G:Group f e inv |- ?c = ?f ?a (?f ?b ?c)] => symmetry
+     end;
+     auto).
+
+Ltac group_only f e inv :=
+  try (progress (group_advanced_only f e inv));
+  try (progress (group_basic)).
+  
+Ltac group :=
+  match goal with
+  | G:Group ?f ?e ?inv |- _ => group_only f e inv
+  end.
 
 (** ** Examples *)
 Section Examples.
-  
-  Import Reals.
-  
-  Goal forall a b c : R, (a + c = 0 /\ c + b = 0 -> a = b)%R.
-  Proof.
-    intros. destruct H.
-    apply group_opp_uniq_r in H.
-    apply group_opp_uniq_l in H0.
-    rewrite <- H, <- H0. auto.
-  Qed.
 
+  Context `{HGroup : Group}.
+  Infix "+" := Aadd : A_scope.
+  Notation "0" := Azero : A_scope.
+  Notation "- a" := (Aopp a) : A_scope.
+  Notation Asub a b := (a + -b).
+  Infix "-" := Asub : A_scope.
+         
+  Goal forall a b c d : A, - (a + 0 + (b - c)) + (- - d + 0) = c - b + - (- d + a).
+  Proof. intros. group. Qed.
+
+  Goal forall a b : A, b = 0 -> a + b = a.
+  Proof. intros. group. Qed.
+
+  Goal forall a b : A, a = 0 -> a + b = b.
+  Proof. intros. group. Qed.
+
+  Goal forall a b : A, a + b = b -> a = 0.
+  Proof. intros. group. Qed.
+
+  Goal forall a b : A, a + b = a -> b = 0.
+  Proof. intros. group. Qed.
+
+  Goal forall a b : A, a = - b -> - a = b.
+  Proof. intros. group. Qed.
+  
+  Goal forall a b : A, - a = b -> a = - b.
+  Proof. intros. group. Qed.
+  
 End Examples.
 
 
 (* ######################################################################### *)
 (** * Abelian Group *)
-(* ######################################################################### *)
+
 (** ** Class *)
-(** ** Instances *)
-(** ** Extra Theories *)
-(** ** Examples *)
-
-(* ======================================================================= *)
-(** ** Definition and theory *)
-
 Class AGroup {A} Aadd (Azero:A) Aopp := {
     agroupGroup :: Group Aadd Azero Aopp;
     agroupAM :: AMonoid Aadd Azero;
     agroupComm :: Commutative Aadd;
   }.
+                                                         
+(** ** Instances *)
+Section Instances.
 
+  Import Qcanon Reals.
+  
+  #[export] Instance Qc_add_AGroup : AGroup Qcplus 0 Qcopp.
+  split_intro; subst; ring. Defined.
+
+  #[export] Instance R_add_AGroup : AGroup Rplus 0%R Ropp.
+  split_intro; subst; ring. Defined.
+
+End Instances.
+
+(** ** Extra Theories *)
 Section Theory.
   
-  Context `{AG : AGroup}.
+  Context `{HAGroup : AGroup}.
   Infix "+" := Aadd.
   Notation "- a" := (Aopp a).
   Notation "a - b" := (a + (-b)).
@@ -1516,22 +1940,61 @@ Section Theory.
   
 End Theory.
 
-(* ======================================================================= *)
-(** ** Instances *)
-Section Instances.
+Ltac agroup_only f e inv :=
+  repeat
+    (match goal with
+     (* a + b - a ==> a - a + b *)
+     | AG : AGroup f e inv |- context[f (f ?a ?b) (inv ?a)] =>
+         rewrite (associative a b (inv a));
+         rewrite (commutative b (inv a));
+         rewrite <- (associative a (inv a) b)
+     end;
+     auto).
 
-  Import Qcanon Reals.
-  
-  #[export] Instance Qc_add_AGroup : AGroup Qcplus 0 Qcopp.
-  split_intro; subst; ring. Defined.
+Ltac agroup :=
+  try match goal with
+    | AG : AGroup ?f ?e ?inv |- _ =>
+        try pose proof (@agroupGroup _ f e inv AG) as HGroup;
+        try pose proof (@agroupAM _ f e inv AG) as HAMonoid;
+        repeat
+          (agroup_only f e inv;
+           group_only f e inv;
+           amonoid)
+    end;
+  try match goal with
+    | G : Group ?f ?e ?inv |- _ =>
+        try pose proof (@agroupGroup _ f e inv G) as HGroup;
+        group_only f e inv
+    end;
+  try match goal with
+    | AM : AMonoid ?f ?e |- _ => amonoid
+    end;
+  try match goal with
+    | M : Monoid ?f ?e |- _ => monoid
+    end;
+  try match goal with
+    | ASG : ASGroup ?f |- _ => asgroup
+    end;
+  try match goal with
+    | SG : SGroup ?f |- _ => sgroup
+    end.
 
-  #[export] Instance R_add_AGroup : AGroup Rplus 0%R Ropp.
-  split_intro; subst; ring. Defined.
+(** ** Examples *)
+Section Examples.
+  Context `{HAGroup : AGroup}.
+  Infix "+" := Aadd : A_scope.
+  Notation "0" := Azero : A_scope.
+  Notation "- a" := (Aopp a) : A_scope.
+  Notation Asub a b := (a + -b).
+  Infix "-" := Asub : A_scope.
 
-  Goal forall a b c : R, ((a - b) - c = a - (b + c))%R.
-  Proof. intros. apply agroup_sub_assoc. Qed.
+  Goal forall a b c d : A, - (a + 0 + (b - c)) + (- - d + 0) = c - b + - (- d + a).
+  Proof. intros. agroup. Qed.
 
-End Instances.
+  Goal forall a b c : A, ((a - b) - c = a - (b + c)).
+  Proof. intros. agroup. Qed.
+
+End Examples.
 
 
 (* ######################################################################### *)
@@ -1540,7 +2003,7 @@ End Instances.
 
 (** ** Class *)
 
-Class SemiRing {A} Aadd (Azero:A) Amul Aone := {
+Class SRing {A} Aadd (Azero:A) Amul Aone := {
     sringAddAM :: AMonoid Aadd Azero; (* 不确定交换性是否必要，姑且先留下 *)
     sringMulAM :: AMonoid Amul Aone; (* 不确定交换性是否必要，姑且先留下 *)
     sringDistrL :: DistributiveLeft Aadd Amul;
@@ -1552,16 +2015,16 @@ Section Instances.
 
   Import Nat ZArith Qcanon Reals.
 
-  #[export] Instance nat_SRing : SemiRing Nat.add 0%nat Nat.mul 1%nat.
+  #[export] Instance nat_SRing : SRing Nat.add 0%nat Nat.mul 1%nat.
   repeat constructor; intros; ring. Qed.
   
-  #[export] Instance Z_SRing : SemiRing Z.add 0%Z Z.mul 1%Z.
+  #[export] Instance Z_SRing : SRing Z.add 0%Z Z.mul 1%Z.
   repeat constructor; intros; ring. Qed.
   
-  #[export] Instance Qc_SRing : SemiRing Qcplus 0 Qcmult 1.
+  #[export] Instance Qc_SRing : SRing Qcplus 0 Qcmult 1.
   repeat constructor; intros; ring. Qed.
 
-  #[export] Instance R_SRing : SemiRing Rplus R0 Rmult R1.
+  #[export] Instance R_SRing : SRing Rplus R0 Rmult R1.
   split_intro; subst; ring. Defined.
 
 End Instances.
@@ -1569,7 +2032,7 @@ End Instances.
 (** ** Extra Theories *)
 Section Theory.
 
-  Context `{SR:SemiRing}.
+  Context `{HSRing : SRing}.
 
   Infix "+" := Aadd.
   Infix "*" := Amul.
@@ -1618,7 +2081,7 @@ End Instances.
 (** ** Extra Theories *)
 Section Theory.
 
-  Context `{R:Ring}.
+  Context `{HRing : Ring}.
 
   Infix "+" := Aadd : A_scope.
   Notation "1" := Aone : A_scope.
@@ -1648,6 +2111,7 @@ End Examples.
 Class ARing {A} Aadd Azero Aopp Amul Aone := {
     aringRing :: @Ring A Aadd Azero Aopp Amul Aone;
     aringMulComm :: Commutative Amul;
+    aringAMonoid :: AMonoid Amul Aone;
     aringASGroup :: ASGroup Amul
   }.
 
@@ -1666,7 +2130,7 @@ End Instances.
 
 (** ** Extra Theories *)
 
-Lemma make_ring_theory `(H:ARing)
+Lemma make_ring_theory `(HARing : ARing)
   : ring_theory Azero Aone Aadd Amul (fun x y => Aadd x (Aopp y)) Aopp eq.
 Proof.
   constructor; intros;
@@ -1677,7 +2141,7 @@ Proof.
 Qed.
 
 Section Theory.
-  Context `{HARing: ARing}.
+  Context `{HARing : ARing}.
   Add Ring ring_inst : (make_ring_theory HARing).
   Infix "+" := Aadd.
   Notation "0" := Azero.
@@ -1729,7 +2193,7 @@ End Theory.
 (** This example declares an abstract abelian-ring structure, and shows how to use
     fewer code to enable "ring" tactic. *)
 Module Demo_AbsARing.
-  Context `{HARing:ARing}.
+  Context `{HARing : ARing}.
   Infix "+" := Aadd. Infix "*" := Amul.
   Notation "0" := Azero. Notation "1" := Aone.
 
@@ -1897,12 +2361,12 @@ Section theories.
     intros. split; intros.
     - apply lt_add_compat_l with (c:=-b) in H.
       apply lt_add_compat_r with (c:=-a) in H.
-      replace (-b + a + -a) with (-b) in H; [|group].
-      replace (-b + b + -a) with (-a) in H; [|group]. auto.
+      replace (-b + a + -a) with (-b) in H; [|ring].
+      replace (-b + b + -a) with (-a) in H; [|ring]. auto.
     - apply lt_add_reg_l with (c:=-b).
       apply lt_add_reg_r with (c:=-a).
-      replace (-b + a + -a) with (-b); [|group].
-      replace (-b + b + -a) with (-a); [|group]. auto.
+      replace (-b + a + -a) with (-b); [|ring].
+      replace (-b + b + -a) with (-a); [|ring]. auto.
   Qed.
 
   (* a < b <-> a - b < 0 *)
@@ -2338,7 +2802,8 @@ End Instances.
 
 (** ** Extra Theories *)
 
-Lemma make_field_theory `(H:Field)
+(* make a `field_theory` from `Field` *)
+Lemma make_field_theory `(HField : Field)
   : field_theory Azero Aone Aadd Amul
       (fun a b => Aadd a (Aopp b)) Aopp
       (fun a b => Amul a (Ainv b)) Ainv eq.
@@ -2351,8 +2816,16 @@ Proof.
   apply field_mulInvL. auto.
 Qed.
 
+(* make a `AGroup` from `Field` *)
+Lemma make_field_agroup_add `(HField : Field) : AGroup Aadd Azero Aopp.
+Proof. apply HField. Qed.
+
+(* make a `AMonoid` from `Field` *)
+Lemma make_field_amonoid_add `(HField : Field) : AMonoid Aadd Azero.
+Proof. apply HField. Qed.
+
 Section Theory.
-  Context `{F:Field}.
+  Context `{HField : Field}.
   Infix "+" := Aadd.
   Notation "- a" := (Aopp a).
   Notation Asub a b := (a + -b).
@@ -2363,7 +2836,7 @@ Section Theory.
   Notation Adiv a b := (a * (/b)).
   Infix "/" := Adiv.
 
-  Add Field field_inst : (make_field_theory F).
+  Add Field field_inst : (make_field_theory HField).
 
   (** a <> 0 -> a * / a = 1 *)
   Lemma field_mulInvR : forall a : A, a <> 0 -> a * /a = 1.
@@ -2371,11 +2844,11 @@ Section Theory.
 
   (** a <> 0 -> (1/a) * a = 1 *)
   Lemma field_mulInvL_inv1 : forall a : A, a <> 0 -> (1/a) * a = 1.
-  Proof. intros. simpl. group. apply field_mulInvL. auto. Qed.
+  Proof. intros. simpl. field; auto. Qed.
   
   (** a <> 0 -> a * (1/a) = 1 *)
   Lemma field_mulInvR_inv1 : forall a : A, a <> 0 -> a * (1/a) = 1.
-  Proof. intros. simpl. group. apply field_mulInvR. auto. Qed.
+  Proof. intros. simpl. field. auto. Qed.
 
   (** a <> 0 -> / a <> 0 *)
   Lemma field_inv_neq0_if_neq0 : forall a : A, a <> 0 -> / a <> 0.
@@ -2460,7 +2933,7 @@ Section Theory.
   Proof.
     intros. split; intros.
     - destruct (Aeqdec a 0), (Aeqdec b 0); auto.
-      assert ((/a * a) * (b * /b) = /a * (a * b) * /b). asemigroup.
+      assert ((/a * a) * (b * /b) = /a * (a * b) * /b). field; auto.
       rewrite H, field_mulInvL, field_mulInvR, identityLeft in H0; auto.
       rewrite ring_mul_0_r in H0 at 1.
       rewrite ring_mul_0_l in H0 at 1.
@@ -2503,7 +2976,7 @@ Section Theory.
       a * b = b -> (a = 1) \/ (b = 0).
   Proof.
     intros. destruct (Aeqdec a 1), (Aeqdec b 0); auto.
-    replace b with (1 * b) in H at 2 by group.
+    replace b with (1 * b) in H at 2 by ring.
     apply field_mul_cancel_r in H; auto.
   Qed.
 
@@ -2664,7 +3137,7 @@ Class ConvertToR {A} Aadd Azero Aopp Amul Aone Ainv Alt Ale Altb Aleb
 
 (** ** Extra Theories *)
 Section Theory.
-  Context `{ConvertToR}.
+  Context `{HConvertToR : ConvertToR}.
   Context {AeqDec : Dec (@eq A)}.
   Infix "<" := Alt : A_scope.
   Infix "<=" := Ale : A_scope.

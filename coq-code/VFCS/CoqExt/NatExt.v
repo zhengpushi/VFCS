@@ -313,6 +313,10 @@ Proof. lia. Qed.
 Lemma nat_ltS_lt_lt : forall a b c : nat, a < S b -> b < c -> a < c.
 Proof. lia. Qed.
 
+(** a < b -> b < S c -> a < c *)
+Lemma nat_lt_ltS_lt : forall a b c : nat, a < b -> b < S c -> a < c.
+Proof. lia. Qed.
+
 
 (* ######################################################################### *)
 (** * Properties for div and mod *)

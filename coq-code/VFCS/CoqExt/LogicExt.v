@@ -156,5 +156,3 @@ not_all_not_ex: forall (U : Type) (P : U -> Prop), ~ (forall n : U, ~ P n) -> ex
   Proof. Abort.
   
 End exercise_forall_exist_not.
-
-

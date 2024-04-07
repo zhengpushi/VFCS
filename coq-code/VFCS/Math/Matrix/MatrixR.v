@@ -86,7 +86,7 @@ Definition vnorm {n} (a : vec n) : vec n := (1 / ||a||) \.* a.
 
 (** The component of a normalized vector is equivalent to its original component 
       divide the vector's length *)
-Lemma vnth_vnorm : forall {n} (a : vec n) i, a <> vzero -> (vnorm a) $ i = (a $ i) / ||a||.
+Lemma vnth_vnorm : forall {n} (a : vec n) i, a <> vzero -> (vnorm a).[i] = a.[i] / ||a||.
 Proof.
   intros. unfold vnorm. rewrite vnth_vcmul; auto.
   autounfold with A. field. apply vlen_neq0_iff_neq0; auto.
@@ -580,7 +580,7 @@ Lemma v2cross_ge0_eq : forall (a b : vec 2),
     a \x b = sqrt ((<a, a> * <b, b>) - <a, b>²).
 Proof.
   intros. apply Rsqr_inj. ra. ra. rewrite !Rsqr_sqrt.
-  - cbv. v2f 0. field.
+  - cbv. rewrite <- !nth_v2f. field.
   - pose proof (vdot_sqr_le a b). autounfold with A in *. ra.
 Qed.
 
@@ -1383,14 +1383,14 @@ Definition v3perp (a b : vec 3) : vec 3 := - ((a \x b) \x b).
 Lemma v3perp_spec : forall (a b : vec 3), vunit b -> v3perp a b = vperp a b.
 Proof.
   intros.
-  pose proof (v3unit_sqr_xyz b H) as H0; cbv in H0; v2f 0.
-  apply v3eq_iff. repeat split; cbv; v2f 0; field_simplify; try lra.
-  - pose proof (v3unit_sqr_xzy b H) as H1; cbv in H1; v2f 0;
-      ring_simplify in H1; rewrite H1; clear H1. field.
-  - pose proof (v3unit_sqr_yxz b H) as H1; cbv in H1; v2f 0;
-      ring_simplify in H1; rewrite H1; clear H1. field.
-  - pose proof (v3unit_sqr_zyx b H) as H1; cbv in H1; v2f 0;
-      ring_simplify in H1; rewrite H1; clear H1. field.
+  pose proof (v3unit_sqr_xyz b H) as H0; cbv in H0; rewrite <- !nth_v2f in H0.
+  apply v3eq_iff. repeat split; cbv; rewrite <- !nth_v2f; field_simplify; try lra.
+  - pose proof (v3unit_sqr_xzy b H) as H1; cbv in H1; rewrite <- !nth_v2f in H1.
+    ring_simplify in H1; rewrite H1; field.
+  - pose proof (v3unit_sqr_yxz b H) as H1; cbv in H1; rewrite <- !nth_v2f in H1.
+    ring_simplify in H1; rewrite H1; field.
+  - pose proof (v3unit_sqr_zyx b H) as H1; cbv in H1; rewrite <- !nth_v2f in H1.
+    ring_simplify in H1; rewrite H1; clear H1. field.
 Qed.
 
 (** Two vectors in 3D are parallel, can be determined by cross-product.
@@ -1544,7 +1544,21 @@ Proof. intros. rewrite v3dot_i_r, v3dot_j_r, v3dot_k_r; auto. Qed.
 (** dc of a nonzero vector is a unit vector *)
 Lemma v3dc_unit : forall (a : vec 3), a <> vzero -> vunit (v3dc a).
 Proof.
-  intros. unfold vunit,Vector.vunit. cbn. autorewrite with R.
+  intros. unfold vunit,Vector.vunit. cbn.
+  pose proof (v3norm_sqr_eq1 a H).
+  erewrite !nth_v2f.
+  rewrite !Vector.vnth_vmap2.
+  autorewrite with R.
+  unfold v3dc. simpl.
+  cbn. auto.
+  autounfold with A.
+  ?
+  apply H0.
+  Set Printing All.
+  rewrite H0.
+  apply H0.
+  autounfold rewrite with A in *.
+  simpl.
   apply v3norm_sqr_eq1; auto.
 Qed.
 

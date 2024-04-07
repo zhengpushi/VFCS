@@ -124,29 +124,39 @@ let mmulR (m1:matrix) (m2:matrix) : matrix =
   (r1,c2, mmul_R r1 c1 c2 f1 f2);;
 
 (** matrix inversion *)
-let minvR (m:matrix) : matrix =
+let minvR_GE (m:matrix) : matrix =
   let (r,c,f) = m in
   (r,c, minvGE_R r f);;
+
+let minvR_AM (m:matrix) : matrix =
+  let (r,c,f) = m in
+  (r,c, minvAM_R r f);;
 
 (** command option processing *)
 
 (* global variables for command options. *)
 let cmdopt_matrix_size : int ref = ref 10
 let cmdopt_show_matrix : bool ref = ref true
+let cmdopt_test_GE : bool ref = ref false
+let cmdopt_test_AM : bool ref = ref false
 
 let set_matrix_size (i:int)   = cmdopt_matrix_size := i
 let set_show_matrix (b:bool)  = cmdopt_show_matrix := b
+let set_test_GE (b:bool)  = cmdopt_test_GE := b
+let set_test_AM (b:bool)  = cmdopt_test_AM := b
 
 let read_options () : string =
   let speclist =
     [
-      ("-size", Arg.Int set_matrix_size, "Set matrix dimension");
-      ("-print", Arg.Bool set_show_matrix, "Show matrix content");
+      ("-n", Arg.Int set_matrix_size, "Set matrix dimension");
+      ("-print", Arg.Bool set_show_matrix, "Show matrix content?");
+      ("-GE", Arg.Bool set_test_GE, "Is test minvGE?");
+      ("-AM", Arg.Bool set_test_AM, "Is test minvAE?");
     ]
   in
   let usage_msg = "Usage: ./matrix [option] where options are:" in
   let _ = Arg.parse speclist (fun s -> ()) usage_msg in
-  ""
+  "";;
 
 let show_hello_msg () =
   let hello_msg = "Program for test matrix." in
@@ -167,25 +177,32 @@ let test_mmul (n:int) : unit =
   prt_mat "m1*m2=" m3;;
 
 (* 测试矩阵求逆 *)
-let test_minv (n:int) : unit =
+let test_minvGE (n:int) : unit =
   let m = gen_mat n n in
-  let m' = minvR m in
-  print_endline "Test matrix inversion:";
+  let m' = minvR_GE m in
+  print_endline "Test matrix inversion GE";
+  prt_mat "m=" m;
+  prt_mat "m'" m';;
+
+let test_minvAM (n:int) : unit =
+  let m = gen_mat n n in
+  let m' = minvR_AM m in
+  print_endline "Test matrix inversion AM";
   prt_mat "m=" m;
   prt_mat "m'" m';;
   
 let main () =
   let _ = read_options () in
   let n = !cmdopt_matrix_size in
+  let is_test_GE = !cmdopt_test_GE in
+  let is_test_AM = !cmdopt_test_AM in
   (* let is_print = !cmdopt_show_matrix in *)
   show_hello_msg ();
   test_mmul n;;
-  (* test_minv n;; *)
-  (* if is_print then
-   *   (
-   *     prt_mat "ORIGINAL" m;
-   *     prt_mat "INVERSE" m'
-   *   );; *)
+  (* if is_test_GE then
+   *   test_minvGE n;
+   * if is_test_AM then
+   *   test_minvAM n;; *)
   
 main ();;
        

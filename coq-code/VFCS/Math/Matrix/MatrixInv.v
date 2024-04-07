@@ -41,6 +41,28 @@ Require Export MatrixGauss.
 Generalizable Variable A Aadd Azero Aopp Amul Aone Ainv.
 
 
+(* ******************************************************************* *)
+(** ** Test two inversion algorithms (GE, AM) in OCaml *)
+
+Require Import ExtrOcamlBasic ExtrOcamlNatInt.
+Require Import MyExtrOCamlR.
+
+Definition mmul_R := @mmul _ Rplus R0 Rmult.
+Definition minvGE_R := @minvGE _ Rplus R0 Ropp Rmult R1 Rinv R_eq_Dec.
+Definition minvGE_Rlist := @minvGE_list _ Rplus R0 Ropp Rmult R1 Rinv R_eq_Dec.
+Definition minvAM_R := @minvAM _ Rplus R0 Ropp Rmult R1 Rinv.
+Definition minvAM_Rlist := @minvAM_list _ Rplus R0 Ropp Rmult R1 Rinv.
+
+(* Recursive Extraction *)
+(*   minvertibleGE minvGEo minvertibleGE_list minvGE_list *)
+(*   minvertibleAM minvAMo minvertibleAM_list minvAM_list. *)
+
+(* Extraction "ocaml_test/matrix2.ml" *)
+(*   m2l l2m mmul_R *)
+(*   minvGE_R minvGE_Rlist *)
+(*   minvAM_R minvAM_Rlist. *)
+  
+
 (* ############################################################################ *)
 (** * Matrix is invertible  *)
 
@@ -140,6 +162,17 @@ Section minvertible.
     - apply mmul_minvGE_l in H.
       rewrite minvertible_iff_minvertibleL. hnf.
       exists (minvGE M); auto.
+  Qed.
+
+  (** A square matrix is invertible, if its determinant is nonzero *)
+  Lemma minvertible_iff_mdet_neq0 : forall {n} (M : smat n),
+      minvertible M <-> mdet M <> 0.
+  Proof.
+    intros. split; intros.
+    - apply minvertible_iff_minvertibleAM_true in H.
+      apply minvertibleAM_true_iff_mdet_neq0; auto.
+    - apply minvertibleAM_true_iff_mdet_neq0 in H; auto.
+      apply minvertible_iff_minvertibleAM_true in H. auto.
   Qed.
   
   (** From `M * N = mat1`, we know `M` is invertible *)
@@ -414,7 +447,7 @@ Section minvAM.
   Qed.
 
   (** (M \T) \-1 = (M \-1) \T *)
-  Lemma minvA_mtrans : forall {n} (M : smat n), minvertible M -> (M\T)\-1 = (M\-1)\T.
+  Lemma minvAM_mtrans : forall {n} (M : smat n), minvertible M -> (M\T)\-1 = (M\-1)\T.
   Proof.
   Admitted.
 
@@ -425,37 +458,47 @@ Section minvAM.
 End minvAM.
 
 
-
 Section test.
-  Context `{HField : Field} {AeqDec : Dec (@eq A)}.
+  Import RExt.
+  Import QcExt.
+  (* (* Context `{HField : Field} {AeqDec : Dec (@eq A)}. *) *)
+  (* Notation "0" := Azero : A_scope. *)
+  (* Notation "1" := Aone : A_scope. *)
+  (* Infix "+" := Aadd : A_scope. *)
+  (* Infix "*" := Amul : A_scope. *)
+  (* Notation "- a" := (Aopp a) : A_scope. *)
+  (* Notation "/ a" := (Ainv a) : A_scope. *)
   
-  Notation minvAM := (@minvAM _ Aadd Azero Aopp Amul Aone Ainv).
-  Notation minvGE := (@minvGE _ Aadd Azero Aopp Amul Aone Ainv).
-  Notation mat1 := (@mat1 _ Azero Aone).
+  (* Notation minvAM := (@minvAM _ Rplus R0 Ropp Rmult 1 Rinv). *)
+  (* Notation minvGE := (@minvGE _ Rplus R0 Ropp Rmult 1 Rinv). *)
+  (* Notation mat1 := (@mat1 _ 0 1). *)
+  Notation minvAM := (@minvAM _ Qcplus 0 Qcopp Qcmult 1 Qcinv).
+  Notation minvGE := (@minvGE _ Qcplus 0 Qcopp Qcmult 1 Qcinv).
+  Notation mat1 := (@mat1 _ 0 1).
   
   (* 性能测试，看可以解多大规模的矩阵 *)
   Section ex3.
   (* Performance of minvAM in Coq
        dim    time(s)    time(s) 基于 Fin
-       5      0.009      0.326
-       6      0.035      2.9s
-       7      0.288
-       8      3.116
+       5      0.009      0.01
+       6      0.035      0.08
+       7      0.288      0.74
+       8      3.116      8.2
    *)
-    (* Time Compute m2l (minvAM (@mat1 6)). *)
+    (* Time Compute m2l (minvAM (@mat1 7)). *)
 
   (* Performance of minvGE in Coq
        dim    time(s)    time(s) 基于Fin
        7      0.006
        10     0.009
-       20     0.03
-       30     0.06
-       40     0.109
-       50     0.165
-       100    0.918
+       20     0.03       0.04
+       30     0.06       0.098
+       40     0.109      0.2
+       50     0.165      0.37
+       100    0.918      3.54
        200    8.666
    *)
-    (* Time Compute m2l (minvGE (@mat1 2)). *)
+    (* Time Compute m2l (minvGE (@mat1 200)). *)
   End ex3.
 End test.
 
