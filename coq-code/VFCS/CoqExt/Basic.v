@@ -77,18 +77,18 @@ Reserved Infix    "*"       (at level 40, left associativity).    (* mul *)
 Reserved Infix    "/"       (at level 40, left associativity).    (* div *)
 Reserved Notation "a ²"     (at level 1).                         (* sqr *)
 Reserved Infix    "\.*"     (at level 40, no associativity).      (* scal left mul *)
+Reserved Infix    "*v"      (at level 30, right associativity).   (* mat * vec *)
+Reserved Infix    "v*"      (at level 28, left associativity).    (* vec * mat *)
 Reserved Infix    "⦿"      (at level 40, left associativity).    (* hardmard prod *)
 Reserved Infix    "\o"      (at level 50, no associativity).
-Reserved Infix    "⋅"       (at level 40, no associativity).      (* dot prod *)
 Reserved Notation "< a , b >" (at level 60, a, b at level 55, format "< a , b >"). (* dot prod *)
 Reserved Notation "|| v ||"   (at level 60, v at level 45, format "|| v ||").  (* vlen *)
-(* Reserved Infix    "×"       (at level 40, no associativity).      (* cross prod *) *)
 Reserved Infix    "\x"      (at level 40, no associativity).      (* cross prod *)
 Reserved Infix    "∘"       (at level 40, left associativity).    (* compose *)
 Reserved Notation "- a"     (at level 35, right associativity).   (* opp *)
 Reserved Notation "/ a"     (at level 35, right associativity).   (* inv *)
-Reserved Notation "M \T"    (at level 32, left associativity).    (* transpose *)
-(* Reserved Notation "M ⁻¹"    (at level 20, format "M ⁻¹").         (* minv *) *)
+Reserved Notation "M \T"    (at level 32, left associativity, format "M \T"). (* transpose *)
+Reserved Notation "M \A"    (at level 15, left associativity, format "M \A"). (* adjoin matrix *)
 Reserved Notation "M \-1"   (at level 20, format "M \-1").         (* minv *)
 Reserved Notation "M @ N"   (at level 30, no associativity).      (* cons by col *)
 Reserved Notation "'tr' M"  (at level 33, no associativity).
@@ -129,6 +129,8 @@ Reserved Notation "M .[ i , j ]"
   (at level 2, i, j at next level, left associativity, format "M .[ i , j ]").
 Reserved Notation "M .[ i , j <- a ]"
   (at level 2, i, j at next level, left associativity, format "M .[ i , j <- a ]").
+Reserved Notation "M &[ i ]"
+  (at level 2, i at next level, left associativity, format "M &[ i ]").
 
 
 (* Get element of finite vector/matrix by index.

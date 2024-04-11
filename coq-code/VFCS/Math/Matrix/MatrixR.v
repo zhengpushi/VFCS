@@ -1545,21 +1545,10 @@ Proof. intros. rewrite v3dot_i_r, v3dot_j_r, v3dot_k_r; auto. Qed.
 Lemma v3dc_unit : forall (a : vec 3), a <> vzero -> vunit (v3dc a).
 Proof.
   intros. unfold vunit,Vector.vunit. cbn.
+  erewrite !nth_v2f, !Vector.vnth_vmap2; cbn.
   pose proof (v3norm_sqr_eq1 a H).
-  erewrite !nth_v2f.
-  rewrite !Vector.vnth_vmap2.
-  autorewrite with R.
-  unfold v3dc. simpl.
-  cbn. auto.
-  autounfold with A.
-  ?
-  apply H0.
-  Set Printing All.
-  rewrite H0.
-  apply H0.
-  autounfold rewrite with A in *.
-  simpl.
-  apply v3norm_sqr_eq1; auto.
+  autounfold with A in *; autorewrite with R in *; lra.
+  Unshelve. all: lia.
 Qed.
 
 
@@ -1663,15 +1652,14 @@ Definition mnorm_spec_trig {r c} (mnorm : mat r c -> R) : Prop :=
 
 (* F-norm (M) := √(∑∑M(i,j)²) *)
 Definition mnormF {r c} (M : mat r c) : R :=
-  sqrt (vsum (fun i => vsum (fun j => (M$i$j)²))).
+  sqrt (vsum (fun i => vsum (fun j => (M.[i].[j])²))).
 
 (** mnormF m = √ tr (M\T * M) *)
 Lemma mnormF_eq_trace : forall {r c} (M : mat r c),
     mnormF M = sqrt (tr (M\T * M)).
 Proof.
-  intros. unfold mnormF. f_equal. unfold mtrace, Matrix.mtrace, vsum.
-  rewrite fseqsum_fseqsum_exchg. apply fseqsum_eq. intros j.
-  apply fseqsum_eq. intros i. cbv. auto.
+  intros. unfold mnormF. f_equal. unfold mtrace, Matrix.mtrace.
+  rewrite vsum_vsum. auto.
 Qed.
 
 Lemma mnormF_spec_pos : forall r c, mnorm_spec_pos (@mnormF r c).
@@ -1786,6 +1774,7 @@ Qed.
 (* SO(3)保持叉乘的一些尝试 *)
 Section morth_keep_cross_try.
   (* https://en.wikipedia.org/wiki/Cross_product#Algebraic&02AProperties *)
+  Notation "M \-1" := (minvAM M) : mat_scope.
 
   Goal forall (M : smat 3) (a b : vec 3),
       mdet M <> 0 -> (M * a)%V \x (M * b)%V = ((mdet M) \.* (M\-1\T * (a \x b)))%V.
@@ -1945,8 +1934,8 @@ Notation SO2 := (@SOn 2).
 (** SO3 *)
 Notation SO3 := (@SOn 3).
 
-Example SO3_example1 : forall M : SO3, M\-1 = M\T.
-Proof. apply SOn_inv_eq_trans. Qed.
+Example SO3_example1 : forall M : SO3, minvAM M = M\T.
+Proof. apply SOn_minvAM_eq_trans. Qed.
 
 
 (* ######################################################################### *)
@@ -1973,16 +1962,9 @@ Proof.
   pose (b := mkvec3 b1 b2 b3).
   replace (sqrt (a1² + a2² + a3²)) with (vlen a); [|cbv; f_equal; ring].
   replace (sqrt (b1² + b2² + b3²)) with (vlen b); [|cbv; f_equal; ring].
-  replace (a1 * b1 + a2 * b2 + a3 * b3)%R with (<a, b>); [|cbv; f_equal; ring].
+  replace (a1 * b1 + a2 * b2 + a3 * b3)%R with (<a, b>); [|cbv; ring].
   pose proof (vdot_abs_le a b). ra.
 Qed.
-
-Section test.
-  Let M := @l2m 2 2 [[1;2];[3;4]].
-  (* Compute m2l M. *)
-  (* Compute m2l (mmap Ropp M). *)
-  (* Compute m2l (M * M). *)
-End test.
 
 Section Example4CoordinateSystem.
   Variable ψ θ φ: R.

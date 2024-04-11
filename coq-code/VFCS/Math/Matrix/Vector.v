@@ -557,7 +557,9 @@ Section vinsert.
     intros j. destruct (j ??< i) as [E|E].
     - refine (a.[fin2PredRange j _]).
       apply Nat.lt_le_trans with (fin2nat i); auto.
-      apply Arith_prebase.lt_n_Sm_le. apply fin2nat_lt.
+      (* apply PeanoNat.lt_n_Sm_le. *)
+      apply Arith_prebase.lt_n_Sm_le.
+      apply fin2nat_lt.
     - destruct (j ??= i) as [E1|E1].
       + apply x.
       + refine (a.[fin2PredRangePred j _]).
@@ -1303,6 +1305,14 @@ Section vconsH_vconsT.
   Proof.
     intros. unfold vconsT. apply veq_iff_vnth; intros. fin.
   Qed.
+
+  (** vmap2 f (vconsT a x) (vconsT b y) = vconsT (vmap2 f a b) (f x y) *)
+  Lemma vmap2_vconsT_vconsT : forall {n} (a b : @vec A n) (x y : A) (f : A -> A -> A),
+      vmap2 f (vconsT a x) (vconsT b y) = vconsT (vmap2 f a b) (f x y).
+  Proof.
+    intros. apply veq_iff_vnth; intros. rewrite vnth_vmap2.
+    unfold vconsT. fin.
+  Qed.
   
 End vconsH_vconsT.
 
@@ -1801,6 +1811,16 @@ Section vsum.
       Unshelve. rewrite fin2nat_fin2AddRangeR. apply fin2nat_lt.
       rewrite fin2nat_fin2AddRangeAddL. lia.
   Qed.
+
+  (** ∑ (vconsT a x) = ∑ a + x *)
+  Lemma vsum_vconsT : forall {n} (a : @vec A n) (x : A),
+      vsum (vconsT a x) = vsum a + x.
+  Proof.
+    intros. rewrite vsumS_tail. f_equal.
+    - apply vsum_eq; intros. erewrite vnth_vconsT_lt. fin.
+    - rewrite vnth_vconsT_n; auto. fin.
+      Unshelve. fin.
+  Qed.
   
   (* If equip a `AGroup` *)
   Section AGroup.
@@ -2133,8 +2153,9 @@ Section vsub.
   Infix "+" := vadd : vec_scope.
   Notation "- a" := (vopp a) : vec_scope.
 
-  Definition vsub {n} (a b : vec n) : vec n := a + (- b).
-  Infix "-" := vsub : vec_scope.
+  Notation "a - b" := ((a + -b)%V) : vec_scope.
+  (* Definition vsub {n} (a b : vec n) : vec n := a + (- b). *)
+  (* Infix "-" := vsub : vec_scope. *)
 
   (** (a - b).i = a.i - b.i *)
   Lemma vnth_vsub : forall {n} (a b : vec n) i, (a - b).[i] = (a.[i] - b.[i])%A.
@@ -2143,35 +2164,35 @@ Section vsub.
   (** a - b = - (b - a) *)
   Lemma vsub_comm : forall {n} (a b : vec n), a - b = - (b - a).
   Proof.
-    intros. unfold vsub. rewrite group_opp_distr. rewrite group_opp_opp. auto.
+    intros. rewrite group_opp_distr. rewrite group_opp_opp. auto.
   Qed.
 
   (** (a - b) - c = a - (b + c) *)
   Lemma vsub_assoc : forall {n} (a b c : vec n), (a - b) - c = a - (b + c).
   Proof.
-    intros. unfold vsub. rewrite associative.
+    intros. rewrite associative.
     f_equal. rewrite group_opp_distr. apply commutative.
   Qed.
 
   (** (a + b) - c = a + (b - c) *)
   Lemma vsub_assoc1 : forall {n} (a b c : vec n), (a + b) - c = a + (b - c).
-  Proof. intros. unfold vsub. pose proof (vadd_AGroup n). agroup. Qed.
+  Proof. intros. pose proof (vadd_AGroup n). agroup. Qed.
 
   (** (a - b) - c = (a - c) - b *)
   Lemma vsub_assoc2 : forall {n} (a b c : vec n), (a - b) - c = (a - c) - b.
-  Proof. intros. unfold vsub. pose proof (vadd_AGroup n). agroup. Qed.
+  Proof. intros. pose proof (vadd_AGroup n). agroup. Qed.
   
   (** 0 - a = - a *)
   Lemma vsub_0_l : forall {n} (a : vec n), vzero - a = - a.
-  Proof. intros. unfold vsub. pose proof (vadd_AGroup n). agroup. Qed.
+  Proof. intros. pose proof (vadd_AGroup n). agroup. Qed.
   
   (** a - 0 = a *)
   Lemma vsub_0_r : forall {n} (a : vec n), a - vzero = a.
-  Proof. intros. unfold vsub. pose proof (vadd_AGroup n). agroup. Qed.
+  Proof. intros. pose proof (vadd_AGroup n). agroup. Qed.
   
   (** a - a = 0 *)
   Lemma vsub_self : forall {n} (a : vec n), a - a = vzero.
-  Proof. intros. unfold vsub. pose proof (vadd_AGroup n). agroup. Qed.
+  Proof. intros. pose proof (vadd_AGroup n). agroup. Qed.
 
   (** a - b = 0 <-> a = b *)
   Lemma vsub_eq0_iff_eq : forall {n} (a b : vec n), a - b = vzero <-> a = b.
@@ -2196,10 +2217,9 @@ Section vcmul.
   Notation vzero := (vzero Azero).
   Notation vadd := (@vadd _ Aadd).
   Notation vopp := (@vopp _ Aopp).
-  Notation vsub := (@vsub _ Aadd Aopp).
   Infix "+" := vadd : vec_scope.
   Notation "- a" := (vopp a) : vec_scope.
-  Infix "-" := vsub : vec_scope.
+  Notation "a - b" := ((a + (-b))%V) : vec_scope.
   
   Definition vcmul {n : nat} (x : A) (a : vec n) : vec n := vmap (fun y => Amul x y) a.
   Infix "\.*" := vcmul : vec_scope.
@@ -2261,7 +2281,7 @@ Section vcmul.
 
   (** x .* (a - b) = (x .* a) - (x .* b) *)
   Lemma vcmul_vsub : forall {n} x (a b : vec n), x \.* (a - b) = (x \.* a) - (x \.* b).
-  Proof. intros. unfold vsub. rewrite vcmul_vadd. rewrite vcmul_vopp. auto. Qed.
+  Proof. intros. rewrite vcmul_vadd. rewrite vcmul_vopp. auto. Qed.
 
   (** <vadd,vzero,vopp> is an abelian group *)
   #[export] Instance vec_AGroup : forall n, @AGroup (vec n) vadd vzero vopp.
@@ -2382,13 +2402,12 @@ Section vdot.
   Notation vzero := (vzero Azero).
   Notation vadd := (@vadd _ Aadd).
   Notation vopp := (@vopp _ Aopp).
-  Notation vsub := (@vsub _ Aadd Aopp).
   Notation vcmul := (@vcmul _ Amul).
   Notation seqsum := (@seqsum _ Aadd Azero).
   Notation vsum := (@vsum _ Aadd Azero).
   Infix "+" := vadd : vec_scope.
   Notation "- a" := (vopp a) : vec_scope.
-  Infix "-" := vsub : vec_scope.
+  Notation "a - b" := ((a + -b)%V) : vec_scope.
   Infix "\.*" := vcmul : vec_scope.
   
   Definition vdot {n : nat} (a b : vec n) : A := vsum (vmap2 Amul a b).
@@ -2435,11 +2454,11 @@ Section vdot.
 
   (** <a - b, c> = <a, c> - <b, c> *)
   Lemma vdot_vsub_l : forall {n} (a b c : vec n), <a - b, c> = (<a, c> - <b, c>)%A.
-  Proof. intros. unfold vsub. rewrite vdot_vadd_l. f_equal. apply vdot_vopp_l. Qed.
+  Proof. intros. rewrite vdot_vadd_l. f_equal. apply vdot_vopp_l. Qed.
 
   (** <a, b - c> = <a, b> - <a, c> *)
   Lemma vdot_vsub_r : forall {n} (a b c : vec n), <a, b - c> = (<a, b> - <a, c>)%A.
-  Proof. intros. unfold vsub. rewrite vdot_vadd_r. f_equal. apply vdot_vopp_r. Qed.
+  Proof. intros. rewrite vdot_vadd_r. f_equal. apply vdot_vopp_r. Qed.
 
   (** <x .* a, b> = x .* <a, b> *)
   Lemma vdot_vcmul_l : forall {n} (a b : vec n) x, <x \.* a, b> = x * <a, b>.
@@ -2466,7 +2485,16 @@ Section vdot.
   (** <veye i, a> = a i *)
   Lemma vdot_veye_l : forall {n} (a : vec n) i, <veye 0 1 i, a> = a i.
   Proof. intros. rewrite vdot_comm. apply vdot_veye_r. Qed.
-  
+
+  (** <vconsT a x, vconsT b y> = <a, b> + x * y *)
+  Lemma vdot_vconsT_vconsT : forall {n} (a b : vec n) (x y : A),
+      <vconsT a x, vconsT b y> = (<a, b> + x * y)%A.
+  Proof.
+    intros. unfold vdot.
+    rewrite vmap2_vconsT_vconsT.
+    rewrite vsum_vconsT. auto.
+  Qed.
+    
   (* If (@eq A) is decidable *)
   Section AeqDec.
     Context {AeqDec : Dec (@eq A)}.
@@ -2653,13 +2681,12 @@ Section vlen.
   Notation vzero := (@vzero _ Azero).
   Notation vadd := (@vadd _ Aadd).
   Notation vopp := (@vopp _ Aopp).
-  Notation vsub := (@vsub _ Aadd Aopp).
   Notation vcmul := (@vcmul _ Amul).
   Notation vdot := (@vdot _ Aadd Azero Amul).
   
   Infix "+" := vadd : vec_scope.
   Notation "- a" := (vopp a) : vec_scope.
-  Infix "-" := vsub : vec_scope.
+  Notation "a - b" := ((a + -b)%V) : vec_scope.
   Infix "\.*" := vcmul : vec_scope.
   Notation "< a , b >" := (vdot a b) : vec_scope.
 
@@ -2746,7 +2773,7 @@ Section vlen.
     Lemma vlen_sqr_vsub : forall {n} (a b : vec n),
         ||(a - b)||² = (||a||² + ||b||² - 2 * a2r (<a, b>))%R.
     Proof.
-      intros. rewrite <- !vdot_same. unfold vsub.
+      intros. rewrite <- !vdot_same.
       rewrite !vdot_vadd_l, !vdot_vadd_r.
       rewrite !vdot_vopp_l, !vdot_vopp_r. rewrite (vdot_comm b a).
       rewrite !a2r_add, !a2r_opp at 1. ring.
@@ -2930,12 +2957,11 @@ Section vorth.
   Notation vzero := (vzero Azero).
   Notation vadd := (@vadd _ Aadd).
   Notation vopp := (@vopp _ Aopp).
-  Notation vsub := (@vsub _ Aadd Aopp).
   Notation vcmul := (@vcmul _ Amul).
   Notation vdot := (@vdot _ Aadd Azero Amul).
   Infix "+" := vadd : vec_scope.
   Notation "- a" := (vopp a) : vec_scope.
-  Infix "-" := vsub : vec_scope.
+  Notation "a - b" := ((a + -b)%V) : vec_scope.
   Infix "\.*" := vcmul : vec_scope.
   Notation "< a , b >" := (vdot a b) : vec_scope.
   
@@ -2994,14 +3020,13 @@ Section vproj.
   Notation vzero := (vzero Azero).
   Notation vadd := (@vadd _ Aadd).
   Notation vopp := (@vopp _ Aopp).
-  Notation vsub := (@vsub _ Aadd Aopp).
   Notation vcmul := (@vcmul _ Amul).
   Notation vdot := (@vdot _ Aadd Azero Amul).
   Notation vunit := (@vunit _ Aadd Azero Amul Aone).
   Notation vorth := (@vorth _ Aadd Azero Amul).
   Infix "+" := vadd : vec_scope.
   Notation "- a" := (vopp a) : vec_scope.
-  Infix "-" := vsub : vec_scope.
+  Notation "a - b" := ((a + -b)%V) : vec_scope.
   Infix "\.*" := vcmul : vec_scope.
   Notation "< a , b >" := (vdot a b) : vec_scope.
   Infix "_|_" := vorth : vec_scope.
@@ -3072,14 +3097,13 @@ Section vperp.
   Notation vzero := (vzero Azero).
   Notation vadd := (@vadd _ Aadd).
   Notation vopp := (@vopp _ Aopp).
-  Notation vsub := (@vsub _ Aadd Aopp).
   Notation vcmul := (@vcmul _ Amul).
   Notation vdot := (@vdot _ Aadd Azero Amul).
   Notation vproj := (@vproj _ Aadd Azero Amul Ainv).
   Notation vorth := (@vorth _ Aadd Azero Amul).
   Infix "+" := vadd : vec_scope.
   Notation "- a" := (vopp a) : vec_scope.
-  Infix "-" := vsub : vec_scope.
+  Notation "a - b" := ((a + -b)%V) : vec_scope.
   Infix "\.*" := vcmul : vec_scope.
   Notation "< a , b >" := (vdot a b) : vec_scope.
   Infix "_|_" := vorth : vec_scope.
@@ -3094,19 +3118,19 @@ Section vperp.
   (** vproj a b = a - vperp a b *)
   Lemma vproj_eq_minus_vperp : forall {n} (a b : vec n), vproj a b = a - vperp a b.
   Proof.
-    intros. unfold vperp, vsub. pose proof (vadd_AGroup (A:=A) n). agroup.
+    intros. unfold vperp. pose proof (vadd_AGroup (A:=A) n). agroup.
   Qed.
 
   (** (vproj a b) + (vperp a b) = a *)
   Lemma vproj_plus_vperp : forall {n} (a b : vec n), vproj a b + vperp a b = a.
   Proof.
-    intros. unfold vperp, vsub. pose proof (vadd_AGroup (A:=A) n). agroup.
+    intros. unfold vperp. pose proof (vadd_AGroup (A:=A) n). agroup.
   Qed.
   
   (** a _|_ b -> vperp a b = a *)
   Lemma vorth_imply_vperp_eq_l : forall {n} (a b : vec n), a _|_ b -> vperp a b = a.
   Proof.
-    intros. unfold vperp, vsub. pose proof (vadd_AGroup (A:=A) n). agroup.
+    intros. unfold vperp. pose proof (vadd_AGroup (A:=A) n). agroup.
     rewrite vorth_imply_vproj_eq0; auto.
   Qed.
   
@@ -3128,7 +3152,7 @@ Section vperp.
     Lemma vperp_vadd : forall {n} (a b c : vec n),
         c <> vzero -> (vperp (a + b) c = vperp a c + vperp b c)%V.
     Proof.
-      intros. unfold vperp, vsub. pose proof (vadd_AGroup (A:=A) n). agroup.
+      intros. unfold vperp. pose proof (vadd_AGroup (A:=A) n). agroup.
       rewrite vproj_vadd; auto. agroup.
     Qed.
 
@@ -3252,11 +3276,10 @@ Section vcoll_vpara_vantipara.
   Notation vzero := (vzero Azero).
   Notation vadd := (@vadd _ Aadd).
   Notation vopp := (@vopp _ Aopp).
-  Notation vsub := (@vsub _ Aadd Aopp).
   Notation vcmul := (@vcmul _ Amul).
   Infix "+" := vadd : vec_scope.
   Notation "- a" := (vopp a) : vec_scope.
-  Infix "-" := vsub : vec_scope.
+  Notation "a - b" := ((a + -b)%V) : vec_scope.
   Infix "\.*" := vcmul : vec_scope.
 
 

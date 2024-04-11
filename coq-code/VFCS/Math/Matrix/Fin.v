@@ -197,12 +197,20 @@ Qed.
 Hint Rewrite fin2nat_nat2finS : fin.
 
 (** {i<n} <> nat2finS n -> fin2nat i < n *)
-Lemma nat2finS_neq_imply_lt : forall {n} (i : fin (S n)), i <> nat2finS n -> fin2nat i < n.
+Lemma nat2finS_neq_imply_lt : forall {n} (i : fin (S n)),
+    i <> nat2finS n -> fin2nat i < n.
 Proof.
   intros. pose proof (fin2nat_lt i).
   assert (fin2nat i <> n); try lia.
   intro. destruct H. destruct i; simpl in *. subst.
   rewrite nat2finS_eq with (E:=H0); auto. apply fin_eq_iff; auto.
+Qed.
+
+(** fin2nat i = n -> #n = i *)
+Lemma fin2nat_imply_nat2finS : forall n (i : fin (S n)), fin2nat i = n -> #n = i.
+Proof.
+  intros. erewrite nat2finS_eq. destruct i. apply fin_eq_iff; auto.
+  Unshelve. auto.
 Qed.
 
 
@@ -240,7 +248,6 @@ Proof.
 Qed.
 
 
-
 (** ** Tactic for fin *)
 
 (* simplify and solve proofs about "fin" *)
@@ -270,6 +277,11 @@ Ltac fin :=
         (* fin2nat i <> fin2nat j |- i <> j ==> solve it *)
         | H : fin2nat ?i <> fin2nat ?j |- ?i <> ?j => apply fin2nat_inj_not in H; easy
         | H : fin2nat ?i <> fin2nat ?j |- ?j <> ?i => apply fin2nat_inj_not in H; easy
+        (* fin2nat i = n |- #n = i ==> solve it *)
+        | H : fin2nat ?i = ?n |- nat2finS ?n = ?i =>
+            apply (fin2nat_imply_nat2finS n i H)
+        | H : fin2nat ?i = ?n |- ?i = nat2finS ?n =>
+            symmetry; apply (fin2nat_imply_nat2finS n i H)
         (* destruct the pattern about "??=, ??<, ??<=" *)
         | [ H : context [(?i ??= ?j)%nat] |- _]  => destruct (i ??= j)%nat as [E|E]
         | [ |- context [(?i ??= ?j)%nat]]        => destruct (i ??= j)%nat as [E|E]
@@ -605,7 +617,7 @@ Hint Rewrite fin2nat_fin2PredRangePred : fin.
 Definition fin2SuccRangeSucc {n} (i:fin n) : fin (S n).
   refine (nat2fin (S (fin2nat i)) _).
   pose proof (fin2nat_lt i).
-  apply Arith_prebase.lt_n_S_stt; auto.
+  rewrite <- Nat.succ_lt_mono; auto.
 Defined.
 
 Lemma fin2nat_fin2SuccRangeSucc : forall n (i:fin n),

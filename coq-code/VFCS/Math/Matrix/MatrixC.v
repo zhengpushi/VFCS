@@ -44,13 +44,19 @@ Section test.
   (* test rewriting *)
   Example mat_C_ex1 : forall r c s (m1 m2 : mat r c) (m3 : mat c s),
       (m1 - m2) * m3 = m1 * m3 - m2 * m3.
-  Proof. intros. rewrite mmul_msub_distr_r. auto. Qed.
+  Proof.
+    intros. rewrite mmul_msub_distr_r. auto.
+  Qed.
 
   Example mat_C_ex2 : forall r c (m1 m2 : mat r c) x, m1 = m2 -> x \.* m1 = x \.* m2.
   Proof. intros. f_equal. auto. Qed.
 
   (* test_monoid. *)
-  Example mat_C_ex3 : forall r c (m1 m2 : mat r c), mat0 + m1 = m1.
-  Proof. monoid. Qed.
+  Example mat_C_ex3 : forall r c (m1 m2 : mat r c),
+      (mat0 + m1) - (mat0 - m2) = m2 + (m1 - mat0).
+  Proof.
+    intros.
+    pose proof (madd_AGroup r c). agroup.
+  Qed.
 
 End test.
