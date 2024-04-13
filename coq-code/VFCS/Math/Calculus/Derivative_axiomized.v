@@ -134,11 +134,13 @@ Section deriv_rules.
   Fact deriv_finv : forall (v : tpRFun), (/v) ' = - ((v ') / (v * v)). Admitted.
 
   (** 导数的线性性质 *)
-  Fact deriv_linear : forall c1 c2 u1 u2, (c1 \.* u1 + c2 \.* u2)' = c1 \.* u1 ' + c2 \.* u2 '.
+  Fact deriv_linear :
+    forall c1 c2 u1 u2, (c1 \.* u1 + c2 \.* u2)' = c1 \.* u1 ' + c2 \.* u2 '.
   Proof. intros. rewrite ?deriv_fadd, ?deriv_fcmul. auto. Qed.
 
   (** 乘法求导推广 *)
-  Fact deriv_fmul3 : forall u v w, (u*v*w)' = u ' * v * w + u * v ' * w + u * v * w '.
+  Fact deriv_fmul3 : forall u v w,
+      (u * v * w)' = u ' * v * w + u * v ' * w + u * v * w '.
   Proof.
     intros. rewrite ?deriv_fmul. rewrite fmul_assoc; f_equal.
     rewrite fmul_add_distr_r. auto.

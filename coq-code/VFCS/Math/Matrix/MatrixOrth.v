@@ -142,47 +142,61 @@
 
 Require Export Hierarchy.
 Require Export Matrix.
-(* Require Export MatrixDet. *)
-(* Require Export MatrixInv. *)
 Require Export MatrixInvAM.
 
 Generalizable Variable A Aadd Aopp Amul Ainv Alt Ale Altb Aleb a2r.
 
-Open Scope nat_scope.
-Open Scope A_scope.
-Open Scope mat_scope.
+
+(* ######################################################################### *)
+(** * Orthogonal Matrix *)
+
+(** More theory of matrix inversion, dependent on core theory `Minv` *)
+Module MatrixOrth (F : FieldElementType).
+  Open Scope nat_scope.
+  Open Scope A_scope.
+  Open Scope mat_scope.
+
+  Module AM := MinvMoreAM F.
+  Import AM AMNotations.
+
+  Local Notation "0" := Azero : A_scope.
+  Local Notation "1" := Aone : A_scope.
+  Local Notation "- a" := (Aopp a) : A_scope.
+  
+  Local Notation vec n := (@vec A n).
+  Local Notation vzero := (@vzero _ 0).
+  Local Notation vdot := (@vdot _ Aadd 0 Amul).
+  Local Notation "< u , v >" := (vdot u v) : vec_scope.
+  Local Notation vunit := (@vunit _ Aadd 0 Amul 1).
+  Local Notation vorth := (@vorth _ Aadd 0 Amul).
+  Local Infix "_|_" := vorth : vec_scope.
+
+  Local Notation mat r c := (mat A r c).
 
 
-(* ======================================================================= *)
-(** ** Orthonormal vectors 标准正交的向量组 *)
-Section mcolsOrthonormal_mrowsOrthonormal.
-  Context `{HField:Field}.
-  Notation mat r c := (mat A r c).
-  Notation vunit := (@vunit _ Aadd Azero Amul Aone).
-  Notation vorth := (@vorth _ Aadd Azero Amul).
-  Infix "_|_" := vorth : vec_scope.
-  Notation vdot := (@vdot _ Aadd Azero Amul).
-  Notation "< a , b >" := (vdot a b) : vec_scope.
+  (* ======================================================================= *)
+  (** ** Orthonormal vectors 标准正交的向量组 *)
+  Section mcolsOrthonormal_mrowsOrthonormal.
 
-  (** All (different) columns of a matrix are orthogonal each other.
+    (** All (different) columns of a matrix are orthogonal each other.
       For example: [v1;v2;v3] => u_|_v2 && u_|_v3 && v_|_v3. *)
-  Definition mcolsOrth {r c} (M : mat r c) : Prop :=
-    forall j1 j2, j1 <> j2 -> mcol M j1 _|_ mcol M j2.
+    Definition mcolsOrth {r c} (M : mat r c) : Prop :=
+      forall j1 j2, j1 <> j2 -> mcol M j1 _|_ mcol M j2.
 
-  (** All (different) rows of a matrix are orthogonal each other. *)
-  Definition mrowsOrth {r c} (M : mat r c) : Prop :=
-    forall i1 i2, i1 <> i2 -> mrow M i1 _|_ mrow M i2.
+    (** All (different) rows of a matrix are orthogonal each other. *)
+    Definition mrowsOrth {r c} (M : mat r c) : Prop :=
+      forall i1 i2, i1 <> i2 -> M.[i1] _|_ M.[i2].
 
-  Lemma mtrans_mcolsOrth : forall {r c} (M : mat r c), mrowsOrth M -> mcolsOrth (M\T).
-  Proof. intros. hnf in *. intros. rewrite !mcol_mtrans_eq_mrow. auto. Qed.
+    Lemma mtrans_mcolsOrth : forall {r c} (M : mat r c), mrowsOrth M -> mcolsOrth (M\T).
+    Proof. intros. hnf in *. intros. rewrite !mcol_mtrans_eq_mrow. auto. Qed.
 
-  Lemma mtrans_mrowsOrth : forall {r c} (M : mat r c), mcolsOrth M -> mrowsOrth (M\T).
-  Proof. intros. hnf in *. intros. rewrite !mrow_mtrans_eq_mcol. auto. Qed.
+    Lemma mtrans_mrowsOrth : forall {r c} (M : mat r c), mcolsOrth M -> mrowsOrth (M\T).
+    Proof. intros. hnf in *. intros. rewrite !mrow_mtrans_eq_mcol. auto. Qed.
 
-  (*
+    (*
   (** bool version *)
   Definition mcolsorthb {r c} (M : mat r c) : bool :=
-    let is_orth (i j : nat) : bool := (<mcol M i, mcol M j> =? Azero)%R in
+    let is_orth (i j : nat) : bool := (<mcol M i, mcol M j> =? 0)%R in
     let cids (i : nat) : list nat := seq (S i) (c - S i) in
     let chk_col (j : nat) : bool := and_blist (map (fun k => is_orth j k) (cids j)) in
     and_blist (map (fun j => chk_col j) (seq 0 c)).
@@ -200,24 +214,24 @@ Section mcolsOrthonormal_mrowsOrthonormal.
     (* Compute mcolsorthb m1. *)
     (* Compute mcolsorthb m2. (* because only one column, needn't be check *) *)
   End test.
-   *)
+     *)
 
-  (** All columns of a matrix are unit vector.
+    (** All columns of a matrix are unit vector.
       For example: [v1;v2;v3] => unit u && unit v && unit v3 *)
-  Definition mcolsUnit {r c} (M : mat r c) : Prop := forall j, vunit (mcol M j).
+    Definition mcolsUnit {r c} (M : mat r c) : Prop := forall j, vunit (mcol M j).
 
-  (** All rows of a matrix are unit vector. *)
-  Definition mrowsUnit {r c} (M : mat r c) : Prop := forall i, vunit (mrow M i).
+    (** All rows of a matrix are unit vector. *)
+    Definition mrowsUnit {r c} (M : mat r c) : Prop := forall i, vunit (M.[i]).
 
-  Lemma mtrans_mcolsUnit : forall {r c} (M : mat r c),
-      mrowsUnit M -> mcolsUnit (M\T).
-  Proof. intros. hnf in *. intros. rewrite mcol_mtrans_eq_mrow. auto. Qed.
+    Lemma mtrans_mcolsUnit : forall {r c} (M : mat r c),
+        mrowsUnit M -> mcolsUnit (M\T).
+    Proof. intros. hnf in *. intros. rewrite mcol_mtrans_eq_mrow. auto. Qed.
 
-  Lemma mtrans_mrowsUnit : forall {r c} (M : mat r c),
-      mcolsUnit M -> mrowsUnit (M\T).
-  Proof. intros. hnf in *. intros. rewrite mrow_mtrans_eq_mcol. auto. Qed.
+    Lemma mtrans_mrowsUnit : forall {r c} (M : mat r c),
+        mcolsUnit M -> mrowsUnit (M\T).
+    Proof. intros. hnf in *. intros. rewrite mrow_mtrans_eq_mcol. auto. Qed.
 
-  (*
+    (*
   (** bool version *)
   Definition mcolsUnitb {r c} (M : mat r c) : bool :=
     and_blist (map (fun i => vunitb (mcol M i)) (seq 0 c)).
@@ -226,505 +240,459 @@ Section mcolsOrthonormal_mrowsOrthonormal.
       mcolsUnitb M <-> mcolsUnit M.
   Proof.
   Abort.
-   *)
+     *)
 
-  (** The columns of a matrix is orthogomal *)
-  Definition mcolsOrthonormal {r c} (M : mat r c) : Prop := mcolsOrth M /\ mcolsUnit M.
+    (** The columns of a matrix is orthogomal *)
+    Definition mcolsOrthonormal {r c} (M : mat r c) : Prop :=
+      mcolsOrth M /\ mcolsUnit M.
 
-  (** The rows of a matrix is orthogomal *)
-  Definition mrowsOrthonormal {r c} (M : mat r c) : Prop := mrowsOrth M /\ mrowsUnit M.
+    (** The rows of a matrix is orthogomal *)
+    Definition mrowsOrthonormal {r c} (M : mat r c) : Prop :=
+      mrowsOrth M /\ mrowsUnit M.
 
-  (** mrowsOrthonormal M -> mcolsOrthonormal (M\T)  *)
-  Lemma mtrans_mcolsOrthonormal : forall {r c} (M : mat r c),
-      mrowsOrthonormal M -> mcolsOrthonormal (M\T).
-  Proof.
-    intros. hnf in *. destruct H. split. 
-    apply mtrans_mcolsOrth; auto.
-    apply mtrans_mcolsUnit; auto.
-  Qed.
+    (** mrowsOrthonormal M -> mcolsOrthonormal (M\T)  *)
+    Lemma mtrans_mcolsOrthonormal : forall {r c} (M : mat r c),
+        mrowsOrthonormal M -> mcolsOrthonormal (M\T).
+    Proof.
+      intros. hnf in *. destruct H. split. 
+      apply mtrans_mcolsOrth; auto.
+      apply mtrans_mcolsUnit; auto.
+    Qed.
 
-  (** mcolsOrthonormal M -> mrowsOrthonormal (M\T)  *)
-  Lemma mtrans_mrowsOrthonormal : forall {r c} (M : mat r c),
-      mcolsOrthonormal M -> mrowsOrthonormal (M\T).
-  Proof.
-    intros. hnf in *. destruct H. split. 
-    apply mtrans_mrowsOrth; auto.
-    apply mtrans_mrowsUnit; auto.
-  Qed.
+    (** mcolsOrthonormal M -> mrowsOrthonormal (M\T)  *)
+    Lemma mtrans_mrowsOrthonormal : forall {r c} (M : mat r c),
+        mcolsOrthonormal M -> mrowsOrthonormal (M\T).
+    Proof.
+      intros. hnf in *. destruct H. split. 
+      apply mtrans_mrowsOrth; auto.
+      apply mtrans_mrowsUnit; auto.
+    Qed.
 
-End mcolsOrthonormal_mrowsOrthonormal.
+  End mcolsOrthonormal_mrowsOrthonormal.
 
 
-(* ======================================================================= *)
-(** ** Orthogonal matrix *)
-Section morth.
-  Context `{HField : Field} {AeqDec : Dec (@eq A)}.
-  
-  Notation "- a" := (Aopp a) : A_scope.
-  
-  Notation vdot := (@vdot _ Aadd Azero Amul).
-  Notation "< u , v >" := (vdot u v) : vec_scope.
+  (* ======================================================================= *)
+  (** ** Orthogonal matrix *)
+  Section morth.
 
-  Notation vec n := (@vec A n).
-  Notation vzero := (vzero Azero).
-  Notation smat n := (smat A n).
-  Notation mat1 := (@mat1 _ Azero Aone _).
-  Notation mmul := (@mmul _ Aadd Azero Amul).
-  Infix "*" := mmul  : mat_scope.
-  Notation mmulv := (@mmulv _ Aadd Azero Amul).
-  Infix "*" := mmulv  : vec_scope.
-  Notation mdet := (@mdet _ Aadd Azero Aopp Amul Aone _).
-  Notation minvertible := (@minvertible _ Aadd Azero Amul Aone _).
-  Notation mcolsOrthonormal := (@mcolsOrthonormal _ Aadd Azero Amul Aone).
-  Notation mrowsOrthonormal := (@mrowsOrthonormal _ Aadd Azero Amul Aone).
-  Notation minvAM := (@minvAM _ Aadd Azero Aopp Amul Aone Ainv).
-  Notation "M \-1" := (minvAM M) : mat_scope.
+    (** An orthogonal matrix *)
+    Definition morth {n} (M : smat n) : Prop := M\T * M = mat1.
 
-  (** An orthogonal matrix *)
-  Definition morth {n} (M : smat n) : Prop := M\T * M = mat1.
+    (** orthogonal M -> invertible M *)
+    Lemma morth_invertible : forall {n} (M : smat n),  morth M -> minvertible M.
+    Proof.
+      intros. rewrite minvertible_iff_minvertibleL.
+      hnf in *. exists (M\T). auto.
+    Qed.
 
-  (** orthogonal M -> invertible M *)
-  Lemma morth_invertible : forall {n} (M : smat n),
-      morth M -> minvertible M.
-  Proof. intros. rewrite minvertible_iff_minvertibleL. hnf in *. exists (M\T). auto. Qed.
+    (** orthogonal M -> M\-1 = M\T *)
+    Lemma morth_imply_minv_eq_trans : forall {n} (M : smat n),
+        morth M -> minv M = M\T.
+    Proof. intros. hnf in H.  apply mmul_eq1_imply_minv_r; auto. Qed.
 
-  (** orthogonal M -> M\-1 = M\T *)
-  Lemma morth_imply_minvAM_eq_trans : forall {n} (M : smat n),
-      morth M -> minvAM M = M\T.
-  Proof. intros. red in H. apply mmul_eq1_imply_minvAM_r in H; auto. Qed.
+    (** M\-1 = M\T -> orthogonal M *)
+    Lemma minv_eq_trans_imply_morth : forall {n} (M : smat n),
+        minvertible M -> minv M = M\T -> morth M.
+    Proof. intros. hnf. rewrite <- H0. apply mmul_minv_l; auto. Qed.
 
-  (** M\-1 = M\T -> orthogonal M *)
-  Lemma minvAM_eq_trans_imply_morth : forall {n} (M : smat n),
-      minvertible M -> minvAM M = M\T -> morth M.
-  Proof.
-    intros. hnf. rewrite <- H0.
-    apply mmul_minvAM_l.
-    apply minvertible_iff_minvertibleAM_true in H.
-    apply minvertibleAM_true_iff_mdet_neq0 in H. auto.
-  Qed.
+    (** orthogonal M <-> M\T * M = mat1 *)
+    Lemma morth_iff_mul_trans_l : forall {n} (M : smat n),
+        morth M <-> M\T * M = mat1.
+    Proof. intros. hnf. auto. Qed.
 
-  (** orthogonal M <-> M\T * M = mat1 *)
-  Lemma morth_iff_mul_trans_l : forall {n} (M : smat n),
-      morth M <-> M\T * M = mat1.
-  Proof. intros. red. auto. Qed.
+    (** orthogonal M <-> M * M\T = mat1 *)
+    Lemma morth_iff_mul_trans_r : forall {n} (M : smat n),
+        morth M <-> M * M\T = mat1.
+    Proof.
+      intros. hnf. split; intros H; auto.
+      - pose proof (morth_invertible M H).
+        apply morth_imply_minv_eq_trans in H. rewrite <- H.
+        apply mmul_minv_r; auto.
+      - hnf. rewrite mmul_eq1_comm; auto.
+    Qed.
 
-  (** orthogonal M <-> M * M\T = mat1 *)
-  Lemma morth_iff_mul_trans_r : forall {n} (M : smat n),
-      morth M <-> M * M\T = mat1.
-  Proof.
-    intros. red. split; intros H; auto.
-    - pose proof (morth_invertible M H).
-      apply morth_imply_minvAM_eq_trans in H. rewrite <- H.
-      apply mmul_minvAM_r.
-      apply minvertible_iff_minvertibleAM_true in H0.
-      apply minvertibleAM_true_iff_mdet_neq0 in H0; auto.
-    - apply minvAM_eq_trans_imply_morth.
-      apply mmul_eq1_imply_invertible_l in H; auto.
-      apply mmul_eq1_imply_minvAM_l in H. auto.
-  Qed.
+    (** orthogonal mat1 *)
+    Lemma morth_mat1 : forall {n}, @morth n mat1.
+    Proof. intros. hnf. rewrite mtrans_mat1, mmul_1_r. easy. Qed.
 
-  (** orthogonal mat1 *)
-  Lemma morth_mat1 : forall {n}, @morth n mat1.
-  Proof. intros. red. rewrite mtrans_mat1, mmul_1_r. easy. Qed.
+    (** orthogonal M -> orthogonal p -> orthogonal (m * p) *)
+    Lemma morth_mul : forall {n} (M N : smat n),
+        morth M -> morth N -> morth (M * N).
+    Proof.
+      intros. hnf. hnf in H, H0. rewrite mtrans_mmul.
+      rewrite mmul_assoc. rewrite <- (mmul_assoc _ M).
+      rewrite H. rewrite mmul_1_l. rewrite H0. easy.
+    Qed.
 
-  (** orthogonal M -> orthogonal p -> orthogonal (m * p) *)
-  Lemma morth_mul : forall {n} (M N : smat n),
-      morth M -> morth N -> morth (M * N).
-  Proof.
-    intros. red. red in H, H0. rewrite mtrans_mmul.
-    rewrite mmul_assoc. rewrite <- (mmul_assoc _ M).
-    rewrite H. rewrite mmul_1_l. rewrite H0. easy.
-  Qed.
+    (** orthogonal M -> orthogonal (M\T) *)
+    Lemma morth_mtrans : forall {n} (M : smat n), morth M -> morth (M\T).
+    Proof.
+      intros. hnf. rewrite mtrans_mtrans.
+      apply morth_iff_mul_trans_r in H. auto.
+    Qed.
 
-  (** orthogonal M -> orthogonal (M\T) *)
-  Lemma morth_mtrans : forall {n} (M : smat n), morth M -> morth (M\T).
-  Proof.
-    intros. red. rewrite mtrans_mtrans.
-    apply morth_iff_mul_trans_r in H. auto.
-  Qed.
+    (** orthogonal (M\T) -> orthogonal M *)
+    Lemma morth_mtrans_inv : forall {n} (M : smat n), morth (M\T) -> morth M.
+    Proof. intros. apply morth_mtrans in H. rewrite mtrans_mtrans in H. auto. Qed.
+    
+    (** orthogonal M -> orthogonal M\-1 *)
+    Lemma morth_minv : forall {n} (M : smat n), morth M -> morth (M\-1).
+    Proof.
+      intros. hnf.
+      rewrite morth_imply_minv_eq_trans; auto. rewrite mtrans_mtrans.
+      apply morth_iff_mul_trans_r; auto.
+    Qed.
+    
+    (** orthogonal M -> |M| = ± 1 *)
+    Lemma morth_mdet : forall {n} (M : smat n),
+        morth M -> (mdet M = 1 \/ mdet M = (- (1))%A).
+    Proof.
+      intros. unfold morth in H.
+      pose proof (mdet_mmul (M\T) M). rewrite H in H0.
+      rewrite mdet_mtrans,mdet_mat1 in H0.
+      symmetry in H0. apply ring_sqr_eq1_imply_1_neg1 in H0. auto.
+    Qed.
+    
+    (** matrix M is orthogonal <-> columns of M are orthogomal *)
+    Lemma morth_iff_mcolsOrthonormal : forall {n} (M : smat n),
+        morth M <-> mcolsOrthonormal M.
+    Proof.
+      intros. unfold mcolsOrthonormal, mcolsOrth, mcolsUnit, vorth, vunit.
+      split; intros.
+      - split; intros.
+        + rewrite vdot_col_col; auto. rewrite H; auto. rewrite mnth_mat1_diff; auto.
+        + rewrite vdot_col_col; auto. rewrite H; auto. rewrite mnth_mat1_same; auto.
+      - destruct H as [H1 H2]. apply meq_iff_mnth; intros.
+        rewrite <- vdot_col_col; auto.
+        destruct (fin2nat i ??= fin2nat j)%nat as [E|E].
+        + apply fin2nat_inj in E; subst. rewrite mnth_mat1_same; auto.
+        + apply fin2nat_inj_not in E. rewrite mnth_mat1_diff; auto.
+    Qed.
+    
+    (** matrix M is orthogonal <-> rows of M are orthogomal *)
+    Lemma morth_iff_mrowsOrthonormal : forall {n} (M : smat n),
+        morth M <-> mrowsOrthonormal M.
+    Proof.
+      intros. split; intros.
+      - apply morth_mtrans in H. apply morth_iff_mcolsOrthonormal in H.
+        apply mtrans_mrowsOrthonormal in H. rewrite mtrans_mtrans in H. auto.
+      - apply mtrans_mcolsOrthonormal in H.
+        apply morth_iff_mcolsOrthonormal in H. apply morth_mtrans_inv; auto.
+    Qed.
+    
+    (** columns of M are orthonormal <-> rows of M are orthonormal *)
+    Lemma mcolsOrthonormal_iff_mrowsOrthonormal : forall {n} (M : smat n),
+        mcolsOrthonormal M <-> mrowsOrthonormal M.
+    Proof.
+      intros. rewrite <- morth_iff_mrowsOrthonormal, <- morth_iff_mcolsOrthonormal.
+      easy.
+    Qed.
 
-  (** orthogonal (M\T) -> orthogonal M *)
-  Lemma morth_mtrans_inv : forall {n} (M : smat n), morth (M\T) -> morth M.
-  Proof. intros. apply morth_mtrans in H. rewrite mtrans_mtrans in H. auto. Qed.
-  
-  (** orthogonal M -> orthogonal M\-1 *)
-  Lemma morth_minvAM : forall {n} (M : smat n), morth M -> morth (M\-1).
-  Proof.
-    intros. red.
-    rewrite morth_imply_minvAM_eq_trans; auto. rewrite mtrans_mtrans.
-    apply morth_iff_mul_trans_r; auto.
-  Qed.
-  
-  (** orthogonal M -> |M| = ± 1 *)
-  Lemma morth_mdet : forall {n} (M : smat n),
-      morth M -> (mdet M = Aone \/ mdet M = (- Aone)%A).
-  Proof.
-    intros. unfold morth in H.
-    pose proof (mdet_mmul (M\T) M). rewrite H in H0.
-    rewrite mdet_mtrans,mdet_mat1 in H0.
-    symmetry in H0. apply ring_sqr_eq1_imply_1_neg1 in H0. auto.
-  Qed.
-  
-  (** matrix M is orthogonal <-> columns of M are orthogomal *)
-  Lemma morth_iff_mcolsOrthonormal : forall {n} (M : smat n),
-      morth M <-> mcolsOrthonormal M.
-  Proof.
-    intros. unfold mcolsOrthonormal, mcolsOrth, mcolsUnit, vorth, vunit.
-    split; intros.
-    - split; intros.
-      + rewrite vdot_col_col; auto. rewrite H; auto. rewrite mnth_mat1_diff; auto.
-      + rewrite vdot_col_col; auto. rewrite H; auto. rewrite mnth_mat1_same; auto.
-    - destruct H as [H1 H2]. apply meq_iff_mnth; intros.
-      rewrite <- vdot_col_col; auto.
-      destruct (fin2nat i ??= fin2nat j)%nat as [E|E].
-      + apply fin2nat_inj in E; subst. rewrite mnth_mat1_same; auto.
-      + apply fin2nat_inj_not in E. rewrite mnth_mat1_diff; auto.
-  Qed.
-  
-  (** matrix M is orthogonal <-> rows of M are orthogomal *)
-  Lemma morth_iff_mrowsOrthonormal : forall {n} (M : smat n),
-      morth M <-> mrowsOrthonormal M.
-  Proof.
-    intros. split; intros.
-    - apply morth_mtrans in H. apply morth_iff_mcolsOrthonormal in H.
-      apply mtrans_mrowsOrthonormal in H. rewrite mtrans_mtrans in H. auto.
-    - apply mtrans_mcolsOrthonormal in H.
-      apply morth_iff_mcolsOrthonormal in H. apply morth_mtrans_inv; auto.
-  Qed.
-  
-  (** columns of M are orthonormal <-> rows of M are orthonormal *)
-  Lemma mcolsOrthonormalorth_iff_mrowsOrthonormal : forall {n} (M : smat n),
-      mcolsOrthonormal M <-> mrowsOrthonormal M.
-  Proof.
-    intros. rewrite <- morth_iff_mrowsOrthonormal, <- morth_iff_mcolsOrthonormal.
-    easy.
-  Qed.
+    (** Transformation by orthogonal matrix will keep inner-product *)
+    Theorem morth_keep_dot : forall {n} (M : smat n) (u v : vec n),
+        morth M -> <M *v u, M *v v> = <u, v>.
+    Proof.
+      intros. rewrite vdot_eq_mmul. rewrite v2rv_mmulv. rewrite v2cv_mmulv.
+      rewrite mmul_assoc. rewrite <- (mmul_assoc _ M).
+      rewrite morth_iff_mul_trans_l in H. rewrite H. rewrite mmul_1_l. auto.
+    Qed.
+    
+    Context `{HOrderedField : OrderedField A Aadd 0 Aopp Amul 1 Ainv}.
+    Context `{HConvertToR
+        : ConvertToR A Aadd 0 Aopp Amul 1 Ainv Alt Ale Altb Aleb a2r}.
+    Notation vlen := (@vlen _ Aadd 0 Amul a2r).
+    Notation "|| v ||" := (vlen v) : vec_scope.
 
-  (** Transformation by orthogonal matrix will keep inner-product *)
-  Theorem morth_keep_dot : forall {n} (M : smat n) (u v : vec n),
-      morth M -> <M * u, M * v>%V = <u, v>.
-  Proof.
-    intros. rewrite vdot_eq_mmul. rewrite v2rv_mmulv. rewrite v2cv_mmulv.
-    rewrite mmul_assoc. rewrite <- (mmul_assoc _ M).
-    rewrite morth_iff_mul_trans_l in H. rewrite H. rewrite mmul_1_l. auto.
-  Qed.
-  
-  Context `{HOrderedField : OrderedField A Aadd Azero Aopp Amul Aone Ainv}.
-  Context `{HConvertToR
-      : ConvertToR A Aadd Azero Aopp Amul Aone Ainv Alt Ale Altb Aleb a2r}.
-  Notation vlen := (@vlen _ Aadd Azero Amul a2r).
-  Notation "|| v ||" := (vlen v) : vec_scope.
+    (** Transformation by orthogonal matrix will keep length. *)
+    Corollary morth_keep_length : forall {n} (M : smat n) (v : vec n),
+        morth M -> ||M *v v|| = ||v||.
+    Proof.
+      intros. rewrite vlen_eq_iff_dot_eq. apply morth_keep_dot. auto.
+    Qed.
 
-  (** Transformation by orthogonal matrix will keep length. *)
-  Corollary morth_keep_length : forall {n} (M : smat n) (v : vec n),
-      morth M -> ||(M * v)%V|| = ||v||.
-  Proof.
-    intros. rewrite vlen_eq_iff_dot_eq. apply morth_keep_dot. auto.
-  Qed.
+    (** Transformation by orthogonal matrix will keep zero. *)
+    Lemma morth_keep_nonzero : forall {n} (M : smat n) (v : vec n),
+        v <> vzero -> morth M -> M *v v <> vzero.
+    Proof.
+      intros. intro.
+      pose proof (morth_keep_length M v H0). rewrite H1 in H2.
+      rewrite vlen_vzero in H2. symmetry in H2.
+      rewrite vlen_eq0_iff_eq0 in H2. easy.
+    Qed.
 
-  (** Transformation by orthogonal matrix will keep zero. *)
-  Lemma morth_keep_nonzero : forall {n} (M : smat n) (v : vec n),
-      v <> vzero -> morth M -> (M * v)%V <> vzero.
-  Proof.
-    intros. intro.
-    pose proof (morth_keep_length M v H0). rewrite H1 in H2.
-    rewrite vlen_vzero in H2. symmetry in H2.
-    rewrite vlen_eq0_iff_eq0 in H2. easy.
-  Qed.
-
-(** 由于正交矩阵可保持变换向量的长度和角度，它可保持坐标系的整体结构不变。
+  (** 由于正交矩阵可保持变换向量的长度和角度，它可保持坐标系的整体结构不变。
     因此，正交矩阵仅可用于旋转变换和反射变换或二者的组合变换。
     当正交矩阵的行列式为1，表示一个旋转，行列式为-1，表示一个反射。*)
 
-End morth.
+  End morth.
 
-
-(* ======================================================================= *)
-(** ** O(n): General Orthogonal Group, General Linear Group *)
-(* https://en.wikipedia.org/wiki/Orthogonal_group#Special_orthogonal_group *)
-Section GOn.
-  Context `{HField:Field}.
-  Context {AeqDec : Dec (@eq A)}.
-  
-  Notation smat n := (smat A n).
-  Notation mat1 n := (@mat1 _ Azero Aone n).
-  Infix "*" := (@mmul _ Aadd Azero Amul _ _ _) : mat_scope.
-  Notation morth := (@morth _ Aadd Azero Amul Aone).
-  Notation "M \-1" := (@minvAM _ Aadd Azero Aopp Amul Aone Ainv _ M) : mat_scope.
-
-  
-  (** The set of GOn *)
-  Record GOn {n: nat} := {
-      GOn_mat :> smat n;
-      GOn_orth : morth GOn_mat
-    }.
-  
-  Arguments Build_GOn {n}.
-
-  (** The condition to form a GOn from a matrix *)
-  Definition GOnP {n} (m : smat n) : Prop := morth m.
-
-  Lemma GOnP_spec : forall {n} (x : @GOn n), GOnP x.
-  Proof. intros. apply x. Qed.
-
-  (** Create a GOn from a matrix satisfing `GOnP` *)
-  Definition mkGOn {n} (m : smat n) (H : GOnP m) : @GOn n.
-    refine (Build_GOn m _). apply H.
-  Defined.
-
-  (** Two GOn are equal, only need the matrix are equal *)
-  Lemma GOn_eq_iff : forall {n} (x1 x2 : @GOn n), GOn_mat x1 = GOn_mat x2 -> x1 = x2.
-  Proof.
-    intros. destruct x1,x2; simpl in H.
-    subst. f_equal. apply proof_irrelevance.
-  Qed.
- 
-  (** Multiplication of elements in GOn *)
-  Definition GOn_mul {n} (x1 x2 : @GOn n) : @GOn n.
-    refine (Build_GOn (x1 * x2) _).
-    destruct x1 as [M1 Horth1], x2 as [M2 Horth2]. simpl.
-    apply morth_mul; auto.
-  Defined.
-
-  (** Identity element in GOn *)
-  Definition GOn_1 {n} : @GOn n.
-    refine (Build_GOn (mat1 n) _).
-    apply morth_mat1.
-  Defined.
-
-  (** GOn_mul is associative *)
-  Lemma GOn_mul_assoc : forall n, Associative (@GOn_mul n).
-  Proof.
-    intros. constructor; intros. apply GOn_eq_iff; simpl. apply mmul_assoc.
-  Qed.
-
-  (** GOn_1 is left-identity-element of GOn_mul operation *)
-  Lemma GOn_mul_id_l : forall n, IdentityLeft (@GOn_mul n) GOn_1.
-  Proof.
-    intros. constructor; intros. apply GOn_eq_iff; simpl. apply mmul_1_l.
-  Qed.
-  
-  (** GOn_1 is right-identity-element of GOn_mul operation *)
-  Lemma GOn_mul_id_r : forall n, IdentityRight (@GOn_mul n) GOn_1.
-  Proof.
-    intros. constructor; intros. apply GOn_eq_iff; simpl. apply mmul_1_r.
-  Qed.
-
-  (** <GOn, +, 1> is a monoid *)
-  Instance Monoid_GOn : forall n, Monoid (@GOn_mul n) GOn_1.
-  Proof.
-    intros. constructor; constructor; intros.
-    apply GOn_mul_assoc.
-    apply GOn_mul_id_l.
-    apply GOn_mul_id_r.
-    apply GOn_mul_assoc.
-  Qed.
-
-  (** Inverse operation of multiplication in GOn *)
-  Definition GOn_inv {n} (x : @GOn n) : @GOn n.
-    refine (Build_GOn (x\T) _). destruct x as [M Horth]. simpl.
-    apply morth_mtrans; auto.
-  Defined.
-
-  (** GOn_inv is left-inversion of <GOn_mul,GOn_1> *)
-  Lemma GOn_mul_inv_l : forall n, InverseLeft (@GOn_mul n) GOn_1 GOn_inv.
-  Proof.
-    intros. constructor; intros. apply GOn_eq_iff; simpl. apply a.
-  Qed.
-
-  (** GOn_inv is right-inversion of <GOn_mul,GOn_1> *)
-  Lemma GOn_mul_inv_r : forall n, InverseRight (@GOn_mul n) GOn_1 GOn_inv.
-  Proof.
-    intros. constructor; intros. apply GOn_eq_iff; simpl.
-    apply morth_iff_mul_trans_r. apply a.
-  Qed.
-
-  (** <GOn, +, 1, /s> is a group *)
-  Theorem Group_GOn : forall n, Group (@GOn_mul n) GOn_1 GOn_inv.
-  Proof.
-    intros. constructor.
-    apply Monoid_GOn.
-    apply GOn_mul_inv_l.
-    apply GOn_mul_inv_r.
-  Qed.
-  
-  (* ======================================================================= *)
-  (** ** Extract the properties of GOn to its carrier *)
-
-  (* Tips: this lemma is useful to get the inversion matrix *)
-  
-  (** M\-1 = M\T *)
-  Lemma GOn_imply_minvAM_eq_trans : forall {n} (M : @GOn n), M\-1 = M\T.
-  Proof.
-    intros. destruct M as [M H]. simpl in *.
-    rewrite morth_imply_minvAM_eq_trans; auto.
-  Qed.
-
-End GOn.
-
-
-(* ======================================================================= *)
-(** ** SO(n): Special Orthogonal Group, Rotation Group *)
-(* https://en.wikipedia.org/wiki/Orthogonal_group#Special_orthogonal_group *)
-Section SOn.
-  Context `{HField:Field}.
-  Add Field field_inst : (make_field_theory HField).
-  Context {AeqDec : Dec (@eq A)}.
-  
-  Notation smat n := (smat A n).
-  Notation mat1 n := (@mat1 _ Azero Aone n).
-  Infix "*" := (@mmul _ Aadd Azero Amul _ _ _) : mat_scope.
-  Notation morth := (@morth _ Aadd Azero Amul Aone).
-  Notation "M \-1" := (@minvAM _ Aadd Azero Aopp Amul Aone Ainv _ M) : mat_scope.
-  Notation mdet := (@mdet _ Aadd Azero Aopp Amul Aone _).
-  Notation GOn := (@GOn _ Aadd Azero Amul Aone).
-  Notation GOn_mat := (@GOn_mat _ Aadd Azero Amul Aone _).
-  
-  (** The set of SOn *)
-  Record SOn {n: nat} := {
-      SOn_GOn :> @GOn n;
-      SOn_det1 : mdet SOn_GOn = Aone
-    }.
-
-  Arguments Build_SOn {n}.
-
-  (** The condition to form a SOn from a matrix *)
-  Definition SOnP {n} (m : smat n) : Prop := morth m /\ mdet m = Aone.
-
-  Lemma SOnP_spec : forall {n} (x : @SOn n), SOnP x.
-  Proof. intros. hnf. destruct x. split; auto. apply SOn_GOn0. Qed.
-
-  (** The transpose also keep SOn *)
-  Lemma SOnP_mtrans : forall {n} (M : smat n), SOnP M -> SOnP (M\T).
-  Proof.
-    intros. hnf in *. destruct H. split.
-    apply morth_mtrans; auto. rewrite mdet_mtrans; auto.
-  Qed.
-
-  (** Create a SOn from a matrix satisfing `SOnP` *)
-  Definition mkSOn {n} (m : smat n) (H : SOnP m) : @SOn n.
-    refine (Build_SOn (Build_GOn _ m _) _). apply H.
-    Unshelve. apply H.
-  Defined.
-
-  (* 这个证明失败了，所以下面分解为两个步骤 *)
-  Lemma SOn_eq_iff_try : forall {n} (x1 x2 : @SOn n),
-      GOn_mat x1 = GOn_mat x2 -> x1 = x2.
-  Proof.
-    intros.
-    destruct x1 as [[M1 Horth1] Hdet1], x2 as [[M2 Horth2] Hdet2]; simpl in *.
-    subst. f_equal.             (* Tips: f_equal 不能正确的处理 Record *)
-    - intros. rewrite H1. f_equal.
-  Abort.
-  
-  (** Two SOn are equal, only need the GOn are equal *)
-  Lemma SOn_eq_iff_step1 : forall {n} (x1 x2 : @SOn n),
-      SOn_GOn x1 = SOn_GOn x2 -> x1 = x2.
-  Proof.
-    intros. destruct x1,x2. simpl in *. subst. f_equal. apply proof_irrelevance.
-  Qed.
-
-  (** Two SOn are equal, only need the matrix are equal *)
-  Lemma SOn_eq_iff : forall {n} (x1 x2 : @SOn n), GOn_mat x1 = GOn_mat x2 -> x1 = x2.
-  Proof.
-    intros. apply SOn_eq_iff_step1. simpl in *.
-    destruct x1,x2. simpl in *. apply GOn_eq_iff. auto.
-  Qed.
-
-  Definition SOn_mul {n} (s1 s2 : @SOn n) : @SOn n.
-    refine (Build_SOn (GOn_mul s1 s2) _).
-    destruct s1 as [[M1 Horth1] Hdet1], s2 as [[M2 Horth2] Hdet2]. simpl in *.
-    rewrite mdet_mmul. rewrite Hdet1,Hdet2. field.
-  Defined.
-
-  Definition SOn_1 {n} : @SOn n.
-    refine (Build_SOn (GOn_1) _).
-    apply mdet_mat1.
-  Defined.
-
-  (** SOn_mul is associative *)
-  Lemma SOn_mul_assoc : forall n, Associative (@SOn_mul n).
-  Proof.
-    intros. constructor; intros. apply SOn_eq_iff; simpl. apply mmul_assoc.
-  Qed.
-
-  (** SOn_1 is left-identity-element of SOn_mul operation *)
-  Lemma SOn_mul_id_l : forall n, IdentityLeft SOn_mul (@SOn_1 n).
-  Proof.
-    intros. constructor; intros. apply SOn_eq_iff; simpl. apply mmul_1_l.
-  Qed.
-  
-  (** SOn_1 is right-identity-element of SOn_mul operation *)
-  Lemma SOn_mul_id_r : forall n, IdentityRight SOn_mul (@SOn_1 n).
-  Proof.
-    intros. constructor; intros. apply SOn_eq_iff; simpl. apply mmul_1_r.
-  Qed.
-  
-  (** <SOn, +, 1> is a monoid *)
-  Lemma Monoid_SOn : forall n, Monoid (@SOn_mul n) SOn_1.
-  Proof.
-    intros. constructor; constructor; intros.
-    apply SOn_mul_assoc.
-    apply SOn_mul_id_l.
-    apply SOn_mul_id_r.
-    apply SOn_mul_assoc.
-  Qed.
-
-  Definition SOn_inv {n} (x : @SOn n) : @SOn n.
-    refine (Build_SOn (GOn_inv x) _).
-    destruct x as [[M Horth] Hdet]; simpl.
-    rewrite mdet_mtrans. auto.
-  Defined.
-
-  (** SOn_inv is left-inversion of <SOn_mul,SOn_1> *)
-  Lemma SOn_mul_inv_l : forall n, InverseLeft SOn_mul SOn_1 (@SOn_inv n).
-  Proof.
-    intros. constructor; intros. apply SOn_eq_iff; simpl.
-    destruct a. apply SOn_GOn0.
-  Qed.
-  
-
-  (** SOn_inv is right-inversion of <SOn_mul,SOn_1> *)
-  Lemma SOn_mul_inv_r : forall n, InverseRight SOn_mul SOn_1 (@SOn_inv n).
-  Proof.
-    intros. constructor; intros. apply SOn_eq_iff; simpl.
-    apply morth_iff_mul_trans_r. destruct a. apply SOn_GOn0.
-  Qed.
-
-  (** <SOn, +, 1, /s> is a group *)
-  Theorem Group_SOn : forall n, Group (@SOn_mul n) SOn_1 SOn_inv.
-  Proof.
-    intros. constructor.
-    apply Monoid_SOn.
-    apply SOn_mul_inv_l.
-    apply SOn_mul_inv_r.
-  Qed.
 
   (* ======================================================================= *)
-  (** ** Extract the properties of SOn to its carrier *)
+  (** ** O(n): General Orthogonal Group, General Linear Group *)
+  (* https://en.wikipedia.org/wiki/Orthogonal_group#Special_orthogonal_group *)
+  Section GOn.
+    
+    (** The set of GOn *)
+    Record GOn {n: nat} := {
+        GOn_mat :> smat n;
+        GOn_orth : morth GOn_mat
+      }.
+    
+    Arguments Build_GOn {n}.
 
-  (** M\-1 = M\T *)
-  Lemma SOn_minvAM_eq_trans : forall {n} (M : @SOn n), M\-1 = M\T.
-  Proof.
-    intros. destruct M as [[M Horth] Hdet]; simpl.
-    apply morth_imply_minvAM_eq_trans. auto.
-  Qed.
+    (** The condition to form a GOn from a matrix *)
+    Definition GOnP {n} (m : smat n) : Prop := morth m.
 
-  (** M\T * M = mat1 *)
-  Lemma SOn_mul_trans_l_eq1 : forall {n} (M : @SOn n), M\T * M = mat1 n.
-  Proof.
-    intros. rewrite <- SOn_minvAM_eq_trans. apply mmul_minvAM_l.
-    destruct M as [[M H] H1]. simpl in *. rewrite H1.
-    intro. apply field_1_neq_0; auto.
-  Qed.
+    Lemma GOnP_spec : forall {n} (x : @GOn n), GOnP x.
+    Proof. intros. apply x. Qed.
 
-  (** M * M\T = mat1 *)
-  Lemma SOn_mul_trans_r_eq1 : forall {n} (M : @SOn n), M * M\T = mat1 n.
-  Proof.
-    intros. rewrite <- SOn_minvAM_eq_trans. apply mmul_minvAM_r.
-    destruct M as [[M H] H1]. simpl in *. rewrite H1.
-    intro. apply field_1_neq_0; auto.
-  Qed.
+    (** Create a GOn from a matrix satisfing `GOnP` *)
+    Definition mkGOn {n} (m : smat n) (H : GOnP m) : @GOn n.
+      refine (Build_GOn m _). apply H.
+    Defined.
 
-End SOn.
+    (** Two GOn are equal, only need the matrix are equal *)
+    Lemma GOn_eq_iff : forall {n} (x1 x2 : @GOn n), GOn_mat x1 = GOn_mat x2 -> x1 = x2.
+    Proof.
+      intros. destruct x1,x2; simpl in H.
+      subst. f_equal. apply proof_irrelevance.
+    Qed.
+    
+    (** Multiplication of elements in GOn *)
+    Definition GOn_mul {n} (x1 x2 : @GOn n) : @GOn n.
+      refine (Build_GOn (x1 * x2) _).
+      destruct x1 as [M1 Horth1], x2 as [M2 Horth2]. simpl.
+      apply morth_mul; auto.
+    Defined.
+
+    (** Identity element in GOn *)
+    Definition GOn_1 {n} : @GOn n.
+      refine (Build_GOn mat1 _).
+      apply morth_mat1.
+    Defined.
+
+    (** GOn_mul is associative *)
+    Lemma GOn_mul_assoc : forall n, Associative (@GOn_mul n).
+    Proof.
+      intros. constructor; intros. apply GOn_eq_iff; simpl. apply mmul_assoc.
+    Qed.
+
+    (** GOn_1 is left-identity-element of GOn_mul operation *)
+    Lemma GOn_mul_id_l : forall n, IdentityLeft (@GOn_mul n) GOn_1.
+    Proof.
+      intros. constructor; intros. apply GOn_eq_iff; simpl. apply mmul_1_l.
+    Qed.
+    
+    (** GOn_1 is right-identity-element of GOn_mul operation *)
+    Lemma GOn_mul_id_r : forall n, IdentityRight (@GOn_mul n) GOn_1.
+    Proof.
+      intros. constructor; intros. apply GOn_eq_iff; simpl. apply mmul_1_r.
+    Qed.
+
+    (** <GOn, +, 1> is a monoid *)
+    Instance Monoid_GOn : forall n, Monoid (@GOn_mul n) GOn_1.
+    Proof.
+      intros. constructor; constructor; intros.
+      apply GOn_mul_assoc.
+      apply GOn_mul_id_l.
+      apply GOn_mul_id_r.
+      apply GOn_mul_assoc.
+    Qed.
+
+    (** Inverse operation of multiplication in GOn *)
+    Definition GOn_inv {n} (x : @GOn n) : @GOn n.
+      refine (Build_GOn (x\T) _). destruct x as [M Horth]. simpl.
+      apply morth_mtrans; auto.
+    Defined.
+
+    (** GOn_inv is left-inversion of <GOn_mul,GOn_1> *)
+    Lemma GOn_mul_inv_l : forall n, InverseLeft (@GOn_mul n) GOn_1 GOn_inv.
+    Proof.
+      intros. constructor; intros. apply GOn_eq_iff; simpl. apply a.
+    Qed.
+
+    (** GOn_inv is right-inversion of <GOn_mul,GOn_1> *)
+    Lemma GOn_mul_inv_r : forall n, InverseRight (@GOn_mul n) GOn_1 GOn_inv.
+    Proof.
+      intros. constructor; intros. apply GOn_eq_iff; simpl.
+      apply morth_iff_mul_trans_r. apply a.
+    Qed.
+
+    (** <GOn, +, 1, /s> is a group *)
+    Theorem Group_GOn : forall n, Group (@GOn_mul n) GOn_1 GOn_inv.
+    Proof.
+      intros. constructor.
+      apply Monoid_GOn.
+      apply GOn_mul_inv_l.
+      apply GOn_mul_inv_r.
+    Qed.
+    
+    (* ======================================================================= *)
+    (** ** Extract the properties of GOn to its carrier *)
+
+    (* Tips: this lemma is useful to get the inversion matrix *)
+    
+    (** M\-1 = M\T *)
+    Lemma GOn_imply_minv_eq_trans : forall {n} (M : @GOn n), M\-1 = M\T.
+    Proof.
+      intros. destruct M as [M H]. simpl in *.
+      rewrite morth_imply_minv_eq_trans; auto.
+    Qed.
+
+  End GOn.
+
+
+  (* ======================================================================= *)
+  (** ** SO(n): Special Orthogonal Group, Rotation Group *)
+  (* https://en.wikipedia.org/wiki/Orthogonal_group#Special_orthogonal_group *)
+  Section SOn.
+    
+    (** The set of SOn *)
+    Record SOn {n: nat} := {
+        SOn_GOn :> @GOn n;
+        SOn_det1 : mdet SOn_GOn = 1
+      }.
+
+    Arguments Build_SOn {n}.
+
+    (** The condition to form a SOn from a matrix *)
+    Definition SOnP {n} (m : smat n) : Prop := morth m /\ mdet m = 1.
+
+    Lemma SOnP_spec : forall {n} (x : @SOn n), SOnP x.
+    Proof. intros. hnf. destruct x. split; auto. apply SOn_GOn0. Qed.
+
+    (** The transpose also keep SOn *)
+    Lemma SOnP_mtrans : forall {n} (M : smat n), SOnP M -> SOnP (M\T).
+    Proof.
+      intros. hnf in *. destruct H. split.
+      apply morth_mtrans; auto. rewrite mdet_mtrans; auto.
+    Qed.
+
+    (** Create a SOn from a matrix satisfing `SOnP` *)
+    Definition mkSOn {n} (m : smat n) (H : SOnP m) : @SOn n.
+      refine (Build_SOn (Build_GOn _ m _) _). apply H.
+      Unshelve. apply H.
+    Defined.
+
+    (* 这个证明失败了，所以下面分解为两个步骤 *)
+    Lemma SOn_eq_iff_try : forall {n} (x1 x2 : @SOn n),
+        GOn_mat x1 = GOn_mat x2 -> x1 = x2.
+    Proof.
+      intros.
+      destruct x1 as [[M1 Horth1] Hdet1], x2 as [[M2 Horth2] Hdet2]; simpl in *.
+      subst. f_equal.             (* Tips: f_equal 不能正确的处理 Record *)
+      - intros. rewrite H1. f_equal.
+    Abort.
+    
+    (** Two SOn are equal, only need the GOn are equal *)
+    Lemma SOn_eq_iff_step1 : forall {n} (x1 x2 : @SOn n),
+        SOn_GOn x1 = SOn_GOn x2 -> x1 = x2.
+    Proof.
+      intros. destruct x1,x2. simpl in *. subst. f_equal. apply proof_irrelevance.
+    Qed.
+
+    (** Two SOn are equal, only need the matrix are equal *)
+    Lemma SOn_eq_iff : forall {n} (x1 x2 : @SOn n), GOn_mat x1 = GOn_mat x2 -> x1 = x2.
+    Proof.
+      intros. apply SOn_eq_iff_step1. simpl in *.
+      destruct x1,x2. simpl in *. apply GOn_eq_iff. auto.
+    Qed.
+
+    Definition SOn_mul {n} (s1 s2 : @SOn n) : @SOn n.
+      refine (Build_SOn (GOn_mul s1 s2) _).
+      destruct s1 as [[M1 Horth1] Hdet1], s2 as [[M2 Horth2] Hdet2]. simpl in *.
+      rewrite mdet_mmul. rewrite Hdet1,Hdet2. field.
+    Defined.
+
+    Definition SOn_1 {n} : @SOn n.
+      refine (Build_SOn (GOn_1) _).
+      apply mdet_mat1.
+    Defined.
+
+    (** SOn_mul is associative *)
+    Lemma SOn_mul_assoc : forall n, Associative (@SOn_mul n).
+    Proof.
+      intros. constructor; intros. apply SOn_eq_iff; simpl. apply mmul_assoc.
+    Qed.
+
+    (** SOn_1 is left-identity-element of SOn_mul operation *)
+    Lemma SOn_mul_id_l : forall n, IdentityLeft SOn_mul (@SOn_1 n).
+    Proof.
+      intros. constructor; intros. apply SOn_eq_iff; simpl. apply mmul_1_l.
+    Qed.
+    
+    (** SOn_1 is right-identity-element of SOn_mul operation *)
+    Lemma SOn_mul_id_r : forall n, IdentityRight SOn_mul (@SOn_1 n).
+    Proof.
+      intros. constructor; intros. apply SOn_eq_iff; simpl. apply mmul_1_r.
+    Qed.
+    
+    (** <SOn, +, 1> is a monoid *)
+    Lemma Monoid_SOn : forall n, Monoid (@SOn_mul n) SOn_1.
+    Proof.
+      intros. constructor; constructor; intros.
+      apply SOn_mul_assoc.
+      apply SOn_mul_id_l.
+      apply SOn_mul_id_r.
+      apply SOn_mul_assoc.
+    Qed.
+
+    Definition SOn_inv {n} (x : @SOn n) : @SOn n.
+      refine (Build_SOn (GOn_inv x) _).
+      destruct x as [[M Horth] Hdet]; simpl.
+      rewrite mdet_mtrans. auto.
+    Defined.
+
+    (** SOn_inv is left-inversion of <SOn_mul,SOn_1> *)
+    Lemma SOn_mul_inv_l : forall n, InverseLeft SOn_mul SOn_1 (@SOn_inv n).
+    Proof.
+      intros. constructor; intros. apply SOn_eq_iff; simpl.
+      destruct a. apply SOn_GOn0.
+    Qed.
+    
+
+    (** SOn_inv is right-inversion of <SOn_mul,SOn_1> *)
+    Lemma SOn_mul_inv_r : forall n, InverseRight SOn_mul SOn_1 (@SOn_inv n).
+    Proof.
+      intros. constructor; intros. apply SOn_eq_iff; simpl.
+      apply morth_iff_mul_trans_r. destruct a. apply SOn_GOn0.
+    Qed.
+
+    (** <SOn, +, 1, /s> is a group *)
+    Theorem Group_SOn : forall n, Group (@SOn_mul n) SOn_1 SOn_inv.
+    Proof.
+      intros. constructor.
+      apply Monoid_SOn.
+      apply SOn_mul_inv_l.
+      apply SOn_mul_inv_r.
+    Qed.
+
+    (* ======================================================================= *)
+    (** ** Extract the properties of SOn to its carrier *)
+
+    (** M\-1 = M\T *)
+    Lemma SOn_minv_eq_trans : forall {n} (M : @SOn n), M\-1 = M\T.
+    Proof.
+      intros. destruct M as [[M Horth] Hdet]; simpl.
+      apply morth_imply_minv_eq_trans. auto.
+    Qed.
+
+    (** M\T * M = mat1 *)
+    Lemma SOn_mul_trans_l_eq1 : forall {n} (M : @SOn n), M\T * M = mat1.
+    Proof.
+      intros. rewrite <- SOn_minv_eq_trans. apply mmul_minv_l.
+      destruct M as [[M H] H1]. simpl in *.
+      apply minvertible_iff_mdet_neq0. rewrite H1.
+      apply field_1_neq_0; auto.
+    Qed.
+
+    (** M * M\T = mat1 *)
+    Lemma SOn_mul_trans_r_eq1 : forall {n} (M : @SOn n), M * M\T = mat1.
+    Proof.
+      intros. pose proof (@SOn_mul_trans_l_eq1 n M).
+      apply mmul_eq1_comm; auto.
+    Qed.
+
+  End SOn.
+End MatrixOrth.
 

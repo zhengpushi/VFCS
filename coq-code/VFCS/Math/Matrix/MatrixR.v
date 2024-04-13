@@ -27,7 +27,6 @@ Require Export RExt.
 Require Export Ratan2.
 Require Export MatrixModule.
 
-
 (* ######################################################################### *)
 (** * Matrix theory come from common implementations *)
 
@@ -67,7 +66,7 @@ Qed.
 (** ** 去掉 a2r 以及 Aabs 的一些引理 *)
 
 (** Aabs a = Rabs a *)
-Lemma Aabs_eq_Rabs : forall a : A, | a |%A = | a |.
+Lemma Aabs_eq_Rabs : forall a : A, | a |%A = | a |%R.
 Proof.
   intros. unfold Aabs. destruct (leb_reflect 0 a); autounfold with A in *; ra.
   rewrite Rabs_left; ra.
@@ -264,7 +263,9 @@ Qed.
 Lemma vdot_unit_bound : forall {n} (a b : vec n),
     vunit a -> vunit b -> -1 <= <a, b> <= 1.
 Proof.
-  intros. pose proof (vdot_abs_le a b). pose proof (vdot_ge_mul_vlen_neg a b).
+  intros.
+  pose proof (vdot_abs_le a b).
+  pose proof (vdot_ge_mul_vlen_neg a b).
   unfold a2r,id in *. apply vunit_spec in H, H0. rewrite H,H0 in H1,H2.
   unfold Rabs in H1. destruct Rcase_abs; ra.
 Qed.
@@ -1274,7 +1275,7 @@ Lemma vex3_skew3 : forall (a : vec 3), vex3 (skew3 a) = a.
 Proof. intros. veq. Qed.
 
 Lemma v3cross_eq_skew_mul_vec : forall (a b : vec 3),
-    a \x b = `|a|x * b.
+    a \x b = `|a|x *v b.
 Proof. intros; veq; ra. Qed.
 
 Lemma v3cross_eq_skew_mul_cvec : forall (a b : cvec 3),
@@ -1467,19 +1468,22 @@ Lemma v3cross_kj : v3k \x v3j = - v3i. Proof. apply v3eq_iff; cbv; ra. Qed.
 Lemma v3cross_ik : v3i \x v3k = - v3j. Proof. apply v3eq_iff; cbv; ra. Qed.
 
 (** 矩阵乘以标准基向量得到列向量 *)
-Lemma mmulv_v3i : forall (M : smat 3), M * v3i = M&1. Proof. intros; veq; ra. Qed.
-Lemma mmulv_v3j : forall (M : smat 3), M * v3j = M&2. Proof. intros; veq; ra. Qed.
-Lemma mmulv_v3k : forall (M : smat 3), M * v3k = M&3. Proof. intros; veq; ra. Qed.
+Lemma mmulv_v3i : forall (M : smat 3), M *v v3i = M&1. Proof. intros; veq; ra. Qed.
+Lemma mmulv_v3j : forall (M : smat 3), M *v v3j = M&2. Proof. intros; veq; ra. Qed.
+Lemma mmulv_v3k : forall (M : smat 3), M *v v3k = M&3. Proof. intros; veq; ra. Qed.
 
 (** 矩阵的列向量等于矩阵乘以标准基向量 *)
-Lemma mcol_eq_mul_v3i : forall (M : smat 3), M&1 = M * v3i. Proof. intros; veq; ra. Qed.
-Lemma mcol_eq_mul_v3j : forall (M : smat 3), M&2 = M * v3j. Proof. intros; veq; ra. Qed.
-Lemma mcol_eq_mul_v3k : forall (M : smat 3), M&3 = M * v3k. Proof. intros; veq; ra. Qed.
+Lemma mcol_eq_mul_v3i : forall (M : smat 3), M&1 = M *v v3i. Proof. intros; veq; ra. Qed.
+Lemma mcol_eq_mul_v3j : forall (M : smat 3), M&2 = M *v v3j. Proof. intros; veq; ra. Qed.
+Lemma mcol_eq_mul_v3k : forall (M : smat 3), M&3 = M *v v3k. Proof. intros; veq; ra. Qed.
 
 (** 矩阵的行向量等于矩阵乘以标准基向量 *)
-Lemma mrow_eq_mul_v3i : forall (M : smat 3), M.1 = M\T * v3i. Proof. intros; veq; ra. Qed.
-Lemma mrow_eq_mul_v3j : forall (M : smat 3), M.2 = M\T * v3j. Proof. intros; veq; ra. Qed.
-Lemma mrow_eq_mul_v3k : forall (M : smat 3), M.3 = M\T * v3k. Proof. intros; veq; ra. Qed.
+Lemma mrow_eq_mul_v3i : forall (M : smat 3), M.1 = M\T *v v3i.
+Proof. intros; veq; ra. Qed.
+Lemma mrow_eq_mul_v3j : forall (M : smat 3), M.2 = M\T *v v3j.
+Proof. intros; veq; ra. Qed.
+Lemma mrow_eq_mul_v3k : forall (M : smat 3), M.3 = M\T *v v3k.
+Proof. intros; veq; ra. Qed.
 
 (** 标准基向量的夹角 *)
 Lemma v3angle_i_j : v3i /_ v3j = PI/2.
@@ -1687,17 +1691,9 @@ Admitted.
 (* ======================================================================= *)
 (** ** Orthogonal matrix *)
 
-(** orthogonal M -> |M| = ± 1 *)
-Lemma morth_mdet : forall {n} (M : smat n), morth M -> (mdet M = 1 \/ mdet M = -1).
-Proof.
-  intros. rewrite morth_iff_mul_trans_l in H.
-  assert (mdet (M\T * M) = mdet (@mat1 n)). rewrite H. auto.
-  rewrite mdet_mmul, mdet_mtrans, mdet_mat1 in H0. apply Rsqr_eq1 in H0. easy.
-Qed.
-
 (** Transformation by orthogonal matrix will keep normalization. *)
 Lemma morth_keep_norm : forall {n} (M : smat n) (a : vec n),
-    morth M -> vnorm (M * a)%V = (M * vnorm a)%V.
+    morth M -> vnorm (M *v a) = M *v vnorm a.
 Proof.
   intros. unfold vnorm.
   pose proof (morth_keep_length M). unfold vlen. rewrite H0; auto.
@@ -1706,7 +1702,7 @@ Qed.
 
 (** Transformation by orthogonal matrix will keep angle. *)
 Lemma morth_keep_angle : forall {n} (M : smat n) (a b : vec n),
-    morth M -> (M * a)%V /_ (M * b)%V = a /_ b.
+    morth M -> (M *v a) /_ (M *v b) = a /_ b.
 Proof.
   intros. unfold vangle. f_equal. rewrite !morth_keep_norm; auto.
   apply morth_keep_dot; auto.
@@ -1729,7 +1725,8 @@ Qed.
 (** if M is orthogonal, then ||M.i||=1 *)
 Lemma morth_imply_vlen_row : forall {n} (M : smat n) i, morth M -> || mrow M i || = 1.
 Proof.
-  intros. apply morth_iff_mrowsOrthonormal in H. destruct H as [H1 H2].
+  intros.
+  apply morth_iff_mrowsOrthonormal in H. destruct H as [H1 H2].
   apply vlen_eq1_iff_vdot1. apply H2.
 Qed.
 
@@ -1777,7 +1774,7 @@ Section morth_keep_cross_try.
   Notation "M \-1" := (minvAM M) : mat_scope.
 
   Goal forall (M : smat 3) (a b : vec 3),
-      mdet M <> 0 -> (M * a)%V \x (M * b)%V = ((mdet M) \.* (M\-1\T * (a \x b)))%V.
+      mdet M <> 0 -> (M *v a) \x (M *v b) = ((mdet M) \.* (M\-1\T *v (a \x b)))%V.
   Proof.
     intros. rewrite <- mmulv_mcmul.
     (* rewrite <- mcomat_eq; auto. *)
@@ -1820,12 +1817,12 @@ Section SO3_keep_v3cross.
   (** morth(M) -> det(M) = 1 -> [Mu Mv Mw] = <Mu, M(v×w)> *)
   Lemma morth_keep_v3cross_det1_aux : forall (M : smat 3) (a b c : vec 3),
       morth M -> mdet M = 1 ->
-      `[(M * a) (M * b) (M * c)] = <M * a, M * (b \x c)>.
+      `[(M *v a) (M *v b) (M *v c)] = <M *v a, M *v (b \x c)>.
   Proof.
     intros.
     rewrite morth_keep_dot; auto. rewrite v3mixed_swap_op. fold (v3mixed a b c).
     rewrite !v3mixed_eq_det_cols.
-    replace (@cvl2m 3 3 [M * a; M * b; M * c])
+    replace (@cvl2m 3 3 [M *v a; M *v b; M *v c])
       with (M * @cvl2m 3 3 [a; b; c])%M by meq.
     rewrite mdet_mmul. rewrite H0. autounfold with A. ring.
   Qed.
@@ -1833,12 +1830,12 @@ Section SO3_keep_v3cross.
   (** morth(M) -> det(M) = -1 -> [Mu Mv Mw] = -<Mu, M(v×w)> *)
   Lemma morth_keep_v3cross_detNeg1_aux : forall (M : smat 3) (a b c : vec 3),
       morth M -> mdet M = (-1)%R ->
-      `[(M * a) (M * b) (M * c)] = (- (<M * a, M * (b \x c)>)%V)%R.
+      `[(M *v a) (M *v b) (M *v c)] = (- (<M *v a, M *v (b \x c)>)%V)%R.
   Proof.
     intros.
     rewrite morth_keep_dot; auto. rewrite v3mixed_swap_op. fold (v3mixed a b c).
     rewrite !v3mixed_eq_det_cols.
-    replace (@cvl2m 3 3 [M * a; M * b; M * c])
+    replace (@cvl2m 3 3 [M *v a; M *v b; M *v c])
       with (M * @cvl2m 3 3 [a; b; c])%M by meq.
     rewrite mdet_mmul. rewrite H0. autounfold with A. ring.
   Qed.
@@ -1846,33 +1843,33 @@ Section SO3_keep_v3cross.
   (* orthogonal matrix keep v3cross *)
   (** morth(M) -> det(M) = 1 -> Mu × Mv = M(u×v) *)
   Lemma morth_keep_v3cross_det1 : forall (M : smat 3) (a b : vec 3),
-      morth M -> mdet M = 1 -> (M * a) \x (M * b) = (M * (a \x b)).
+      morth M -> mdet M = 1 -> (M *v a) \x (M *v b) = (M *v (a \x b)).
   Proof.
     intros.
     pose proof (morth_keep_v3cross_det1_aux M).
     apply vdot_cancel_l; intros.
-    rewrite !v3mixed_swap_op. fold (v3mixed c (M * a) (M * b)).
-    specialize (H1 (M\T * c) a b H H0).
-    replace (M * (M \T * c)) with c in H1; auto.
+    rewrite !v3mixed_swap_op. fold (v3mixed c (M *v a) (M *v b)).
+    specialize (H1 (M\T *v c) a b H H0).
+    replace (M *v (M \T *v c)) with c in H1; auto.
     rewrite <- mmulv_assoc. rewrite morth_iff_mul_trans_r in H.
     rewrite H; auto. rewrite mmulv_1_l. auto.
   Qed.
 
   (** SO(3) keep v3cross *)
   Corollary SO3_keep_v3cross : forall (M : smat 3) (a b : vec 3),
-      SOnP M -> (M * a) \x (M * b) = M * (a \x b).
+      SOnP M -> (M *v a) \x (M *v b) = M *v (a \x b).
   Proof. intros. hnf in H. destruct H. apply morth_keep_v3cross_det1; auto. Qed.
 
   (** morth(M) -> det(M) = -1 -> Ma × Mb = -M(a × b) *)
   Lemma morth_keep_v3cross_detNeg1 : forall (M : smat 3) (a b : vec 3),
-      morth M -> mdet M = (-1)%R -> (M * a) \x (M * b) = -(M * (a \x b)).
+      morth M -> mdet M = (-1)%R -> (M *v a) \x (M *v b) = -(M *v (a \x b)).
   Proof.
     intros.
     pose proof (morth_keep_v3cross_detNeg1_aux M).
     apply vdot_cancel_l; intros.
-    rewrite !v3mixed_swap_op. fold (v3mixed c (M * a) (M * b)).
-    specialize (H1 (M\T * c) a b H H0).
-    replace (M * (M \T * c)) with c in H1; auto.
+    rewrite !v3mixed_swap_op. fold (v3mixed c (M *v a) (M *v b)).
+    specialize (H1 (M\T *v c) a b H H0).
+    replace (M *v (M \T *v c)) with c in H1; auto.
     - rewrite H1. rewrite vdot_vopp_r. auto.
     - rewrite <- mmulv_assoc. rewrite morth_iff_mul_trans_r in H.
       rewrite H; auto. rewrite mmulv_1_l. auto.
@@ -1934,8 +1931,8 @@ Notation SO2 := (@SOn 2).
 (** SO3 *)
 Notation SO3 := (@SOn 3).
 
-Example SO3_example1 : forall M : SO3, minvAM M = M\T.
-Proof. apply SOn_minvAM_eq_trans. Qed.
+Example SO3_example1 : forall M : SO3, M\-1 = M\T.
+Proof. apply SOn_minv_eq_trans. Qed.
 
 
 (* ######################################################################### *)

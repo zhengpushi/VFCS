@@ -55,7 +55,7 @@ Section AxisAngle.
     assert (a_perp = a - <a,n> \.* n) as H2.
     { unfold a_perp. rewrite <- H1. auto. }
     assert (b = n \x a) as H3.
-    { unfold b. rewrite H2. unfold vsub. 
+    { unfold b. rewrite H2.
       rewrite v3cross_add_distr_r. rewrite v3cross_vopp_r.
       rewrite v3cross_vcmul_assoc_r. rewrite v3cross_self. rewrite vcmul_0_r.
       rewrite vopp_vzero. rewrite vadd_0_r. auto. }
@@ -67,9 +67,10 @@ Section AxisAngle.
       rotaa θ n a =
         (cos θ) \.* a + (sin θ) \.* (n \x a) + (<a,n> * (1 - cos θ))%R \.* n.
   Proof.
-    intros. unfold rotaa. rewrite vcmul_vsub. unfold vsub. asemigroup.
+    pose proof (vadd_AGroup 3) as HAGroup.
+    intros. unfold rotaa. rewrite vcmul_vsub. agroup.
     unfold Rminus. rewrite Rmult_plus_distr_l. rewrite identityRight at 1.
-    rewrite vcmul_add. asemigroup. rewrite vcmul_assoc.
+    rewrite vcmul_add. agroup. rewrite vcmul_assoc.
     rewrite <- vcmul_opp. f_equal. autounfold with A. ring.
   Qed.
 
@@ -80,20 +81,21 @@ Section AxisAngle.
 
   (** `aa2mat` has the same behavior as `rotaa` *)
   Lemma aa2mat_spec : forall (θ : R) (n : vec 3) (a : vec 3),
-      vunit n -> aa2mat θ n * a = rotaa θ n a.
+      vunit n -> aa2mat θ n *v a = rotaa θ n a.
   Proof.
+    pose proof (vadd_AGroup 3) as HAGroup.
     intros. rewrite rotaa_form1. unfold aa2mat.
     rewrite !mmulv_madd. rewrite mmulv_1_l.
     rewrite !mmulv_mcmul. rewrite mmulv_assoc.
     rewrite <- !v3cross_eq_skew_mul_vec.
-    move2h (sin θ \.* (n \x a)). symmetry. move2h (sin θ \.* (n \x a)). elimh.
+    move2h (sin θ \.* (n \x a)). symmetry. move2h (sin θ \.* (n \x a)). agroup.
     rewrite (commutative (<a,n>)). rewrite <- vcmul_assoc.
     rewrite v3cross_a_ab_eq_minus.
-    rewrite H. rewrite vdot_comm. unfold vsub.
-    rewrite vcmul_vadd. asemigroup. unfold Rminus.
+    rewrite H. rewrite vdot_comm.
+    rewrite vcmul_vadd. agroup. unfold Rminus.
     rewrite vcmul_add. rewrite !vcmul_1_l.
     rewrite vcmul_opp, vcmul_vopp. rewrite group_opp_opp at 1.
-    asemigroup. group.
+    agroup.
   Qed.
   
   (** The direct form aa2mat. *)
@@ -112,10 +114,13 @@ Section AxisAngle.
   Theorem aa2matM_eq_aa2mat : forall (θ : R) (n : vec 3),
       vunit n -> aa2matM θ n = aa2mat θ n.
   Proof.
-    intros. meq; ra.
-    - pose proof (v3unit_sqr_x n H). cbv in H0; rewrite H0; ra.
-    - pose proof (v3unit_sqr_y n H). cbv in H0; rewrite H0; ra.
-    - pose proof (v3unit_sqr_z n H). cbv in H0; rewrite H0; ra.
+    intros. meq; rewrite <- !nth_v2f; ra.
+    - pose proof (v3unit_sqr_x n H).
+      cbv in H0; rewrite <- !nth_v2f in H0; rewrite H0; ra.
+    - pose proof (v3unit_sqr_y n H).
+      cbv in H0; rewrite <- !nth_v2f in H0; rewrite H0; ra.
+    - pose proof (v3unit_sqr_z n H).
+      cbv in H0; rewrite <- !nth_v2f in H0; rewrite H0; ra.
   Qed.
 
   (** `aa2matM` is orthogonal matrix *)
@@ -260,14 +265,14 @@ Proof.
   (* method 1 : prove by computing (too slow, 0.4s) *)
   (* Time intros; meq; ra. *)
   (* method 2 : prove by reasoning *)
-  intros. apply (SOn_inv_eq_trans (R3x_SO3 θ)).
+  intros. apply (SOn_minv_eq_trans (R3x_SO3 θ)).
 Qed.
 
 Lemma R3y_inv_eq_trans : forall θ : R, (R3y θ)\-1 = (R3y θ)\T.
-Proof. intros; apply (SOn_inv_eq_trans (R3y_SO3 θ)). Qed.
+Proof. intros; apply (SOn_minv_eq_trans (R3y_SO3 θ)). Qed.
 
 Lemma R3z_inv_eq_trans : forall θ : R, (R3z θ)\-1 = (R3z θ)\T.
-Proof. intros; apply (SOn_inv_eq_trans (R3z_SO3 θ)). Qed.
+Proof. intros; apply (SOn_minv_eq_trans (R3z_SO3 θ)). Qed.
 
 (** R(-θ) = R(θ)\T *)
 Lemma R3x_neg_eq_trans : forall θ : R, R3x (-θ) = (R3x θ)\T.

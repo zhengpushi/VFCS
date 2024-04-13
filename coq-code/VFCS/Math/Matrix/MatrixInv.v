@@ -31,243 +31,333 @@
  *)
 
 
-Require Import Basic NatExt.
-Require Import MyExtrOCamlR.
-Require Export Matrix.
 Require Export MatrixInvAM.
-(* Require Export MatrixGauss. *)
+Require Export MatrixInvGE.
+Require Import ExtrOcamlBasic ExtrOcamlNatInt MyExtrOCamlR.
 
 
 Generalizable Variable A Aadd Azero Aopp Amul Aone Ainv.
 
 
-(* ******************************************************************* *)
-(** ** Test two inversion algorithms (GE, AM) in OCaml *)
+(* ############################################################################ *)
+(** * OCaml Extraction of matrix inversion *)
 
-Require Import ExtrOcamlBasic ExtrOcamlNatInt.
-Require Import MyExtrOCamlR.
+Module test_inv_ocaml.
+  (* short name *)
+  Module AM := MinvMoreAM FieldElementTypeR.
+  Module GE := MinvMoreGE FieldElementTypeR.
 
-Definition mmul_R := @mmul _ Rplus R0 Rmult.
-Definition minvGE_R := @minvGE _ Rplus R0 Ropp Rmult R1 Rinv R_eq_Dec.
-Definition minvGE_Rlist := @minvGE_list _ Rplus R0 Ropp Rmult R1 Rinv R_eq_Dec.
-Definition minvAM_R := @minvAM _ Rplus R0 Ropp Rmult R1 Rinv.
-Definition minvAM_Rlist := @minvAM_list _ Rplus R0 Ropp Rmult R1 Rinv.
+  Import AM.
+  Definition minvertiblebAM {n} := @minvertibleb n.
+  Definition minvoAM {n} := @minvo n.
+  Definition minvAM {n} := @minv n.
+  Definition minvListAM {n} := @minvList n.
+  
+  Import GE.
+  Definition minvertiblebGE {n} := @minvertibleb n.
+  Definition minvoGE {n} := @minvo n.
+  Definition minvGE {n} := @minv n.
+  Definition minvListGE {n} := @minvList n.
 
-(* Recursive Extraction *)
-(*   minvertibleGE minvGEo minvertibleGE_list minvGE_list *)
-(*   minvertibleAM minvAMo minvertibleAM_list minvAM_list. *)
+  (* Recursive Extraction *)
+  (*   minvertiblebGE minvoGE minvGE minvListGE *)
+  (*   minvertiblebAM minvoAM minvAM minvListAM. *)
 
-(* Extraction "ocaml_test/matrix2.ml" *)
-(*   m2l l2m mmul_R *)
-(*   minvGE_R minvGE_Rlist *)
-(*   minvAM_R minvAM_Rlist. *)
+  (* Extraction "ocaml_test/matrix.ml" *)
+  (*   minvertiblebGE minvoGE minvGE minvListGE *)
+  (*   minvertiblebAM minvoAM minvAM minvListAM. *)
+End test_inv_ocaml.
 
 
 (* ############################################################################ *)
-(** * Inverse Matrix by Gauss Elimination *)
-Section minvGE.
-  Context `{HField : Field} {AeqDec : Dec (@eq A)}.
-  Add Field field_thy_inst : (make_field_theory HField).
+(** * Usage examples for matrix inversion *)
+
+(* ======================================================================= *)
+(** usage for AM over Qc type *)
+Module usage_AM_Qc.
+  Module AM := MinvMoreAM FieldElementTypeQc.
+  Import AM.
+  Import AMNotations.
+
+  (* Example 1: evaluate inverse matrix *)
+  Section ex1.
+  (* [1 3 1]   [-1 -1  2]   [1 0 0]
+     [2 1 1] * [ 0 -1  1] = [0 1 0]
+     [2 2 1]   [ 2  4 -5]   [0 0 1] *)
+    Let M : smat 3 := l2m 0 (Q2Qc_dlist [[1;3;1];[2;1;1];[2;2;1]]%Q).
+    Let N : smat 3 := l2m 0 (Q2Qc_dlist [[-1;-1;2];[0;-1;1];[2;4;-5]]%Q).
+
+    (* Compute m2l (M\-1). *)
+    (* Compute m2l (N\-1). *)
+  End ex1.
+
+  (* Example 2: solve equation *)
+  Section ex2.
+    (* Given an equation [C * x = b] as following:
+       1 * x + 2 * y = 5
+       3 * x + 4 * y = 6 *)
+    Let C : smat 2 := l2m 0 (Q2Qc_dlist [[1;2];[3;4]]%Q).
+    Let b : vec 2 := l2v 0 (Q2Qc_list [5;6]%Q).
+    
+    (* solve equation by cramer-rule *)
+    (* Compute v2l (cramerRule C b). *)
+    
+    (* solve equation by inverse matrix *)
+    (* Compute v2l (solveEq C b). *)
+  End ex2.
+End usage_AM_Qc.
+
+(* ======================================================================= *)
+(** usage for GE over Qc type *)
+Module usage_GE_Qc.
+  Module GE := MinvMoreGE FieldElementTypeQc.
+  Import GE.
+  Import GENotations.
+
+  (* Example 1: evaluate inverse matrix *)
+  Section ex1.
+  (* [1 3 1]   [-1 -1  2]   [1 0 0]
+     [2 1 1] * [ 0 -1  1] = [0 1 0]
+     [2 2 1]   [ 2  4 -5]   [0 0 1] *)
+    Let M : smat 3 := l2m 0 (Q2Qc_dlist [[1;3;1];[2;1;1];[2;2;1]]%Q).
+    Let N : smat 3 := l2m 0 (Q2Qc_dlist [[-1;-1;2];[0;-1;1];[2;4;-5]]%Q).
+
+    (* Compute m2l (M\-1). *)
+    (* Compute m2l (N\-1). *)
+  End ex1.
+
+  (* Example 2: solve equation *)
+  Section ex2.
+    (* Given an equation [C * x = b] as following:
+       1 * x + 2 * y = 5
+       3 * x + 4 * y = 6 *)
+    Let C : smat 2 := l2m 0 (Q2Qc_dlist [[1;2];[3;4]]%Q).
+    Let b : vec 2 := l2v 0 (Q2Qc_list [5;6]%Q).
+    
+    (* solve equation by inverse matrix *)
+    (* Compute v2l (solveEq C b). *)
+  End ex2.
+End usage_GE_Qc.
+
+(* ======================================================================= *)
+(** usage for AM over Q type *)
+Module usage_AM_Q.
+  Module AM := MinvMoreAM FieldElementTypeQc.
+  Import AM AMNotations.
+
+  (* Support matrix inversion over Q type *)
+  Section inv_Q.
+    (** Inverse matrix over rational number *)
+    Definition minv {n} (M : mat Q n n) : mat Qc n n :=
+      let M : mat Qc n n := mmap Q2Qc M in
+      mmap Qc2Q M.
+    
+    (** Inverse matrix with list over rational number *)
+    Definition minvList (n : nat) (dl : dlist Q) : dlist Q :=
+      Qc2Q_dlist (minvList n (Q2Qc_dlist dl)).
+
+    (** use cramerRule to solve equation [C * x = b] with Q list type *)
+    Definition cramerRule (n : nat) (C : dlist Q) (b : list Q) : list Q :=
+      let C' : smat n := l2m 0 (Q2Qc_dlist C) in
+      let b' : vec n := l2v 0 (Q2Qc_list b) in
+      let x' : vec n := cramerRule C' b' in
+      Qc2Q_list (v2l x').
+
+    (** use inverse matrix to solve equation [C * x = b] with Q list type *)
+    Definition solveEq (n : nat) (C : dlist Q) (b : list Q) : list Q :=
+      let C' : smat n := l2m 0 (Q2Qc_dlist C) in
+      let b' : vec n := l2v 0 (Q2Qc_list b) in
+      let x' : vec n := solveEq C' b' in
+      Qc2Q_list (v2l x').
+  End inv_Q.
+
+  (* Now, we can use Q scope *)
+  Open Scope Q_scope.
   
-  Notation "0" := Azero : A_scope.
-  Notation "1" := Aone : A_scope.
+  (* Example 1: evaluate inverse matrix *)
+  (* Example 1: evaluate inverse matrix *)
+  Section ex1.
+  (* [1 3 1]   [-1 -1  2]   [1 0 0]
+     [2 1 1] * [ 0 -1  1] = [0 1 0]
+     [2 2 1]   [ 2  4 -5]   [0 0 1] *)
+    Let M := [[1;3;1];[2;1;1];[2;2;1]].
+    Let N := [[-1;-1;2];[0;-1;1];[2;4;-5]].
 
-  Notation mat r c := (mat A r c).
-  Notation smat n := (smat A n).
-  Notation mmul := (@mmul _ Aadd 0 Amul).
-  Infix "*" := mmul : mat_scope.
-  Notation mat1 := (@mat1 _ Azero Aone).
-  Notation mmulv := (@mmulv _ Aadd 0 Amul).
-  Infix "*" := mmulv : vec_scope.
-  Notation mdet := (@mdet _ Aadd 0 Aopp Amul 1).
-  
-  Notation minvertible := (@minvertible _ Aadd 0 Amul 1).
-  Notation msingular := (@msingular _ Aadd 0 Amul 1).
-  Notation minvertibleGE := (@minvertibleGE _ Aadd 0 Aopp Amul Ainv).
-  Notation minvGEo := (@minvGEo _ Aadd 0 Aopp Amul 1 Ainv).
-  Notation minvGE := (@minvGE _ Aadd 0 Aopp Amul 1 Ainv).
+    (* Compute minvList 3 M. *)
+    (* Compute minvList 3 N. *)
+  End ex1.
 
-  
-  (* ======================================================================= *)
-  (** ** Invertibility of matrix *)
-  
-  (** If `minvGEo M` return `Some M'`, then `M` is invertible *)
-  Lemma minvGEo_Some_imply_invertible : forall {n} (M M' : smat n),
-      minvGEo M = Some M' -> minvertible M.
-  Proof.
-    intros. apply minvGEo_imply_eq in H.
-    apply mmul_eq1_imply_invertible_r in H; auto.
-  Qed.
+  (* Example 2: solve equation *)
+  Section ex2.
+    (* Given an equation [C * x = b] as following:
+       1 * x + 2 * y = 5
+       3 * x + 4 * y = 6 *)
+    Let C := [[1;2];[3;4]].
+    Let b := [5;6].
 
-  (** If [minvGEo M] return [Some M'], then [M'] is invertible *)
-  Lemma minvGEo_Some_imply_invertible_inv : forall {n} (M M' : smat n),
-      minvGEo M = Some M' -> minvertible M'.
-  Proof.
-    intros. apply minvGEo_imply_eq in H.
-    apply mmul_eq1_imply_invertible_l in H; auto.
-  Qed.
+    (* Solve equation by cramer-rule *)
+    (* Compute cramerRule 2 C b. *)
+    
+    (* solve equation by inverse matrix *)
+    (* Compute solveEq 2 C b. *)
+  End ex2.
 
-  (** If [minvGEo M] return [None], then [M] is singular *)
-  Lemma minvGEo_None_imply_singular : forall {n} (M : smat n),
-      minvGEo M = None -> msingular M.
-  Proof.
-    intros.
-    apply minvGEo_None_iff_invertibleGE_false in H.
-    apply msingular_iff_minvertibleGE_false; auto.
-  Qed.
-  
-End minvGE.
-
-
-(* ############################################################################ *)
-(** * Inverse Matrix by Adjoint Matrix *)
-Section minvAM.
-  Context `{HField : Field} {AeqDec : Dec (@eq A)}.
-  Add Field field_thy_inst : (make_field_theory HField).
-  
-  Notation "0" := Azero : A_scope.
-  Notation "1" := Aone : A_scope.
-  Infix "*" := Amul : A_scope.
-  Notation "/ a" := (Ainv a) : A_scope.
-  Notation Adiv a b := (a * /b).
-  Infix "/" := Adiv : A_scope.
-
-  Notation mat r c := (mat A r c).
-  Notation smat n := (smat A n).
-  Notation mmul := (@mmul _ Aadd 0 Amul).
-  Infix "*" := mmul : mat_scope.
-  Notation mat1 := (@mat1 _ Azero Aone).
-  Notation mmulv := (@mmulv _ Aadd 0 Amul).
-  Infix "*" := mmulv : vec_scope.
-  Notation mdet := (@mdet _ Aadd 0 Aopp Amul 1).
-  
-  Notation minvertible := (@minvertible _ Aadd 0 Amul 1).
-  Notation msingular := (@msingular _ Aadd 0 Amul 1).
-  Notation minvertibleAM := (@minvertibleAM _ Aadd 0 Aopp Amul Ainv).
-  Notation minvAMo := (@minvAMo _ Aadd 0 Aopp Amul 1 Ainv).
-  Notation minvAM := (@minvAM _ Aadd 0 Aopp Amul 1 Ainv).
-  Notation "M \-1" := (minvAM M) : mat_scope.
-
-  
-  (* ======================================================================= *)
-  (** ** Invertibility of matrix *)
-  
-  (** If `minvAMo M` return `Some M'`, then `M` is invertible *)
-  Lemma minvAMo_Some_imply_invertible : forall {n} (M M' : smat n),
-      minvAMo M = Some M' -> minvertible M.
-  Proof.
-    intros. apply minvAMo_imply_eq in H.
-    apply mmul_eq1_imply_invertible_r in H; auto.
-  Qed.
-
-  (** If [minvAMo M] return [Some M'], then [M'] is invertible *)
-  Lemma minvAMo_Some_imply_invertible_inv : forall {n} (M M' : smat n),
-      minvAMo M = Some M' -> minvertible M'.
-  Proof.
-    intros. apply minvAMo_imply_eq in H.
-    apply mmul_eq1_imply_invertible_l in H; auto.
-  Qed.
-
-  (** If [minvAMo M] return [None], then [M] is singular *)
-  Lemma minvAMo_None_imply_singular : forall {n} (M : smat n),
-      minvAMo M = None -> msingular M.
-  Proof.
-    intros.
-    apply minvAMo_None_iff_invertibleAM_false in H.
-    apply msingular_iff_minvertibleAM_false; auto.
-  Qed.
-
-  (** If `M` is invertible, then `minvAM M` is also invertible *)
-  Lemma minvAM_invertible : forall {n} (M : smat n),
-      minvertible M -> minvertible (M\-1).
-  Proof.
-    intros.
-    apply minvertible_iff_minvertibleAM_true in H.
-    apply (minvAM_imply_minvAMo_Some (Ainv:=Ainv)) in H.
-    apply minvAMo_Some_imply_invertible_inv in H. auto.
-  Qed.
-
-  (** M \-1 \-1 = M *)
-  Lemma minvAM_minvAM : forall {n} (M : smat n), minvertible M -> M\-1\-1 = M.
-  Proof.
-    intros.
-    assert (M\-1 * M = mat1).
-    { apply mmul_minvAM_l. apply minvertibleAM_true_iff_mdet_neq0.
-      apply minvertible_iff_minvertibleAM_true. auto. }
-    apply mmul_eq1_imply_minvAM_l in H0; auto.
-  Qed.
-
-  (** (M * N) \-1 = N\-1 * M\-1 *)
-  Lemma minvAM_mmul : forall {n} (M N : smat n),
-      minvertible M -> minvertible N -> (M * N)\-1 = (N\-1) * (M\-1).
-  Proof.
-    intros.
-    assert (mdet M <> 0).
-    { apply minvertibleAM_true_iff_mdet_neq0.
-      apply minvertible_iff_minvertibleAM_true; auto. }
-    assert (mdet N <> 0).
-    { apply minvertibleAM_true_iff_mdet_neq0.
-      apply minvertible_iff_minvertibleAM_true; auto. }
-    assert ((M * N) * (N\-1 * M\-1) = mat1).
-    { rewrite <- !mmul_assoc. rewrite (mmul_assoc M).
-      rewrite mmul_minvAM_r; auto.
-      rewrite mmul_1_r. rewrite mmul_minvAM_r; auto. }
-    apply mmul_eq1_imply_minvAM_l in H3. auto.
-  Qed.
-
-  (** (M \T) \-1 = (M \-1) \T *)
-  Lemma minvAM_mtrans : forall {n} (M : smat n), minvertible M -> (M\T)\-1 = (M\-1)\T.
-  Proof.
-  Admitted.
-
-  (** mdet (M\-1) = 1 / (mdet M) *)
-  Lemma mdet_minvAM : forall {n} (M : smat n), mdet (M \-1) = 1 / (mdet M).
-  Admitted.
-  
-End minvAM.
-
-
-Section test.
-  Import RExt.
-  Import QcExt.
-  (* (* Context `{HField : Field} {AeqDec : Dec (@eq A)}. *) *)
-  (* Notation "0" := Azero : A_scope. *)
-  (* Notation "1" := Aone : A_scope. *)
-  (* Infix "+" := Aadd : A_scope. *)
-  (* Infix "*" := Amul : A_scope. *)
-  (* Notation "- a" := (Aopp a) : A_scope. *)
-  (* Notation "/ a" := (Ainv a) : A_scope. *)
-  
-  (* Notation minvAM := (@minvAM _ Rplus R0 Ropp Rmult 1 Rinv). *)
-  (* Notation minvGE := (@minvGE _ Rplus R0 Ropp Rmult 1 Rinv). *)
-  (* Notation mat1 := (@mat1 _ 0 1). *)
-  Notation minvAM := (@minvAM _ Qcplus 0 Qcopp Qcmult 1 Qcinv).
-  Notation minvGE := (@minvGE _ Qcplus 0 Qcopp Qcmult 1 Qcinv).
-  Notation mat1 := (@mat1 _ 0 1).
-  
-  (* 性能测试，看可以解多大规模的矩阵 *)
+  (* Example 3: solve equation (bigger) *)
   Section ex3.
-  (* Performance of minvAM in Coq
-       dim    time(s)    time(s) 基于 Fin
-       5      0.009      0.01
-       6      0.035      0.08
-       7      0.288      0.74
-       8      3.116      8.2
-   *)
-    (* Time Compute m2l (minvAM (@mat1 7)). *)
+    (* Given an equation [C * x = b]: *)
+    Let C := [[1;2;3;4;5];
+              [2;4;3;5;1];
+              [3;1;5;2;4];
+              [4;5;2;3;1];
+              [5;4;1;2;3]].
+    Let b := [1;2;3;5;4].
 
-  (* Performance of minvGE in Coq
-       dim    time(s)    time(s) 基于Fin
-       7      0.006
-       10     0.009
-       20     0.03       0.04
-       30     0.06       0.098
-       40     0.109      0.2
-       50     0.165      0.37
-       100    0.918      3.54
-       200    8.666
-   *)
-    (* Time Compute m2l (minvGE (@mat1 200)). *)
+    (* Solve equation by cramer-rule *)
+    (* Compute cramerRule 5 C b. *)
+    
+    (* solve equation by inverse matrix *)
+    (* Compute solveEq 5 C b. *)
   End ex3.
-End test.
 
+  (* Example 4: performance test *)
+  Section ex4.
+    (* create random data in MATLAB by command ">> rand(10,10)" *)
+    Let M :=
+          [[0.8147;0.1576;0.6557;0.7060;0.4387;0.2760;0.7513;0.8407;0.3517;0.0759];
+           [0.9058;0.9706;0.0357;0.0318;0.3816;0.6797;0.2551;0.2543;0.8308;0.0540];
+           [0.1270;0.9572;0.8491;0.2769;0.7655;0.6551;0.5060;0.8143;0.5853;0.5308];
+           [0.9134;0.4854;0.9340;0.0462;0.7952;0.1626;0.6991;0.2435;0.5497;0.7792];
+           [0.6324;0.8003;0.6787;0.0971;0.1869;0.1190;0.8909;0.9293;0.9172;0.9340];
+           [0.0975;0.1419;0.7577;0.8235;0.4898;0.4984;0.9593;0.3500;0.2858;0.1299];
+           [0.2785;0.4218;0.7431;0.6948;0.4456;0.9597;0.5472;0.1966;0.7572;0.5688];
+           [0.5469;0.9157;0.3922;0.3171;0.6463;0.3404;0.1386;0.2511;0.7537;0.4694];
+           [0.9575;0.7922;0.6555;0.9502;0.7094;0.5853;0.1493;0.6160;0.3804;0.0119];
+           [0.9649;0.9595;0.1712;0.0344;0.7547;0.2238;0.2575;0.4733;0.5678;0.3371]].
+  (* Performance of minvList in Coq:
+       dim    time(s)
+       5      0.394
+       6      1.2
+       7      7.9 *)
+    (* Time Compute minvList 7 M. *)
+
+    (* Same data, but with only 2 decimal. Because constructive numbers have big cost *)
+    Let M1 :=
+          [[0.81;0.15;0.65;0.70;0.43;0.27;0.75;0.84;0.35;0.07];
+           [0.90;0.97;0.03;0.03;0.38;0.67;0.25;0.25;0.83;0.05];
+           [0.12;0.95;0.84;0.27;0.76;0.65;0.50;0.81;0.58;0.53];
+           [0.91;0.48;0.93;0.04;0.79;0.16;0.69;0.24;0.54;0.77];
+           [0.63;0.80;0.67;0.09;0.18;0.11;0.89;0.92;0.91;0.93];
+           [0.09;0.14;0.75;0.82;0.48;0.49;0.95;0.35;0.28;0.12];
+           [0.27;0.42;0.74;0.69;0.44;0.95;0.54;0.19;0.75;0.56];
+           [0.54;0.91;0.39;0.31;0.64;0.34;0.13;0.25;0.75;0.46];
+           [0.95;0.79;0.65;0.95;0.70;0.58;0.14;0.61;0.38;0.01];
+           [0.96;0.95;0.17;0.03;0.75;0.22;0.25;0.47;0.56;0.33]].
+  (* Performance of minvList in Coq:
+       dim    dig4-time(s)   dig2-time(s)
+       5      0.394          0.11
+       6      1.2            0.42
+       7      7.9            2.87 *)
+    (* Time Compute minvList 7 M1. *)
+  End ex4.
+  
+End usage_AM_Q.
+
+(* ======================================================================= *)
+(** usage for GE over Q type *)
+Module usage_GE_Q.
+  Module GE := MinvMoreGE FieldElementTypeQc.
+  Import GE GENotations.
+
+  (* Support matrix inversion over Q type *)
+  Section inv_Q.
+    (** Inverse matrix over rational number *)
+    Definition minv {n} (M : mat Q n n) : mat Qc n n :=
+      let M : mat Qc n n := mmap Q2Qc M in
+      mmap Qc2Q M.
+    
+    (** Inverse matrix with list over rational number *)
+    Definition minvList (n : nat) (dl : dlist Q) : dlist Q :=
+      Qc2Q_dlist (minvList n (Q2Qc_dlist dl)).
+
+    (** use inverse matrix to solve equation [C * x = b] with Q list type *)
+    Definition solveEq (n : nat) (C : dlist Q) (b : list Q) : list Q :=
+      let C' : smat n := l2m 0 (Q2Qc_dlist C) in
+      let b' : vec n := l2v 0 (Q2Qc_list b) in
+      let x' : vec n := solveEq C' b' in
+      Qc2Q_list (v2l x').
+  End inv_Q.
+
+  (* Now, we can use Q scope *)
+  Open Scope Q_scope.
+  
+  (* Example 1: evaluate inverse matrix *)
+  Section ex1.
+  End ex1.
+
+  (* Example 2: solve equation *)
+  Section ex2.
+    (* Given an equation [C * x = b] as following:
+       1 * x + 2 * y = 5
+       3 * x + 4 * y = 6 *)
+    Let C := [[1;2];[3;4]].
+    Let b := [5;6].
+    
+    (* solve equation by inverse matrix *)
+    (* Compute solveEq 2 C b. *)
+  End ex2.
+
+  (* Example 2: solve equation (bigger) *)
+  Section ex3.
+    (* Given an equation [C * x = b]: *)
+    Let C := [[1;2;3;4;5];
+              [2;4;3;5;1];
+              [3;1;5;2;4];
+              [4;5;2;3;1];
+              [5;4;1;2;3]].
+    Let b := [1;2;3;5;4].
+    
+    (* solve equation by inverse matrix *)
+    (* Compute solveEq 5 C b. *)
+  End ex3.
+
+  (* Example 4: performance test *)
+  Section ex4.
+    (* create random data in MATLAB by command ">> rand(10,10)" *)
+    Let M :=
+          [[0.8147;0.1576;0.6557;0.7060;0.4387;0.2760;0.7513;0.8407;0.3517;0.0759];
+           [0.9058;0.9706;0.0357;0.0318;0.3816;0.6797;0.2551;0.2543;0.8308;0.0540];
+           [0.1270;0.9572;0.8491;0.2769;0.7655;0.6551;0.5060;0.8143;0.5853;0.5308];
+           [0.9134;0.4854;0.9340;0.0462;0.7952;0.1626;0.6991;0.2435;0.5497;0.7792];
+           [0.6324;0.8003;0.6787;0.0971;0.1869;0.1190;0.8909;0.9293;0.9172;0.9340];
+           [0.0975;0.1419;0.7577;0.8235;0.4898;0.4984;0.9593;0.3500;0.2858;0.1299];
+           [0.2785;0.4218;0.7431;0.6948;0.4456;0.9597;0.5472;0.1966;0.7572;0.5688];
+           [0.5469;0.9157;0.3922;0.3171;0.6463;0.3404;0.1386;0.2511;0.7537;0.4694];
+           [0.9575;0.7922;0.6555;0.9502;0.7094;0.5853;0.1493;0.6160;0.3804;0.0119];
+           [0.9649;0.9595;0.1712;0.0344;0.7547;0.2238;0.2575;0.4733;0.5678;0.3371]].
+  (* Performance of minvList in Coq:
+       dim    AM-time(s)  GE-time(s)
+       5      0.394       0.375
+       6      1.2         1.298
+       7      7.9         5.268 *)
+    (* Time Compute minvList 7 M. *)
+
+    (* Same data, but with only 2 decimal. Because constructive numbers have big cost *)
+    Let M1 :=
+          [[0.81;0.15;0.65;0.70;0.43;0.27;0.75;0.84;0.35;0.07];
+           [0.90;0.97;0.03;0.03;0.38;0.67;0.25;0.25;0.83;0.05];
+           [0.12;0.95;0.84;0.27;0.76;0.65;0.50;0.81;0.58;0.53];
+           [0.91;0.48;0.93;0.04;0.79;0.16;0.69;0.24;0.54;0.77];
+           [0.63;0.80;0.67;0.09;0.18;0.11;0.89;0.92;0.91;0.93];
+           [0.09;0.14;0.75;0.82;0.48;0.49;0.95;0.35;0.28;0.12];
+           [0.27;0.42;0.74;0.69;0.44;0.95;0.54;0.19;0.75;0.56];
+           [0.54;0.91;0.39;0.31;0.64;0.34;0.13;0.25;0.75;0.46];
+           [0.95;0.79;0.65;0.95;0.70;0.58;0.14;0.61;0.38;0.01];
+           [0.96;0.95;0.17;0.03;0.75;0.22;0.25;0.47;0.56;0.33]].
+  (* Performance of minvList in Coq:
+       dim    AM-dig4(s)  AM-dig2(s)  GE-dig4(s)  GE-dig2
+       5      0.394       0.11        0.375       0.12
+       6      1.2         0.42        1.298       0.37
+       7      7.9         2.87        5.268       1.335 *)
+    (* Time Compute minvList 7 M1. *)
+  End ex4.
+End usage_GE_Q.

@@ -1739,8 +1739,9 @@ Section malg.
     Notation vopp := (@vopp _ Aopp).
     Notation "- a" := (vopp a) : vec_scope.
     Notation "a - b" := ((a + -b)%V) : vec_scope.
-   
-    Definition mmulv {r c : nat} (M : mat r c) (a : vec c) : vec r := fun i => <M.[i], a>.
+
+    Definition mmulv {r c : nat} (M : mat r c) (a : vec c) : vec r :=
+      fun i => <M.[i], a>.
     Infix "*v" := mmulv : mat_scope.
 
     (** (M *v a)[i] = <row M i, a> *)
@@ -1856,7 +1857,7 @@ Section malg.
     Qed.
     
   End mmulv.
-  Infix "*v" := mmulv : vec_scope.
+  Infix "*v" := mmulv : mat_scope.
   
   
   (** *** Vector (row matrix) multiply matrix *)
@@ -1868,7 +1869,7 @@ Section malg.
 
     Definition mvmul {r c : nat} (a : vec r) (M : mat r c) : vec c :=
       fun i => <a, M&[i]>.
-    Infix "v*" := mvmul : vec_scope.
+    Infix "v*" := mvmul : mat_scope.
 
     (** (M v* a)[i] = <row M i, a> *)
     Lemma vnth_mvmul : forall {r c} (a : vec r) (M : mat r c) i,
@@ -1988,7 +1989,7 @@ Section malg.
     Proof. auto. Qed.
     
   End mvmul.
-  Infix "v*" := mvmul : vec_scope.
+  Infix "v*" := mvmul : mat_scope.
 
   (** *** Mixed properties about mmul, mmulv, mvmul  *)
   Section mmul_mmulv_mvmul.

@@ -2957,6 +2957,7 @@ Section Theory.
        3. 在 Reals.RIneq 库中，有两个引理如下，我觉得好像有问题，但又无法指正。
           Lemma Rinv_0 : / 0 = 0.
           Lemma Rinv_inv r : / / r = r.
+       4. 主要问题是，/ 0 是没有定义的，但我的 Field 结构无法排除这种情况
      *)
   Admitted.
 
