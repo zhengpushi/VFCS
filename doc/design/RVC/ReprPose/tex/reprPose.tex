@@ -191,7 +191,9 @@ pdfstartview=Fit
 使用笛卡尔坐标系统，或带有两个正交轴（典型的记为$x$和$y$)的坐标系。
 平行于坐标轴的单位向量记为$\hat{\mathbf{x}}$和$\hat{\mathbf{y}}$。
 一个点用它的$x-$和$y-$坐标$(x,y)$来表示，或者作为一个约束向量
-$$\mathbf{p}=x\hat{\mathbf{x}}+y\hat{\mathbf{y}}$$
+\begin{equation}\label{eq:point2D}
+  \mathbf{p}=x\hat{\mathbf{x}}+y\hat{\mathbf{y}}
+\end{equation}
 
 如图\ref{fig:two_frame_2D}所示，给定了红色坐标系${B}$，我们要描述它关于蓝色坐标系${A}$的位姿。
 其中，${B}$的原点被移动了向量$t=(x,y)$，然后${B}$又逆时针旋转了$\theta$角。
@@ -205,7 +207,7 @@ $$\mathbf{p}=x\hat{\mathbf{x}}+y\hat{\mathbf{y}}$$
 我们将把问题分为两部分：旋转，然后平移。
 
 \subsection{二维中的朝向}
-\subsubsection{标准正交旋转矩阵(Orthonomal Rotation Matrix}
+\subsubsection{标准正交旋转矩阵(Orthonomal Rotation Matrix)}
 
 如图\ref{fig:two_frame_2D}所示，任意点$P$可以相对于每个坐标系而表示。
 新建一个坐标系$\{V\}$，其坐标轴与$\{A\}$的平行，原点与$\{B\}$的相同，如图\ref{fig:two_frame_2D_V}所示。
@@ -233,65 +235,79 @@ $$\mathbf{p}=x\hat{\mathbf{x}}+y\hat{\mathbf{y}}$$
   \hat{\mathbf{y}}_B&=-\sin\theta\hat{\mathbf{x}}_V + \cos\theta\hat{\mathbf{y}}_V
 \end{align*}
 其矩阵形式为
-\begin{equation}\label{eq:xyB_xyV}
+\begin{equation}\label{eq:unitVecV2B_raw}
   \begin{pmatrix}\hat{\mathbf{x}}_B&\hat{\mathbf{y}}_B\end{pmatrix}=
   \begin{pmatrix}\hat{\mathbf{x}}_V&\hat{\mathbf{y}}_V\end{pmatrix}
   \begin{pmatrix}\cos\theta  & -\sin\theta\\\sin\theta & \cos\theta\end{pmatrix}
 \end{equation}
-将式\eqref{eq:xyB_xyV}带入\eqref{eq:pB}，得到如下形式
+将式\eqref{eq:unitVecV2B_raw}带入\eqref{eq:pB}，得到如下形式
 \begin{equation}\label{eq:pB2}
   {}^B\mathbf{p}={}^Bx\hat{\mathbf{x}}_B + {}^By\hat{\mathbf{y}}_B =
   \begin{pmatrix}\hat{\mathbf{x}}_V&\hat{\mathbf{y}}_V\end{pmatrix}
   \begin{pmatrix}\cos\theta  & -\sin\theta\\\sin\theta & \cos\theta\end{pmatrix}
   \begin{pmatrix}{}^Bx\\{}^By\end{pmatrix}
 \end{equation}
-由于${}^V\mathbf{p}$和${}^B\mathbf{p}$实际上是同一个向量，所以\eqref{eq:pV}和\eqref{eq:pB2}的右侧是同一个向量，它们的系数相等。
-\begin{equation*}
+由于${}^V\mathbf{p}$和${}^B\mathbf{p}$实际上是同一个向量，所以\eqref{eq:pV}和\eqref{eq:pB2}的右侧是同一个向量。
+又因为此时它们用同一个基向量$\begin{pmatrix}\hat{\mathbf{x}}_V&\hat{\mathbf{y}}_V\end{pmatrix}$来表示，所以其对应系数相等。
+\begin{equation}\label{eq:xyB2V_raw}
   \begin{pmatrix}{}^Vx\\{}^Vy\end{pmatrix}=
   \begin{pmatrix}\cos\theta  & -\sin\theta\\\sin\theta & \cos\theta\end{pmatrix}
   \begin{pmatrix}{}^Bx\\{}^By\end{pmatrix}
-\end{equation*}
-记作
-\begin{equation}\label{eq:pB2pV}
-  \begin{pmatrix}{}^Vx\\{}^Vy\end{pmatrix}=
-  {}^V\mathbf{R}_B\begin{pmatrix}{}^Bx\\{}^By\end{pmatrix},
 \end{equation}
-其中
+记
 \begin{equation}\label{eq:RBV}
   {}^V\mathbf{R}_B=
   \begin{pmatrix}\cos\theta  & -\sin\theta\\\sin\theta & \cos\theta\end{pmatrix}
 \end{equation}
+称\eqref{eq:RBV}中的矩阵${}^V\mathbf{R}_B$是一个旋转矩阵，它表示坐标系$\{V\}$是由$\{B\}$绕原点旋转了$\theta$而来。
+此时，\eqref{eq:unitVecV2B_raw}和\eqref{eq:xyB2V_raw}得到更紧凑的形式
+\begin{equation}\label{eq:unitVecV2B}
+  \begin{pmatrix}\hat{\mathbf{x}}_B&\hat{\mathbf{y}}_B\end{pmatrix}=
+  \begin{pmatrix}\hat{\mathbf{x}}_V&\hat{\mathbf{y}}_V\end{pmatrix}
+  {}^V\mathbf{R}_B
+\end{equation}
+\begin{equation}\label{eq:xyB2V}
+  \begin{pmatrix}{}^Vx\\{}^Vy\end{pmatrix}=
+  {}^V\mathbf{R}_B
+  \begin{pmatrix}{}^Bx\\{}^By\end{pmatrix}
+\end{equation}
+式\eqref{eq:unitVecV2B}描述了如何将坐标轴向量从坐标系$\{V\}$转换到$\{B\}$下（即，右乘矩阵${}^V\mathbf{R}_B$）。
+式\eqref{eq:xyB2V}描述了如何将点从坐标系$\{B\}$转换到$\{V\}$下（即，左乘矩阵${}^V\mathbf{R}_B$)。
 
-式\eqref{eq:pB2pV}描述了如何将点从坐标系$\{B\}$转换到绕原点旋转后的坐标系$\{V\}$下。
-矩阵${}^V\mathbf{R}_B$称为一个旋转矩阵。
-
-矩阵${}^V\mathbf{R}_B$是一个二维旋转矩阵，具有一些特殊性质
+任给二维旋转矩阵${}^Y\mathbf{R}_X$，具有一些特殊性质
 \begin{itemize}
-\item 它是正规的(orthonormal)，也称标准正交的，简称正交的(orthogonal)。
+\item 它是正规的、标准正交的(orthonormal)，简称正交的(orthogonal)。
   因为每一列是单位向量，并且列之间是正交的。
 \item 列向量定义了旋转后的坐标系$\{Y\}$在坐标系$\{X\}$下的轴向量。
-\item 它属于二维特殊正交群，即$\mathbf{R}\in\mathbf{SO}(2)\subset\mathbb{R}^2$。
+\item 它属于二维特殊正交群，即$\mathbf{R}\in\mathbf{SO}(2)\subset\mathbb{R}^{2\times2}$。
   这意味着，任意两个该群的矩阵相乘仍在群中，其逆也在群中。
-\item 它的行列式是$+1$，这表明向量在变换之后长度步改变。即，$\|{}^Y\mathbf{p}\|=\|{}^X\mathbf{p}\|, \forall\theta$
+\item 它的行列式是$+1$，这表明向量在变换之后长度不改变。
+  即，$\|{}^Y\mathbf{p}\|=\|{}^X\mathbf{p}\|, \forall\theta$
 \item 其逆矩阵等于其转置，即，$\mathbf{R}^{-1}=\mathbf{R}^{T}$。
 \end{itemize}
 
-对\eqref{eq:RBV}变换，得到
+对\eqref{eq:xyB2V}变形，得到
 \begin{equation*}
   \begin{pmatrix}{}^Bx\\{}^By\end{pmatrix}=
   \left({}^V\mathbf{R}_B\right)^{-1}\begin{pmatrix}{}^Vx\\{}^Vy\end{pmatrix}=
   \left({}^V\mathbf{R}_B\right)^{T}\begin{pmatrix}{}^Vx\\{}^Vy\end{pmatrix}=
   {}^B\mathbf{R}_V\begin{pmatrix}{}^Vx\\{}^Vy\end{pmatrix}
 \end{equation*}
-可知逆矩阵与交换矩阵上下标是一样的，即$\left({}^V\mathbf{R}_B\right)^{-1}={}^B\mathbf{R}_V$。
-另外，很容易验证$\mathbf{R}(-\theta)=\mathbf{R}(\theta)^T$。
+可知逆矩阵与交换矩阵上下标是一样的，即
+\begin{equation}
+  \left({}^V\mathbf{R}_B\right)^{-1}={}^B\mathbf{R}_V
+\end{equation}
+另外，很容易验证
+\begin{equation}
+  \mathbf{R}(-\theta)=\mathbf{R}(\theta)^T
+\end{equation}
 
-一个有趣的观察是，我们不使用一个标量的角度，而是使用由4个元素构成的$2\times2$矩阵。
+一个有趣的观察是，我们不使用一个标量的角度作为参数，而是使用由4个元素构成的$2\times2$矩阵。
 尽管这些元素并不独立。
 每列都具有单位大小提供了2个约束，列是正交的提供了另一个约束，于是4个元素在3个约束下必然是一个独立的值。
-旋转矩阵是非最小表示(nonminimum representation)的一个例子，其缺点是增加了存储空间，而优点是提供了可组合性。
+旋转矩阵是非最小表示(nonminimum representation)的一个例子，其缺点是增加了存储空间，而优点是提供了可组合性（即矩阵乘法）。
 
-在MATLAB中做一些数值实验。
+在MATLAB中的实验。
 \begin{matlab}
   % 创建了一个旋转矩阵
   R = rot2(0.2)
@@ -314,33 +330,38 @@ $$\mathbf{p}=x\hat{\mathbf{x}}+y\hat{\mathbf{y}}$$
 \end{equation}
 其中，$\omega\in\mathbb{R}$。
 
-在MATLAB中做一些数值实验。
+在MATLAB中的实验。
 \begin{matlab}
   % 数值 -> 斜对称阵
   R=skew(2)
   % 斜对称阵 -> 数值
   x=vex(R)
+  % 一个0.3弧度的纯旋转表示为旋转矩阵
+  R=rot2(0.3)
+  % 使用矩阵对数求得另一个矩阵S
+  S=logm(R)    % S是斜对称矩阵，对应于实数0.3，巧合吗？
+  % 矩阵指数是矩阵对数的逆
+  R1=expm(S)   % 得到的R1等于R
 \end{matlab}
+上述的这种巧合来源于李群（Lie group）理论。
 
-考虑一个$0.3$弧度的纯旋转表示为旋转矩阵 \verb|R=rot2(0.3)|。
-使用矩阵对数(logarithm of the matrix)可以求得另一个矩阵 \verb|S=logm(R)|，
-该矩阵是一个斜对称矩阵，它对应于实数$0.3$。
-这种巧合来源于李群（Lie group）理论。
-
-矩阵指数的逆是矩阵对数（exponentiation），使用\verb|expm(S)|可得到与\verb|R|相同的结果。
+矩阵指数（exponentiation）的逆是矩阵对数（logarithm of the matrix）。
+在MATLAB中，使用\verb|expm(x)|和\verb|logm(x)|函数来计算矩阵指数和矩阵对数。
 事实上，在RVC中\verb|rot2|被定义为\verb|rot2(x)=expm(skew(x))|。
 
 矩阵指数的计算公式为：
 $$
-\mathtt{expm}(A)=I+A+A^2/2!+A^3/3!+\ldots
+\mathtt{expm}(\mathbf{A})
+=\sum_{n=0}^{\infty}\frac{\mathbf{A}^n}{n!}
+=\mathbf{I}+\mathbf{A}+\frac{\mathbf{A}^2}{2!}+\frac{\mathbf{A}^3}{3!}+\ldots
 $$
 形式上，写作
 $$
-\mathbf{R}=e^{[\theta]_{\times}}\in\mathbf{SO}(2)
+\mathbf{R}(\theta)=e^{[\theta]_{\times}}\in\mathbf{SO}(2)
 $$
-因为指数函数在x=的幂级数公式为
+因为指数函数的幂级数是
 $$
-e^{x}=\sum_{n=0}^{\infty}\frac{x^n}{n!}=1+x+\frac{x^2}{2!}+\ldots
+e^{x}=\sum_{n=0}^{\infty}\frac{x^n}{n!}=1+x+\frac{x^2}{2!}+\frac{x^3}{3!}+\ldots
 $$
 
 提示，MATLAB默认实数显示4位小数，在预设/命令行窗口/文本显式/数值格式，可把short修改为long来显示15位小数。
@@ -349,13 +370,13 @@ $$
 
 \subsubsection{齐次变换矩阵}
 
-一个向量$\mathbf{p}=(x,y)$写成齐次形式为$\tilde{\mathbf{p}}\in\mathbb{P}^2,\tilde{\mathbf{p}}=(x_1,x_2,x_3)$，
+一个向量$\mathbf{p}=(x,y)$写成齐次形式为$\tilde{\mathbf{p}}=(x_1,x_2,x_3)\in\mathbb{P}^2$。
 其中$x=x_1/x_3, y=x_2/x_3, x_3\neq0$。
 其维数增加了1，并且一个平面点表示为了一个三维向量。
 要将一个点转换为齐次形式，通常附加一个元素1得到$\tilde{\mathbf{p}}=(x,y,1)$。符号$\tilde{}$表明该向量是齐次的。
 齐次向量有一个重要性质，对于任意非零实数$\lambda$，$\tilde{\mathbf{p}}$等价于$\lambda\tilde{\mathbf{p}}$，
 记作$\tilde{\mathbf{p}}\simeq\lambda\tilde{\mathbf{p}}$。
-此处等价的含义是，$\tilde{\mathbf{p}}$表示了平面上相同的点，无需考虑整体的缩放因子。
+此处等价的含义是，二者表示了平面上相同的点，无需考虑整体的缩放因子。
 
 现在考虑坐标原点的平移。
 在图\ref{fig:two_frame_2D}中，由于$\{V\}$和$\{A\}$平行，所以使用向量加法就能得到$P$在$\{A\}$中的坐标。
@@ -373,7 +394,7 @@ $$
   \begin{pmatrix}{}^A\mathbf{R}_B & \mathbf{t}\\\mathbf{0}_{1\times2}&1\end{pmatrix}
   \begin{pmatrix}{}^Bx\\{}^By\\1\end{pmatrix}
 \end{equation}
-其中，$\mathbf{t}=(x,y)$是坐标系的平移，${}^A\mathbf{R}_B$是朝向。
+其中，$\mathbf{t}=(x,y)^T$是坐标系$\{B\}$的原点在$\{A\}$中的坐标，${}^A\mathbf{R}_B$是$\{B\}$在$\{A\}$中的朝向。
 注意，${}^A\mathbf{R}_B={}^V\mathbf{R}_B$，因为$\{A\}$和$\{V\}$是平行的。
 现在，$P$点的坐标向量成为了齐次形式，并记作
 \begin{equation}
@@ -431,8 +452,9 @@ $$
   h2e(inv(T1) * e2h(P))
 \end{matlab}
 为什么\verb|P1 = inv(T1) * [P; 1]|？
-首先，已知 ${}^0\mathbf{p}={}^0\xi_1\cdot{}^1\mathbf{p}$，其中，T1 是将$\{0\}$中的点映射到$\{1\}$，即${}^0\xi_1$。
-所以，${}^1\mathbf{p}={}^1\xi_0\cdot{}^0\mathbf{p}=({}^0\xi_1)^{-1}\cdot{}^0\mathbf{p}=(T1)^{-1}\cdot{}^0\mathbf{p}$
+T1 是$\{1\}$相对于$\{0\}$的位姿，即$T1\sim{}^0\xi_1$。
+并且等式${}^0\mathbf{p}={}^0\xi_1\cdot{}^1\mathbf{p}$和${}^1\mathbf{p}={}^1\xi_0\cdot{}^0\mathbf{p}$成立。
+所以，${}^1\mathbf{p}=({}^0\xi_1)^{-1}\cdot{}^0\mathbf{p}=(T1)^{-1}\cdot{}^0\mathbf{p}$。
 
 
 
@@ -458,9 +480,9 @@ $$
 
 \appendix
 \section{RVC toolbox}
-安装Matlab toolbox。
-从地址 \href{https://petercorke.com/RVC}{RVC toolbox}下载到 rvctools.zip，然后在该目录使用 \verb|addpath rvctools|命令即可安装。
-然后使用\verb|startupp_rvc|即可启动。
+安装Matlab toolbox：
+从地址 \href{https://petercorke.com/RVC}{RVC toolbox}下载 rvctools.zip，解压缩后将 rvctools 路径加入MATLAB，
+使用\verb|startup_rvc|即可启动。
 
 
 

@@ -24,7 +24,9 @@
 * MatrixInv_v11.v
   在 v1 基础上大量改动，统一命名，简化证明，改进注释，便于理解。
 * MatrixInv_v111.v
-  在 v11 基础上改用 SafeNatFun 模型，进一步简化证明（公理部分）。
+  在 v11 基础上改用 SafeNatFun 模型，进一步简化证明（去掉公理部分）。
 * MatrixInv_v12.v
   在 v1 基础上切换其他矩阵模型立即能够编译。(目前是SafeNatFun，其余模型需要增加一个 f2m 的接口)
+* MatrixInv_v3.v
+  在 v111 基础上，进一步精简，与 fin 模型的矩阵保持一致。
 

@@ -218,6 +218,12 @@
 
   参考：[【无人飞行器】开源 | CMPCC：基于走廊的模型预测无人机激进飞行的轮廓控制](https://cloud.tencent.com/developer/article/1792656)
 
+## 在MATLAB上的控制器仿真（使用github上的源码）
+
+* 项目说明 README.txt
+* 启动程序 test_trajectory.m
+* 算法实现 controller.m
+
 
 
 ## 相关论文或资源
