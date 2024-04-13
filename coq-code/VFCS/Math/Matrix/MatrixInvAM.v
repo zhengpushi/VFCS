@@ -66,7 +66,6 @@ Module MinvAM (E : FieldElementType) <: Minv E.
   Notation msingular := (@msingular _ Aadd 0 Amul 1).
   
 
-
   (* ======================================================================= *)
   (** ** Check matrix invertibility *)
 

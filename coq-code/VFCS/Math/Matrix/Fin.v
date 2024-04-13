@@ -308,6 +308,18 @@ Ltac fin :=
      auto; try reflexivity; try easy; try lia; try ring
     ).
 
+(* simplify "fin2nat i =(<>) fin2nat j" in context *)
+Ltac fin2nat_inj :=
+  repeat
+    (let E := fresh "E" in
+     match goal with
+     (* fin2nat i = fin2nat j |- _ ==> i = j |-, and rewrite *)
+     | H : fin2nat ?i = fin2nat ?j |- _ =>
+         apply fin2nat_inj in H; try rewrite H in *
+     | H : fin2nat ?i <> fin2nat ?j |- _ =>
+         apply fin2nat_inj_not in H
+     end).
+
 
 (** ** Cast between two [fin] type with actual equal range *)
 

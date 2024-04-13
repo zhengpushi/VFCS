@@ -14,10 +14,8 @@
 
 Require Import NatExt.
 Require Import Hierarchy.
-Require Import Matrix.
 Require Import MyExtrOCamlR.
-Require Import Utils.           (* LDict *)
-Require Export Matrix MatrixInvBase MatrixGauss.
+Require Export Matrix MatrixGauss MatrixInvBase.
 Require QcExt RExt.
 
 Generalizable Variable A Aadd Azero Aopp Amul Aone Ainv.
@@ -34,56 +32,94 @@ Module MinvGE (E : FieldElementType) <: Minv E.
 
   Notation "0" := Azero : A_scope.
   Notation "1" := Aone : A_scope.
+  Infix "+" := Aadd : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
+  Notation "a - b" := ((a + -b)%A) : A_scope.
   Infix "*" := Amul : A_scope.
   Notation "/ a" := (Ainv a) : A_scope.
-  Infix "/" := (fun a b => a * / b) : A_scope.
+  Notation "a / b" := ((a * /b)%A) : A_scope.
   
   Notation smat n := (smat A n).
   Notation mat1 := (@mat1 _ Azero Aone).
+  Notation mcmul := (@mcmul _ Amul).
+  Infix "\.*" := mcmul : mat_scope.
   Notation mmul := (@mmul _ Aadd Azero Amul).
   Infix "*" := mmul : mat_scope.
+  Infix "*" := mmul : mat_scope.
+  Notation mmulv := (@mmulv _ Aadd 0 Amul).
+  Infix "*v" := mmulv : mat_scope.
   Notation minvertible := (@minvertible _ Aadd 0 Amul 1).
+  Notation msingular := (@msingular _ Aadd 0 Amul 1).
 
   Notation rowEchelon := (@rowEchelon _ Aadd 0 Aopp Amul Ainv _).
   Notation minRowEchelon := (@minRowEchelon _ Aadd 0 Aopp Amul _).
   Notation rowOps2mat := (@rowOps2mat _ Aadd 0 Amul 1).
+  Notation rowOps2matInv := (@rowOps2matInv _ Aadd 0 Aopp Amul 1 Ainv).
   
-  (* ******************************************************************* *)
-  (** ** Compute that if a matrix is invertible *)
+  (* ======================================================================= *)
+  (** ** Check matrix invertibility *)
 
-  (** If the matrix `M` is invertible *)
+  (** Check the invertibility of matrix `M` *)
   Definition minvertibleb {n} : smat n -> bool :=
     match n with
-    | O => fun _ => false   (* zero-dims matrix is not invertible *)
+    | O => fun _ => true   (* zero-dims matrix is considered invertible *)
     | S n' =>
-        fun (M : smat (S n')) =>
+        fun M =>
           match rowEchelon M (S n') with
           | None => false
           | Some (l1, M1) => true
           end
     end.
 
-  (* From `M * N = mat1`, the `minvertibleb M` return true *)
-  Lemma mmul_eq1_imply_minvertibleb_true_l : forall {n} (M N : smat n),
-      M * N = mat1 -> minvertibleb M = true.
+  (* M * N = mat1 -> (exists (l1, M1), rowEchelon M (S n) = Some (l1,M1) *)
+  Lemma mmul_eq1_imply_rowEchelon_Some_l : forall {n} (M N : smat (S n)),
+      M * N = mat1 -> (exists '(l1, M1), rowEchelon M (S n) = Some (l1, M1)).
   Proof.
   Admitted.
 
-  (* From `M * N = mat1`, the `minvertibleb N` return true *)
-  Lemma mmul_eq1_imply_minvertibleb_true_r : forall {n} (M N : smat n),
-      M * N = mat1 -> minvertibleb N = true.
+  (* M * N = mat1 -> (exists (l1, N1), rowEchelon N (S n) = Some (l1,N1) *)
+  Lemma mmul_eq1_imply_rowEchelon_Some_r : forall {n} (M N : smat (S n)),
+      M * N = mat1 -> (exists '(l1, N1), rowEchelon N (S n) = Some (l1, N1)).
   Proof.
   Admitted.
+  
+  (** minvertible M <-> minvertibleb M = true *)
+  Lemma minvertible_iff_minvertibleb_true : forall {n} (M : smat n),
+      minvertible M <-> minvertibleb M = true.
+  Proof.
+    intros. split; intros.
+    - hnf in H. destruct H as [M' [Hl Hr]]. destruct n; auto.
+      apply (mmul_eq1_imply_rowEchelon_Some_r) in Hl. destruct Hl as [[l1 M1]].
+      unfold minvertibleb. rewrite H. auto.
+    - apply minvertible_iff_minvertibleL. hnf.
+      unfold minvertibleb in H. destruct n.
+      + exists M. apply v0eq.
+      + destruct rowEchelon as [[l1 M1]|] eqn:T1; try easy.
+        destruct (minRowEchelon M1 (S n)) as [l2 M2] eqn:T2.
+        apply minRowEchelon_imply_eq in T2 as H3.
+        apply rowEchelon_imply_eq in T1 as H4.
+        apply minRowEchelon_imply_mat1 in T2 as H5.
+        * subst. rewrite <- mmul_assoc in H5.
+          exists (rowOps2mat l2 * rowOps2mat l1); auto.
+        * apply rowEchelon_NormedLowerTriangle in T1. auto.
+  Qed.
+  
+  (** msingular M <-> minvertibleb M = false *)
+  Lemma msingular_iff_minvertibleb_false : forall {n} (M : smat n),
+      msingular M <-> minvertibleb M = false.
+  Proof.
+    intros. unfold msingular. rewrite minvertible_iff_minvertibleb_true.
+    rewrite not_true_iff_false. tauto.
+  Qed.
 
 
   (* ******************************************************************* *)
   (** ** Inverse matrix (option version) *)
   
-  (** 计算逆矩阵(option版本) *)
+  (** Inverse matrix (option version) *)
   Definition minvo {n} : smat n -> option (smat n) :=
     match n with
-    | O => fun _ => None
+    | O => fun M => Some mat1 (* zero-dims matrix has a dummy inverse, any value is OK *)
     | S n' =>
         fun (M : smat (S n')) =>
           match rowEchelon M (S n') with
@@ -93,75 +129,76 @@ Module MinvGE (E : FieldElementType) <: Minv E.
               Some (rowOps2mat (l2 ++ l1))
           end
     end.
+  
+  (** `minvo` return `Some`, iff M is invertible *)
+  Lemma minvo_Some_iff_minvertible : forall {n} (M : smat n),
+      (exists M', minvo M = Some M') <-> minvertible M.
+  Proof.
+    intros. rewrite minvertible_iff_minvertibleb_true.
+    unfold minvo, minvertibleb. destruct n.
+    - split; intros; auto. exists M. f_equal. apply v0eq.
+    - split; intros.
+      + destruct H as [M' H]. destruct rowEchelon as [[l1 M1]|]; try easy.
+      + destruct rowEchelon as [[l1 M1]|] eqn:T1; try easy.
+        destruct minRowEchelon as [l2 M2] eqn:T2. eexists; auto.
+  Qed.
 
-  (** If `minvo M` return `Some M'`, then `M'` is left inverse of `M` *)
-  Theorem minvo_imply_eq : forall {n} (M M' : smat n),
+  (** `minvo` return `None`, iff M is singular *)
+  Lemma minvo_None_iff_msingular : forall {n} (M : smat n),
+      minvo M = None <-> msingular M.
+  Proof.
+    intros. unfold msingular. rewrite <- minvo_Some_iff_minvertible.
+    unfold minvo. destruct n.
+    - split; intros; try easy. destruct H. exists mat1; auto.
+    - split; intros; try easy.
+      + intro. destruct H0 as [M' H0]. rewrite H in H0. easy.
+      + destruct rowEchelon as [[l1 M1]|] eqn:T1; try easy.
+        destruct minRowEchelon as [l2 M2] eqn:T2. destruct H. eexists; auto.
+  Qed.
+
+  (** If `minvo M` return `Some M'`, then `M' * M = mat1` *)
+  Lemma minvo_Some_imply_eq1_l : forall {n} (M M' : smat n),
       minvo M = Some M' -> M' * M = mat1.
   Proof.
-    intros. unfold minvo in H. destruct n; try easy.
-    destruct rowEchelon as [[l1 M1]|] eqn:T1; try easy.
-    destruct minRowEchelon as [l2 M2] eqn:T2. inv H.
-    copy T1. copy T2.
-    apply rowEchelon_imply_eq in T1.
-    apply minRowEchelon_imply_eq in T2.
-    rewrite rowOps2mat_app. rewrite mmul_assoc. rewrite T1,T2.
-    apply minRowEchelon_imply_mat1 in HC0; auto.
-    apply rowEchelon_NormedLowerTriangle in HC; auto.
-  Qed.
-
-  (** `minvo` return `Some`, iff, `minvertibleb` return true *)
-  Lemma minvo_Some_iff_minvertibleb_true : forall {n} (M : smat n),
-      (exists M', minvo M = Some M') <-> minvertibleb M = true.
-  Proof.
-    intros. unfold minvo, minvertibleb in *.
-    destruct n; split; intros; try easy.
-    - destruct H. easy.
-    - destruct H. destruct rowEchelon as [[l1 M1]|]; try easy.
+    intros. unfold minvo in H. destruct n.
+    - apply v0eq.
     - destruct rowEchelon as [[l1 M1]|] eqn:T1; try easy.
-      destruct (minRowEchelon M1 (S n)) as [l2 M2] eqn:T2.
-      exists (rowOps2mat (l2 ++ l1)). auto.
-  Qed.
-
-  (** `minvo` return `None`, iff, `minvertibleb` return false *)
-  Lemma minvo_None_iff_minvertibleb_false : forall {n} (M : smat n),
-      minvo M = None <-> minvertibleb M = false.
-  Proof.
-    intros. unfold minvo, minvertibleb in *.
-    destruct n; split; intros; try easy.
-    - destruct rowEchelon as [[l1 M1]|]; try easy.
-      destruct minRowEchelon as [l2 M2] eqn:T2; try easy.
-    - destruct rowEchelon as [[l1 M1]|]; try easy.
-  Qed.
-
-  (** minvertible M <-> minvertibleb M = true *)
-  Lemma minvertible_iff_minvertibleb_true : forall {n} (M : smat n),
-      minvertible M <-> minvertibleb M = true.
-  Proof.
-    intros. split; intros.
-    - hnf in *. destruct H as [M' [H H0]].
-      apply mmul_eq1_imply_minvertibleb_true_l in H0. auto.
-    - apply minvo_Some_iff_minvertibleb_true in H. destruct H as [M' H].
-      apply minvo_imply_eq in H.
-      Search MatrixInvBase.minvertible.
-      ?
-      hnf.
-      Search minvertibleL. ?
-      hnf. exists M'.
-      ?
-      unfold minvertibleb in H. destruct n; try easy.
-      destruct rowEchelon as [[l1 M1]|] eqn:T1; try easy.
-      Search MatrixGauss.minRowEchelon.
-      pose proof (minRowEchelon_imply_eq).
-      destruct (minRowEchelon M1 (S n)) .
+      destruct minRowEchelon as [l2 M2] eqn:T2. inv H.
+      copy T1. copy T2.
       apply rowEchelon_imply_eq in T1.
-      Search 
-      
-      Search minvertible.
-  
-  (** msingular M <-> minvertibleb M = false *)
-  Lemma msingular_iff_minvertibleb_false : forall {n} (M : smat n),
-      msingular M <-> minvertibleb M = false.
+      apply minRowEchelon_imply_eq in T2.
+      rewrite rowOps2mat_app. rewrite mmul_assoc. rewrite T1,T2.
+      apply minRowEchelon_imply_mat1 in HC0; auto.
+      apply rowEchelon_NormedLowerTriangle in HC; auto.
+  Qed.
 
+  (** If `minvo M` return `Some M'`, then `M * M' = mat1` *)
+  Lemma minvo_Some_imply_eq1_r : forall {n} (M M' : smat n),
+      minvo M = Some M' -> M * M' = mat1.
+  Proof.
+    intros.
+    (* Quickly finished the proof (but, we need Adjoint Matrix method) *)
+    (* apply minvo_Some_imply_eq1_l in H as H'. *)
+    (* apply mmul_eq1_comm in H'. auto. *)
+
+    (* Let's proof it directly *)
+    unfold minvo in H. destruct n.
+    - apply v0eq.
+    - destruct rowEchelon as [[l1 M1]|] eqn:T1; try easy.
+      destruct minRowEchelon as [l2 M2] eqn:T2.
+      apply rowEchelon_imply_eq_inv in T1 as T1'.
+      apply minRowEchelon_imply_eq_inv in T2 as T2'.
+      apply minRowEchelon_imply_mat1 in T2 as T2''; auto.
+      2:{ apply rowEchelon_NormedLowerTriangle in T1; auto. }
+      rewrite <- T1'. rewrite <- T2'. rewrite T2''.
+      inversion H. rewrite mmul_1_r.
+      rewrite <- rowOps2matInv_app.
+      rewrite mmul_rowOps2matInv_rowOps2mat_eq1. auto.
+      apply Forall_app. split.
+      apply minRowEchelon_imply_rowOpValid in T2; auto.
+      apply rowEchelon_imply_rowOpValid in T1; auto.
+  Qed.
+?
 
   (* ******************************************************************* *)
   (** ** Inverse matrix (default value version) *)

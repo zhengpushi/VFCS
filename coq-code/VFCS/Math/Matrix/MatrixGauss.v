@@ -8,18 +8,42 @@
   date      : 2023.12
 
   remark    :
-  1. First stage, we use a simple case of `n × n` matrix
-  2. Second stage, we should consider the case of `m × n` matrix
+  1. Two stages
+     First stage, we use a simple case of `n × n` matrix
+     Second stage, we should consider the case of `m × n` matrix
+
+  2. learn "fold_left" and "fold_right"
+
+     fold_left  f [b1;b2;b3] a = f (f (f a b1) b2) b3
+     Folding start from newest added element.
+
+     fold_right f a [b1;b2;b3] = f b1 (f b2 (f b3 a))
+     Folding start from oldest added element.
  *)
 
 Require Import NatExt.
 Require Import Hierarchy.
 Require Import Matrix.
 Require Import MyExtrOCamlR.
-Require Import Utils.           (* LDict *)
 Require QcExt RExt.
 
 Generalizable Variable A Aadd Azero Aopp Amul Aone Ainv.
+
+(** fold_left f (map g l) a = fold_left (fun x y => f x (g y)) l a *)
+Lemma fold_left_map : forall {A B} (l : list B) (f : A -> A -> A) (g : B -> A) a,
+    fold_left f (map g l) a = fold_left (fun x y => f x (g y)) l a.
+Proof.
+  intros A B l. induction l; intros; simpl. auto.
+  rewrite IHl. auto.
+Qed.
+
+(** fold_right f a (map g l) = fold_right (fun x y => f (g x) y) a l *)
+Lemma fold_right_map : forall {A B} (l : list B) (f : A -> A -> A) (g : B -> A) a,
+    fold_right f a (map g l) = fold_right (fun x y => f (g x) y) a l.
+Proof.
+  intros A B l. induction l; intros; simpl. auto.
+  rewrite IHl. auto.
+Qed.
 
 
 (* ############################################################################ *)
@@ -30,6 +54,7 @@ Section GaussElim.
 
   Notation "0" := Azero : A_scope.
   Notation "1" := Aone : A_scope.
+  Infix "+" := Aadd : A_scope.
   Notation "- a" := (Aopp a) : A_scope.
   Infix "*" := Amul : A_scope.
   Notation "/ a" := (Ainv a) : A_scope.
@@ -39,6 +64,8 @@ Section GaussElim.
   Notation mat r c := (mat A r c).
   Notation smat n := (smat A n).
   Notation mat1 := (@mat1 _ Azero Aone).
+  Notation madd := (@madd _ Aadd).
+  Infix "+" := madd : mat_scope.
   Notation mmul := (@mmul _ Aadd Azero Amul).
   Infix "*" := mmul : mat_scope.
   Notation matRowSwap := (@matRowSwap _ 0 1 _).
@@ -51,7 +78,7 @@ Section GaussElim.
 
 
   (* ======================================================================= *)
-  (** ** 行变换的抽象表示 *)
+  (** ** 行变换 *)
   
   (* 为避免逆矩阵计算时的大量计算，使用抽象表示，可提高计算效率 *)
   Inductive RowOp {n} :=
@@ -63,38 +90,281 @@ Section GaussElim.
   (** 行变换列表转换为矩阵 *)
   Definition rowOps2mat {n} (l : list (@RowOp n)) : smat (S n) :=
     fold_right (fun op M =>
-                 match op with
-                 | ROnop => M
-                 | ROswap i j => mrowSwap i j M
-                 | ROscale i c => mrowScale i c M
-                 | ROadd i j c => mrowAdd i j c M
-                 end) mat1 l.
-
-  (** mrowSwap i j (M * N) = mrowSwap i j M * N *)
-  Lemma mrowSwap_mmul : forall {n} (M N : smat n) (i j : fin n),
-      mrowSwap i j (M * N) = mrowSwap i j M * N.
-  Proof. intros. rewrite !mrowSwap_eq. rewrite mmul_assoc; auto. Qed.
-
-  (** mrowScale i c (M * N) = mrowScale i c M * N *)
-  Lemma mrowScale_mmul : forall {n} (M N : smat n) (i : fin n) (c : A),
-      mrowScale i c (M * N) = mrowScale i c M * N.
-  Proof. intros. rewrite !mrowScale_eq. rewrite mmul_assoc; auto. Qed.
-
-  (** mrowAdd i j c (M * N) = mrowScale i j c M * N *)
-  Lemma mrowAdd_mmul : forall {n} (M N : smat n) (i j : fin n) (c : A),
-      mrowAdd i j c (M * N) = mrowAdd i j c M * N.
-  Proof. intros. rewrite !mrowAdd_eq. rewrite mmul_assoc; auto. Qed.
+                  match op with
+                  | ROnop => M
+                  | ROswap i j => mrowSwap i j M
+                  | ROscale i c => mrowScale i c M
+                  | ROadd i j c => mrowAdd i j c M
+                  end) mat1 l.
 
   (** rowOps2mat (l1 ++ l2) = rowOps2mat l1 * rowOps2mat l2 *)
-   Lemma rowOps2mat_app : forall {n} (l1 l2 : list (@RowOp n)),
+  Theorem rowOps2mat_app : forall {n} (l1 l2 : list (@RowOp n)),
       rowOps2mat (l1 ++ l2) = rowOps2mat l1 * rowOps2mat l2.
   Proof.
-    intros n. induction l1; intros; simpl.
+    intros. induction l1; intros; simpl.
     - rewrite mmul_1_l; auto.
     - destruct a; auto.
       + rewrite IHl1. rewrite mrowSwap_mmul; auto.
       + rewrite IHl1. rewrite mrowScale_mmul; auto.
       + rewrite IHl1. rewrite mrowAdd_mmul; auto.
+  Qed.
+
+
+  (* ======================================================================= *)
+  (** ** 行变换的逆过程 *)
+
+  (** 行变换列表转换为反作用的矩阵。即，rowOps2mat的逆矩阵 *)
+  Definition rowOps2matInv {n} (l : list (@RowOp n)) : smat (S n) :=
+    fold_left (fun M op =>
+                 match op with
+                 | ROnop => M
+                 | ROswap i j => mrowSwap i j M
+                 | ROscale i c => mrowScale i (/c) M
+                 | ROadd i j c => mrowAdd i j (-c) M
+                 end) l mat1.
+
+  (* 为证明 rowOps2matInv_app，引入辅助定义和引理，主要思想是：
+     将 rowOps2mat 和 rowOps2matInv 转换为矩阵乘法 *)
+  Section helper.
+    
+    (* Valid RowOp *)
+    Definition roValid {n} (op : @RowOp n) : Prop :=
+      match op with
+      | ROnop => True
+      | ROswap i j => True
+      | ROscale i c => c <> 0
+      | ROadd i j c => i <> j
+      end.
+
+    (* op => matrix of op *)
+    Definition ro2mat {n} (op : @RowOp n) : smat (S n) :=
+      match op with
+      | ROnop => mat1
+      | ROswap i j => matRowSwap i j
+      | ROscale i c => matRowScale i c
+      | ROadd i j c => matRowAdd i j c
+      end.
+
+    (* op => matrix of inverse opeation *)
+    Definition ro2matInv {n} (op : @RowOp n) : smat (S n) :=
+      match op with
+      | ROnop => mat1
+      | ROswap i j => matRowSwap i j
+      | ROscale i c => matRowScale i (/c)
+      | ROadd i j c => matRowAdd i j (-c)
+      end.
+
+    Lemma mmul_ro2mat_l : forall n (op : RowOp) (M : smat (S n)),
+        ro2mat op * M =
+          match op with
+          | ROnop => M
+          | ROswap i j => mrowSwap i j M
+          | ROscale i c => mrowScale i c M
+          | ROadd i j c => mrowAdd i j c M
+          end.
+    Proof.
+      intros. unfold ro2mat. destruct op.
+      - apply mmul_1_l.
+      - rewrite mrowSwap_eq; auto.
+      - rewrite mrowScale_eq; auto.
+      - rewrite mrowAdd_eq; auto.
+    Qed.
+
+    Lemma mmul_ro2matInv_l : forall n (op : RowOp) (M : smat (S n)),
+        ro2matInv op * M =
+          match op with
+          | ROnop => M
+          | ROswap i j => mrowSwap i j M
+          | ROscale i c => mrowScale i (/ c) M
+          | ROadd i j c => mrowAdd i j (- c) M
+          end.
+    Proof.
+      intros.  unfold ro2matInv. destruct op.
+      - apply mmul_1_l.
+      - rewrite mrowSwap_eq; auto.
+      - rewrite mrowScale_eq; auto.
+      - rewrite mrowAdd_eq; auto.
+    Qed.
+    
+    Lemma mmul_ro2mat_ro2matInv : forall {n} (op : @RowOp n),
+        roValid op -> ro2mat op * ro2matInv op = mat1.
+    Proof.
+      intros. hnf in H. destruct op; simpl.
+      - rewrite mmul_1_l; auto.
+      - rewrite mmul_matRowSwap_matRowSwap; auto.
+      - rewrite mmul_matRowScale_matRowScale; auto.
+      - rewrite mmul_matRowAdd_matRowAdd; auto.
+    Qed.
+    
+    Lemma mmul_ro2matInv_ro2mat : forall {n} (op : @RowOp n),
+        roValid op -> ro2matInv op * ro2mat op = mat1.
+    Proof.
+      intros. hnf in H. destruct op; simpl.
+      - rewrite mmul_1_l; auto.
+      - rewrite mmul_matRowSwap_matRowSwap; auto.
+      - replace c with (/ / c) at 2.
+        rewrite mmul_matRowScale_matRowScale; auto.
+        apply field_inv_neq0_iff; auto.
+        rewrite field_inv_inv; auto.
+      - replace c with (- - c) at 2 by field.
+        rewrite mmul_matRowAdd_matRowAdd; auto.
+    Qed.
+
+    (** rowOps2mat has an equivalent form with matrix multiplication. *)
+    (*     Note that, we won't use this definition to improve performance *)
+    Lemma rowOps2mat_eq : forall {n} (l : list (@RowOp n)),
+        rowOps2mat l = fold_right mmul mat1 (map ro2mat l).
+    Proof.
+      intros. unfold rowOps2mat. rewrite fold_right_map. f_equal.
+      extensionality M. extensionality op. rewrite mmul_ro2mat_l. auto.
+    Qed.
+
+    (** rowOps2matInv has an equivalent form with matrix multiplication. *)
+    (*     Note that, we won't use this definition to improve performance *)
+    Lemma rowOps2matInv_eq : forall {n} (l : list (@RowOp n)),
+        rowOps2matInv l = fold_left (fun x y => y * x) (map ro2matInv l) mat1.
+    Proof.
+      intros. unfold rowOps2matInv. rewrite fold_left_map. f_equal.
+      extensionality M. extensionality op. rewrite mmul_ro2matInv_l. auto.
+    Qed.
+  End helper.
+
+  (** rowOps2matInv l * rowOps2mat l = mat1 *)
+  Lemma mmul_rowOps2matInv_rowOps2mat_eq1 : forall {n} (l : list (@RowOp n)),
+      Forall roValid l -> rowOps2matInv l * rowOps2mat l = mat1.
+  Proof.
+    intros.
+    (* convert to mmul *)
+    rewrite rowOps2mat_eq. rewrite rowOps2matInv_eq. rewrite <- fold_left_rev_right.
+    (* If we assume l = a1;a2;a3, and denoted that
+            map ro2matInv l       = a1';a2';a3'
+            rev (map ro2matInv l) = a3';a2';a1'
+            map ro2mat l          = a1;a2;a3,
+       then the Goal is: (a3'*a2'*a1'*mat1) * (a1*a2*a3*mat1) = mat1 *)
+    induction l; simpl. apply mmul_1_l.
+    (* Convert 'ro2matInv a' to second items of matrix multiplication *)
+    replace (fold_right mmul mat1 (rev (map ro2matInv l) ++ [ro2matInv a]))
+      with ((fold_right mmul mat1 (rev (map ro2matInv l))) * (ro2matInv a)).
+    2: {
+      (* (a3'*a2'*a1'*mat1)*a' = (a3'*a2'*a1'*a')*mat1 *)
+      remember (rev (map ro2matInv l)). remember (ro2matInv a).
+      clear Heqv IHl Heql0.
+      induction l0; simpl. rewrite mmul_1_l, mmul_1_r; auto.
+      rewrite mmul_assoc. f_equal. rewrite IHl0. auto. }
+    (* Now, eliminate the middle two items *)
+    rewrite mmul_assoc. rewrite <- (mmul_assoc (ro2matInv a)).
+    rewrite mmul_ro2matInv_ro2mat. rewrite mmul_1_l. apply IHl.
+    inversion H; auto. inversion H; auto.
+  Qed.
+
+  (** rowOps2mat l * rowOps2matInv l = mat1 *)
+  Lemma mmul_rowOps2mat_rowOps2matInv_eq1 : forall {n} (l : list (@RowOp n)),
+      Forall roValid l -> rowOps2mat l * rowOps2matInv l = mat1.
+  Proof.
+    intros.
+    (* convert to mmul *)
+    rewrite rowOps2mat_eq. rewrite rowOps2matInv_eq. rewrite <- fold_left_rev_right.
+    (* If we assume l = a1;a2;a3, and denoted that
+            map ro2matInv l       = a1';a2';a3'
+            rev (map ro2matInv l) = a3';a2';a1'
+            map ro2mat l          = a1;a2;a3,
+       then the Goal is: (a1*a2*a3*mat1) (a3'*a2'*a1'*mat1) = mat1 *)
+    induction l; simpl. apply mmul_1_l.
+    (* Convert 'ro2matInv a' to last items of matrix multiplication *)
+    replace (fold_right mmul mat1 (rev (map ro2matInv l) ++ [ro2matInv a]))
+      with ((fold_right mmul mat1 (rev (map ro2matInv l))) * (ro2matInv a)).
+    2: {
+      (* (a3'*a2'*a1'*mat1)*a' = (a3'*a2'*a1'*a')*mat1 *)
+      remember (rev (map ro2matInv l)). remember (ro2matInv a).
+      clear Heqv IHl Heql0.
+      induction l0; simpl. rewrite mmul_1_l, mmul_1_r; auto.
+      rewrite mmul_assoc. f_equal. rewrite IHl0. auto. }
+    (* Now, eliminate the middle two items *)
+    rewrite <- !mmul_assoc. rewrite (mmul_assoc (ro2mat a)). rewrite IHl.
+    rewrite mmul_1_r. rewrite mmul_ro2mat_ro2matInv. auto.
+    inversion H; auto. inversion H; auto.
+  Qed.
+
+  (** rowOps2mat l * M = N -> rowOps2matInv l * N = M *)
+  Lemma rowOps2mat_imply_rowOps2matInv : forall {n} (l : list RowOp) (M N : smat (S n)),
+      Forall roValid l -> (rowOps2mat l) * M = N -> (rowOps2matInv l) * N = M.
+  Proof.
+    intros. rewrite <- H0. rewrite <- mmul_assoc.
+    rewrite mmul_rowOps2matInv_rowOps2mat_eq1; auto. rewrite mmul_1_l. auto.
+  Qed.
+
+  (** rowOps2matInv l * M = N -> rowOps2mat l * N = M *)
+  Lemma rowOps2matInv_imply_rowOps2mat : forall {n} (l : list RowOp) (M N : smat (S n)),
+      Forall roValid l -> (rowOps2matInv l) * M = N -> (rowOps2mat l) * N = M.
+  Proof.
+    intros. rewrite <- H0. rewrite <- mmul_assoc.
+    rewrite mmul_rowOps2mat_rowOps2matInv_eq1; auto. rewrite mmul_1_l. auto.
+  Qed.
+
+  (** (l1 * l2 * ... * ln * 1) * a = l1 * l2 * ... * ln * (a * 1) *)
+  Lemma fold_right_mmul_rebase : forall {n} (l : list (smat n)) (a : smat n),
+      fold_right mmul mat1 l * a = fold_right mmul a l.
+  Proof.
+    intros n. induction l; intros; simpl. rewrite mmul_1_l; auto.
+    rewrite mmul_assoc. rewrite IHl. auto.
+  Qed.
+
+  (** rowOps2matInv (l1 ++ l2) = rowOps2matInv l2 * rowOps2matInv l1 *)
+  Theorem rowOps2matInv_app : forall {n} (l1 l2 : list (@RowOp n)),
+      rowOps2matInv (l1 ++ l2) = rowOps2matInv l2 * rowOps2matInv l1.
+  Proof.
+    intros n. unfold rowOps2matInv.
+    remember (fun (M : smat (S n)) (op : RowOp) =>
+                match op with
+                | ROnop => M
+                | ROswap i j => mrowSwap i j M
+                | ROscale i c => mrowScale i (/ c) M
+                | ROadd i j c => mrowAdd i j (- c) M
+                end) as f.
+    (* by induction on l2 is easier *)
+    intros l1 l2. revert l1. induction l2.
+    - intros. simpl. rewrite app_nil_r. rewrite mmul_1_l; auto.
+    - intros. simpl.
+      replace (l1 ++ a :: l2) with ((l1 ++ [a]) ++ l2);
+        [|rewrite <- app_assoc; auto].
+      rewrite IHl2. rewrite fold_left_app; simpl.
+      (* Assume: l1 = [b1;b2], l2 = [c1;c2], then
+         l1++l2 = [b1;b2;c1;c2]
+         f mat1 a                        = Ta*1
+         fold_left f l2 mat1             = Tc2*Tc1*1
+         fold_left f l2 (f mat1 a)       = Tc2*Tc1*Ta*1
+         fold_left f l1 mat1             = Tb2*Tb1*1
+         f (fold_left f l1 mat1) a       = Ta*Tb2*Tb1*1
+      The goal is:
+         (Tc2*Tc1*1)*(Ta*Tb2*Tb1*1) = (Tc2*Tc1*Ta*1)*(Tb2*Tb1*1) *)
+      replace (f (fold_left f l1 mat1) a)
+        with (ro2matInv a * (fold_left f l1 mat1)).
+      2:{ rewrite mmul_ro2matInv_l. rewrite Heqf; auto. }
+      replace (fold_left f l2 (f mat1 a))
+        with ((fold_left f l2 mat1) * ro2matInv a).
+      2:{
+        (* a difficulty proof *)
+        clear IHl2. rename l2 into l. clear l1.
+        assert (f = fun (M : smat (S n)) op => ro2matInv op * M).
+        { rewrite Heqf. unfold ro2matInv.
+          extensionality M. extensionality op. destruct op.
+          rewrite mmul_1_l; auto.
+          rewrite mrowSwap_eq; auto.
+          rewrite mrowScale_eq; auto.
+          rewrite mrowAdd_eq; auto. }
+        (* op ==> 矩阵乘法 *)
+        rewrite H.
+        rewrite <- (fold_left_map l (fun x y => y * x) ro2matInv).
+        rewrite <- (fold_left_map l (fun x y => y * x) ro2matInv).
+        (* “交换的矩阵乘法” ==> 正常的矩阵转换 *)
+        rewrite <- fold_left_rev_right.
+        rewrite <- fold_left_rev_right.
+        remember (rev (map ro2matInv l)) as L.
+        rewrite mmul_1_r.
+        remember (ro2matInv a) as b.
+        (* (l1*l2*l3*1)*b = l1*l2*l3*(b*1) *)
+        rewrite fold_right_mmul_rebase. auto. }
+      rewrite mmul_assoc. auto.
   Qed.
 
 
@@ -230,23 +500,23 @@ Section GaussElim.
       + inversion H. rewrite fin2nat_nat2finS; lia.
   Qed.
   
-(* End GaussElim. *)
-(* Section test. *)
-(*   Let M : smat nat 3 := l2m 0 [[1;0;0];[0;1;0];[0;0;1]]. *)
-(*   Notation firstNonzero := (@firstNonzero nat 0). *)
-(*   Compute firstNonzero M 3 #0. *)
-(*   Compute firstNonzero M 3 #1. *)
-(*   Compute firstNonzero M 3 #2. *)
-(*   Compute firstNonzero M 2 #0. *)
-(*   Compute firstNonzero M 2 #1. *)
-(*   Compute firstNonzero M 2 #2. *)
-(*   Compute firstNonzero M 1 #0. *)
-(*   Compute firstNonzero M 1 #1. *)
-(*   Compute firstNonzero M 1 #2. *)
-(*   Compute firstNonzero M 0 #0. *)
-(*   Compute firstNonzero M 0 #1. *)
-(*   Compute firstNonzero M 0 #2. *)
-(* End test. *)
+  (* End GaussElim. *)
+  (* Section test. *)
+  (*   Let M : smat nat 3 := l2m 0 [[1;0;0];[0;1;0];[0;0;1]]. *)
+  (*   Notation firstNonzero := (@firstNonzero nat 0). *)
+  (*   Compute firstNonzero M 3 #0. *)
+  (*   Compute firstNonzero M 3 #1. *)
+  (*   Compute firstNonzero M 3 #2. *)
+  (*   Compute firstNonzero M 2 #0. *)
+  (*   Compute firstNonzero M 2 #1. *)
+  (*   Compute firstNonzero M 2 #2. *)
+  (*   Compute firstNonzero M 1 #0. *)
+  (*   Compute firstNonzero M 1 #1. *)
+  (*   Compute firstNonzero M 1 #2. *)
+  (*   Compute firstNonzero M 0 #0. *)
+  (*   Compute firstNonzero M 0 #1. *)
+  (*   Compute firstNonzero M 0 #2. *)
+  (* End test. *)
 
 
   (* ******************************************************************* *)
@@ -269,6 +539,26 @@ Section GaussElim.
           let (l2, M2) := elimDown M1 x' j in
           (l2 ++ [op1], M2)
     end.
+  
+  (** 对 M 向下消元得到 (l, M')，则 l 都是有效的 *)
+  Lemma elimDown_imply_rowOpValid :
+    forall (x : nat) {n} (M M' : smat (S n)) (j : fin (S n)) (l : list RowOp),
+      x < S n - fin2nat j -> elimDown M x j = (l, M') -> Forall roValid l.
+  Proof.
+    induction x; intros; simpl in *.
+    - inversion H0. constructor.
+    - (* 当前元素是否为0，若是则直接递归，若不是则消元后递归 *)
+      destruct (Aeqdec (M #(n - x) j) 0) as [E|E].
+      + apply IHx in H0; auto. lia.
+      + destruct elimDown as [l2 M2] eqn: T2.
+        apply IHx in T2; try lia. inversion H0.
+        apply Forall_app. split; auto. repeat constructor. hnf. intro.
+        destruct j.
+        assert (n - x = i).
+        { erewrite nat2finS_eq in H1. apply fin_eq_iff in H1. auto. }
+        fin. subst. destruct (n - x) eqn:H2. fin. fin.
+        Unshelve. fin.
+  Qed.
 
   (** 对 M 向下消元得到 (l, M')，则 [l] * M = M' *)
   Lemma elimDown_imply_eq :
@@ -375,25 +665,25 @@ Section GaussElim.
       pose proof (fin2nat_lt j). lia.
   Qed.
 
-(* End GaussElim. *)
-(* Section test. *)
-(*   Import QcExt. *)
-(*   Notation elimDown := (@elimDown _ Qcplus 0 Qcopp Qcmult _). *)
+  (* End GaussElim. *)
+  (* Section test. *)
+  (*   Import QcExt. *)
+  (*   Notation elimDown := (@elimDown _ Qcplus 0 Qcopp Qcmult _). *)
   
-(*   (* 化阶梯形测试 *) *)
-(*   Let M : smat Qc 3 := l2m 0 (Q2Qc_dlist [[1;2;3];[4;5;6];[7;8;9]]%Q). *)
-(*   Compute m2l (snd (elimDown M 2 #0)). *)
-(* End test. *)
+  (*   (* 化阶梯形测试 *) *)
+  (*   Let M : smat Qc 3 := l2m 0 (Q2Qc_dlist [[1;2;3];[4;5;6];[7;8;9]]%Q). *)
+  (*   Compute m2l (snd (elimDown M 2 #0)). *)
+  (* End test. *)
 
 
   (* ******************************************************************* *)
   (** ** 化为行阶梯形 *)
 
   (*            (x=3)        (x=4)
-     * * * *    * * * *     1 * * *
-     * * * *    * 1 * *     0 1 * *
-     * * * * => * 0 1 *     0 0 1 *
-     * * * *    * 0 0 1     0 0 0 1
+   * * * *    * * * *     1 * * *
+   * * * *    * 1 * *     0 1 * *
+   * * * * => * 0 1 *     0 0 1 *
+   * * * *    * 0 0 1     0 0 0 1
      -----------------------------------
      递归时i    3 2 1 (0)   4 3 2 1 (0)
      递归时n-i  1 2 3       0 1 2 3
@@ -435,7 +725,7 @@ Section GaussElim.
   Proof.
     induction x; intros.
     - simpl in H. inversion H. simpl. apply mmul_1_l.
-    - unfold rowEchelon in H; fold (@rowEchelon (n)) in H. (* Tips: simpl会展开太多 *)
+    - unfold rowEchelon in H; fold (@rowEchelon (n)) in H. (* Tips: simpl展开太多 *)
       destruct firstNonzero as [i|] eqn: Hi; try easy.
       replace (S n - S x) with (n - x) in * by lia.
       (* 根据 i ??= #(n - x) 决定是否需要换行 *)
@@ -565,6 +855,62 @@ Section GaussElim.
     hnf; lia.
   Qed.
 
+  (** 对 M 行变换得到 (l, M')，则 l 都是有效的 *)
+  Lemma rowEchelon_imply_rowOpValid :
+    forall (x : nat) {n} (M M' : smat (S n)) (l : list RowOp),
+      x <= S n -> rowEchelon M x = Some (l, M') -> Forall roValid l.
+  Proof.
+    induction x; intros.
+    - simpl in H0. inversion H0. constructor.
+    - unfold rowEchelon in H0; fold (@rowEchelon (n)) in H0.
+      destruct firstNonzero as [i|] eqn: Hi; try easy.
+      replace (S n - S x) with (n - x) in * by lia.
+      (* 根据 i ??= #(n - x) 决定是否需要换行 *)
+      destruct (i ??= #(n - x)) as [E|E].
+      + (* i 就是当前行，不需要换行 *)
+        destruct elimDown as [l3 M3] eqn:T3.
+        destruct rowEchelon as [[l4 M4]|] eqn:T4; try easy. inversion H0.
+        apply IHx in T4 as T4'.
+        apply elimDown_imply_rowOpValid in T3.
+        apply Forall_app. split; auto.
+        apply Forall_app. split; auto.
+        repeat constructor. unfold roValid.
+        apply field_inv_neq0_iff.
+        apply firstNonzero_imply_nonzero in Hi. fin2nat_inj. auto. fin. fin.
+      + (* i 不是当前行，需要换行 *)
+        destruct elimDown as [l3 M3] eqn:T3.
+        destruct (rowEchelon M3 x) as [[l4 M4]|] eqn:T4; try easy.
+        apply IHx in T4 as T4'. inversion H0.
+        apply elimDown_imply_rowOpValid in T3.
+        apply Forall_app. split; auto.
+        apply Forall_app. split; auto.
+        repeat constructor. unfold roValid.
+        apply field_inv_neq0_iff. unfold mrowSwap. fin.
+        apply firstNonzero_imply_nonzero in Hi. auto. fin. fin.
+  Qed.
+
+  (* (** 对 M 行变换得到 (l, M')，则 [l]' * M' = M *) *)
+  (* Lemma rowEchelon_imply_eq_inv : *)
+  (*   forall (x : nat) {n} (M M' : smat (S n)) (l : list RowOp), *)
+  (*     rowEchelon M x = Some (l, M') -> rowOps2matInv l * M' = M. *)
+  (* Proof. *)
+  (*   intros. apply rowEchelon_imply_eq in H as H'. rewrite <- H'. *)
+  (*   rewrite <- mmul_assoc. rewrite mmul_rowOps2matInv_rowOps2mat_eq1. *)
+  (*   rewrite mmul_1_l; auto. *)
+  (*   apply rowEchelon_imply_rowOpValid in H. auto. *)
+  (* Qed. *)
+
+
+  (** 对 M 行变换得到 (l, M')，则 [l]' * M' = M *)
+  Lemma rowEchelon_imply_eq_inv :  forall {n} (M M' : smat (S n)) (l : list RowOp),
+      rowEchelon M (S n) = Some (l, M')  -> rowOps2matInv l * M' = M.
+  Proof.
+    intros. apply rowEchelon_imply_eq in H as H'. rewrite <- H'.
+    rewrite <- mmul_assoc. rewrite mmul_rowOps2matInv_rowOps2mat_eq1.
+    rewrite mmul_1_l; auto.
+    apply rowEchelon_imply_rowOpValid in H. auto. lia.
+  Qed.
+  
   (** 化行阶梯矩阵得到的矩阵是规范的的下三角矩阵 *)
   Lemma rowEchelon_NormedLowerTriangle : forall {n} (M M' : smat (S n)) (l : list RowOp),
       rowEchelon M (S n) = Some (l, M') -> mNormedLowerTriangle M'.
@@ -586,39 +932,39 @@ Section GaussElim.
   Qed.
 
 
-(* End GaussElim. *)
-(* Section test. *)
+  (* End GaussElim. *)
+  (* Section test. *)
 
-(*   Import QcExt. *)
-(*   Notation firstNonzero := (firstNonzero (Azero:=0)). *)
-(*   Notation rowEchelon := (@rowEchelon _ Qcplus 0 Qcopp Qcmult Qcinv _). *)
-(*   Notation elimDown := (@elimDown _ Qcplus 0 Qcopp Qcmult _). *)
-(*   Notation rowOps2mat := (@rowOps2mat _ Qcplus 0 Qcmult 1 _). *)
-(*   Notation mmul := (@mmul _ Qcplus 0 Qcmult). *)
-(*   Infix "*" := mmul : mat_scope. *)
+  (*   Import QcExt. *)
+  (*   Notation firstNonzero := (firstNonzero (Azero:=0)). *)
+  (*   Notation rowEchelon := (@rowEchelon _ Qcplus 0 Qcopp Qcmult Qcinv _). *)
+  (*   Notation elimDown := (@elimDown _ Qcplus 0 Qcopp Qcmult _). *)
+  (*   Notation rowOps2mat := (@rowOps2mat _ Qcplus 0 Qcmult 1 _). *)
+  (*   Notation mmul := (@mmul _ Qcplus 0 Qcmult). *)
+  (*   Infix "*" := mmul : mat_scope. *)
 
-(*   (* 行阶梯形 *) *)
-(* (*      [  0 -2  1]     [0    1/3  0]   [1 0 -2/3] *) *)
-(* (*      [  3  0 -2]  => [-1/2   0  0] * [0 1 -1/2] *) *)
-(* (*      [ -2  3  0]     [9      4  6]   [0 0    1] *) *)
-(*   Let M : smat Qc 3 := l2m 0 (Q2Qc_dlist [[0;-2;1];[3;0;-2];[-2;3;0]]%Q). *)
-(*   Let M1 : smat Qc 3 := l2m 0 (Q2Qc_dlist [[1;0;-2/3];[0;1;-1/2];[0;0;1]]%Q). *)
-(*   Let E1 : smat Qc 3 := l2m 0 (Q2Qc_dlist [[0;1/3;0];[-1/2;0;0];[9;4;6]]%Q). *)
+  (*   (* 行阶梯形 *) *)
+  (* (*      [  0 -2  1]     [0    1/3  0]   [1 0 -2/3] *) *)
+  (* (*      [  3  0 -2]  => [-1/2   0  0] * [0 1 -1/2] *) *)
+  (* (*      [ -2  3  0]     [9      4  6]   [0 0    1] *) *)
+  (*   Let M : smat Qc 3 := l2m 0 (Q2Qc_dlist [[0;-2;1];[3;0;-2];[-2;3;0]]%Q). *)
+  (*   Let M1 : smat Qc 3 := l2m 0 (Q2Qc_dlist [[1;0;-2/3];[0;1;-1/2];[0;0;1]]%Q). *)
+  (*   Let E1 : smat Qc 3 := l2m 0 (Q2Qc_dlist [[0;1/3;0];[-1/2;0;0];[9;4;6]]%Q). *)
   
-(*   Goal match rowEchelon M 3 with *)
-(*        | Some (l1',M1') => m2l (rowOps2mat l1') = m2l E1 *)
-(*                           /\ m2l M1' = m2l M1 *)
-(*        | _ => False *)
-(*        end. *)
-(*   Proof. *)
-(*     Time cbv; split; list_eq; f_equal; apply proof_irrelevance. *)
-(*   Qed. *)
+  (*   Goal match rowEchelon M 3 with *)
+  (*        | Some (l1',M1') => m2l (rowOps2mat l1') = m2l E1 *)
+  (*                           /\ m2l M1' = m2l M1 *)
+  (*        | _ => False *)
+  (*        end. *)
+  (*   Proof. *)
+  (*     Time cbv; split; list_eq; f_equal; apply proof_irrelevance. *)
+  (*   Qed. *)
 
-(*   (* 验证 E1 将 M 变换到了 M1 *) *)
-(*   Goal (E1 * M)%M = M1. *)
-(*   Proof. apply m2l_inj. cbv. list_eq; f_equal. Qed. *)
+  (*   (* 验证 E1 将 M 变换到了 M1 *) *)
+  (*   Goal (E1 * M)%M = M1. *)
+  (*   Proof. apply m2l_inj. cbv. list_eq; f_equal. Qed. *)
 
-(* End test. *)
+  (* End test. *)
 
   (* ******************************************************************* *)
   (** ** 向上消元 *)
@@ -655,6 +1001,25 @@ Section GaussElim.
         rewrite rowOps2mat_app. simpl.
         rewrite !mmul_assoc. f_equal.
         rewrite <- mrowAdd_mmul. rewrite mmul_1_l. auto.
+  Qed.
+  
+  (** 对 M 向上消元得到 (l, M')，则 l 都是有效的 *)
+  Lemma elimUp_imply_rowOpValid :
+    forall (x : nat) {n} (M M' : smat (S n)) (j : fin (S n)) (l : list RowOp),
+      x <= fin2nat j ->     (* 前 x 行，行号不超过 j *)
+      elimUp M x j = (l, M') -> Forall roValid l.
+  Proof.
+    induction x; intros; simpl in *.
+    - inversion H0. constructor.
+    - (* 当前元素是否为0，若是则直接递归，若不是则消元后递归 *)
+      destruct (Aeqdec (M #x j) 0) as [E|E].
+      + apply IHx in H0; auto. fin.
+      + destruct elimUp as [l2 M2] eqn:T2.
+        apply IHx in T2; fin. inv H0.
+        apply Forall_app. split; auto. repeat constructor. hnf. intros.
+        rewrite <- H0 in H.
+        rewrite fin2nat_nat2finS in H; fin.
+        pose proof (fin2nat_lt j). fin.
   Qed.
 
   (** 对 M 向上消元保持下三角矩阵 *)
@@ -760,15 +1125,15 @@ Section GaussElim.
       rewrite H; auto. lia.
   Qed.
   
-(* End GaussElim. *)
-(* Section test. *)
+  (* End GaussElim. *)
+  (* Section test. *)
 
-(*   Import QcExt. *)
-(*   Notation elimUp := (@elimUp _ Qcplus 0 Qcopp Qcmult _). *)
+  (*   Import QcExt. *)
+  (*   Notation elimUp := (@elimUp _ Qcplus 0 Qcopp Qcmult _). *)
   
-(*   Let M : smat Qc 3 := l2m 0 (Q2Qc_dlist [[1;2;3];[4;5;6];[7;8;1]]%Q). *)
-(*   Compute m2l (snd (elimUp M 2 #2)). *)
-(* End test. *)
+  (*   Let M : smat Qc 3 := l2m 0 (Q2Qc_dlist [[1;2;3];[4;5;6];[7;8;1]]%Q). *)
+  (*   Compute m2l (snd (elimUp M 2 #2)). *)
+  (* End test. *)
   
 
   (* ******************************************************************* *)
@@ -829,6 +1194,29 @@ Section GaussElim.
     - apply elimUp_keep_NormedLowerTriangle in T1; auto. fin.
     - apply elimUp_keep_upperRightZeros_S in T1; auto.
   Qed.
+
+  (** 对 M 向下消元得到 (l, M')，则 l 都是有效的 *)
+  Lemma minRowEchelon_imply_rowOpValid :
+    forall (x : nat) {n} (M M' : smat (S n)) (l : list RowOp),
+      minRowEchelon M x = (l, M') -> x <= S n -> Forall roValid l.
+  Proof.
+    induction x; intros; simpl in H. inv H; auto.
+    destruct elimUp as [l1 M1] eqn : T1.
+    destruct minRowEchelon as [l2 M2] eqn : T2. inv H.
+    apply IHx in T2; auto; try lia.
+    apply elimUp_imply_rowOpValid in T1 as T1'; fin.
+    apply Forall_app. split; auto.
+  Qed.
+  
+  (** 对 M 最简行变换得到 (l, M')，则 [l]' * M' = M *)
+  Lemma minRowEchelon_imply_eq_inv : forall {n} (M M' : smat (S n)) (l : list RowOp),
+      minRowEchelon M (S n) = (l, M') -> rowOps2matInv l * M' = M.
+  Proof.
+    intros. apply minRowEchelon_imply_eq in H as H'. rewrite <- H'.
+    rewrite <- mmul_assoc. rewrite mmul_rowOps2matInv_rowOps2mat_eq1.
+    rewrite mmul_1_l; auto.
+    apply minRowEchelon_imply_rowOpValid in H; fin.
+  Qed.
   
   (** 对 M 最简行变换得到 (l, M')，则 M' 是单位阵 *)
   Lemma minRowEchelon_imply_mat1 : forall {n} (M M' : smat (S n)) (l : list RowOp),
@@ -855,27 +1243,99 @@ Section GaussElim.
         * rewrite H; auto; try lia.
         * hnf; intros. pose proof (fin2nat_lt j0). lia.
   Qed.
-  
-  (* End GaussElim. *)
-(* Section test. *)
-(*   Import QcExt. *)
-(*   Notation minRowEchelon := (@minRowEchelon _ Qcplus 0 Qcopp Qcmult _). *)
-(*   Notation elimUp := (@elimUp _ Qcplus 0 Qcopp Qcmult _). *)
-(*   Notation rowOps2mat := (@rowOps2mat _ Qcplus 0 Qcmult 1). *)
-(*   Notation mmul := (@mmul _ Qcplus 0 Qcmult). *)
-(*   Infix "*" := mmul : mat_scope. *)
-(*   Notation mat1 := (@mat1 _ 0 1). *)
-  
-(*   (* 简化行阶梯形 *) *)
-(* (*      [1 0 -2/3]     [1  0  2/3]   [1 0 0] *) *)
-(* (*      [0 1 -1/2]  => [0  1  1/2] * [0 1 0] *) *)
-(* (*      [0 0    1]     [0  0    1]   [0 0 1] *) *)
-(*   Let M : smat Qc 3 := l2m 0 (Q2Qc_dlist [[1;0;-2/3];[0;1;-1/2];[0;0;1]]%Q). *)
-(*   Let l1 := fst (minRowEchelon M 3). *)
-(*   Let M1 := snd (minRowEchelon M 3). *)
-
-(*   Goal (rowOps2mat l1 * M)%M = M1. *)
-(*   Proof. apply m2l_inj. cbv. list_eq. Qed. *)
-(* End test. *)
 
 End GaussElim.
+
+
+Section test.
+  Import QcExt.
+  Open Scope mat_scope.
+
+  Notation smat n := (smat Qc n).
+  Notation mat1 := (@mat1 _ 0 1).
+  Notation mmul := (@mmul _ Qcplus 0 Qcmult).
+  Infix "*" := mmul : mat_scope.
+  Notation rowEchelon := (@rowEchelon _ Qcplus 0 Qcopp Qcmult Qcinv).
+  Notation minRowEchelon := (@minRowEchelon _ Qcplus 0 Qcopp Qcmult).
+  Notation elimUp := (@elimUp _ Qcplus 0 Qcopp Qcmult).
+  Notation rowOps2mat := (@rowOps2mat _ Qcplus 0 Qcmult 1).
+  Notation rowOps2matInv := (@rowOps2matInv _ Qcplus 0 Qcopp Qcmult 1 Qcinv).
+  
+  (*
+                                  [ 0 -2  1]
+                                  [ 3  0 -2]                 M0
+                                  [-2  3  0]
+
+  行阶梯形
+                  [0    1/3  0]   [ 0 -2  1]   [1 0 -2/3]
+                  [-1/2   0  0] * [ 3  0 -2] = [0 1 -1/2]    T1 * M0 = M1
+                  [9      4  6]   [-2  3  0]   [0 0    1]
+
+  简化行阶梯形
+    [1  0  2/3]   [0    1/3  0]   [ 0 -2  1]   [1 0 0]
+    [0  1  1/2] * [-1/2   0  0] * [ 3  0 -2] = [0 1 0]       T2 * T1 * M0 = M2
+    [0  0    1]   [9      4  6]   [-2  3  0]   [0 0 1]
+
+  逆矩阵
+                        [6 3 4]   [ 0 -2  1]   [1 0 0]
+                        [4 2 3] * [ 3  0 -2] = [0 1 0]       N0 * M0 = I
+                        [9 4 6]   [-2  3  0]   [0 0 1]
+   *)
+
+  (* 通过元素的比较来证明两个有限维的矩阵相等 *)
+  Ltac meq :=
+    apply m2l_inj; cbv; list_eq; f_equal; apply proof_irrelevance.
+  
+  (* 给定输入 M0 *)
+  Let M0 : smat 3 := l2m 0 (Q2Qc_dlist [[0;-2;1];[3;0;-2];[-2;3;0]]%Q).
+  (* 算出 M0 的逆矩阵一定是 N0 *)
+  Let N0 : smat 3 := l2m 0 (Q2Qc_dlist [[6;3;4];[4;2;3];[9;4;6]]%Q).
+
+  (* 验证 M0 和 N0 互逆 *)
+  Goal M0 * N0 = mat1.
+  Proof. meq. Qed.
+
+  Goal N0 * M0 = mat1.
+  Proof. meq. Qed.
+  
+  (* 行阶梯形 *)
+  Let l1 := match rowEchelon M0 3 with Some (l1,M1) => l1 | _ => [] end.
+  Let T1 : smat 3 := rowOps2mat l1.
+  Let M1 : smat 3 := match rowEchelon M0 3 with Some (l1,M1) => M1 | _ => mat1 end.
+  
+  (* 简化行阶梯形 *)
+  Let l2 := fst (minRowEchelon M1 3).
+  Let T2 : smat 3 := rowOps2mat l2.
+  Let M2 : smat 3 := snd (minRowEchelon M1 3).
+
+  (* 证明变换后的矩阵 M2 是单位阵 *)
+  Goal M2 = mat1.
+  Proof. meq. Qed.
+
+  (* 验证变换阵 T2*T1 是逆矩阵 N0 *)
+  Goal T2 * T1 = N0.
+  Proof. meq. Qed.
+  
+  (* 可直接计算这些矩阵值 *)
+  (* Compute m2l (T2 * T1). *)
+
+  (* 我们还能得到以下结论：
+     1. 根据 T1 * M0 = M1 得到 M0 = T1\-1 * M1
+     2. 根据 T2 * M1 = E  得到 M1 = T2\-1
+     3. 根据 T2 * T1 * M0 = E 得到 M0 = T1\-1 * T2\-1
+     注意，由于 T1 和 T2 是由初等行变换构造的，其逆矩阵很容易求得。
+   *)
+  Goal rowOps2matInv l1 * M1 = M0.
+  Proof. meq. Qed.
+  
+  Goal rowOps2matInv l2 = M1.
+  Proof. meq. Qed.
+  
+  Goal rowOps2matInv l1 * rowOps2matInv l2 = M0.
+  Proof. meq. Qed.
+
+  (* 并猜测 rowOps2matInv_app 性质 *)
+  Goal rowOps2matInv (l2 ++ l1) = M0.
+  Proof. meq. Qed.
+  
+End test.

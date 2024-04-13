@@ -2053,7 +2053,7 @@ Section malg.
 
   
   (** Properties below, need a field structure *)
-  Context `{F:Field A Aadd 0 Aopp Amul 1 Ainv}.
+  Context `{HField : Field A Aadd 0 Aopp Amul 1 Ainv}.
 
   
   (** *** Properties when equipped with `Field` *)
@@ -2111,9 +2111,11 @@ Section RowTrans.
   Notation "0" := Azero : A_scope.
   Notation "1" := Aone : A_scope.
   Infix "+" := Aadd : A_scope.
+  Notation "- a" := (Aopp a) : A_scope.
+  Notation "a - b" := (a + - b) : A_scope.
   Infix "*" := Amul : A_scope.
   Infix "+" := (@madd _ Aadd _ _) : mat_scope.
-  Notation mat1 := (@mat1 _ 0 1 _).
+  Notation mat1 := (@mat1 _ 0 1).
   Infix "*" := (@mmul _ Aadd 0 Amul _ _ _) : mat_scope.
 
   (** *** 单元素矩阵 *)
@@ -2135,6 +2137,7 @@ Section RowTrans.
   Definition mrowScale {n} (x : fin n) (c : A) (M : smat A n) : smat A n :=
     fun i j => if i ??= x then (c * M i j)%A else M i j.
 
+  (** rowScale of `M` equal to left multiply rowScaleMat of `M` *)
   Lemma mrowScale_eq : forall {n} (x : fin n) (c : A) (M : smat A n),
       mrowScale x c M = (matRowScale x c) * M.
   Proof.
@@ -2146,6 +2149,12 @@ Section RowTrans.
       apply vsum_unique with (i := i); intros; rewrite vnth_vmap2; fin.
       rewrite vnth_mcol. ring.
   Qed.
+
+  (** mrowScale i c (M * N) = mrowScale i c M * N *)
+  Lemma mrowScale_mmul : forall {n} (M N : smat A n) (i : fin n) (c : A),
+      mrowScale i c (M * N) = mrowScale i c M * N.
+  Proof. intros. rewrite !mrowScale_eq. rewrite mmul_assoc; auto. Qed.
+
 
   (** *** 行倍加矩阵 *)
   
@@ -2176,6 +2185,21 @@ Section RowTrans.
       + rewrite vnth_mcol. rewrite mnth_mat1_diff; auto. ring.
   Qed.
 
+  (** mrowAdd i j c (M * N) = mrowScale i j c M * N *)
+  Lemma mrowAdd_mmul : forall {n} (M N : smat A n) (i j : fin n) (c : A),
+      mrowAdd i j c (M * N) = mrowAdd i j c M * N.
+  Proof. intros. rewrite !mrowAdd_eq. rewrite mmul_assoc; auto. Qed.
+
+  (** (i)+c(j)) * (i)+(-c)(j) = mat1 *)
+  Lemma mmul_matRowAdd_matRowAdd : forall {n} (i j : fin n) (c : A),
+      i <> j -> matRowAdd i j c * matRowAdd i j (-c) = mat1.
+  Proof.
+    intros. rewrite <- mrowAdd_eq. unfold matRowAdd, mrowAdd.
+    apply meq_iff_mnth; intros. rewrite !mnth_madd. unfold matOneElem. fin.
+    - fin2nat_inj. rewrite mnth_mat1_same. ring.
+    - fin2nat_inj. subst. rewrite (mnth_mat1_diff j j0); auto. ring.
+  Qed.
+  
 
   (** *** 行交换矩阵 *)
   
@@ -2206,6 +2230,44 @@ Section RowTrans.
     - apply vsum_unique with (i := i); intros; rewrite vnth_vmap2; fin.
       rewrite vnth_mcol. ring.
   Qed.
+
+  (** mrowSwap i j (M * N) = mrowSwap i j M * N *)
+  Lemma mrowSwap_mmul : forall {n} (M N : smat A n) (i j : fin n),
+      mrowSwap i j (M * N) = mrowSwap i j M * N.
+  Proof. intros. rewrite !mrowSwap_eq. rewrite mmul_assoc; auto. Qed.
+
+  (** (i,j) * (i,j) = mat1 *)
+  Lemma mmul_matRowSwap_matRowSwap : forall {n} (i j : fin n),
+      matRowSwap i j * matRowSwap i j = mat1.
+  Proof.
+    intros. rewrite <- mrowSwap_eq. unfold matRowSwap, mrowSwap.
+    apply meq_iff_mnth; intros. fin.
+    - fin2nat_inj. rewrite mnth_mat1_same; auto.
+    - fin2nat_inj. rewrite mnth_mat1_diff; auto.
+    - fin2nat_inj. rewrite mnth_mat1_same; auto.
+    - fin2nat_inj. rewrite mnth_mat1_diff; auto.
+    - fin2nat_inj. rewrite mnth_mat1_same; auto.
+    - fin2nat_inj. rewrite mnth_mat1_diff; auto.
+  Qed.
+
+  (* If we equipped a "Field" *)
+  Section Field.
+    Context `{HField : Field A Aadd 0 Aopp Amul 1}.
+    Add Field field_inst : (make_field_theory HField).
+    
+    Notation "/ a" := (Ainv a) : A_scope.
+    Notation "a / b" := (a * / b) : A_scope.
+    
+    (** c(i) * (/c)(i) = mat1 *)
+    Lemma mmul_matRowScale_matRowScale : forall {n} (i : fin n) (c : A),
+        c <> 0 -> matRowScale i c * matRowScale i (/c) = mat1.
+    Proof.
+      intros. rewrite <- mrowScale_eq. unfold matRowScale, mrowScale.
+      apply meq_iff_mnth; intros. fin.
+      - fin2nat_inj. rewrite mnth_mat1_same; auto. field. auto.
+      - fin2nat_inj. rewrite mnth_mat1_diff; auto. field.
+    Qed.
+  End Field.
 
 End RowTrans.
 
