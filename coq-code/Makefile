@@ -13,7 +13,7 @@ COQDOCFLAGS ?= \
   --no-lib-name \
   --with-header $(HTML_EXTRA_DIR)/header.html \
   --with-footer $(HTML_EXTRA_DIR)/footer.html \
-  --parse-comments
+  # --parse-comments
 export COQDOCFLAGS
 
 all: $(COQMAKEFILE)
@@ -38,6 +38,5 @@ install: $(COQMAKEFILE)
 
 uninstall: $(COQMAKEFILE)
 	$(MAKE) -f $^ uninstall
-
 
 .PHONY: all clean cleanall html install uninstall
