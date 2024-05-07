@@ -1,5 +1,6 @@
 
-Require Import VectorR.
+From FinMatrix Require Import MatrixR.
+Import V3Notations.
 
 (** ch6 矩阵详解：*)
 
@@ -17,11 +18,11 @@ Section sec_6_1_1.
       另外，3x3矩阵的行列式等于混合积，也称 triple product of the three vectors *)
   (* Check mdet2. *)
   (* Check mdet3. *)
-  (* Check cv3mixed. *)
+  (* Check v3mixed. *)
 
   Lemma mdet3_eq_cv3mixed : forall m : smat 3,
-      mdet3 m = <mcol m 0 × mcol m 1, mcol m 2>.
-  Proof. intros. cbv. mat2fun. ring. Qed.
+      mdet3 m = <mcol m #0 \x mcol m #1, mcol m #2>.
+  Proof. intros. cbv. ring. Qed.
   
 End sec_6_1_1.
 
@@ -41,7 +42,7 @@ Section sec_6_1_3.
      由于这里不需要高于4x4矩阵的行列式，该技术暂不讨论。*)
 
   (* 单位阵的行列式 *)
-  Check mdet_1.
+  Check mdet1.
   (* 矩阵乘积的行列式 *)
   Check mdet_mmul.
   (* 转置的行列式 *)
@@ -99,7 +100,7 @@ Section sec_6_2_2.
   (* 逆的逆等于原始阵 *)
   Check minv_minv.
   (* 单位阵的逆 *)
-  Check minv_1.
+  Check minv_mat1.
   (* 还有一些矩阵的逆是自身，正交+对称时，例如 反射矩阵，绕轴旋转180度 *)
   (* 转置的逆等于逆的转置 *)
   Check minv_mtrans.
@@ -116,24 +117,30 @@ Section sec_6_2_3.
 
   (* 验证逆矩阵可以撤销一个变换。
      分别用列向量和行向量，以及先变换再逆变换，或先逆变换再变换，共4种情形。 *)
-  Example minv_ex1 : forall {n} (v : cvec n) (M : smat n), M⁻¹ * (M * v) == v.
+  Example minv_ex1 : forall {n} (v : cvec n) (M : smat n),
+      minvtble M -> M\-1 * (M * v) = v.
   Proof.
-    intros. rewrite <- mmul_assoc. rewrite mmul_minv_l. rewrite mmul_1_l. easy.
+    intros. rewrite <- mmul_assoc. rewrite mmul_minv_l; auto. rewrite mmul_1_l; auto.
   Qed.
 
-  Example minv_ex2 : forall {n} (v : cvec n) (M : smat n), M * (M⁻¹ * v) == v.
+  Example minv_ex2 : forall {n} (v : cvec n) (M : smat n),
+      minvtble M -> M * (M\-1 * v) = v.
   Proof.
-    intros. rewrite <- mmul_assoc. rewrite mmul_minv_r. rewrite mmul_1_l. easy.
+    intros. rewrite <- mmul_assoc. rewrite mmul_minv_r; auto. rewrite mmul_1_l; auto.
   Qed.
 
-  Example minv_ex3 : forall {n} (v : rvec n) (M : smat n), (v * M) * M⁻¹ == v.
+  Example minv_ex3 : forall {n} (v : vec n) (M : smat n),
+      minvtble M -> (v v* M) v* M\-1 = v.
   Proof.
-    intros. rewrite mmul_assoc. rewrite mmul_minv_r. rewrite mmul_1_r. easy.
+    intros. rewrite <- mvmul_assoc. rewrite mmul_minv_r; auto.
+    rewrite mvmul_1_r; auto.
   Qed.
 
-  Example minv_ex4 : forall {n} (v : rvec n) (M : smat n), (v * M⁻¹) * M == v.
+  Example minv_ex4 : forall {n} (v : vec n) (M : smat n),
+      minvtble M -> (v v* M\-1) v* M = v.
   Proof.
-    intros. rewrite mmul_assoc. rewrite mmul_minv_l. rewrite mmul_1_r. easy.
+    intros. rewrite <- mvmul_assoc. rewrite mmul_minv_l; auto.
+    rewrite mvmul_1_r. auto.
   Qed.
 
 End sec_6_2_3.
@@ -149,11 +156,11 @@ End sec_6_2_3.
 Section sec_6_3_1.
 
   (** 正交矩阵：乘以其转置矩阵是单位阵 *)
-  Print morthogonal.
+  Print morth.
 
   (* 等价定义，转置等于逆。这是一个非常有用的信息，避免了高昂的逆矩阵计算。 *)
-  Check morthogonal_imply_inv_eq_trans.
-  Check minv_eq_trans_imply_morthogonal.
+  Check morth_imply_minv_eq_trans.
+  Check minv_eq_trans_imply_morth.
 
 End sec_6_3_1.
 
@@ -241,46 +248,43 @@ Section sec_6_4_2.
      4x4矩阵就提供了这样一个数学上的组装方法。*)
 
   (* 假设w为1，则三维矢量[x,y,z]在四维中表示为[x,y,z,1] *)
-  Definition cv324 (v : cvec 3) : cvec 4 := l2cv [v.0; v.1; v.2; 1].
-  Definition rv324 (v : rvec 3) : rvec 4 := l2rv [v.0; v.1; v.2; 1].
+  Definition v324 (v : vec 3) : vec 4 := l2v [v.1; v.2; v.3; 1].
   (* 将四维表示 [x,y,z,1] 转换为三维矢量 [x,y,z] *)
-  Definition cv423 (v : cvec 4) : cvec 3 := l2cv [v.0; v.1; v.2].
-  Definition rv423 (v : rvec 4) : rvec 3 := l2rv [v.0; v.1; v.2].
+  Definition v423 (v : vec 4) : vec 3 := l2v [v.1; v.2; v.3].
 
   (* 三维矢量[x,y,z]在四维中表示为[x,y,z,0] *)
-  Definition cv324_0 (v : cvec 3) : cvec 4 := l2cv [v.0; v.1; v.2; 0].
-  Definition rv324_0 (v : rvec 3) : rvec 4 := l2rv [v.0; v.1; v.2; 0].
+  Definition v324_0 (v : vec 3) : vec 4 := l2v [v.1; v.2; v.3; 0].
 
     
   (* 任意3x3变换矩阵扩展到四维 *)
   Definition m324 (m : smat 3) : smat 4 :=
-    l2m [[m.00; m.01; m.02; 0];
-         [m.10; m.11; m.12; 0];
-         [m.20; m.21; m.22; 0];
+    l2m [[m.11; m.12; m.13; 0];
+         [m.21; m.22; m.23; 0];
+         [m.31; m.32; m.33; 0];
          [0; 0; 0; 1]].
   (* 反之 *)
   Definition m423 (m : smat 4) : smat 3 :=
-    l2m [[m.00; m.01; m.02];
-         [m.10; m.11; m.12];
-         [m.20; m.21; m.22]].
+    l2m [[m.11; m.12; m.13];
+         [m.21; m.22; m.23];
+         [m.31; m.32; m.33]].
 
   (* 可验证，任意三维向量与3x3矩阵的乘法，等效于四维向量和4x4矩阵的乘法 *)
-  Lemma m324_mul_spec : forall (v : cvec 3) (m : smat 3),
-      m * v == cv423 ((m324 m) * (cv324 v)).
-  Proof. lma. Qed.
+  Lemma m324_mul_spec : forall (v : vec 3) (m : smat 3),
+      m *v v = v423 ((m324 m) *v (v324 v)).
+  Proof. intros. veq; ring. Qed.
 
   (** 最有趣的部分，在四维中，可使用矩阵乘法来表示平移，而三维中这是不可能的。*)
   (** 使用4x4矩阵执行三维中的平移(translation) *)
-  Definition mtransl3 (p : cvec 3) : smat 4 :=
-    l2m [[1; 0; 0; p.0];
-         [0; 1; 0; p.1];
-         [0; 0; 1; p.2];
+  Definition mtransl3 (p : vec 3) : smat 4 :=
+    l2m [[1; 0; 0; p.1];
+         [0; 1; 0; p.2];
+         [0; 0; 1; p.3];
          [0; 0; 0; 1]].
 
   (* 可验证，该矩阵执行了平移 *)
-  Lemma mtransl3_spec : forall (p u : cvec 3),
-      cv423 ((mtransl3 p) * (cv324 u)) == u + p.
-  Proof. lma. Qed.
+  Lemma mtransl3_spec : forall (p u : vec 3),
+      v423 ((mtransl3 p) *v (v324 u)) = (u + p)%V.
+  Proof. intros. veq; ring. Qed.
 
   (* 需要理解，这种矩阵乘法仍然是线性变换，它不能表示四维中的平移，
      因为四维零矢量始终变换到四维零矢量。
@@ -291,49 +295,49 @@ Section sec_6_4_2.
   (* 现在，考虑先执行一次没有平移的变换，接着执行一次仅有平移的变换 *)
   Section test.
     Variable R : smat 3. (* 一个旋转矩阵，实际上也可以包含其他三维线性变换 *)
-    Variable t : cvec 3. (* 平移的量，储存在该向量的各分量中 *)
+    Variable t : vec 3. (* 平移的量，储存在该向量的各分量中 *)
 
     Let R4 : smat 4 := m324 R. (* 对应的四维形式 *)
     Let T : smat 4 := mtransl3 t. (* 平移矩阵 *)
 
-    Variable v : cvec 3. (* 任给一个向量，或说一个点 *)
+    Variable v : vec 3. (* 任给一个向量，或说一个点 *)
 
     (* 先旋转，再平移，得到变换后的向量 *)
-    Let v' : cvec 3 := cv423 (T * R4 * (cv324 v)).
+    Let v' : vec 3 := v423 (T *v (R4 *v (v324 v))).
 
     (* 可发现，T * R 合成的单个变换矩阵包含了旋转和平移两部分。*)
     (* 以列向量的方式为例：右侧的列包含了平移，底下的行是 [0;0;0;1]，
        以行向量的方式为例：底下的行包含了平移，右侧的列是 [0;0;0;1] *)
 
-    Goal T * R4 == mappr (mappc R t) rv4l.
-    Proof. lma. Qed.
+    Goal T * R4 = mconsrT (mconscT R t) v4l.
+    Proof. intros; meq; ring. Qed.
   End test.
 
   (** 旋转再平移的直接矩阵形式，R是旋转，p是平移 *)
-  Definition mrottransl (R : smat 3) (p : cvec 3) : smat 4 :=
-    l2m [[R.00; R.01; R.02; p.0];
-         [R.10; R.11; R.12; p.1];
-         [R.20; R.21; R.22; p.2];
+  Definition mrottransl (R : smat 3) (p : vec 3) : smat 4 :=
+    l2m [[R.11; R.12; R.13; p.1];
+         [R.21; R.22; R.23; p.2];
+         [R.31; R.32; R.33; p.3];
          [0; 0; 0; 1]].
 
   (* 验证上述矩阵定义在语法上的正确性，还可以代入向量来做语义上更完整的验证 *)
-  Lemma mrottransl_spec1 : forall (R : smat 3) (p : cvec 3),
-      mrottransl R p == mappr (mappc R p) rv4l.
-  Proof. lma. Qed.
+  Lemma mrottransl_spec1 : forall (R : smat 3) (p : vec 3),
+      mrottransl R p = mconsrT (mconscT R p) v4l.
+  Proof. intros; meq; ring. Qed.
 
   (* 反过来，任给 4x4矩阵，可分为线性变换部分和平移部分。   
      用块矩阵表示法（Block Matrix Notation）来表示。*)
 
   (* 对于“无限远的点”[x,y,z,0]，用标准的3x3线性变换矩阵（不含平移）扩展为
      四维后做乘法，会发生预期的变换，结果是另一个无穷远的点的矢量[x',y',z',0] *)
-  Goal forall (R : smat 3) (p : cvec 3), (m324 R) * (cv324_0 p) == cv324_0 (R * p).
-  Proof. lma. Qed.
+  Goal forall (R : smat 3) (p : vec 3), (m324 R) *v (v324_0 p) = v324_0 (R *v p).
+  Proof. intros; veq; ring. Qed.
 
   (* 对于“无限远的点”[x,y,z,0]，用包含平移的变换矩阵做乘法，其结果是一样的。
      即，不会发生平移。*)
-  Goal forall (R : smat 3) (p : cvec 3) (v : cvec 3),
-      (mrottransl R p) * (cv324_0 v) == cv324_0 (R * v).
-  Proof. lma. Qed.
+  Goal forall (R : smat 3) (p : vec 3) (v : vec 3),
+      (mrottransl R p) *v (v324_0 v) = v324_0 (R *v v).
+  Proof. intros; veq; ring. Qed.
   
   (* 换言之，四维矢量的w分量可以决定是否使用4x4矩阵的平移部分。
      因为有些矢量代表“位置”，它应该被平移，而其他矢量则代表方向，不该平移。
@@ -355,28 +359,29 @@ Section sec_6_4_3.
      平移回原始位置。*)
 
   (** 平移变换矩阵的的逆矩阵，等于反向平移 *)
-  (* Goal forall p : cvec 3, (mtransl3 p) * (mtransl3 (-p)) == mat1. *)
-  (*   lma. *)
-  Lemma minv_mtransl3 : forall (p : cvec 3), (mtransl3 p)⁻¹ == mtransl3 (-p).
+  Lemma minv_mtransl3 : forall (p : vec 3), (mtransl3 p)\-1 = mtransl3 (-p)%V.
   Proof.
     intros.
-    assert ((mtransl3 p) * (mtransl3 (-p)) == mat1) by lma.
-    apply mmul_eq1_iff_minv_l. auto.
+    assert ((mtransl3 p) * (mtransl3 (-p)%V) = mat1). intros. meq; ring.
+    apply mmul_eq1_imply_minvAM_l in H. auto.
   Qed.
-  
+
   (* 仿射变换的额外平移仅改变矩阵最后一列，而旋转部分不受影响 *)
-  Goal forall (R : smat 3) (p : cvec 3),
+  Goal forall (R : smat 3) (p : vec 3),
       let T := mtransl3 p in
       let R4 := m324 R in
-      T * R4 * (T⁻¹) == mrottransl R (p - R * p).
+      T * R4 * (T\-1) = mrottransl R (p - R *v p)%V.
   Proof.
-    intros. unfold T,R4. unfold mrottransl, mtransl3,m324.
-    (* 首先用4维上的逆矩阵公式展开，以简化公式。证明大约耗时3秒 *)
-  (*   rewrite <- minv4_eq_inv. lma. *)
-  (*   (* prove "det m <> 0" *) *)
-  (*   cbv; autorewrite with R. ra. *)
-    (* Qed. *)
-  Admitted. (* 为提高编译速度，暂时注释掉 *)
+    intros. unfold T,R4; clear T R4. unfold mrottransl, mtransl3,m324.
+    (* 展开矩阵和向量，以加速运算 *)
+    vec_destruct R2. vec_destruct a1. vec_destruct a2. vec_destruct a3. vec_destruct p.
+    (* 首先用4维上的逆矩阵公式展开，以简化逆矩阵运算 *)
+    rewrite <- minvAM4_eq_minvAM.
+    (* 2.6 s *)
+    Time meq; field.
+    (* 计算可逆性比较快 *)
+    apply minvtble_iff_mdet_neq0; cbv; lra.
+  Qed.
       
 End sec_6_4_3.
 
@@ -404,15 +409,15 @@ Section sec_6_5_1.
      一个三维空间，原点位于针孔（投影中心），给定投影平面 z = -d，那么可以计算其投影。*)
 
   (** 投影到 z = -d 平面上的 *)
-  Let proj_point_to_neg_z (d : R) (p : cvec 3) : cvec 3 :=
-        l2cv [- d * p.x / p.z; - d * p.y / p.z; (-d)%R].
+  Let proj_point_to_neg_z (d : R) (p : vec 3) : vec 3 :=
+        l2v [- d * p.x / p.z; - d * p.y / p.z; (-d)%R].
 
   (** 实践中，减号会产生额外的复杂性，可将投影平面移动到 z = d。
       虽然真正的针孔相机不可能是这样。然而，计算机内部的数学处理是完全有效的。*)
 
   (** 投影到 z = d 平面上的 *)
-  Let proj_point_to_z (d : R) (p : cvec 3) : cvec 3 :=
-        l2cv [d * p.x / p.z; d * p.y / p.z; d].
+  Let proj_point_to_z (d : R) (p : vec 3) : vec 3 :=
+        l2v [d * p.x / p.z; d * p.y / p.z; d].
   
 End sec_6_5_1.
 
@@ -428,10 +433,10 @@ Section sec_6_5_2.
          [0; 0; 1; 0];
          [0; 0; (1/d); 0]].
 
-  Lemma proj4_spec : forall d (p : cvec 3),
-      let p' := cv324 p in
-      (proj4 d) * p' == l2cv [p.x; p.y; p.z; p.z / d].
-  Proof. lma. Qed.
+  Lemma proj4_spec : forall d (p : vec 3),
+      let p' := v324 p in
+      (proj4 d) *v p' = l2v [p.x; p.y; p.z; p.z / d].
+  Proof. intros. veq; ring. Qed.
 
   (** 这个 4x4 投影矩阵的一些说明：
       1. 矩阵乘法并不真正执行透视变换，它计算w。当将四维转换到3维时，才会真正执行透视除法

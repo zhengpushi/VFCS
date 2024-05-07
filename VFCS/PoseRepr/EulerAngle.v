@@ -66,7 +66,6 @@
      sin(α)->α, cos(α)->1, 高阶项sin(α)*sin(β)->0
 *)
 
-Require Export Math.
 Require Export Pose3D.
 
 

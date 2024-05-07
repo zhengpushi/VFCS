@@ -51,7 +51,7 @@
       总的相对位姿是 R(θ2) * R(θ1)，或者 R(θ1) * R(θ2)
  *)
 
-Require Export Math.
+From FinMatrix Require Export MatrixR.
 Import V2Notations.
 
 
@@ -151,8 +151,8 @@ Proof. intros. hnf. split. apply rot2_orth. apply rot2_det1. Qed.
 Definition rot2_SO2 (θ : R) : SO2 := mkSOn (rot2 θ) (rot2_SOnP θ).
 
 (** rot2 is invertible *)
-Lemma rot2_invertible : forall (θ : R), minvertible (rot2 θ).
-Proof. intros. apply morth_invertible. apply rot2_orth. Qed.
+Lemma rot2_minvtble : forall (θ : R), minvtble (rot2 θ).
+Proof. intros. apply morth_minvtble. apply rot2_orth. Qed.
 
 (** rot2\-1 = rot2\T *)
 Lemma rot2_inv_eq_trans : forall θ : R, (rot2 θ)\-1 = (rot2 θ)\T.
@@ -165,11 +165,11 @@ Qed.
 
 (** rot2 * rot2\-1 = I *)
 Lemma rot2_mul_rot2_inv : forall θ : R, rot2 θ * ((rot2 θ)\-1) = mat1.
-Proof. intros. apply mmul_minvAM_r. apply rot2_invertible. Qed.
+Proof. intros. apply mmul_minvAM_r. apply rot2_minvtble. Qed.
 
 (** rot2\-1 * rot2 = I *)
 Lemma rot2_inv_mul_rot2 : forall θ : R, (rot2 θ)\-1 * (rot2 θ) = mat1.
-Proof. intros. apply mmul_minv_l. apply rot2_invertible. Qed.
+Proof. intros. apply mmul_minv_l. apply rot2_minvtble. Qed.
 
 (** rot2 * rot2\T = I *)
 Lemma rot2_mul_rot2_trans : forall θ : R, rot2 θ * ((rot2 θ)\T) = mat1.
@@ -333,7 +333,7 @@ Section spec_TwoFrame.
               (cvl2m [xw';yw'] * rot2 theta)%M *v b).
     { rewrite <- HpwM. rewrite <- p_w_b. auto. }
     rewrite mmulv_assoc in H. apply mmulv_cancel in H; auto.
-    apply morth_invertible; auto.
+    apply morth_minvtble; auto.
   Qed.
   
   Lemma body4rot_spec : b = body4rot theta w.
@@ -343,7 +343,7 @@ Section spec_TwoFrame.
               (cvl2m [xb';yb'] * (rot2 theta)\T)%M *v w)%V.
     { rewrite <- HpbM. rewrite <- p_b_w. auto. }
     rewrite mmulv_assoc in H. apply mmulv_cancel in H; auto.
-    apply morth_invertible; auto.
+    apply morth_minvtble; auto.
   Qed.
 End spec_TwoFrame.
 

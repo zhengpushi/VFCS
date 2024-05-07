@@ -1,5 +1,5 @@
 
-Require Import VectorR.
+From FinMatrix Require Import MatrixR.
 
 (* ch5 本章将讨论通过矩阵实现线性变换 *)
 
@@ -42,14 +42,13 @@ End sec_5_1_2.
 Section sec_5_1_3.
 
   (** 3D中，绕任意轴（单位矢量n̂）旋转的矩阵。将标准基矢量p,q,r变换为p',q',r' *)
-  Definition mrot3 (θ : R) (n : cvec 3) : smat 3 :=
+  Definition mrot3 (θ : R) (n : vec 3) : smat 3 :=
         let c := cos θ in
         let s := sin θ in
-        let '(nx,ny,nz) := cv2t_3 n in
         l2m
-          [[nx*nx*(1-c) + c; nx*ny*(1-c) - nz*s; nx*nz*(1-c) + ny*s];
-           [nx*ny*(1-c) + nz*s; ny*ny*(1-c) + c; ny*nz*(1-c) - nx*s];
-           [nx*nz*(1-c) - ny*s; ny*nz*(1-c) + nx*s; nz*nz*(1-c) + c]]%R.
+          [[n.x*n.x*(1-c) + c; n.x*n.y*(1-c) - n.z*s; n.x*n.z*(1-c) + n.y*s];
+           [n.x*n.y*(1-c) + n.z*s; n.y*n.y*(1-c) + c; n.y*n.z*(1-c) - n.x*s];
+           [n.x*n.z*(1-c) - n.y*s; n.y*n.z*(1-c) + n.x*s; n.z*n.z*(1-c) + c]]%R.
 
 End sec_5_1_3.
 
@@ -79,10 +78,10 @@ Section sec_5_2_1.
 
   (* 例如，该矩阵乘以任意矢量，将被缩放 *)
   Lemma scale3_ex1 : forall x y z kx ky kz,
-      let v : cvec 3 := l2cv [x;y;z] in
-      let v' : cvec 3 := l2cv [kx*x;ky*y;kz*z]%R in
-      mscale3_axis kx ky kz * v == v'.
-  Proof. lma. Qed.
+      let v : vec 3 := l2v [x;y;z] in
+      let v' : vec 3 := l2v [kx*x;ky*y;kz*z]%R in
+      mscale3_axis kx ky kz *v v = v'.
+  Proof. intros. veq; ring. Qed.
 
 End sec_5_2_1.
 
@@ -93,16 +92,15 @@ Section sec_5_2_2.
     按照 5.1.3中类似的思路，分解为平行和垂直两个分量来推导。 *)
 
   (** 2D中，在任意方向上缩放的矩阵 *)
-  Definition mscale2 (n : cvec 2) (k : R) : smat 2 :=
-    let '(nx,ny) := cv2t_2 n in
-    l2m [[1 + (k-1)*nx*nx; (k-1)*nx*ny]; [(k-1)*nx*ny; 1+(k-1)*ny*ny]]%R.
+  Definition mscale2 (n : vec 2) (k : R) : smat 2 :=
+    l2m [[1 + (k-1)*n.x*n.x; (k-1)*n.x*n.y];
+         [(k-1)*n.x*n.y; 1+(k-1)*n.y*n.y]]%R.
 
   (** 3D中，在任意方向上缩放的矩阵 *)
-  Definition mscale3 (n : cvec 3) (k : R) : smat 3 :=
-    let '(nx,ny,nz) := cv2t_3 n in
-    l2m [[1+(k-1)*nx*nx; (k-1)*nx*ny; (k-1)*nx*nz];
-         [(k-1)*nx*ny; 1+(k-1)*ny*ny; (k-1)*ny*nz];
-         [(k-1)*nx*nz; (k-1)*ny*nz; 1+(k-1)*nz*nz]]%R.
+  Definition mscale3 (n : vec 3) (k : R) : smat 3 :=
+    l2m [[1+(k-1)*n.x*n.x; (k-1)*n.x*n.y; (k-1)*n.x*n.z];
+         [(k-1)*n.x*n.y; 1+(k-1)*n.y*n.y; (k-1)*n.y*n.z];
+         [(k-1)*n.x*n.z; (k-1)*n.y*n.z; 1+(k-1)*n.z*n.z]]%R.
   
 End sec_5_2_2.
 
@@ -126,12 +124,12 @@ Section sec_5_3_1.
   Definition mproj2y : smat 2 := l2m [[0;0];[0;1]].
 
   (** 2D中投影到x轴，等价于沿着y轴缩放0倍 *)
-  Lemma mproj2x_eq_scale : mproj2x == mscale2 (l2cv [0;1]) 0.
-  Proof. lma. Qed.
+  Lemma mproj2x_eq_scale : mproj2x = mscale2 (l2v [0;1]) 0.
+  Proof. meq; ring. Qed.
 
   (** 2D中投影到y轴，等价于沿着x轴缩放0倍 *)
-  Lemma mproj2y_eq_scale : mproj2y == mscale2 (l2cv [1;0]) 0.
-  Proof. lma. Qed.
+  Lemma mproj2y_eq_scale : mproj2y = mscale2 (l2v [1;0]) 0.
+  Proof. meq; ring. Qed.
 
   (** 3D中投影到主平面上 *)
   Definition mproj3xy : smat 3 := l2m [[1;0;0];[0;1;0];[0;0;0]].
@@ -139,16 +137,16 @@ Section sec_5_3_1.
   Definition mproj3yz : smat 3 := l2m [[0;0;0];[0;1;0];[0;0;1]].
 
   (** 3D中投影到xy平面，等价于沿着z轴缩放0倍 *)
-  Lemma mproj3xy_eq_scale : mproj3xy == mscale3 (l2cv [0;0;1]) 0.
-  Proof. lma. Qed.
+  Lemma mproj3xy_eq_scale : mproj3xy = mscale3 (l2v [0;0;1]) 0.
+  Proof. meq; ring. Qed.
 
   (** 3D中投影到zx平面，等价于沿着y轴缩放0倍 *)
-  Lemma mproj3zx_eq_scale : mproj3zx == mscale3 (l2cv [0;1;0]) 0.
-  Proof. lma. Qed.
+  Lemma mproj3zx_eq_scale : mproj3zx = mscale3 (l2v [0;1;0]) 0.
+  Proof. meq; ring. Qed.
   
   (** 3D中投影到yz平面，等价于沿着x轴缩放0倍 *)
-  Lemma mproj3yz_eq_scale : mproj3yz == mscale3 (l2cv [1;0;0]) 0.
-  Proof. lma. Qed.
+  Lemma mproj3yz_eq_scale : mproj3yz = mscale3 (l2v [1;0;0]) 0.
+  Proof. meq; ring. Qed.
   
 End sec_5_3_1.
 
@@ -160,24 +158,22 @@ Section sec_5_3_2.
       可使用第5.2.2中开发的公式，沿此方向应用零比例因子。*)
 
   (** 2D中，任意方向上投影的矩阵 *)
-  Definition mproj2 (n : cvec 2) : smat 2 :=
-    let '(nx,ny) := cv2t_2 n in
-    l2m [[1-nx*nx; -nx*ny]; [-nx*ny; 1-ny*ny]]%R.
+  Definition mproj2 (n : vec 2) : smat 2 :=
+    l2m [[1-n.x*n.x; -n.x*n.y]; [-n.x*n.y; 1-n.y*n.y]]%R.
 
   (** 3D中，任意方向上投影的矩阵 *)
-  Definition mproj3 (n : cvec 3) : smat 3 :=
-    let '(nx,ny,nz) := cv2t_3 n in
-    l2m [[1-nx*nx; -nx*ny; -nx*nz];
-         [-nx*ny; 1-ny*ny; -ny*nz];
-         [-nx*nz; -ny*nz; 1-nz*nz]]%R.
+  Definition mproj3 (n : vec 3) : smat 3 :=
+    l2m [[1-n.x*n.x; -n.x*n.y; -n.x*n.z];
+         [-n.x*n.y; 1-n.y*n.y; -n.y*n.z];
+         [-n.x*n.z; -n.y*n.z; 1-n.z*n.z]]%R.
 
   (** 2D中，任意方向投影，等价于在该方向缩放0倍 *)
-  Lemma mproj2_eq_scale : forall (n : cvec 2), mproj2 n == mscale2 n 0.
-  Proof. lma. Qed.
+  Lemma mproj2_eq_scale : forall (n : vec 2), mproj2 n = mscale2 n 0.
+  Proof. intros. meq; ring. Qed.
   
   (** 3D中，任意方向投影，等价于在该方向缩放0倍 *)
-  Lemma mproj3_eq_scale : forall (n : cvec 3), mproj3 n == mscale3 n 0.
-  Proof. lma. Qed.
+  Lemma mproj3_eq_scale : forall (n : vec 3), mproj3 n = mscale3 n 0.
+  Proof. intros. meq; ring. Qed.
   
 End sec_5_3_2.
 
@@ -193,22 +189,20 @@ Section sec_5_4.
   (** 可通过应用比例因子为-1的缩放来完成 *)
 
   (** 2D中，绕任意轴反射的矩阵 *)
-  Definition mreflect2 (n : cvec 2) : smat 2 :=
-    let '(nx,ny) := cv2t_2 n in
-    l2m [[1 + (-2)*nx*nx; (-2)*nx*ny]; [(-2)*nx*ny; 1+(-2)*ny*ny]]%R.
+  Definition mreflect2 (n : vec 2) : smat 2 :=
+    l2m [[1 + (-2)*n.x*n.x; (-2)*n.x*n.y]; [(-2)*n.x*n.y; 1+(-2)*n.y*n.y]]%R.
 
   (** 3D中，在任意平面反射的矩阵 *)
-  Definition mreflect3 (n : cvec 3) : smat 3 :=
-    let '(nx,ny,nz) := cv2t_3 n in
-    l2m [[1+(-2)*nx*nx; (-2)*nx*ny; (-2)*nx*nz];
-         [(-2)*nx*ny; 1+(-2)*ny*ny; (-2)*ny*nz];
-         [(-2)*nx*nz; (-2)*ny*nz; 1+(-2)*nz*nz]]%R.
+  Definition mreflect3 (n : vec 3) : smat 3 :=
+    l2m [[1+(-2)*n.x*n.x; (-2)*n.x*n.y; (-2)*n.x*n.z];
+         [(-2)*n.x*n.y; 1+(-2)*n.y*n.y; (-2)*n.y*n.z];
+         [(-2)*n.x*n.z; (-2)*n.y*n.z; 1+(-2)*n.z*n.z]]%R.
 
-  Lemma mreflect2_eq_scale : forall (n : cvec 2), mreflect2 n == mscale2 n (-1).
-  Proof. lma. Qed.
+  Lemma mreflect2_eq_scale : forall (n : vec 2), mreflect2 n = mscale2 n (-1).
+  Proof. intros; meq; ring. Qed.
 
-  Lemma mreflect3_eq_scale : forall (n : cvec 3), mreflect3 n == mscale3 n (-1).
-  Proof. lma. Qed.
+  Lemma mreflect3_eq_scale : forall (n : vec 3), mreflect3 n = mscale3 n (-1).
+  Proof. intros; meq; ring. Qed.
 
 End sec_5_4.
 

@@ -15,9 +15,6 @@
 # -arg -w -arg -future-coercion-class-field
 # -arg -w -arg -extraction-logical-axiom
 
-# ====== CoqExt ======================================================
-
-
 # ====== Math ========================================================
 
 # VFCS/Math/Calculus/Derivative_axiomized.v
@@ -35,20 +32,21 @@
 # VFCS/ACS/DifferentialEquation.v
 # VFCS/ACS/RationalExpression.v
 
-# ====== Flight Control System =======================================
-# VFCS/FCS/Propulsion/RAux.v
-# VFCS/FCS/Propulsion/PSModel.v
-# VFCS/FCS/Propulsion/PSExtension.v
-# VFCS/FCS/Propulsion/Q1.v
-# VFCS/FCS/Propulsion/Q2.v
-# VFCS/FCS/Propulsion/Q3.v
-# VFCS/FCS/Propulsion/Q4.v
-#VFCS/FCS/Propulsion/ExtractionThis.v
+# ====== Propulsion sub-system =======================================
+# VFCS/Propulsion/RAux.v
+# VFCS/Propulsion/PSModel.v
+# VFCS/Propulsion/PSExtension.v
+# VFCS/Propulsion/Q1.v
+# VFCS/Propulsion/Q2.v
+# VFCS/Propulsion/Q3.v
+# VFCS/Propulsion/Q4.v
+# VFCS/Propulsion/ExtractionThis.v
 
-# VFCS/FCS/AttitudeRepr/rvctool.v
-# VFCS/FCS/AttitudeRepr/RVC/PoseInterface.v
+# ====== Pose Represeation sub-system =======================================
+# VFCS/PoseRepr/rvctool.v
+# VFCS/PoseRepr/RVC/PoseInterface.v
 
-VFCS/FCS/AttitudeRepr/Math.v
-VFCS/FCS/AttitudeRepr/Pose2D.v
-VFCS/FCS/AttitudeRepr/Pose3D.v
-VFCS/FCS/AttitudeRepr/EulerAngle.v
+VFCS/PoseRepr/Math.v
+VFCS/PoseRepr/Pose2D.v
+VFCS/PoseRepr/Pose3D.v
+VFCS/PoseRepr/EulerAngle.v

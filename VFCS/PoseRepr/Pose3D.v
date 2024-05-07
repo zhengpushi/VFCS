@@ -13,7 +13,7 @@
   2. R3x,R3y,R3z 是主动旋转时的旋转矩阵。参考 Pose2D 中的说明。
 *)
 
-Require Export Math.
+From FinMatrix Require Export MatrixR.
 Import V3Notations.
 
 
@@ -221,14 +221,14 @@ Lemma R3z_orth : forall (θ : R), morth (R3z θ).
 Proof. intros; meq; req. Qed.
 
 (** R3x,R3y,R3z are invertible matrix *)
-Lemma R3x_invertible : forall (θ : R), minvertible (R3x θ).
-Proof. intros. apply morth_invertible. apply R3x_orth. Qed.
+Lemma R3x_minvtble : forall (θ : R), minvtble (R3x θ).
+Proof. intros. apply morth_minvtble. apply R3x_orth. Qed.
 
-Lemma R3y_invertible : forall (θ : R), minvertible (R3y θ).
-Proof. intros. apply morth_invertible. apply R3y_orth. Qed.
+Lemma R3y_minvtble : forall (θ : R), minvtble (R3y θ).
+Proof. intros. apply morth_minvtble. apply R3y_orth. Qed.
 
-Lemma R3z_invertible : forall (θ : R), minvertible (R3z θ).
-Proof. intros. apply morth_invertible. apply R3z_orth. Qed.
+Lemma R3z_minvtble : forall (θ : R), minvtble (R3z θ).
+Proof. intros. apply morth_minvtble. apply R3z_orth. Qed.
 
 (** The determinant of R3x,R3y,R3z are 1 *)
 Lemma R3x_det1 : forall (θ : R), mdet (R3x θ) = 1.
@@ -259,7 +259,14 @@ Definition R3z_SO3 (θ : R) : SO3 := mkSOn (R3z θ) (R3z_SOnP θ).
 Lemma R3x_inv_eq_trans : forall θ : R, (R3x θ)\-1 = (R3x θ)\T.
 Proof.
   (* method 1 : prove by computing (too slow, 0.4s) *)
-  (* Time intros; meq; ra. *)
+  (* because the computation "determinant <> 0" prevents the computation,
+     we should use minvNoCheck. Maybe we should use it as default method *)
+  (*
+  intros.
+  unfold minv; unfold OrthAM.AM.Minv_inst.minv.
+  rewrite <- minvNoCheck_spec.
+  meq; ra; field_simplify_eq.
+  *)
   (* method 2 : prove by reasoning *)
   intros. apply (SOn_minv_eq_trans (R3x_SO3 θ)).
 Qed.
@@ -285,38 +292,38 @@ Lemma R3x_neg_mul_R3x : forall θ : R, R3x (- θ) * R3x θ = mat1.
 Proof.
   (* intros; meq; ra. Qed. *)
   intros; rewrite R3x_neg_eq_trans, <- R3x_inv_eq_trans, mmul_minv_l; auto.
-  apply R3x_invertible.
+  apply R3x_minvtble.
 Qed.
 
 Lemma R3y_neg_mul_R3y : forall θ : R, R3y (- θ) * R3y θ = mat1.
 Proof.
   intros; rewrite R3y_neg_eq_trans, <- R3y_inv_eq_trans, mmul_minv_l; auto.
-  apply R3y_invertible.
+  apply R3y_minvtble.
 Qed.
 
 Lemma R3z_neg_mul_R3z : forall θ : R, R3z (- θ) * R3z θ = mat1.
 Proof.
   intros; rewrite R3z_neg_eq_trans, <- R3z_inv_eq_trans, mmul_minv_l; auto.
-  apply R3z_invertible.
+  apply R3z_minvtble.
 Qed.
 
 (** R(θ) * R(-θ) = I *)
 Lemma R3x_mul_R3x_neg : forall θ : R, R3x θ * R3x (- θ) = mat1.
 Proof.
   intros; rewrite R3x_neg_eq_trans, <- R3x_inv_eq_trans, mmul_minv_r; auto.
-  apply R3x_invertible.
+  apply R3x_minvtble.
 Qed.
 
 Lemma R3y_mul_R3y_neg : forall θ : R, R3y θ * R3y (- θ) = mat1.
 Proof.
   intros; rewrite R3y_neg_eq_trans, <- R3y_inv_eq_trans, mmul_minv_r; auto.
-  apply R3y_invertible.
+  apply R3y_minvtble.
 Qed.
 
 Lemma R3z_mul_R3z_neg : forall θ : R, R3z θ * R3z (- θ) = mat1.
 Proof.
   intros; rewrite R3z_neg_eq_trans, <- R3z_inv_eq_trans, mmul_minv_r; auto.
-  apply R3z_invertible.
+  apply R3z_minvtble.
 Qed.
 
 
