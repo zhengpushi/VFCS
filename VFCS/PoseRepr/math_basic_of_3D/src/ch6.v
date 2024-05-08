@@ -374,7 +374,7 @@ Section sec_6_4_3.
   Proof.
     intros. unfold T,R4; clear T R4. unfold mrottransl, mtransl3,m324.
     (* 展开矩阵和向量，以加速运算 *)
-    vec_destruct R2. vec_destruct a1. vec_destruct a2. vec_destruct a3. vec_destruct p.
+    v2e R2. v2e p.
     (* 首先用4维上的逆矩阵公式展开，以简化逆矩阵运算 *)
     rewrite <- minvAM4_eq_minvAM.
     (* 2.6 s *)

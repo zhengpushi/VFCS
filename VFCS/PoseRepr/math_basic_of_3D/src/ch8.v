@@ -1,29 +1,16 @@
 
-(* 先导入复数域向量，再导入实数域向量，因为优先使用实数域向量 *)
-Require Import VectorC.
-Require Import VectorR.
+From FinMatrix Require MatrixR MatrixC.
 
-(* 为了能简短的访问到复数域上的矩阵和向量，使用这个新的模块 *)
-Module C.
-  (* 若使用 Import/Export，则外部不能访问都 mat 等定义 *)
-  (* Export MatrixTheoryC. *)
-  (* Export VectorTheoryC. *)
-  
-  (* 先用 Include，以后再研究这个用法问题 *)
-  Include MatrixTheoryC.
-  Include VectorTheoryC.
-End C.
+(* 为了能简短的访问到复数域上的矩阵和向量，使用新的模块名称 *)
+Module Import RM := MatrixR.
+Module Import CM := MatrixC.
 
 (* 四元数 *)
-Require Import Quaternion.
-
-(* 再次导入复数，以覆盖 Reals 库引入的 C 的定义 *)
-Import Complex.
+(* Require Import Quaternion. *)
 
 Open Scope R_scope.
+Open Scope vec_scope.
 Open Scope mat_scope.
-Open Scope rvec_scope.
-Open Scope cvec_scope.
 
 (** ch8 三维旋转 *)
 
@@ -96,6 +83,7 @@ End sec_8_2_1.
 
 (** ** 8..2 方向余弦矩阵 *)
 Section sec_8_2_2.
+  Import RM.
   (* 方向余弦（Direction Cosine）矩阵与旋转矩阵相同，该术语只是指一种解释（或构造）矩阵
      的特殊方式。这意味这旋转矩阵中的每个元素等于一个输入基矢量与另一个输出基矢量的点积。
 
@@ -113,7 +101,7 @@ Section sec_8_2_2.
    *)
 
   (* 两个坐标空间的基向量（用行矢量、列矢量都无所谓了） *)
-  Variable p q r p' q' r' : cvec 3.
+  Variable p q r p' q' r' : vec 3.
 
   (** ========================================= *)
   (** LR 形式 *)
@@ -131,22 +119,22 @@ Section sec_8_2_2.
         空间的基矢量p',q',r'是任意的坐标。我们可以发现：
         矩阵的行是输出坐标空间的基矢量（用相对于输入坐标空间的坐标来表示） *)
   Lemma LR_row_is_output_basis :
-    p == cv3i -> q == cv3j -> r == cv3k ->
-    (mrow LRmat 0 == p'\T /\ mrow LRmat 1 == q'\T /\ mrow LRmat 2 == r'\T).
+    p = v3i -> q = v3j -> r = v3k ->
+    (mrow LRmat #0 = p' /\ mrow LRmat #1 = q' /\ mrow LRmat #2 = r').
   Proof.
-    intros. unfold LRmat. repeat split;
-      lma; rewrite ?H,?H0,?H1,?cvdot_v3i_l,?cvdot_v3j_l,?cvdot_v3k_l; try easy.
+    intros. unfold LRmat. subst. v2e p'; v2e q'; v2e r'.
+    repeat split; veq; ring.
   Qed.
 
   (** 假设这些轴是相对于第二个基来描述的，则p',q',r'是平凡的形式 [1,0,0],...，而第一个
         空间的基矢量p,q,r是任意的坐标。我们可以发现：
         矩阵的列是输入坐标空间的基矢量（用相对于输出坐标空间的坐标来表示） *)
   Lemma LR_col_is_input_basis :
-    p' == cv3i -> q' == cv3j -> r' == cv3k ->
-    (mcol LRmat 0 == p /\ mcol LRmat 1 == q /\ mcol LRmat 2 == r).
+    p' = v3i -> q' = v3j -> r' = v3k ->
+    (mcol LRmat #0 = p /\ mcol LRmat #1 = q /\ mcol LRmat #2 = r).
   Proof.
-    intros. unfold LRmat. repeat split;
-      lma; rewrite ?H,?H0,?H1,?cvdot_v3i_r,?cvdot_v3j_r,?cvdot_v3k_r; try easy.
+    intros. unfold LRmat. subst. v2e p; v2e q; v2e r.
+    repeat split; veq; ring.
   Qed.
   
   (** ========================================= *)
@@ -159,32 +147,32 @@ Section sec_8_2_2.
              [<r,p'>; <r,q'>; <r,r'>]].
 
   (* 用法 *)
-  Definition RCrot (v : cvec 3) : cvec 3 := RCmat * v.
+  Definition RCrot (v : vec 3) : vec 3 := RCmat *v v.
 
   (** RCmat 是 LRmat 的转置 *)
-  Lemma RCmat_LRmat_trans : RCmat == LRmat \T.
-  Proof. lma. Qed.
+  Lemma RCmat_LRmat_trans : RCmat = LRmat \T.
+  Proof. meq. Qed.
 
   (** 假设这些轴是相对于第一个基来描述的，则p,q,r是平凡的形式 [1,0,0],...，而第二个
         空间的基矢量p',q',r'是任意的坐标。我们可以发现：
         矩阵的列是输出坐标空间的基矢量（用相对于输入坐标空间的坐标来表示） *)
   Lemma RC_col_is_output_basis :
-    p == cv3i -> q == cv3j -> r == cv3k ->
-    (mcol RCmat 0 == p' /\ mcol RCmat 1 == q' /\ mcol RCmat 2 == r').
+    p = v3i -> q = v3j -> r = v3k ->
+    (mcol RCmat #0 = p' /\ mcol RCmat #1 = q' /\ mcol RCmat #2 = r').
   Proof.
-    intros. unfold RCmat. repeat split;
-      lma; rewrite ?H,?H0,?H1,?cvdot_v3i_l,?cvdot_v3j_l,?cvdot_v3k_l; try easy.
+    intros. unfold RCmat. subst. v2e p'; v2e q'; v2e r'.
+    repeat split; veq; ring.
   Qed.
 
   (** 假设这些轴是相对于第二个基来描述的，则p',q',r'是平凡的形式 [1,0,0],...，而第一个
         空间的基矢量p,q,r是任意的坐标。我们可以发现：
         矩阵的行是输入坐标空间的基矢量（用相对于输出坐标空间的坐标来表示） *)
   Lemma RC_row_is_input_basis :
-    p' == cv3i -> q' == cv3j -> r' == cv3k ->
-    (mrow RCmat 0 == p\T /\ mrow RCmat 1 == q\T /\ mrow RCmat 2 == r\T).
+    p' = v3i -> q' = v3j -> r' = v3k ->
+    (mrow RCmat #0 = p /\ mrow RCmat #1 = q /\ mrow RCmat #2 = r).
   Proof.
-    intros. unfold RCmat. repeat split;
-      lma; rewrite ?H,?H0,?H1,?cvdot_v3i_r,?cvdot_v3j_r,?cvdot_v3k_r; try easy.
+    intros. unfold RCmat. subst. v2e p; v2e q; v2e r.
+    repeat split; veq; ring.
   Qed.
 
 End sec_8_2_2.
@@ -383,7 +371,7 @@ End sec_8_2_2.
 
 
 (** ** 8.5 四元数 *)
-
+?
 Open Scope quat_scope.
 
 (* 本节会偏离传统的表述方式（将四元数解释为复数），相反，从几何角度介绍四元数。
@@ -580,18 +568,18 @@ Section sec_8_5_14.
   Let m4j : smat 4 := l2m [[0;0;-1;0]; [0;0;0;1]; [1;0;0;0]; [0;-1;0;0]].
   Let m4k : smat 4 := l2m [[0;0;0;-1]; [0;0;-1;0]; [0;1;0;0]; [1;0;0;0]].
 
-  Goal (m4i * m4i == -(m4a 1))%M. lma. Qed.
-  Goal (m4j * m4j == -(m4a 1))%M. lma. Qed.
-  Goal (m4k * m4k == -(m4a 1))%M. lma. Qed.
+  Goal (m4i * m4i = -(m4a 1))%M. lma. Qed.
+  Goal (m4j * m4j = -(m4a 1))%M. lma. Qed.
+  Goal (m4k * m4k = -(m4a 1))%M. lma. Qed.
 
-  Goal (m4i * m4j == m4k)%M. lma. Qed.
-  Goal (m4j * m4i == - m4k)%M. lma. Qed.
+  Goal (m4i * m4j = m4k)%M. lma. Qed.
+  Goal (m4j * m4i = - m4k)%M. lma. Qed.
   
-  Goal (m4j * m4k == m4i)%M. lma. Qed.
-  Goal (m4k * m4j == - m4i)%M. lma. Qed.
+  Goal (m4j * m4k = m4i)%M. lma. Qed.
+  Goal (m4k * m4j = - m4i)%M. lma. Qed.
   
-  Goal (m4k * m4i == m4j)%M. lma. Qed.
-  Goal (m4i * m4k == - m4j)%M. lma. Qed.
+  Goal (m4k * m4i = m4j)%M. lma. Qed.
+  Goal (m4i * m4k = - m4j)%M. lma. Qed.
 
   (* 此时，任意四元数可以映射到 4x4 矩阵 *)
   Let m4q (q : quat) : smat 4 := (m4a (q.W) + q.X c* m4i + q.Y c* m4j + q.Z c* m4k)%M.
@@ -605,7 +593,7 @@ Section sec_8_5_14.
              [z; -y; x; w]]%R.
   
   (* 可以验证两个表示相等 *)
-  Goal forall q : quat, m4q q == m4q' q. lma. Qed.
+  Goal forall q : quat, m4q q = m4q' q. lma. Qed.
 
   (* 目前为止，任意的四元数都使用。我们现在关注旋转。（这里的推导只是一家之言），
      而网上 Krasjet 的那篇又是另一种思路。*)

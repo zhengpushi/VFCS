@@ -1,5 +1,6 @@
 
-Require Import VectorR.
+From FinMatrix Require Import MatrixR.
+Import V3Notations.
 
 (** ch7 极坐标系 *)
 
@@ -61,23 +62,23 @@ End sec_7_1_2.
 Section sec_7_1_3.
 
   (** 2D中，极坐标变换为笛卡尔坐标 *)
-  Definition polar2cartesian2 (p : cvec 2) : cvec 2 :=
-    let r := p.0 in
-    let θ := p.1 in
+  Definition polar2cartesian2 (p : vec 2) : vec 2 :=
+    let r := p.1 in
+    let θ := p.2 in
     let x := (r * cos θ)%R in
     let y := (r * sin θ)%R in
-    l2cv [x; y].
+    l2v [x; y].
 
   (** 计算 r 可以用勾股定理。
       计算 θ 用 arctan(y/x)，但是有一些问题。我们使用比 atan 更广泛适用的 atan2 *)
 
   (** 2D中，笛卡尔坐标变换为极坐标 *)
-  Definition cartesian2polar2 (p : cvec 2) : cvec 2 :=
-    let x := p.0 in
-    let y := p.1 in
+  Definition cartesian2polar2 (p : vec 2) : vec 2 :=
+    let x := p.1 in
+    let y := p.2 in
     let r := sqrt (x * x + y * y) in
     let θ := atan2 y x in
-    l2cv [r; θ].
+    l2v [r; θ].
 
 End sec_7_1_3.
 
@@ -154,37 +155,37 @@ End sec_7_3_4.
 Section sec_7_3_5.
 
   (** 数学惯例中，球面坐标转换为三维笛卡尔坐标 *)
-  Definition polar2cartesian3 (p : cvec 3) : cvec 3 :=
-    let r := p.0 in
-    let θ := p.1 in
-    let ϕ := p.2 in
+  Definition polar2cartesian3 (p : vec 3) : vec 3 :=
+    let r := p.1 in
+    let θ := p.2 in
+    let ϕ := p.3 in
     let x := (r * sin ϕ * cos θ)%R in
     let y := (r * sin ϕ * sin θ)%R in
     let z := (r * cos ϕ)%R in
-    l2cv [x; y; z].
+    l2v [x; y; z].
 
   (** 本书惯例中，球面坐标转换为三维笛卡尔坐标 *)
-  Definition polar2cartesian3_book (p : cvec 3) : cvec 3 :=
-    let r := p.0 in
-    let h := p.1 in (* heading *)
-    let p := p.2 in (* pitch *)
+  Definition polar2cartesian3_book (p : vec 3) : vec 3 :=
+    let r := p.1 in
+    let h := p.2 in (* heading *)
+    let p := p.3 in (* pitch *)
     let x := (r * cos p * sin h)%R in
     let y := (- r * sin p)%R in
     let z := (r * cos p * cos h)%R in
-    l2cv [x; y; z].
+    l2v [x; y; z].
 
   (** 由于别名现象，从笛卡尔坐标变换为求坐标更复杂，我们需要的是规范坐标。
       下面的推导选择航空领域的约定，这也是视频游戏中常用的惯例。*)
       
   (** 3D中，笛卡尔坐标变换为极坐标 *)
-  Definition cartesian2polar3 (p : cvec 2) : cvec 2 :=
-    let x := p.0 in
-    let y := p.1 in
-    let z := p.2 in
+  Definition cartesian2polar3 (p : vec 3) : vec 3 :=
+    let x := p.1 in
+    let y := p.2 in
+    let z := p.3 in
     let r := sqrt (x * x + y * y + z * z) in
     let h := atan2 x z in
     let p := asin (-y / r) in (* Note, the range of asin is [-π/2,π/2] *)
-    l2cv [r; h; p].
+    l2v [r; h; p].
 
 End sec_7_3_5.
 
