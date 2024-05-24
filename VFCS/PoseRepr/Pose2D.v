@@ -19,7 +19,7 @@
   3. 旋转操作rot2和rot2'的构成，及其理解。
   (1) 列向量由该旋转后的坐标系的坐标轴在原来参考坐标系中的单位向量构成。
       可以利用线性表示来帮助理解：
-      * 矩阵R=[x̂,ŷ]，列向量v=[v.x,v.y]^T，而 R*v = v.x*x̂ + v.y*ŷ，表示了某向量
+      * 矩阵R=[x̂,ŷ]，列向量v=[v.1,v.2]^T，而 R*v = v.1*x̂ + v.2*ŷ，表示了某向量
         用坐标轴单位向量及其坐标的线性组合。
   4. 旋转矩阵的3个用途
   (1) 可表示两个坐标系的相对朝向。
@@ -294,8 +294,8 @@ Section spec_TwoFrame.
   Variable p : vec 2.        (* 任意P点 *)
   Variable w : vec 2.        (* P点在 {W} 下的坐标 *)
   Variable b : vec 2.        (* P点在 {B} 下坐标 *)
-  Hypotheses Hpw : p = (w.x \.* xw' + w.y \.* yw')%V. (* P点在{W}中的表示 *)
-  Hypotheses Hpb : p = (b.x \.* xb' + b.y \.* yb')%V. (* P点在{B}中的表示 *)
+  Hypotheses Hpw : p = (w.1 \.* xw' + w.2 \.* yw')%V. (* P点在{W}中的表示 *)
+  Hypotheses Hpb : p = (b.1 \.* xb' + b.2 \.* yb')%V. (* P点在{B}中的表示 *)
 
   (* Hxb' 和 Hyb' 的矩阵形式，公式(2.4) *)
   Fact Hxb'Hyb' : cvl2m [xb';yb'] = (cvl2m [xw';yw']) * rot2 theta.
@@ -369,8 +369,8 @@ Section spec_OneFrame.
     (* convert the equality of matrix to element-wise equalities *)
     intros. unfold b,b_x,b_y,afterRot. apply v2l_inj. rewrite v2l_l2v; auto.
     replace (v2l (rot2 theta *v a))
-      with [a.x * (cos theta) + a.y * (- sin theta);
-            a.x * (sin theta) + a.y * (cos theta)]%R.
+      with [a.1 * (cos theta) + a.2 * (- sin theta);
+            a.1 * (sin theta) + a.2 * (cos theta)]%R.
     2:{ cbv. list_eq; ra. } list_eq.
     (* proof equality of element *)
     - rewrite cos_add. unfold alpha, Rminus, l. ring_simplify.
@@ -385,7 +385,7 @@ Section spec_OneFrame.
   Proof.
     (* convert the equality of matrix to element-wise equalities *)
     intros. unfold b,b_x,b_y,beforeRot. apply v2l_inj.
-    replace (v2l a) with [a.x; a.y]; [|cbv; auto].
+    replace (v2l a) with [a.1; a.2]; [|cbv; auto].
     replace (v2l (((rot2 theta)\T *v
                      (l2v [(l * cos (alpha + theta))%R;
                            (l * sin (alpha + theta))%R]))))
@@ -396,7 +396,7 @@ Section spec_OneFrame.
           (cos theta) * l * sin (alpha + theta)]%R.
     2:{ Local Opaque cos sin vlen vangle2. cbv; list_eq; ra. } list_eq.
     (* proof equality of element *)
-    - (* Tips: `a.x` and `a.y` is A type, making `ring` will fail. *)
+    - (* Tips: `a.1` and `a.2` is A type, making `ring` will fail. *)
       remember ((a (nat2finS 0)) : R) as a_x.
       rewrite cos_add, sin_add; unfold alpha, Rminus, l. ring_simplify.
       rewrite associative. rewrite v2len_mul_cos_vangle2_i; auto.
@@ -418,15 +418,15 @@ End spec_OneFrame.
 (** ** Convert between Euclidean coordinates and homogeneous coordinates *)
 
 (** Convert Euclidean coordinates to homogeneous coordinates *)
-Definition e2h (v : vec 2) : vec 3 := mkvec3 (v.x) (v.y) 1.
+Definition e2h (v : vec 2) : vec 3 := mkvec3 (v.1) (v.2) 1.
 
 (** Convert homogeneous coordinates to Euclidean coordinates *)
-Definition h2e (v : vec 3) : vec 2 := mkvec2 (v.x/v.z) (v.y/v.z).
+Definition h2e (v : vec 3) : vec 2 := mkvec2 (v.1/v.3) (v.2/v.3).
 
 Lemma h2e_e2h : forall (v : vec 2), h2e (e2h v) = v.
 Proof. intros. veq; ra. Qed.
 
-Lemma e2h_h2e : forall (v : vec 3), v.z = 1 -> e2h (h2e v) = v.
+Lemma e2h_h2e : forall (v : vec 3), v.3 = 1 -> e2h (h2e v) = v.
 Proof. intros. cbv in H. veq; rewrite H; ra. Qed.
 
 (* Lemma e2h_vadd : forall (u v : vec 2), e2h (u + v) = e2h u + e2h v. *)
@@ -443,13 +443,13 @@ Open Scope mat_scope.
        This is often referred to as a rigid-body motion.
     2. 它表示坐标系先平移 t，再旋转 θ 后的相对位姿
     3. trans2 ∈ SE(2) ⊂ R^(3x3), SE: special Euclidean group
-    4. 相对位姿可用3个参数(t.x, t.y, θ)，或齐次矩阵来表示，前者省空间，后者有组合性
+    4. 相对位姿可用3个参数(t.1, t.2, θ)，或齐次矩阵来表示，前者省空间，后者有组合性
     5. 由于平移和旋转操作不可交换，所以我们总是使用两个分开的操作
     6. 如何使用该矩阵来变换向量？见 operations *)
 Definition trans2 (t : vec 2) (θ : R) : mat 3 3 :=
   l2m
-    [[cos θ; - sin θ; t.x];
-     [sin θ; cos θ;   t.y];
+    [[cos θ; - sin θ; t.1];
+     [sin θ; cos θ;   t.2];
      [0;     0;       1  ]]%R.
 
 

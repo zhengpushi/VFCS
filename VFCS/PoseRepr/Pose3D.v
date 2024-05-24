@@ -96,9 +96,9 @@ Section AxisAngle.
   
   (** The direct form aa2mat. *)
   Definition aa2matM (θ : R) (n : vec 3) : mat 3 3 :=
-    let x := n.x in
-    let y := n.y in
-    let z := n.z in
+    let x := n.1 in
+    let y := n.2 in
+    let z := n.3 in
     let C := cos θ in
     let S := sin θ in
     l2m
