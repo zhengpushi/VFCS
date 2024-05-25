@@ -24,6 +24,10 @@
 # VFCS/Math/Quaternion/Quaternion_base.v
 # VFCS/Math/Quaternion/Quaternion_rot.v
 
+VFCS/Math/DifferentialEquation/DEbase.v
+VFCS/Math/DifferentialEquation/HomoLDE2.v
+VFCS/Math/DifferentialEquation/HomoLDEn.v
+
 # VFCS/Math/DifferenceEquation/DifferenceEquation.v
 # VFCS/Math/LaplaceTransform/LaplaceTransform.v
 
