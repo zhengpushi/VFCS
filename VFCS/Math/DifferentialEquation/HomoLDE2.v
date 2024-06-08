@@ -319,10 +319,10 @@ Section test.
     (* Verify that sol is equal to y *)
     Goal sol = Dlt0.y e c1 c2.
     Proof.
-      cbv. extensionality t. ring_simplify.
-      autorewrite with R. repeat f_equal.
-      - rewrite (sqrt_mult _ (k/m)); ra. rewrite sqrt_square; ra.
-      - rewrite (sqrt_mult _ (k/m)); ra. rewrite sqrt_square; ra.
+      cbv. extensionality t. ring_simplify. ra.
+      repeat f_equal.
+      - rewrite (sqrt_mult _ (k/m)); ra. rewrite Rabs_right; ra.
+      - rewrite (sqrt_mult _ (k/m)); ra. rewrite Rabs_right; ra.
     Qed.
 
     (* The friendly form solution (another one) *)
@@ -358,10 +358,10 @@ Section test.
 
       (* delta > 0 *)
       Goal D e > 0.
-      Proof. cbv. field_simplify; ra. apply Rdiv_lt_0_compat; ra. Qed.
+      Proof. cbv. field_simplify; ra. Qed.
 
       (* c1*e^{r1t} + c2*e^{r2t} *)
-      Eval cbv in Dgt0.y e.
+      (* Eval cbv in Dgt0.y e. *)
     End overdamping.
     
     (* critical damping，临界阻尼，(g*g - 4*m*k = 0) *)
@@ -376,7 +376,7 @@ Section test.
       Qed.
 
       (* c1*e^{r*t} + c2*x*e^{r*t} *)
-      Eval cbv in Deq0.y e.
+      (* Eval cbv in Deq0.y e. *)
     End critical.
     
     (* underdamping，低阻尼，(g*g - 4*m*k < 0) *)
@@ -387,12 +387,11 @@ Section test.
       Goal D e < 0.
       Proof.
         cbv. field_simplify; ra.
-        replace (g ^ 2) with (g * g); ra. apply Rdiv_lt_0_compat_r; ra.
       Qed.
 
       (* c1*e^{(-r/2m)*t} * (c1*cos(u*t) + c2*sin(u*t)),
          u = sqrt(4km*g*g)/(2*m) *)
-      Eval cbv in Dlt0.y e.
+      (* Eval cbv in Dlt0.y e. *)
     End underdamping.
   End vibrating_springs_Damped_Free_Vibration.
 

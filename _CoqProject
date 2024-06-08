@@ -10,7 +10,7 @@
 -arg -w -arg -hiding-delimiting-key
 # -arg -w -arg -deprecated-hint-without-locality
 # -arg -w -arg -redundant-canonical-projection
-# -arg -w -arg -ambiguous-paths
+-arg -w -arg -ambiguous-paths
 # -arg -w -arg -local-declaration
 # -arg -w -arg -future-coercion-class-field
 # -arg -w -arg -extraction-logical-axiom
@@ -50,7 +50,7 @@ VFCS/Math/DifferentialEquation/HomoLDEn.v
 # VFCS/PoseRepr/rvctool.v
 # VFCS/PoseRepr/RVC/PoseInterface.v
 
-VFCS/PoseRepr/Math.v
-VFCS/PoseRepr/Pose2D.v
-VFCS/PoseRepr/Pose3D.v
-VFCS/PoseRepr/EulerAngle.v
+# VFCS/PoseRepr/Math.v
+# VFCS/PoseRepr/Pose2D.v
+# VFCS/PoseRepr/Pose3D.v
+# VFCS/PoseRepr/EulerAngle.v

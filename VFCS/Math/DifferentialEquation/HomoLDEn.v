@@ -39,7 +39,7 @@ Notation "e .a" := (a e) (at level 20, format "e .a").
 
 Definition isSolution {n} (e : Eqn n) (y : R -> R) : Prop :=
   let a' : vec R (S n) := vconsT (e.a) 1 in
-  let y' : vec (R -> R) (S n) := fun i => a'.[i] c* (Derive_n y i) in
+  let y' : vec (R -> R) (S n) := fun i => (a'.[i] c* (Derive_n y i))%F in
   vsum faddR fzeroR y' = fzeroR.
 
 (* The characteristic equation is:
