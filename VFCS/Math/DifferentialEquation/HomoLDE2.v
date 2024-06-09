@@ -29,7 +29,7 @@ Notation "e .b" := (b e) (at level 20, format "e .b").
 
 (** The solution y(x) satisfy the equation *)
 Definition isSolution (e : Eqn) (y : R -> R) : Prop :=
-  y '' +f (e.a c* y ') +f (e.b c* y) = fzeroR.
+  y '' +f (e.a c* y ') +f (e.b c* y) = fzero.
 
 (* The characteristic polynomial is: r * r + a * r + b,
      and there are three cases for the solutions, depending on the discriminant

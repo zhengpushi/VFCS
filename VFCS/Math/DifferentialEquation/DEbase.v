@@ -15,36 +15,9 @@
  *)
 
 
-From Coquelicot Require Export Rbar Continuity Derive RInt AutoDerive.
+Require Export Calculus.
+From FinMatrix Require Export Complex MyExtrOCamlR.
 
-(* fix Bellet behavior, caused by Mathcomp.ssreflect.ssreflect.v *)
-#[export] Set Bullet Behavior "Strict Subproofs".
-
-From Coquelicot Require Export Hierarchy ElemFct.
-From FinMatrix Require Export RFunExt Complex MyExtrOCamlR.
-
-Open Scope Rfun_scope.
 Open Scope C_scope.
 Open Scope R_scope.
-
-
-(** Noations *)
-
-(* 1st-order derivative *)
-Notation "f '" :=
-  (Derive f) (at level 10, left associativity, format "f '") : Rfun_scope.
-
-(* Now, 2nd-order or 3st-order derivative could be: f '', f ''' *)
-
-(** Tactics *)
-
-(** Convert function equality to value equality *)
-Ltac feq :=
-  let x := fresh "x" in
-  extensionality x;
-  rewrite ?faddR_ok;
-  rewrite ?faddR_ok;
-  rewrite ?fcmulR_ok;
-  try unfold fzeroR;
-  try unfold fcnstR.
-
+Open Scope RFun_scope.
