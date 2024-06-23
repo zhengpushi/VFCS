@@ -7,80 +7,88 @@
   author    : ZhengPu Shi
   date      : Nov, 2023
 
-  reference : QuanQuan, 多旋翼飞行器设计与控制，ch6
+  reference : Introduction to Multicopter Design and Control, QuanQuan, 2017
  *)
 
-(* Require Import Ratan2. *)
-(* Require Import Lra. *)
-(* Require Import VectorR. *)
-(* Require Import  *)
-Require Import Calculus.
-Require Import VectorR3.
+Require Export Calculus.
+From FinMatrix Require Matrix MatrixR.
+From OrienRepr Require Orien3D.
 
-Open Scope cvec_scope.
 
+(* ######################################################################### *)
+(** * Preliminary things *)
+
+Import Matrix.
+(* ======================================================================= *)
 (** ** 向量值函数 (vector-valued function)，以及矩阵值函数 *)
 (* 向量值函数是指分量都是关于同一自变量的一元函数，就是说 n 元向量值函数是x到x^n上的映射。
    常见的是二维和三维的向量值函数，即n = 2和n = 3的情形。
    向量值函数简称向量函数，同理，矩阵值函数简称矩阵函数
  *)
-Section vector_valued_function.
 
-  (* 向量函数的导数 *)
-  Definition cvderiv {n} (f : R -> cvec n) : R -> cvec n :=
-    fun t => @f2cv n (fun i => deriv (fun x => f x $ i) t).
+(** 向量函数的导数 *)
+Definition vderiv {n} (v : R -> @vec R n) : R -> @vec R n :=
+  fun x => (fun i => (fun x0 => v x0 i)' x).
 
-  (* 矩阵函数的导数 *)
-  Definition mderiv {r c} (f : R -> mat r c) : R -> mat r c :=
-    fun t => @f2m r c (fun i j => deriv (fun x => f x $ i $ j) t).
+(* 示例：速度矢量 v = 位置矢量 p 的导数  *)
+Section example.
+  (* 给定位置矢量的三个分量 *)
+  Variable px py pz : R -> R.
 
-  (* 示例：速度矢量 v = 位置适量 p 的导数  *)
-  Section example.
-    Variable x y z : R -> R.    (* 给定位置矢量的三个分量 *)
-    Let p : R -> cvec 3 := fun t => l2cv [x t; y t; z t]. (* 位置矢量 *)
-    Let v : R -> cvec 3 := cvderiv p.                    (* 速度矢量 *)
-    Compute fun t => cv2l (v t).                          (* 计算其表达式 *)
-    Variable t : R.                    (* 给定时间变量，更好的查看速度矢量的表达式 *)
-    Compute cv2l (v t).
-  End example.
+  (* 位置矢量 *)
+  Let p : R -> vec 3 := fun t => l2v R0 [px t; py t; pz t].
+  (* 速度矢量 *)
+  Let v : R -> vec 3 := vderiv p.
+  (* 计算其表达式 *)
+  (* Eval cbv in fun t => v2l (v t). *)
+  
+  (* 验证位置矢量和速度矢量的等式 *)
+  Goal forall t, (vderiv p) t = l2v R0 [px ' t; py ' t; pz ' t].
+  Proof. intros. veq. Qed.
+End example.
 
-End vector_valued_function.
 
+(** 矩阵函数的导数 *)
+Definition mderiv {r c} (f : R -> mat R r c) : R -> mat R r c :=
+  fun t => (fun i j => (fun x => f x i j)' t).
+
+
+(* ######################################################################### *)
 (** * 姿态表示 *)
-Section PoseRepr.
 
-  (** ** 坐标系  *)
-  Section CoordinateSystem.
-    (* 单位向量 *)
-    Definition e1 : cvec 3 := l2cv [1;0;0].
-    Definition e2 : cvec 3 := l2cv [0;1;0].
-    Definition e3 : cvec 3 := l2cv [0;0;1].
+(* ======================================================================= *)
+(** ** 坐标系  *)
 
-    (* 机体轴在机体坐标系下的向量 *)
-    Variable b_b_1 b_b_2 b_b_3 : R -> cvec 3.
+Import MatrixR.
 
-    (* b_b_i 满足如下关系 *)
-    Axiom H_b_b_1 : forall t, b_b_1 t = e1.
-    Axiom H_b_b_2 : forall t, b_b_2 t = e2.
-    Axiom H_b_b_3 : forall t, b_b_3 t = e3.
+(* EFCF: Earth-Fixed Coordinate Frame，地球固连坐标系，记作 e *)
+(* ABCF: Aircraft-Body Coordinate Frame，机体坐标系，记作 b *)
 
-    (* 机体轴在地球坐标系下的向量 *)
-    Variable b_e_1 b_e_2 b_e_3 : R -> cvec 3.
-  End CoordinateSystem.
+(* 单位向量 *)
+Definition e1 : vec 3 := l2v [1;0;0].
+Definition e2 : vec 3 := l2v [0;1;0].
+Definition e3 : vec 3 := l2v [0;0;1].
 
-  (* 给定机体旋转角速度（绕机体轴的，可由传感器直接测量得到） *)
-  Variable ω_b : R -> cvec 3.
+(* 机体轴在机体坐标系下的向量。随时间而确定的向量，此处是常量 *)
+Definition b_b_1 : R -> vec 3 := fun t => e1.
+Definition b_b_2 : R -> vec 3 := fun t => e2.
+Definition b_b_3 : R -> vec 3 := fun t => e3.
 
-  (* 欧拉角模型 *)
-  Section Euler.
-    (* 采用的欧拉角定义方式：intrinsic + ZYX，即B321 *)
-    
-    (* 给定机体姿态角（即，欧拉角） *)
-    Variable ϕ θ ψ : R -> R.
-    Definition Θ : R -> cvec 3 := fun t => l2cv [ϕ t; θ t; ψ t].
+(* 机体轴在地球坐标系下的向量 *)
+Parameter b_e_1 b_e_2 b_e_3 : R -> vec 3.
 
-    (* 推导中间推导过程 *)
-    
+(* 给定机体旋转角速度（绕机体轴的，可由传感器直接测量得到） *)
+Parameter ω_b : R -> vec 3.
+
+(* 欧拉角模型 *)
+Section Euler.
+  (* 采用的欧拉角定义方式：intrinsic + ZYX，即B321 *)
+  
+  (* 给定机体姿态角（即，欧拉角） *)
+  Variable ϕ θ ψ : R -> R.
+  Definition Θ : R -> vec 3 := fun t => l2v [ϕ t; θ t; ψ t].
+
+  (* 欧拉角与旋转矩阵 *)
   
     (* 中间变换矩阵 W *)
     Definition W : R -> mat 3 3 :=
@@ -92,7 +100,7 @@ Section PoseRepr.
                  [0; sin ϕ/ cos θ; cos ϕ/ cos θ]]%R.
     
     (* 姿态角与旋转角速度的关系 *)
-    Axiom H_Θ_ω : cvderiv Θ = fun t => W t * ω_b t.
+    Axiom H_Θ_ω : vderiv Θ = fun t => W t *v ω_b t.
 
   End Euler.
 
@@ -105,28 +113,30 @@ Section PoseRepr.
     Variable Rbe : mat 3 3.     (* 向量 r_b 从 b  *)
     (* b_e_i 满足如下关系 *)
 
-        End RotationMatrix.
+  End RotationMatrix.
 
 End PoseRepr.
 
 
+(* ######################################################################### *)
 (** * 多旋翼控制模型 *)
 Section ControlModel.
+  Import MatrixR.
 
   (* 多旋翼的重心向量(与时间相关的函数) *)
-  Variable p_e : R -> cvec 3.
+  Variable p_e : R -> vec 3.
 
   (* 多旋翼的速度向量 *)
-  Variable v_e : R -> cvec 3.
+  Variable v_e : R -> vec 3.
 
   (* 给定机体旋转角速度（绕机体轴的，可由传感器直接测量得到） *)
-  Variable ω_b : R -> cvec 3.
+  Variable ω_b : R -> vec 3.
 
   (** ** 多旋翼刚体运动学模型 *)
   Section RigidKinematicsModel.
 
     (* 速度与位置的关系 *)
-    Axiom H_v_p : cvderiv p_e = v_e.
+    Axiom H_v_p : vderiv p_e = v_e.
     
     (* 欧拉角模型 *)
     Section Euler.
@@ -143,20 +153,20 @@ Section ControlModel.
       Variable Rbe : R -> mat 3 3.
 
       (* 旋转矩阵变化率与机体旋转角速度的关系 *)
-      Axiom H_Rbe_ω : mderiv Rbe = fun t => (Rbe t * cv3skew (ω_b t))%M.
+      Axiom H_Rbe_ω : mderiv Rbe = fun t => (Rbe t * skew3 (ω_b t))%M.
     End RotationMatrix.
 
     (* 四元数模型 *)
     Section Quaternion.
       (* 给定四元数，这里分别给出实部和虚部 *)
       Variable q0 : R -> R.
-      Variable qv : R -> cvec 3.
+      Variable qv : R -> vec 3.
 
       (* 四元数变化率与机体旋转角速度的关系 *)
       Axiom H_q0 :
         q0 ' =
           fun t =>
-            let m : mat 1 1 := (qv t)\T * (ω_b t) in
+            let m : mat 1 1 := (qv t) * (ω_b t) in
             (- (1/2) * m.11)%R.
       Axiom H_qv :
         cvderiv qv =
@@ -184,9 +194,9 @@ Section ControlModel.
       (* 速度与拉力的关系 *)
       Variable t : R.
       Check cvderiv v_e.
-      Definition e1 : cvec 3 := l2cv [1;0;0].
-      Definition e2 : cvec 3 := l2cv [0;1;0].
-      Definition e3 : cvec 3 := l2cv [0;0;1].
+      Definition e1 : vec 3 := l2v [1;0;0].
+      Definition e2 : vec 3 := l2v [0;1;0].
+      Definition e3 : vec 3 := l2v [0;0;1].
       Check g c* e3.
       Check b_e_3
 ?      Axiom H_6_5 : v_e

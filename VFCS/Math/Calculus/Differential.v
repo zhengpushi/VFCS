@@ -24,6 +24,11 @@ From Coquelicot Require Export Coquelicot.
 From FinMatrix Require Export RFunExt.
 
 
+(* We won't expose the the details of the differential technique *)
+#[global] Opaque Derive.
+#[global] Opaque ex_derive.
+
+
 (* ######################################################################### *)
 (** * Additional properties for real functions *)
 
@@ -61,7 +66,7 @@ Proof.
   pose proof (ex_derive_opp u) as Hd; apply Hd; auto.
 Qed.
 
-Lemma derivable_cmul : forall c u, derivable u -> derivable (c c* u).
+Lemma derivable_cmul : forall c u, derivable u -> derivable (c s* u).
 Proof.
   intros. unfold derivable in *; intros. autounfold with RFun.
   pose proof (ex_derive_scal u) as Hd; apply Hd; auto.
@@ -143,7 +148,7 @@ Proof. feq. rewrite Derive_opp; auto. Qed.
 Lemma deriv_sub : forall u v, derivable u -> derivable v -> (u -f v)' = u ' -f v '.
 Proof. feq. apply Derive_minus; auto. Qed.
 
-Lemma deriv_cmul : forall c u, (c c* u)' = c c* u '.
+Lemma deriv_cmul : forall c u, (c s* u)' = c s* u '.
 Proof. feq. apply Derive_scal. Qed.
 
 Lemma deriv_mul : forall u v, derivable u -> derivable v -> (u *f v)' = u ' *f v +f u *f v '.
@@ -197,7 +202,7 @@ Proof.
   unfold div_fct. ra.
 Admitted.
 
-Lemma deriv_fpower : forall a, (Rpower a)' = a c* (Rpower (a-1)).
+Lemma deriv_fpower : forall a, (Rpower a)' = a s* (Rpower (a-1)).
 Proof. intros. Admitted.
 
 Fact deriv_sqrt : (sqrt) ' = (fun x => 1 / (2 * sqrt x))%R.
@@ -235,7 +240,7 @@ Fact deriv_cot : cot ' = -f (csc *f csc). Admitted.
 (** 导数的线性性质 *)
 Fact deriv_linear : forall c1 c2 u1 u2,
     derivable u1 -> derivable u2 ->
-    (c1 c* u1 +f c2 c* u2)' = c1 c* u1 ' +f c2 c* u2 '.
+    (c1 s* u1 +f c2 s* u2)' = c1 s* u1 ' +f c2 s* u2 '.
 Proof. deriv. Qed.
 
 (** 乘法求导推广 *)
@@ -286,11 +291,11 @@ Section example_LCR_Problem.
   Variables i uc ur : R -> R.
 
   (* 克希霍夫定律 *)
-  Axiom kxmf1 : L c* i ' +f uc +f (R1 c* i) = ur.
-  Axiom kxmf2 : i = C c* uc '.
+  Axiom kxmf1 : L s* i ' +f uc +f (R1 s* i) = ur.
+  Axiom kxmf2 : i = C s* uc '.
 
   (** 待证命题（消去 i，对等式变形即可）  *)
-  Let main_thm : Prop := (L * C) c* uc ' ' +f (R1 * C) c* uc ' +f uc = ur.
+  Let main_thm : Prop := (L * C) s* uc ' ' +f (R1 * C) s* uc ' +f uc = ur.
 
   Goal main_thm.
   Proof.
@@ -329,7 +334,7 @@ Section deriv_equations.
       derivable v ->
       (* Here, different with "v <> fzero" *)
       (forall x, v x <> 0) ->
-      (fone /f v)' = (-1) c* (v ') /f (v * v).
+      (fone /f v)' = (-1) s* (v ') /f (v * v).
   Proof.
     intros.
     (* feq. *)
