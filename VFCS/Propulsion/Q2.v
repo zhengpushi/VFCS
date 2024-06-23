@@ -1,10 +1,10 @@
 (*
-  Copyright 2022 ZhengPu Shi
+  Copyright 2022 Zhengpu Shi
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
   purpose:      Model of Question2
-  author:       ZhengPu Shi
+  author:       Zhengpu Shi
   date:         2021.05.25
   
   reference:
@@ -17,7 +17,7 @@ Require Import PSExtension.
 (** Solve system efficiency in the maximum throttole mode *)
 Section Q2.
   
-  Definition the_sigma_e := makeR 1 1.  (* 1.0 *)
+  Definition the_sigma_e := 1.0.
   Hypothesis arg_sigma_e : is_sigma_e the_sigma_e.
   
   Definition the_U_eo := get_U_eo_by_sigma_e the_sigma_e.

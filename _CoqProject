@@ -1,5 +1,5 @@
 # ===================================================================
-# Copyright 2022 ZhengPu Shi
+# Copyright 2022 Zhengpu Shi
 #  This file is part of VFCS. It is distributed under the MIT
 #  "expat license". You should have recieved a LICENSE file with it.
 # ===================================================================
@@ -37,14 +37,14 @@ VFCS/Math/DifferentialEquation/HomoLDEn.v
 # VFCS/ACS/RationalExpression.v
 
 # ====== Propulsion sub-system =======================================
-# VFCS/Propulsion/RAux.v
-# VFCS/Propulsion/PSModel.v
-# VFCS/Propulsion/PSExtension.v
-# VFCS/Propulsion/Q1.v
-# VFCS/Propulsion/Q2.v
-# VFCS/Propulsion/Q3.v
-# VFCS/Propulsion/Q4.v
-# VFCS/Propulsion/ExtractionThis.v
+VFCS/Propulsion/RAux.v
+VFCS/Propulsion/PSModel.v
+VFCS/Propulsion/PSExtension.v
+VFCS/Propulsion/Q1.v
+VFCS/Propulsion/Q2.v
+VFCS/Propulsion/Q3.v
+VFCS/Propulsion/Q4.v
+VFCS/Propulsion/ExtractionThis.v
 
 # ====== Pose Represeation sub-system =======================================
 # VFCS/PoseRepr/rvctool.v

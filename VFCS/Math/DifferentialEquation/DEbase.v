@@ -1,10 +1,10 @@
 (*
-  Copyright 2024 ZhengPu Shi
+  Copyright 2024 Zhengpu Shi
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
   purpose   : base for differential equation
-  author    : ZhengPu Shi
+  author    : Zhengpu Shi
   date      : 2024.05
 
   ref       :

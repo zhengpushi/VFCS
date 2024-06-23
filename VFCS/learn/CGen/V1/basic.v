@@ -1,11 +1,11 @@
 (*
-  Copyright 2022 ZhengPu Shi
+  Copyright 2022 Zhengpu Shi
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
   purpose     : 数据类型等各种基础设施
   date        : 2022.09.11
-  author      : ZhengPu Shi
+  author      : Zhengpu Shi
   
   remark      :
   1. 模块有多个输入、输出端口。

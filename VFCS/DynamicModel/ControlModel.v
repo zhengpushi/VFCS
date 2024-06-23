@@ -1,10 +1,10 @@
 (*
-  Copyright 2022 ZhengPu Shi
+  Copyright 2022 Zhengpu Shi
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
   purpose   : Multicopter Control Model 多旋翼控制模型
-  author    : ZhengPu Shi
+  author    : Zhengpu Shi
   date      : Nov, 2023
 
   reference : Introduction to Multicopter Design and Control, QuanQuan, 2017

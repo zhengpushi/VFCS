@@ -1,10 +1,10 @@
 (*
-  Copyright 2022 ZhengPu Shi
+  Copyright 2022 Zhengpu Shi
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
   purpose:    Extract code from Coq to OCaml, include all files
-  author:     ZhengPu Shi
+  author:     Zhengpu Shi
   date:       2020.11.17
 *)
 
@@ -94,24 +94,22 @@ Extract Constant S => "val_S".
 
 Extract Constant val_0_0065 => "0.0065".
 Extract Constant val_5_2561 => "5.2561".
-(* Extract Constant val_0_8 => "0.8". *)
-(* Extract Constant val_0_25 => "0.25". *)
 Extract Constant val_9_55 => "9.55".
 Extract Constant val_0_06 => " 0.06". 
 
-(* Extraction C_d. (* let C_d = *)
+(* Extraction C_d. *)
+(* let C_d =
   let r1 =
     rdiv (rminus (rmult epsilon (atan (rdiv h_p (rmult pI d_p)))) alpha0)
       (rplus (rmult pI a) k0)
   in
-  rplus c_fd (rmult (rdiv (rmult (rmult pI a) (rsqr k0)) e) (rsqr r1))
-*)
+  rplus c_fd (rmult (rdiv (rmult (rmult pI a) (rsqr k0)) e) (rsqr r1)) *)
   
-(* Recursive Extraction 
+Recursive Extraction 
   C_d C_T C_M get_G_maxload_by_T get_T_by_N .
   
 Extraction "PS.ml"
-  C_d C_T C_M get_G_maxload_by_T get_T_by_N . *)
+  C_d C_T C_M get_G_maxload_by_T get_T_by_N .
   
 Extraction "PS.ml"
   C_d C_T C_M K_E K_T get_G_maxload_by_T get_T_by_N 
@@ -152,7 +150,6 @@ Extraction "PS.ml"
   get_N_by_U_m 
   get_N_by_U_eo .
 
-(* Print Q1. *)
 Extraction "Q1.ml"
   Q1.the_State 
   Q1.the_T 
@@ -177,7 +174,6 @@ Extraction "Q2.ml"
   Q2.the_I_b 
   Q2.the_eta.
 
-(* Print Q3. *)
 Extraction "Q3.ml"
   Q3.the_sigma_e
   Q3.the_U_eo
@@ -198,3 +194,4 @@ Extraction "Q4.ml"
   Q4.the_I_b 
   Q4.the_T_b 
   Q4.the_Z .
+

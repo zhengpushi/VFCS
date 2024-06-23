@@ -1,11 +1,11 @@
 (*
-  Copyright 2024 ZhengPu Shi
+  Copyright 2024 Zhengpu Shi
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
   purpose   : 2nd-order homogeneous linear differential equation
               二阶常系数齐次线性微分方程
-  author    : ZhengPu Shi
+  author    : Zhengpu Shi
   date      : 2024.05
 
   remark    :

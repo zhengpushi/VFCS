@@ -15,9 +15,9 @@
   * The FCS is a comprehensive engineering system, and many special knowledge, experience data and mathematical theory need to be formal described , organized and verified. Meanwhile, these knowledge and theory are existed in many similiar system. 
   * So, it is a fundamental research topic with huge potential benefits
 * Who are we?
-  * We are a team focusing on formal engineering mathematics study, and located in Nanjing University of  Aeronautics and Astronautics, in China.
+  * We are a team focused on the study of formal engineering mathematics, located in Nanjing University of  Aeronautics and Astronautics in China.
   * Authors list
-	ZhengPu Shi (zhengpushi@nuaa.edu.cn) 
+	Zhengpu Shi (zhengpushi@nuaa.edu.cn) 
 
 ## 2. Dependent or related projects
 * Dependent projects:

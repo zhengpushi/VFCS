@@ -1,10 +1,10 @@
 (*
-  Copyright 2022 ZhengPu Shi
+  Copyright 2022 Zhengpu Shi
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
   purpose   : 对方框图、结构图、传递函数等的形式化，以便完成数学模型的建立
-  author    : ZhengPu Shi
+  author    : Zhengpu Shi
   date      : 2021.12
   
   ref       :

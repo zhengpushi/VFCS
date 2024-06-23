@@ -1,6 +1,6 @@
 (*
   Purpose   : Learn Canonical Structures
-  Author    : ZhengPu Shi
+  Author    : Zhengpu Shi
   Date      : May 06, 2023
   
   reference :

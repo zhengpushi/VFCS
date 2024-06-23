@@ -1,10 +1,10 @@
 (*
-  Copyright 2022 ZhengPu Shi
+  Copyright 2022 Zhengpu Shi
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
   purpose:    Model of Propulsion System, all theory from text book
-  author:     ZhengPu Shi
+  author:     Zhengpu Shi
   date:       2022.11.25
 
   History:
@@ -20,8 +20,7 @@
 *)
 
 
-Require Export QArith.
-Require Export RAux.
+From FinMatrix Require Export RExt.
 
 (* (** Generate a real number. eg: makeR 123 100 => 1.23 *) *)
 (* Definition makeR : Z -> positive -> R := *)
@@ -279,7 +278,7 @@ Module Ppl.
   Axiom delta_def : forall (delta:Delta), (delta:R) = 0.
 
   ? 暂停一下，Inductive对于单变量的关系描述的很好，可是多变量时，
-    好像 Axiom 更格式。暂时不知道这么多变量的 Inductive 格式的 relation建立之后，
+    好像 Axiom 更合适。暂时不知道这么多变量的 Inductive 格式的 relation建立之后，
     如何用于证明性质？
 
   (** alpha的一个更常用的公式 *)

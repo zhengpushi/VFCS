@@ -1,6 +1,6 @@
 (*
   purpose   : 临时头脑风暴，尝试建立{适合于飞控的，C的AST + 验证}
-  author    : ZhengPu Shi
+  author    : Zhengpu Shi
   date      : May 10, 2023
 
   特性：

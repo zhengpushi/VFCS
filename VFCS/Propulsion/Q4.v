@@ -1,10 +1,10 @@
 (*
-  Copyright 2022 ZhengPu Shi
+  Copyright 2022 Zhengpu Shi
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
   purpose:    Model of Question4
-  author:     ZhengPu Shi
+  author:     Zhengpu Shi
   date:       2021.05.25
   
   reference:
@@ -43,7 +43,7 @@ Section Q4.
     match goal with
     | |- ?a = sqrt (?b) => replace b with (a)²
     end.
-    - rewrite sqrt_Rsqr; auto. zero_leq.
+    - rewrite sqrt_Rsqr; auto. ge0.
     - unfold Rsqr. field. neq0.
   Qed.
   

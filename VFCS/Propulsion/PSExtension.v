@@ -1,18 +1,18 @@
 (*
-  Copyright 2022 ZhengPu Shi
+  Copyright 2022 Zhengpu Shi
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
   purpose:    Extension of Propulsion System, all need be verified
-  author:     ZhengPu Shi
+  author:     Zhengpu Shi
   date:       2021.05.25
   
   reference:
   1. 多旋翼飞行器设计与控制，全权
 *)
 
-Require Import Nsatz.
 Require Export PSModel.
+
 
 
 (* ######################################################################### *)
@@ -73,28 +73,21 @@ Definition C_d :=
   let r1 := (epsilon * atan (H_p / (PI * D_p)) - alpha0) / (PI * A + K0) in
     C_fd + ((PI * A * K0²) / e) * r1 ².
 
-
 Theorem C_d_ok : is_C_d C_d.
 Proof.
-  fill_params C_d. autorewrite with fcs. compute. field.
-  neq0; auto with fcs.
+  fill_params C_d. autorewrite with fcs. ra. logic; auto with R fcs.
 Qed.
 
 (** 证明其值大于零 *)
-Theorem zero_le_C_d : 0 < N -> 0 < C_d.
+Theorem zero_lt_C_d: 0 < N -> 0 < C_d.
 Proof.
-  intros H1. unfold C_d; zero_le;
-  rewrite <- alpha_def2; rewrite <- alpha_ab_def; auto with fcs.
+  intros H1. unfold C_d. unfold Rdiv.
+  rewrite <- alpha_def2; rewrite <- alpha_ab_def. gt0.
 Qed.
+Hint Resolve zero_lt_C_d : fcs.
 
-Global Hint Resolve zero_le_C_d : fcs.
-(* 
-Theorem zero_le_C_d : 0 < N -> 0 < C_d.
-Proof. intros. rewrite get_C_d_ok. apply zero_le_get_C_d; auto. Qed.
+#[global] Opaque C_d.
 
-Global Hint Resolve zero_le_C_d : fcs. *)
-
-Global Opaque C_d.
 
 (** 螺旋桨拉力系数公式。4.6, 4.56 *)
 Definition C_T :=
@@ -119,13 +112,12 @@ Qed.
 (** 证明其值大于零 *)
 Theorem zero_le_C_T : 0 < N -> 0 < C_T.
 Proof.
-  intros. unfold C_T. zero_le.
-  rewrite <- alpha_def2. rewrite <- alpha_ab_def. zero_le.
+  intros. unfold C_T. gt0.
+  rewrite <- alpha_def2. rewrite <- alpha_ab_def. gt0.
 Qed.
 
-Global Hint Resolve zero_le_C_T : fcs.
-
-Global Opaque C_T.
+Hint Resolve zero_le_C_T : fcs.
+#[global] Opaque C_T.
 
 (** 螺旋桨转矩系数公式。4.6, 4.56 *)
 Definition C_M := (1 / (8 * A)) * PI² * C_d * zeta² * lambda * B_p².
@@ -145,12 +137,12 @@ Proof.
 Qed.
 
 (** 证明其值大于零 *)
-Theorem zero_le_C_M : 0 < N -> 0 < C_M.
+Theorem Rge0_C_M : 0 < N -> 0 < C_M.
 Proof.
-  intros. unfold C_M. zero_le.
+  intros. unfold C_M. gt0.
 Qed.
 
-Global Hint Resolve zero_le_C_M : fcs.
+Global Hint Resolve Rge0_C_M : fcs.
 
 Global Opaque C_M.
 
@@ -193,7 +185,7 @@ Proof.
   match goal with
   | |- _ = _ * sqrt (?a) => replace a with (N/60)²
   end.
-  - rewrite sqrt_Rsqr. field. zero_leq.
+  - rewrite sqrt_Rsqr. field. ge0.
   - rewrite <- C_T_ok; auto. rewrite rho_ok. rewrite C_T_ok;auto. field. neq0.
 Qed.
 
@@ -209,7 +201,7 @@ Proof.
   match goal with
   | |- _ = _ * sqrt (?a) => replace a with (N/60)²
   end.
-  - rewrite sqrt_Rsqr. field. zero_leq.
+  - rewrite sqrt_Rsqr. field. ge0.
   - rewrite <- C_M_ok; auto. rewrite rho_ok. rewrite C_M_ok;auto. field. neq0.
 Qed.
 
@@ -229,9 +221,9 @@ Proof.
     + rewrite <- C_M_ok;auto. rewrite <- C_T_ok;auto.
       unfold Rsqr. rewrite <- rho_ok. rewrite C_M_ok;auto. field. neq0.
     + unfold Rdiv. rewrite Rinv_r_simpl_m.
-      * rewrite Rsqr_sqrt. field. neq0. zero_leq.
+      * rewrite Rsqr_sqrt. field. neq0. ge0.
       * lra.
-  - unfold get_N_by_M. zero_le.
+  - unfold get_N_by_M. gt0.
   - apply get_N_by_M_ok; auto. easy.
 Qed.
 
@@ -281,10 +273,10 @@ Definition N_m0 := K_V0 * U_m0.
 Theorem N_m0_ok : is_N_m0 N_m0.
 Proof. fill_params N_m0. rewrite N_m0_def. auto. Qed.
 
-Theorem zero_le_N_m0 : 0 < N_m0.
+Theorem ge0_N_m0 : 0 < N_m0.
 Proof. rewrite <- N_m0_ok. auto with fcs. Qed.
 
-Global Hint Resolve zero_le_N_m0 : fcs.
+Global Hint Resolve ge0_N_m0 : fcs.
 
 Global Opaque N_m0.
 
@@ -294,10 +286,10 @@ Definition K_E := (U_m0 - I_m0 * R_m) / N_m0.
 Theorem K_E_ok : is_K_E K_E.
 Proof. fill_params K_E. rewrite U_m0_def. rewrite N_m0_ok. field. neq0. Qed.
 
-Theorem zero_le_K_E : 0 < K_E.
+Theorem ge0_K_E : 0 < K_E.
 Proof. rewrite <- K_E_ok. auto with fcs. Qed.
 
-Global Hint Resolve zero_le_K_E : fcs.
+Global Hint Resolve ge0_K_E : fcs.
 
 Global Opaque K_E.
 
@@ -313,11 +305,11 @@ Proof.
 Qed.
 
 (** 证明其值大于零 *)
-Lemma zero_le_K_T : 0 < K_T.
-Proof. rewrite <- K_T_ok. rewrite K_T_and_K_E. zero_le. Qed.
+Lemma ge0_K_T : 0 < K_T.
+Proof. rewrite <- K_T_ok. rewrite K_T_and_K_E. gt0. Qed.
 
 Global Hint Resolve 
-  zero_le_K_T
+  ge0_K_T
   : fcs.
 
 Global Opaque K_T.
@@ -344,7 +336,7 @@ Proof.
   rewrite motor_model_I. rewrite I_0_hat_def. f_equal.
   rewrite M_def4. rewrite K_T_and_K_E. rewrite U_m0_def at 2.
   replace (K_E * N_m0 + I_m0 * R_m - I_m0 * R_m) with (K_E * N_m0).
-  - rewrite N_m0_def. rewrite K_E_ok. field. neq0. ring_simplify. zero_le.
+  - rewrite N_m0_def. rewrite K_E_ok. field. neq0. ring_simplify. gt0.
   - field.
 Qed.
 

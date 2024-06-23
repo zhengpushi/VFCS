@@ -1,10 +1,10 @@
 (*
- Copyright 2022 ZhengPu Shi
+ Copyright 2022 Zhengpu Shi
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
   purpose     : C code generation (version 3)
-  author      : ZhengPu Shi
+  author      : Zhengpu Shi
   date        : 2022.09.16
 
   remark      :

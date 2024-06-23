@@ -12,4 +12,6 @@
 **/.nra.cache
 **/.csdp.cache
 **/*.cmi
+**/*.ml
+**/*.mli
 html

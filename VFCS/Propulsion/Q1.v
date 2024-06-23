@@ -1,10 +1,10 @@
 (*
-  Copyright 2022 ZhengPu Shi
+  Copyright 2022 Zhengpu Shi
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
   purpose:    Model of Question1
-  author:     ZhengPu Shi
+  author:     Zhengpu Shi
   date:       2021.05.25
   
   reference:
@@ -31,7 +31,7 @@ Section Q1.
   
   Lemma the_T_gt0 : 0 < the_T.
   Proof.
-    autounfold with fcs in *. compute. subst. zero_le.
+    autounfold with fcs in *. compute. subst. gt0.
   Qed.
   
   Hint Resolve the_T_gt0 : fcs.

@@ -1,11 +1,11 @@
 (*
-  Copyright 2022 ZhengPu Shi
+  Copyright 2022 Zhengpu Shi
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
   purpose   : 带有验证和代码生成的层次化模块机制 - 原型
   date      : 2022.09.08
-  author    : ZhengPu Shi
+  author    : Zhengpu Shi
   
   整体思路：
   1. 建立类似于Simulink的层次化模块机制。
