@@ -3,9 +3,9 @@
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
-  purpose:    Extract code from Coq to OCaml, include all files
-  author:     Zhengpu Shi
-  date:       2020.11.17
+  purpose   : Extract code from Coq to OCaml, include all files
+  author    : Zhengpu Shi
+  date      : 2020.11.17
 *)
 
 Require Import PSExtension Q1 Q2 Q3 Q4.

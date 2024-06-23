@@ -1,6 +1,12 @@
-(* Copyright 2022 Zhengpu Shi
- * This file is part of VFCS. It is distributed under the MIT
- * "expat license". You should have recieved a LICENSE file with it. *)
+(* 
+  Copyright 2022 Zhengpu Shi
+  This file is part of VFCS. It is distributed under the MIT
+  "expat license". You should have recieved a LICENSE file with it. 
+
+  purpose   : a typical configuration for Quadcopter
+  author    : Zhengpu Shi
+  date      : 2021.05.25
+*)
 
 
 let val_T0 = 273.15

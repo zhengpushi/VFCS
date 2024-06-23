@@ -3,9 +3,9 @@
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
-  purpose:    Model of Question4
-  author:     Zhengpu Shi
-  date:       2021.05.25
+  purpose   : Model of Question 4
+  author    : Zhengpu Shi
+  date      : 2021.05.25
   
   reference:
   1. 多旋翼飞行器设计与控制，全权
