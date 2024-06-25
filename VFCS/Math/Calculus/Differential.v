@@ -20,7 +20,35 @@
 
 (* From Coquelicot Require Export Rbar Continuity Derive RInt AutoDerive. *)
 
+Require List.
+From Coquelicot Require Coquelicot.
+
+Module problem_of_notation_in_Coquelicot.
+  (* 当我按如下方式导入这两个库，先导入 ListNotations，再导入 Coquelicot *)
+  Import List. Import ListNotations.
+  Import Coquelicot.
+
+  (* 则，[1] 会被解释为 nat * unit 类型 *)
+  (* Check [1]. (* : nat * unit *) *)
+
+  (* 即使再次导入 ListNotations 库，仍然无法改变这个记号的行为 *)
+  Import ListNotations.
+  (* Check [1]. (* : nat * unit *) *)
+
+  (* 最后无奈，使用 Disable Notation 可以解决。
+     但是，这又带来了多余的提示信息，该消息无法屏蔽，而且会在所有间接使用该库的地方显示，
+     这打乱了编译时的输出提示。*)
+
+  (* Disable Notation "[ x1 , .. , xn ]". *)
+
+  (* 更多讨论，请参考 https://coq.discourse.group/t/suppressing-repeated-warnings-from-disable-notation-command-in-coq/2339 for more discussion. *)
+
+  (* 一个投机的办法是，在ListNotations导入之前先导入 Coquelicot 库 *)
+End problem_of_notation_in_Coquelicot.
+
 From Coquelicot Require Export Coquelicot.
+Export List. Export ListNotations.
+
 From FinMatrix Require Export RFunExt.
 
 

@@ -105,8 +105,8 @@ Extract Constant val_0_06 => " 0.06".
   in
   rplus c_fd (rmult (rdiv (rmult (rmult pI a) (rsqr k0)) e) (rsqr r1)) *)
   
-Recursive Extraction 
-  C_d C_T C_M get_G_maxload_by_T get_T_by_N .
+(* Recursive Extraction  *)
+(*   C_d C_T C_M get_G_maxload_by_T get_T_by_N . *)
   
 Extraction "PS.ml"
   C_d C_T C_M get_G_maxload_by_T get_T_by_N .

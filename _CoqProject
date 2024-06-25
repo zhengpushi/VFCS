@@ -18,8 +18,10 @@
 # ====== Math ========================================================
 
 VFCS/Math/Calculus/Differential.v
+VFCS/Math/Calculus/DifferentialVector.v
 VFCS/Math/Calculus/Integral.v
 VFCS/Math/Calculus/Calculus.v
+VFCS/Math/Calculus/Calculus_example.v
 
 # VFCS/Math/Quaternion/Quaternion_base.v
 # VFCS/Math/Quaternion/Quaternion_rot.v
@@ -44,13 +46,7 @@ VFCS/Propulsion/Q1.v
 VFCS/Propulsion/Q2.v
 VFCS/Propulsion/Q3.v
 VFCS/Propulsion/Q4.v
-VFCS/Propulsion/ExtractionThis.v
+VFCS/Propulsion/ExtractThis.v
 
-# ====== Pose Represeation sub-system =======================================
-# VFCS/PoseRepr/rvctool.v
-# VFCS/PoseRepr/RVC/PoseInterface.v
-
-# VFCS/PoseRepr/Math.v
-# VFCS/PoseRepr/Pose2D.v
-# VFCS/PoseRepr/Pose3D.v
-# VFCS/PoseRepr/EulerAngle.v
+# ====== Attitdue Represeation sub-system =======================================
+VFCS/AttitudeRepr/AttitudeRepr.v
