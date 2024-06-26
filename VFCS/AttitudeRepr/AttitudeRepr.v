@@ -21,28 +21,6 @@
 
 From FinMatrix Require Import MatrixR.
 
-Lemma vscal_vconsH : forall {n} (a : R) (v : vec n) (x : R),
-    (x s* (vconsH a v))%V = vconsH (x * a)%R (x s* v)%V.
-Proof.
-Admitted.
-
-Lemma mscal_mconsrH : forall {r c} (v : vec c) (A : mat r c) (x : R),
-    x s* (mconsrH v A) = mconsrH (x s* v)%V (x s* A).
-Proof.
-Admitted.
-
-Lemma mscal_mconscH : forall {r c} (v : vec r) (A : mat r c) (x : R),
-    x s* (mconscH v A) = mconscH (x s* v)%V (x s* A).
-Proof.
-Admitted.
-
-Lemma skew3_vscal : forall (v : vec 3) (x : R), `|(x s* v)%V|x = x s* `|v|x.
-Admitted.
-
-Lemma vnth_vscal : forall {n} (v : vec n) (x : R) i, (x s* v)%V i = (x * (v i))%R.
-Admitted.
-
-
 Require Export Calculus.
 From OrienRepr Require Import Pose.
 From FinMatrix Require Import MatrixR.

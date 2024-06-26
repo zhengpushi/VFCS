@@ -7,7 +7,8 @@
   author    : Zhengpu Shi
   date      : Nov, 2023
 
-  reference : Introduction to Multicopter Design and Control, QuanQuan, 2017
+  reference : 
+  1. Introduction to Multicopter Design and Control, QuanQuan, 2017
  *)
 
 Require Export Calculus.
