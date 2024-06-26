@@ -17,14 +17,16 @@
 
 # ====== Math ========================================================
 
+# VFCS/Math/VecValFun.v
+# VFCS/Math/MatValFun.v
+
 VFCS/Math/Calculus/Differential.v
+# VFCS/Math/Calculus/DifferentialVVF.v
+# VFCS/Math/Calculus/DifferentialMVF.v
 VFCS/Math/Calculus/DifferentialVector.v
 VFCS/Math/Calculus/Integral.v
 VFCS/Math/Calculus/Calculus.v
 VFCS/Math/Calculus/Calculus_example.v
-
-# VFCS/Math/Quaternion/Quaternion_base.v
-# VFCS/Math/Quaternion/Quaternion_rot.v
 
 VFCS/Math/DifferentialEquation/DEbase.v
 VFCS/Math/DifferentialEquation/HomoLDE2.v
@@ -37,6 +39,9 @@ VFCS/Math/DifferentialEquation/HomoLDEn.v
 # VFCS/ACS/Diagram.v
 # VFCS/ACS/DifferentialEquation.v
 # VFCS/ACS/RationalExpression.v
+
+# ====== The Configuration =======================================
+VFCS/MulticopterConfig.v
 
 # ====== Propulsion sub-system =======================================
 VFCS/Propulsion/RAux.v

@@ -3,7 +3,7 @@
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
-  purpose   : Attitude Representation for FCS
+  purpose   : Attitude Representation for FCS (使用了向量值函数、矩阵函数的版本)
   author    : Zhengpu Shi
   date      : Mar, 2021
   
@@ -22,19 +22,25 @@
 From FinMatrix Require Import MatrixR.
 
 Require Export Calculus.
+(* 向量值函数、矩阵函数，进一步的封装，有利有弊 *)
+Require Export DifferentialVVF.
+Require Export DifferentialMVF.
+
 From OrienRepr Require Export Pose.
 From FinMatrix Require Export MatrixR.
 
 Open Scope R_scope.
 Open Scope vec_scope.
 Open Scope mat_scope.
+Open Scope VecValFun_scope.
+Open Scope MatValFun_scope.
 
-(* (** Convert (fun x => f x) ' to f ' *) *)
-(* Ltac eta_Derive := *)
-(*   repeat *)
-(*     match goal with *)
-(*     | |- context[ (fun x => ?f x) '] => replace ((fun x => f x)') with (f '); auto *)
-(*     end. *)
+(** Convert (fun x => f x) ' to f ' *)
+Ltac eta_Derive :=
+  repeat
+    match goal with
+    | |- context[ (fun x => ?f x) '] => replace ((fun x => f x)') with (f '); auto
+    end.
 
 
 (* 右手定则的惯例
@@ -83,46 +89,48 @@ Section eulerAngles.
    *)
 
   (* 相对于坐标系{e}的自身三个轴的单位向量，它们是由时间而定的向量值函数 *)
-  Definition b_b1 : R -> vec 3 := fun t => v3i.
-  Definition b_b2 : R -> vec 3 := fun t => v3j.
-  Definition b_b3 : R -> vec 3 := fun t => v3k.
+  Definition b_b1 : vvf 3 := fun t => v3i.
+  Definition b_b2 : vvf 3 := fun t => v3j.
+  Definition b_b3 : vvf 3 := fun t => v3k.
+  Hint Unfold b_b1 b_b2 b_b3 : fcs.
 
   (* 相对于坐标系{e}的自身三个轴的单位向量 *)
-  Definition e_e1 : R -> vec 3 := fun t => v3i.
-  Definition e_e2 : R -> vec 3 := fun t => v3j.
-  Definition e_e3 : R -> vec 3 := fun t => v3k.
+  Definition e_e1 : vvf 3 := fun t => v3i.
+  Definition e_e2 : vvf 3 := fun t => v3j.
+  Definition e_e3 : vvf 3 := fun t => v3k.
+  Hint Unfold e_e1 e_e2 e_e3 : fcs.
 
   (* 坐标系{n}的y轴相对于{n}的单位向量 *)
-  Definition n_n2 : R -> vec 3 := fun t => v3j.
+  Definition n_n2 : vvf 3 := fun t => v3j.
   (* 坐标系{k}的z轴相对于{k}的单位向量 *)
-  Definition k_k3 : R -> vec 3 := fun t => v3k.
+  Definition k_k3 : vvf 3 := fun t => v3k.
+  Hint Unfold n_n2 k_k3 : fcs.
 
   (* 设欧拉角(姿态角)如下 *)
-  Variable roll : R -> R.      (* 绕 x 轴旋转的滚转角 *)
-  Variable pitch : R -> R.     (* 绕 y 轴旋转的俯仰角 *)
-  Variable yaw : R -> R.       (* 绕 z 轴旋转的偏航角 *)
-  Notation ϕ := roll. Notation θ := pitch. Notation ψ := yaw.
-
-  (* 欧拉角的向量形式 *)
-  Let Φ : R -> vec 3 := fun t => l2v [ϕ t; θ t; ψ t].
-  (* 欧拉角变化率的向量形式 *)
-  Let dΦ : R -> vec 3 := fun t => l2v [ϕ ' t; θ ' t; ψ ' t].
+  Variable eulerAngles : vvf 3. Notation Φ := eulerAngles.
+  Notation ϕ := (Φ.1). (* 绕 x 轴旋转的滚转角 roll *)
+  Notation θ := (Φ.2). (* 绕 y 轴旋转的俯仰角 pitch *)
+  Notation ψ := (Φ.3). (* 绕 z 轴旋转的偏航角 yaw *)
+  Notation dΦ := (vvfderiv Φ). (* 欧拉角变化率 *)
 
   (* 根据欧拉角的定义，{b}相对于{n}, {n}相对于{k}, {k}相对于{e} 的位姿如下 *)
-  Definition R_b2n : R -> smat 3 := fun t => Rx (ϕ t).
-  Definition R_n2k : R -> smat 3 := fun t => Ry (θ t).
-  Definition R_k2e : R -> smat 3 := fun t => Rz (ψ t).
+  Definition R_b2n : smvf 3 := fun t => Rx (ϕ t).
+  Definition R_n2k : smvf 3 := fun t => Ry (θ t).
+  Definition R_k2e : smvf 3 := fun t => Rz (ψ t).
+  Hint Unfold R_b2n R_n2k R_k2e : fcs.
 
   (* 由于每一次旋转都是绕物体坐标系，所以矩阵连乘符合右乘。
      所以，{b}相对{e}的位姿如下 *)
-  Definition R_b2e : R -> smat 3 := fun t => R_k2e t * R_n2k t * R_b2n t.
+  Definition R_b2e : smvf 3 := R_k2e * R_n2k * R_b2n.
+  Hint Unfold R_b2e R_n2k R_k2e : fcs.
 
   (* 还能给出如下中间信息，在后面推导机体角速度与姿态角变化率时用到 *)
-  Definition R_n2b : R -> smat 3 := fun t => (R_b2n t)\T.
-  Definition R_k2n : R -> smat 3 := fun t => (R_n2k t)\T.
-  Definition R_k2b : R -> smat 3 := fun t => R_n2b t * R_k2n t.
-  Definition b_n2 : R -> vec 3 := fun t => R_n2b t *v n_n2 t.
-  Definition b_k3 : R -> vec 3 := fun t => R_k2b t *v k_k3 t.
+  Definition R_n2b : smvf 3 := R_b2n\T.
+  Definition R_k2n : smvf 3 := R_n2k\T.
+  Definition R_k2b : smvf 3 := R_n2b * R_k2n.
+  Definition b_n2 : vvf 3 := R_n2b *v n_n2.
+  Definition b_k3 : vvf 3 := R_k2b *v k_k3.
+  Hint Unfold R_n2b R_k2n R_k2b b_n2 b_k3 : fcs.
 
   (* 我们可以给出 R_b2e 的实矩阵形式（无时间变量，无unicode字符）以便指导编程 *)
   Definition b2eMAT (roll pitch yaw : R) : smat 3 :=
@@ -138,7 +146,10 @@ Section eulerAngles.
 
   (* 验证上述矩阵正确 *)
   Lemma b2eMAT_spec : forall t, b2eMAT (ϕ t) (θ t) (ψ t) = R_b2e t.
-  Proof. intros. meq; lra. Qed.
+  Proof.
+    intros. autounfold with fcs. autounfold with mvf vvf.
+    vvf2e eulerAngles. meq; lra.
+  Qed.
 
   (* 从旋转矩阵到欧拉角，在 OrienRepr 项目中。此处略 *)
 
@@ -156,11 +167,11 @@ Section eulerAngles.
    *)
 
   (* 设机体角速度在{b}中的表示如下，三个分量也记作 p,q,r *)
-  Variable b_angvx b_angvy b_angvz : R -> R.
-  Notation b_ωx := b_angvx. Notation b_ωy := b_angvy. Notation b_ωz := b_angvz.
-  Let b_angv (t : R) : vec 3 := l2v [b_ωx t; b_ωy t; b_ωz t].
-  Notation b_ω := b_angv.
-
+  Variable b_angv : vvf 3. Notation b_ω := b_angv.
+  (* Notation b_ωx := (b_ω.1). (* 角速度在xb轴上的分量 *) *)
+  (* Notation b_ωy := (b_ω.2). (* 角速度在yb轴上的分量 *) *)
+  (* Notation b_ωz := (b_ω.3). (* 角速度在zb轴上的分量 *) *)
+  
   (* 根据相关理论，机体角速度与姿态角速率的关系如下 *)
   Axiom H_b_ω : forall t,
       b_ω t = (ϕ ' t s* b_b1 t
@@ -169,7 +180,10 @@ Section eulerAngles.
 
   (* n2 轴在 {b} 中的向量具有以下形式 *)
   Lemma b_n2_eq : forall t, b_n2 t = l2v [0; cos (ϕ t); - sin (ϕ t)]%R.
-  Proof. intros. veq; lra. Qed.
+  Proof.
+    intros. autounfold with fcs. autounfold with mvf vvf.
+    vvf2e eulerAngles. veq; lra.
+  Qed.
 
   (* k3 轴在 {b} 中的向量具有以下形式 *)
   Lemma b_k3_eq : forall t,
@@ -188,8 +202,11 @@ Section eulerAngles.
 
   (* 该矩阵满足如下规范 *)
   Lemma eulerRate2angvMAT_spec : forall t,
-      b_ω t = (eulerRate2angvMAT (ϕ t) (θ t)) *v dΦ t.
-  Proof. intros. rewrite H_b_ω. veq; ra. Qed.
+      b_ω t = ((eulerRate2angvMAT (ϕ t) (θ t)) *v dΦ t)%M.
+  Proof.
+    intros. rewrite H_b_ω. autounfold with fcs. autounfold with mvf vvf.
+    vvf2e eulerAngles. vvf2e b_angv. veq; eta_Derive; ra.
+  Qed.
 
   (* 从机体角速度到欧拉角速率的转换矩阵（无时间变量，无unicode字符），以便指导编程 *)
   Definition angv2eulerRateMAT (roll pitch : R) : smat 3 :=
@@ -212,7 +229,7 @@ Section eulerAngles.
   (* angv2eulerRateMat 和 eulerRate2angvMAT 的乘积为单位阵，即它们互逆 *)
   Lemma mmul_angv2eulerRateMAT_eulerRate2angvMAT_eq1 : forall roll pitch,
       pitchValid pitch ->
-      angv2eulerRateMAT roll pitch * eulerRate2angvMAT roll pitch = mat1.
+      (angv2eulerRateMAT roll pitch * eulerRate2angvMAT roll pitch = mat1)%M.
   Proof.
     intros. meq; ra.
     all: try rewrite tan_eq; field_simplify_eq; ra.
@@ -224,7 +241,7 @@ Section eulerAngles.
   (* 该矩阵满足如下规范，这即是欧拉角模型 *)
   Lemma angv2eulerRateMAT_spec : forall t,
       pitchValid (θ t) ->
-      dΦ t = (angv2eulerRateMAT (ϕ t) (θ t)) *v b_ω t.
+      dΦ t = (angv2eulerRateMAT (ϕ t) (θ t) *v b_ω t)%M.
   Proof.
     intros. rewrite eulerRate2angvMAT_spec. rewrite <- mmulv_assoc.
     rewrite mmul_angv2eulerRateMAT_eulerRate2angvMAT_eq1; auto.
@@ -263,49 +280,47 @@ utop[1]> m2l 3 3 (b2eMAT 0.1 0.2 0.3);;
 (* 旋转矩阵导数和机体角速度之间的关系 *)
 Section derivRotMat_and_angv.
   (* 设机体角速度在{b}中的表示为 *)
-  Variable b_angv : R -> vec 3.
-  Notation b_ω := b_angv.
+  Variable b_angv : vvf 3. Notation b_ω := b_angv.
 
   (* 设{b}相对于{e}的旋转矩阵为 *)
-  Variable Rb2e : R -> smat 3.
+  Variable Rb2e : smvf 3.
   (* 旋转矩阵还要满足 SO(3) 的性质 *)
   Hypotheses Rb2e_SO3 : forall t, SOnP (Rb2e t).
   
   (* 机体角速度在 {e} 中的表示为 *)
-  Let e_ω : R -> vec 3 := fun t => Rb2e t *v b_ω t.
+  Let e_ω : vvf 3 := Rb2e *v b_ω.
 
   (* 任意 {e} 中的向量 e_r 的导数满足如下关系式 *)
-  Axiom H_deriv_e_r : forall (e_r : R -> vec 3), vderiv e_r = fun t => e_ω t \x e_r t.
+  Axiom H_deriv_e_r : forall (e_r : vvf 3), vvfderiv e_r = e_ω \x e_r.
   
   (* 反对称矩阵和叉乘有关的理论已经开发完毕，例如 *)
   (* Check v3cross_eq_skew_mul_vec. *)
   (* : forall a b : vec 3, a \x b = `| a |x *v b *)
 
   (* Rb2e的导数满足如下关系 *)
-  Lemma derivRb2e_eq_e_ω : mderiv Rb2e = fun t => skew3 (e_ω t) * Rb2e t.
+  Lemma derivRb2e_eq_e_ω : mvfderiv Rb2e = mvfskew3 e_ω * Rb2e.
   Proof.
-    rewrite mderiv_eq_vderiv_col.
+    rewrite mvfderiv_eq_vvfderiv_col.
     extensionality t. extensionality i. extensionality j.
-    rewrite H_deriv_e_r. rewrite v3cross_eq_skew_mul_vec. auto.
+    rewrite H_deriv_e_r. autounfold with mvf vvf.
+    rewrite v3cross_eq_skew_mul_vec. auto.
   Qed.
     
   (* 旋转矩阵的导数和机体角速度之间的关系如下，该关系式用于控制器的设计 *)
-  Lemma derivRb2e_eq :
-    mderiv Rb2e = fun t => Rb2e t * skew3 (b_ω t).
+  Lemma derivRb2e_eq : mvfderiv Rb2e = Rb2e * mvfskew3 b_ω.
   Proof.
-    rewrite derivRb2e_eq_e_ω.
+    rewrite derivRb2e_eq_e_ω. unfold e_ω. autounfold with mvf vvf.
     (* 证明 (skew3 [e_ω]) * Rb2e = Rb2e * skew3 [b_ω]
        左 = skew3 [Rb2e * b_ω] * Rb2e
           = (Rb2e * skew3 b_ω * Re2b) * Rb2e        这是SO3的矩阵才有的特性
           = Rb2e * skew3 b_ω *)
-    extensionality t. unfold e_ω. rewrite <- SO3_skew3_eq; auto. rewrite mmul_assoc.
+    extensionality t. rewrite <- SO3_skew3_eq; auto. rewrite mmul_assoc.
     assert (morth (Rb2e t)) by apply Rb2e_SO3.
     rewrite morth_iff_mul_trans_l in H. rewrite H. rewrite mmul_1_r. auto.
   Qed.
 End derivRotMat_and_angv.
 
 (* 四元数的基本理论，四元数与旋转矩阵、轴角等的转换，在 OrienRepr 项目中。此处略 *)
-
 
 (* 当 x 足够小时，可以有如下结论：cos x ≈ 1, sin x ≈ x 。因为：
    cos x ≈ 1 - (1/2) x² + O (x⁴)
@@ -325,8 +340,7 @@ Section derivQuat_and_angv.
   Variable q_e2b : R -> quat.
   
   (* 设机体角速度在{b}中的表示如下 *)
-  Variable b_angv : R -> vec 3.
-  Notation b_ω := b_angv.
+  Variable b_angv : vvf 3. Notation b_ω := b_angv.
   (* 假设角速度向量非零 *)
   Hypotheses H_b_ω_neq0 : forall t, b_ω t <> vzero.
 
@@ -341,10 +355,10 @@ Section derivQuat_and_angv.
     (* 首先，定义 Δt 对应的旋转摄动的四元数 *)
     
     (* 定义旋转角，其直观含义是：时间越长，则旋转角越大 *)
-    Let rotAngle (t : R) : R := (vlen (b_ω t) * Δt)%R.
+    Let rotAngle : R -> R := fun t => (vlen (b_ω t) * Δt)%R.
     Notation θ := rotAngle.
     (* 定义旋转轴 *)
-    Let rotAxis (t : R) : vec 3 := vnorm (b_ω t).
+    Let rotAxis : vvf 3 := fun t => vnorm (b_ω t).
     (* 定义旋转摄动 Δq *)
     Definition deltaQuat (t : R) : quat := aa2quat (mkAA (θ t) (rotAxis t)).
     
@@ -370,21 +384,19 @@ Section derivQuat_and_angv.
       q_e2b (t + deltaT) = (q_e2b t * deltaQuat deltaT t)%quat.
 
   (** 四元数变化率与机体角速度的关系 *)
-
-  (* 第一次尝试证明，在极限证明中遇到了 h <> 0 的条件 *)
-  Lemma derivQuat_eq_try :
+  Lemma derivQuat_eq :
     (forall t h, is_small ((||b_ω t||) * h / 2)) ->
-    vderiv q_e2b =
+    vvfderiv q_e2b =
       fun t =>
         ((1/2) s*
-           (mconsrH (vconsH 0 (- b_ω t))
+           (mconsrH (vconsH 0 (- b_ω t)%V)
               (mconscH (b_ω t) (- (skew3 (b_ω t)))%M)) *v  (q_e2b t))%V.
   Proof.
-    intros. unfold vderiv. extensionality t. extensionality i.
+    intros.
+    unfold vderiv. extensionality t. extensionality i.
+    lazy [Derive].          (* 将导数转换为极限 *)
     remember (mconsrH (vconsH 0 (- b_ω t)%V)
                 (mconscH (b_ω t) (- (skew3 (b_ω t)))%M)) as A.
-    lazy [Derive].   (* 将导数转换为极限 *)
-    (* 这一步可能丢失了信息，不能这么做！ *)
     rewrite Lim_ext with (f:=fun h => ((((1/2) s* A)%M *v q_e2b t) i * (h / h))%R).
     - rewrite Lim_scal_l.
       rewrite Lim_ext with (f:=fun _ => 1).
@@ -404,8 +416,7 @@ Section derivQuat_and_angv.
       rewrite <- associative. rewrite Rplus_opp_r. rewrite Rplus_0_l.
       rewrite !mscal_mconsrH. rewrite !vscal_vconsH. ra.
   Abort.
-
-  (* 正式证明 *)
+  
   Lemma derivQuat_eq :
     (forall t h, is_small ((||b_ω t||) * h / 2)) ->
     vderiv q_e2b =
@@ -414,49 +425,39 @@ Section derivQuat_and_angv.
            (mconsrH (vconsH 0 (- b_ω t))
               (mconscH (b_ω t) (- (skew3 (b_ω t)))%M)) *v  (q_e2b t))%V.
   Proof.
-    intros. unfold vderiv. extensionality t. extensionality i.
+    intros.
+    unfold vderiv. extensionality t. extensionality i.
+    lazy [Derive].          (* 将导数转换为极限 *)
     remember (mconsrH (vconsH 0 (- b_ω t)%V)
                 (mconscH (b_ω t) (- (skew3 (b_ω t)))%M)) as A.
-    lazy [Derive].          (* 将导数转换为极限 *)
-    (* 不要使用简单的 Lim_ext，它会产生额外的目标 h <> 0，无法证明 *)
-    rewrite Lim_ext_loc with (f:=fun h => ((((1/2) s* A)%M *v q_e2b t) i)%R).
-    - rewrite Lim_const. rewrite mmulv_mscal. auto.
-    - (* 化简极限有关的谓词，直至Coq标准的逻辑命题 *)
-      unfold Rbar_locally'. unfold locally'. unfold within.
-      unfold locally. unfold ball. simpl. unfold AbsRing_ball.
-      exists posreal_one. intros.
-      (* 向量和矩阵运算的化简，主要是化简右侧 *)
-      rewrite HeqA. rewrite quat4AddDelta. rewrite deltaQuat_eq; auto. unfold si2q.
-      rewrite qmatR_spec2. rewrite qmatR_spec1.
-      (* Tips: 展示矩阵证明的复杂推理步骤的一个很好的例子 *)
-      (* 接着，有两种证明方法 *)
-      (* 1. 计算的方式，简单 *)
-      (* q2e (q_e2b t). v2e (b_angv t). clear -H1. destruct i. *)
-      (* do 4 (destruct i; [cbv; ra | try lia]). *)
-      (* 2. 推理的方式，繁琐，但能看请每一步 *)
-      rewrite vnth_vconsH_0 by (cbv; fin). rewrite mscal_1_l.
+    rewrite Lim_ext with (f:=fun h => ((((1/2 * h)%R s* A)%M *v q_e2b t) i) / h).
+    - (* 再替换一次 *)
+      rewrite Lim_ext with (f:=fun h => (((1/2) s* A)%M *v q_e2b t) i).
+      + rewrite Lim_const. rewrite mmulv_mscal. auto.
+      + intros h.
+        replace (1 / 2 * h)%R with (h * (1 / 2))%R by lra. 
+        rewrite <- mscal_assoc.
+        unfold Rdiv at 2. rewrite Rmult_comm.
+        rewrite <- vnth_vscal.
+        rewrite <- mmulv_mscal. f_equal.
+        rewrite !mscal_assoc. f_equal. cbv. field.
+        (* 如何避免 h <> 0 的这个证明？ *)
+        admit.
+    - intros h. f_equal.
+      rewrite quat4AddDelta. rewrite deltaQuat_eq; auto. unfold si2q.
+      rewrite HeqA. rewrite qmatR_spec2. rewrite qmatR_spec1.
+      rewrite vnth_vconsH_0. rewrite mscal_1_l.
+      2:{ cbv. fin. }
       rewrite mmulv_madd. rewrite mmulv_1_l.
       unfold q2im. rewrite vremoveH_vconsH; fin.
       rewrite vnth_vadd. unfold Rminus.
       rewrite associative. rewrite (commutative _ (- q_e2b t i)%R).
       rewrite <- associative. rewrite Rplus_opp_r. rewrite Rplus_0_l.
-      apply Rmult_imply_Rdiv; auto. rewrite (Rmult_comm _ y).
-      repeat rewrite ?mscal_mconsrH,?vscal_vconsH. rewrite skew3_vscal.
-      remember (`| b_ω t |x). remember (q_e2b t). remember (b_ω t).
-      autounfold with tA. autorewrite with R.
-      replace (- ((/ 2 * y)%R s* v0))%V with (y s* (/ 2 s* (- v0)))%V.
-      replace (- ((/ 2 * y)%R s* v)) with (y s* (/ 2 s* (- v))).
-      replace ((/ 2 * y)%R s* v0)%V with (y s* (/ 2 s* v0))%V.
-      rewrite <- mscal_mconscH.
-      replace 0 with (y * 0)%R at 2 by ring.
-      rewrite <- vscal_vconsH. rewrite <- mscal_mconsrH. rewrite <- mscal_mconscH.
-      rewrite mmulv_mscal. rewrite vnth_vscal. auto.
-      + rewrite vscal_assoc. f_equal. autounfold with tA. lra.
-      + rewrite mscal_assoc. rewrite mscal_mopp. f_equal. f_equal.
-        autounfold with tA. lra.
-      + rewrite vscal_assoc. rewrite vscal_vopp. f_equal. f_equal.
-        autounfold with tA. lra.
-  Qed.
+      rewrite !mscal_mconsrH. rewrite !vscal_vconsH. ra. f_equal. f_equal.
+      + f_equal. rewrite vscal_vopp. auto.
+      + rewrite mscal_mconscH. f_equal.
+        rewrite mscal_mopp. f_equal. rewrite skew3_vscal. auto.
+  Admitted.
 
   (* 备注：在实际中，b_ω 可由陀螺仪近似测得，此时以上微分方程为线性的。*)
 
@@ -475,7 +476,14 @@ Section derivQuat_and_angv.
     extensionality t. specialize (H0 H t).
     rewrite veq_iff_vnth in H0. specialize (H0 #0).
     unfold vderiv in *. rewrite H0.
+    (* Tips: 展示矩阵证明的复杂推理步骤的一个很好的例子 *)
+    (* 直接计算就能完成证明 *)
     q2e (q_e2b t). v2e (b_angv t). cbv. ra.
+    (* 或者，用性质来化简，也反映出证明过程 *)
+    (* rewrite vnth_vscal. rewrite vdot_vscal_l. rewrite vnth_mmulv. *)
+    (* unfold mconsrH. unfold Matrix.mconsrH. *)
+    (* rewrite Vector.vnth_vconsH_0; fin. *)
+    (* 继续开发 vconsH 和 vdot 的性质，略 *)
   Qed.
 
   (** 四元数Im分量qv的导数与机体角速度b_ω的关系 *)

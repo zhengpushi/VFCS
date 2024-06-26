@@ -10,5 +10,7 @@
  *)
 
 Require Export Differential.
+(* Require Export DifferentialVVF. *)
+(* Require Export DifferentialMVF. *)
 Require Export DifferentialVector.
 Require Export Integral.

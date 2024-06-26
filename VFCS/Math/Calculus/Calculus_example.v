@@ -12,7 +12,7 @@
 Require Import Calculus.
 From FinMatrix Require Import MatrixR.
 
-(** Limit of R -> R*)
+(** Limit of R -> R *)
 Section limit_ex1.
   Open Scope R_scope.
 
