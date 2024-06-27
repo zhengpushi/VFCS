@@ -11,7 +11,7 @@
   1. Introduction to Multicopter Design and Control, QuanQuan, 2017
  *)
 
-Require Import Reals.
+From FinMatrix Require Import MatrixR.
 Open Scope R_scope.
 
 (* 
@@ -37,17 +37,68 @@ Inductive QuadcopterHead :=
 | QHeadCross        (* x字型 *)
 .
 
+(** 第i个(i=1,2,...,nr)螺旋桨的旋转方向对应的实数值：
+    奇数标号是逆时针取-1，偶数标号是顺时针取+1 *)
+Definition rotDir2val (i : nat) : R := if Nat.odd i then (-1) else 1.
+
+(** 下一个桨的旋转方向总是与这个桨的旋转方向相反 *)
+Lemma rotDir2val_S : forall i, rotDir2val (S i) = Ropp (rotDir2val i).
+Proof.
+  intros. unfold rotDir2val.
+  replace (Nat.odd (S i)) with (negb (Nat.odd i)).
+  destruct (Nat.odd i); auto. cbv. lra.
+  rewrite Nat.negb_odd. rewrite Nat.odd_succ. auto.
+Qed.
+
 (* 多旋翼的配置，即不变的一些参数。
    ToDo: 是否需要使用 Record 来设计结构体，作为各个函数的参数？或许会增加复杂度 *)
 Module Config.
 
-  (* 旋翼数目 *)
-  Parameter RotorCount : RotorCount.
+  (* 旋翼数目（暂未采用) *)
+  Parameter rotorCount : RotorCount.
+
+  (* 旋翼数目的自然数值 *)
+  Parameter rotorCountNat : nat.
+  Axiom rotorCountNat_gt0 : (0 < rotorCountNat)%nat.  (* 至少1个桨 *)
+  
 
   (* 重力加速度 (m/s²) *)
   Parameter g : R.
   Axiom g_gt0 : 0 < g.          (* g是正值 *)
 
+  Lemma g_neq0 : g <> 0.
+  Proof. pose proof g_gt0. lra. Qed.
+
   (* 整机质量 (kg) *)
   Parameter m : R.
+  Axiom m_gt0 : 0 < m.
+
+  Lemma m_neq0 : m <> 0.
+  Proof. pose proof m_gt0. lra. Qed.
+
+  (* 总转动惯量（Moment of Inertia），记作J:
+     J 是一个 3×3 的矩阵，表示整个多旋翼飞行器相对于其质心的转动惯量。
+     这个矩阵考虑了飞行器所有部件（包括机身、电机、螺旋桨、电池等）的质量分布对转动惯量的贡献。
+     对角线上的元素 Jxx,Jyy,Jzz 分别表示飞行器绕 x, y 和 z 轴的转动惯量。
+     非对角线上的元素表示飞行器各轴之间的耦合转动惯量，也称为积惯量。
+     它通常被视为常数，但在某些情况下可能会变化，比如：飞行器携带的有效载荷发生变化（例如
+     增加或减少电池、摄像头等），或者飞行器结构发生改变（如损坏或维修）。此时，需要重新
+     计算或测量 J 矩阵。 *)
+  Parameter J : smat 3.
+
+  (* 电机转子和螺旋桨绕转轴轴的总转动惯量 (rotor-propeller ..)，记作 J_{RP}:
+     JRP 是一个实数，表示一组整个电机转子和螺旋桨绕其转轴的总转动惯量。
+     这个矩阵主要用于描述每个电机及其螺旋桨的旋转运动对飞行器动力学的影响。
+     JRP 的值取决于螺旋桨的质量、形状、大小以及电机转子的特性。
+     它通常被视为常数，但在某些情况下可能会变化，比如：螺旋桨因磨损、损坏或更换等原因
+     发生变化，或者电机特性改变（例如更换电机），则 JRP 可能需要重新测量或计算 *)
+  Parameter JRP : R.
+  
 End Config.
+
+Hint Resolve
+  Config.g_gt0
+  Config.g_neq0
+  Config.m_gt0
+  Config.m_neq0
+  : fcs.

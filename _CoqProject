@@ -43,6 +43,12 @@ VFCS/Math/DifferentialEquation/HomoLDEn.v
 # ====== The Configuration =======================================
 VFCS/MulticopterConfig.v
 
+# ====== Attitdue Represeation sub-system =======================================
+VFCS/AttitudeRepr/AttitudeRepr.v
+
+# ====== Control Model sub-system =======================================
+VFCS/DynamicModel/ControlModel.v
+
 # ====== Propulsion sub-system =======================================
 VFCS/Propulsion/RAux.v
 VFCS/Propulsion/PSModel.v
@@ -52,6 +58,3 @@ VFCS/Propulsion/Q2.v
 VFCS/Propulsion/Q3.v
 VFCS/Propulsion/Q4.v
 VFCS/Propulsion/ExtractThis.v
-
-# ====== Attitdue Represeation sub-system =======================================
-VFCS/AttitudeRepr/AttitudeRepr.v

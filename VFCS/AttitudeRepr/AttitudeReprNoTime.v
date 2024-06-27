@@ -3,7 +3,7 @@
   This file is part of VFCS. It is distributed under the MIT
   "expat license". You should have recieved a LICENSE file with it.
 
-  purpose   : Attitude Representation for FCS
+  purpose   : Attitude Representation for FCS (no time variable)
   author    : Zhengpu Shi
   date      : Mar, 2021
   
@@ -82,48 +82,49 @@ Section eulerAngles.
          得到的结果相同。
    *)
 
-  (* 相对于坐标系{e}的自身三个轴的单位向量，它们是由时间而定的向量值函数 *)
-  Definition b_b1 : R -> vec 3 := fun t => v3i.
-  Definition b_b2 : R -> vec 3 := fun t => v3j.
-  Definition b_b3 : R -> vec 3 := fun t => v3k.
+  (* 相对于坐标系{e}的自身三个轴的单位向量 *)
+  Definition b_b1 : vec 3 := v3i.
+  Definition b_b2 : vec 3 := v3j.
+  Definition b_b3 : vec 3 := v3k.
 
   (* 相对于坐标系{e}的自身三个轴的单位向量 *)
-  Definition e_e1 : R -> vec 3 := fun t => v3i.
-  Definition e_e2 : R -> vec 3 := fun t => v3j.
-  Definition e_e3 : R -> vec 3 := fun t => v3k.
+  Definition e_e1 : vec 3 := v3i.
+  Definition e_e2 : vec 3 := v3j.
+  Definition e_e3 : vec 3 := v3k.
 
   (* 坐标系{n}的y轴相对于{n}的单位向量 *)
-  Definition n_n2 : R -> vec 3 := fun t => v3j.
+  Definition n_n2 : vec 3 := v3j.
   (* 坐标系{k}的z轴相对于{k}的单位向量 *)
-  Definition k_k3 : R -> vec 3 := fun t => v3k.
+  Definition k_k3 : vec 3 := v3k.
 
   (* 设欧拉角(姿态角)如下 *)
-  Variable roll : R -> R.      (* 绕 x 轴旋转的滚转角 *)
-  Variable pitch : R -> R.     (* 绕 y 轴旋转的俯仰角 *)
-  Variable yaw : R -> R.       (* 绕 z 轴旋转的偏航角 *)
+  Variable roll : R.      (* 绕 x 轴旋转的滚转角 *)
+  Variable pitch : R.     (* 绕 y 轴旋转的俯仰角 *)
+  Variable yaw : R.       (* 绕 z 轴旋转的偏航角 *)
   Notation ϕ := roll. Notation θ := pitch. Notation ψ := yaw.
 
   (* 欧拉角的向量形式 *)
-  Let Φ : R -> vec 3 := fun t => l2v [ϕ t; θ t; ψ t].
+  Let Φ : vec 3 := l2v [ϕ; θ; ψ].
   (* 欧拉角变化率的向量形式 *)
-  Let dΦ : R -> vec 3 := fun t => l2v [ϕ ' t; θ ' t; ψ ' t].
+  ? 如果不用函数，则无法处理导数
+  Let dΦ : vec 3 := l2v [ϕ '; θ '; ψ '].
 
   (* 根据欧拉角的定义，{b}相对于{n}, {n}相对于{k}, {k}相对于{e} 的位姿如下 *)
-  Definition R_b2n : R -> smat 3 := fun t => Rx (ϕ t).
-  Definition R_n2k : R -> smat 3 := fun t => Ry (θ t).
-  Definition R_k2e : R -> smat 3 := fun t => Rz (ψ t).
+  Definition R_b2n : smat 3 := Rx (ϕ).
+  Definition R_n2k : smat 3 := Ry (θ).
+  Definition R_k2e : smat 3 := Rz (ψ).
 
   (* 由于每一次旋转都是绕物体坐标系，所以矩阵连乘符合右乘。
      所以，{b}相对{e}的位姿如下 *)
-  Definition R_b2e : R -> smat 3 := fun t => R_k2e t * R_n2k t * R_b2n t.
+  Definition R_b2e : smat 3 := R_k2e * R_n2k * R_b2n.
 
   (* 还能给出如下中间信息，在后面推导中会用到 *)
-  Definition R_n2b : R -> smat 3 := fun t => (R_b2n t)\T.
-  Definition R_k2n : R -> smat 3 := fun t => (R_n2k t)\T.
-  Definition R_k2b : R -> smat 3 := fun t => R_n2b t * R_k2n t.
-  Definition b_n2 : R -> vec 3 := fun t => R_n2b t *v n_n2 t.
-  Definition b_k3 : R -> vec 3 := fun t => R_k2b t *v k_k3 t.
-  Definition e_b3 : R -> vec 3 := fun t => R_b2e t *v b_b3 t.
+  Definition R_n2b : smat 3 := (R_b2n)\T.
+  Definition R_k2n : smat 3 := (R_n2k)\T.
+  Definition R_k2b : smat 3 := R_n2b * R_k2n.
+  Definition b_n2 : vec 3 := R_n2b *v n_n2.
+  Definition b_k3 : vec 3 := R_k2b *v k_k3.
+  Definition e_b3 : vec 3 := R_b2e *v b_b3.
 
   (* 我们可以给出 R_b2e 的实矩阵形式（无时间变量，无unicode字符）以便指导编程 *)
   Definition b2eMAT (roll pitch yaw : R) : smat 3 :=
@@ -157,7 +158,7 @@ Section eulerAngles.
    *)
 
   (* 设机体角速度在{b}中的表示如下，三个分量也记作 p,q,r *)
-  Variable b_angvx b_angvy b_angvz : R -> R.
+  Variable b_angvx b_angvy b_angvz : R.
   Notation b_ωx := b_angvx. Notation b_ωy := b_angvy. Notation b_ωz := b_angvz.
   Let b_angv (t : R) : vec 3 := l2v [b_ωx t; b_ωy t; b_ωz t].
   Notation b_ω := b_angv.
@@ -264,26 +265,26 @@ utop[1]> m2l 3 3 (b2eMAT 0.1 0.2 0.3);;
 (* 旋转矩阵导数和机体角速度之间的关系 *)
 Section derivRotMat_and_angv.
   (* 设机体角速度在{b}中的表示为 *)
-  Variable b_angv : R -> vec 3.
+  Variable b_angv : vec 3.
   Notation b_ω := b_angv.
 
   (* 设{b}相对于{e}的旋转矩阵为 *)
-  Variable Rb2e : R -> smat 3.
+  Variable Rb2e : smat 3.
   (* 旋转矩阵还要满足 SO(3) 的性质 *)
   Hypotheses Rb2e_SO3 : forall t, SOnP (Rb2e t).
   
   (* 机体角速度在 {e} 中的表示为 *)
-  Let e_ω : R -> vec 3 := fun t => Rb2e t *v b_ω t.
+  Let e_ω : vec 3 := Rb2e t *v b_ω t.
 
   (* 任意 {e} 中的向量 e_r 的导数满足如下关系式 *)
-  Axiom H_deriv_e_r : forall (e_r : R -> vec 3), vderiv e_r = fun t => e_ω t \x e_r t.
+  Axiom H_deriv_e_r : forall (e_r : vec 3), vderiv e_r = e_ω t \x e_r t.
   
   (* 反对称矩阵和叉乘有关的理论已经开发完毕，例如 *)
   (* Check v3cross_eq_skew_mul_vec. *)
   (* : forall a b : vec 3, a \x b = `| a |x *v b *)
 
   (* Rb2e的导数满足如下关系 *)
-  Lemma derivRb2e_eq_e_ω : mderiv Rb2e = fun t => skew3 (e_ω t) * Rb2e t.
+  Lemma derivRb2e_eq_e_ω : mderiv Rb2e = skew3 (e_ω t) * Rb2e t.
   Proof.
     rewrite mderiv_eq_vderiv_col.
     extensionality t. extensionality i. extensionality j.
@@ -292,7 +293,7 @@ Section derivRotMat_and_angv.
     
   (* 旋转矩阵的导数和机体角速度之间的关系如下，该关系式用于控制器的设计 *)
   Lemma derivRb2e_eq :
-    mderiv Rb2e = fun t => Rb2e t * skew3 (b_ω t).
+    mderiv Rb2e = Rb2e t * skew3 (b_ω t).
   Proof.
     rewrite derivRb2e_eq_e_ω.
     (* 证明 (skew3 [e_ω]) * Rb2e = Rb2e * skew3 [b_ω]
@@ -322,11 +323,11 @@ Section derivQuat_and_angv.
 
   (* 四元数函数的导数，也就是向量的导数。见 vderiv *)
 
-  (* 设 {e} 相对于 {b} 的四元数如下。注意，不是 {b} 相对于 {e} *)
-  Variable q_e2b : R -> quat.
+  (* 设 {e} 相对于 {b} 的四元数如下，它随时间而变化。注意，不是 {b} 相对于 {e} *)
+  Variable q_e2b : quat.
   
   (* 设机体角速度在{b}中的表示如下 *)
-  Variable b_angv : R -> vec 3.
+  Variable b_angv : vec 3.
   Notation b_ω := b_angv.
   (* 假设角速度向量非零 *)
   Hypotheses H_b_ω_neq0 : forall t, b_ω t <> vzero.
@@ -334,7 +335,7 @@ Section derivQuat_and_angv.
   (* 推导从 t 到 t + Δt 而发生微小摄动时的四元数变化 *)
   Section deltaQuat.
     (* 任意的四元数函数 *)
-    Variable q : R -> quat.
+    Variable q : quat.
     (* 任意小的时间间隔 *)
     Variable deltaT : R.
     Notation Δt := deltaT.
@@ -463,13 +464,13 @@ Section derivQuat_and_angv.
 
   (* 可以给出 W 分量 和 Im 分量的导数形式 *)
 
-  Let q0 := fun t => (q_e2b t).W.
-  Let qv := fun t => (q_e2b t).Im.
+  Let q0 := (q_e2b t).W.
+  Let qv := (q_e2b t).Im.
 
   (** 四元数W分量q0的导数与机体角速度b_ω的关系 *)
   Lemma derivQuat_W_eq :
     (forall t h : R, is_small ((||b_ω t||) * h / 2)) ->
-    q0 ' = fun t => <((-(1/2))%R s* qv t)%V, b_ω t>.
+    q0 ' = <((-(1/2))%R s* qv t)%V, b_ω t>.
   Proof.
     intros. unfold q0,qv.
     pose proof (derivQuat_eq). rewrite fun_eq_iff_forall_eq in H0.
@@ -482,7 +483,7 @@ Section derivQuat_and_angv.
   (** 四元数Im分量qv的导数与机体角速度b_ω的关系 *)
   Lemma derivQuat_Im_eq :
     (forall t h : R, is_small ((||b_ω t||) * h / 2)) ->
-    vderiv qv = fun t => ((1/2) s* (q0 t s* mat1 + skew3 (qv t))) *v (b_ω t).
+    vderiv qv = ((1/2) s* (q0 t s* mat1 + skew3 (qv t))) *v (b_ω t).
   Proof.
     intros. unfold q0,qv.
     pose proof (derivQuat_eq). rewrite fun_eq_iff_forall_eq in H0.
