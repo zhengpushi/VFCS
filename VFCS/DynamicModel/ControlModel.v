@@ -9,24 +9,20 @@
 
   reference : 
   1. Introduction to Multicopter Design and Control, QuanQuan, 2017
+
+  remark    :
+  1. 螺旋桨产生的反扭力矩，也称旋转力矩，简称力矩
+     力矩方向一般假设为平行于飞机所在平面，垂直于机臂
+     物体受力后旋转的物理量，τ = F × d
  *)
 
-Require Export MulticopterConfig.
+Require Export PS.
 Require Export AttitudeRepr.
 
 Open Scope R_scope.
 Open Scope mat_scope.
 Open Scope vec_scope.
 
-(** [∑_(j=0)^k {f(j)}].i = ∑_(j=0)^k {[f (j)].i} *)
-Lemma vnth_seqsum_vadd : forall (n : nat) (f : nat -> vec n) (k : nat) (i : 'I_n),
-    (@seqsum _ vadd vzero k f) i = (@seqsum _ Rplus 0 k (fun x => f x i)).
-Proof.
-  intros. induction k; simpl; auto. unfold seqsum in *.
-  rewrite seqsumAux_rebase. symmetry. rewrite seqsumAux_rebase.
-  rewrite !vnth_vadd. rewrite IHk. auto.
-Qed.
-               
 
 (* ######################################################################### *)
 (** * 多旋翼飞行控制刚体模型 *)
@@ -52,7 +48,7 @@ Section RigidKinematicsModel.
   Let b_angv (t : R) : vec 3 := l2v [b_ωx t; b_ωy t; b_ωz t].
   Notation b_ω := b_angv.
 
-  (** 欧拉角模型 *)
+  (** *** 欧拉角模型 *)
   Section eulerMODEL.
 
     (** 假设欧拉角（姿态角）*)
@@ -86,7 +82,7 @@ Section RigidKinematicsModel.
     Qed.
   End eulerMODEL.
 
-  (** 旋转矩阵模型 *)
+  (** *** 旋转矩阵模型 *)
   Section matrixMODEL.
 
     (** 给定旋转矩阵 *)
@@ -99,7 +95,7 @@ Section RigidKinematicsModel.
     Proof. intros. apply derivRb2e_eq; auto. Qed.
   End matrixMODEL.
 
-  (** 四元数模型 *)
+  (** *** 四元数模型 *)
   Section quatMODEL.
     (** 假设 {e}相对于{b} 的四元数 *)
     Variable q_e2b : R -> quat.
@@ -134,7 +130,7 @@ Section RigidDynamicsModel.
   Let b_angv (t : R) : vec 3 := l2v [b_ωx t; b_ωy t; b_ωz t].
   Notation b_ω := b_angv.
 
-  (** 位置动力学模型，即速度的导数、姿态角、拉力之间的关系 *)
+  (** *** 位置动力学模型，即速度的导数、姿态角、拉力之间的关系 *)
   Section Position.
 
     (** 假设 {b} 相对于 {e} 的旋转矩阵为 *)
@@ -216,7 +212,7 @@ Section RigidDynamicsModel.
 
   End Position.
 
-  (** 姿态动力学模型 *)
+  (** *** 姿态动力学模型 *)
   Section Pose.
 
     (** 假设螺旋桨在机体轴上产生的力矩(propeller torque) 在{b}下的表示如下 *)
@@ -226,20 +222,20 @@ Section RigidDynamicsModel.
     Notation b_τ := b_torqP.
 
     (** 假设第i个螺旋桨在t时刻的角速度 (rad/s) *)
-    Variable propAngv : R -> nat -> R.
+    Variable propAngv : nat -> R -> R.
     Notation ϖ := propAngv.
 
     (** 机体z轴在{b}中的表示 *)
     Let b_b3 : R -> vec 3 := fun t => v3k.
 
     (** 第i个螺旋桨产生的陀螺力矩(gyroscopic torques)，其符号与螺旋桨的旋转方向有关 *)
-    Definition gyroTorqueOne (t : R) (i : nat) : vec 3 :=
-      (Config.JRP * rotDir2val i * propAngv t i)%R s* (b_b3 t \x b_ω t).
+    Definition gyroTorqueOne (i : nat) (t : R) : vec 3 :=
+      (Config.JRP * rotDir2val i * propAngv i t)%R s* (b_b3 t \x b_ω t).
 
     (** 单个螺旋桨的陀螺力矩的等价形式。包括：展开 b_b3，并交换叉乘顺序等 *)
-    Lemma gyroTorqueOne_eq : forall (t : R) (i : nat),
-        gyroTorqueOne t i =
-          (Config.JRP * propAngv t i * rotDir2val (S i))%R s* (b_ω t \x v3k).
+    Lemma gyroTorqueOne_eq : forall (i : nat) (t : R),
+        gyroTorqueOne i t =
+          (Config.JRP * propAngv i t * rotDir2val (S i))%R s* (b_ω t \x v3k).
     Proof.
       intros. unfold gyroTorqueOne. rewrite v3cross_anticomm.
       rewrite vscal_vopp. rewrite <- vscal_opp. unfold b_b3. f_equal.
@@ -253,7 +249,7 @@ Section RigidDynamicsModel.
 
     (** 所有的旋翼陀螺力矩 *)
     Definition gyroTorque (t : R) (n : nat) : vec 3 :=
-      @seqsum _ vadd vzero n (gyroTorqueOne t).
+      @seqsum _ vadd vzero n (fun i => gyroTorqueOne i t).
 
     (** 当前配置下的所有的旋翼陀螺力矩 *)
     Let Gall : R -> vec 3 := fun t => gyroTorque t Config.rotorCountNat.
@@ -263,10 +259,11 @@ Section RigidDynamicsModel.
     (** 在 xb 方向的陀螺力矩 *)
     Lemma gyroTorque_x : forall t n,
         (gyroTorque t n).1 =
-          @seqsum _ Rplus 0 n (fun i => Config.JRP * b_ωy t * rotDir2val (S i) * ϖ t i)%R.
+          @seqsum _ Rplus 0 n
+            (fun i => Config.JRP * b_ωy t * rotDir2val (S i) * ϖ i t)%R.
     Proof.
-      intros. unfold gyroTorque.
-      rewrite vnth_seqsum_vadd. f_equal. extensionality i.
+      intros. unfold gyroTorque. rewrite vnth_seqsum_vadd.
+      f_equal. extensionality i.
       rewrite gyroTorqueOne_eq. rewrite angv_cross_v3k_eq.
       rewrite vnth_vscal. rewrite vnth_l2v. simpl.
       autounfold with tA. ring.
@@ -275,7 +272,7 @@ Section RigidDynamicsModel.
     (** 在 yb 方向的陀螺力矩 *)
     Lemma gyroTorque_y : forall t n,
         (gyroTorque t n).2 =
-          @seqsum _ Rplus 0 n (fun i => Config.JRP * b_ωx t * rotDir2val i * ϖ t i)%R.
+          @seqsum _ Rplus 0 n (fun i => Config.JRP * b_ωx t * rotDir2val i * ϖ i t)%R.
     Proof.
       intros. unfold gyroTorque.
       rewrite vnth_seqsum_vadd. f_equal. extensionality i.
@@ -303,9 +300,10 @@ Section RigidDynamicsModel.
 End RigidDynamicsModel.
 
 
-(** 多旋翼飞行控制刚体模型，由刚体运动学模型和刚体动力学模型联立后得到 *)
+(* ======================================================================= *)
+(** ** 多旋翼飞行控制刚体模型，由刚体运动学模型和刚体动力学模型联立后得到 *)
 
-(** 欧拉角表示下的模型 *)
+(** *** 欧拉角表示下的模型 *)
 Module EulerRigidModel.
 
   Section euler.
@@ -327,7 +325,7 @@ Module EulerRigidModel.
     Hypotheses f_ge0 : forall t, 0 <= f t. (* 拉力非负 *)
 
     (** 假设第i个螺旋桨在t时刻的角速度 (rad/s) *)
-    Variable propAngv : R -> nat -> R.
+    Variable propAngv : nat -> R -> R.
     Notation ϖ := propAngv.
 
     (** 假设螺旋桨在机体轴上产生的力矩(propeller torque) 在{b}下的表示如下 *)
@@ -376,7 +374,7 @@ Module EulerRigidModel.
   End euler.
 End EulerRigidModel.
 
-(** 旋转矩阵表示下的模型 *)
+(** *** 旋转矩阵表示下的模型 *)
 Module MatrixRigidModel.
 
   Section matrix.
@@ -398,7 +396,7 @@ Module MatrixRigidModel.
     Hypotheses f_ge0 : forall t, 0 <= f t. (* 拉力非负 *)
 
     (** 假设第i个螺旋桨在t时刻的角速度 (rad/s) *)
-    Variable propAngv : R -> nat -> R.
+    Variable propAngv : nat -> R -> R.
     Notation ϖ := propAngv.
 
     (** 假设螺旋桨在机体轴上产生的力矩(propeller torque) 在{b}下的表示如下 *)
@@ -439,7 +437,7 @@ Module MatrixRigidModel.
   End matrix.
 End MatrixRigidModel.
 
-(** 四元数表示下的模型 *)
+(** *** 四元数表示下的模型 *)
 Module QuatRigidModel.
 
   Section quat.
@@ -461,7 +459,7 @@ Module QuatRigidModel.
     Hypotheses f_ge0 : forall t, 0 <= f t. (* 拉力非负 *)
 
     (** 假设第i个螺旋桨在t时刻的角速度 (rad/s) *)
-    Variable propAngv : R -> nat -> R.
+    Variable propAngv : nat -> R -> R.
     Notation ϖ := propAngv.
 
     (** 假设螺旋桨在机体轴上产生的力矩(propeller torque) 在{b}下的表示如下 *)
@@ -517,3 +515,122 @@ Module QuatRigidModel.
     Proof. apply derivQuat_Im_eq; auto. Qed.
   End quat.
 End QuatRigidModel.
+
+
+(* ######################################################################### *)
+(** * 控制效率模型 *)
+
+
+(* ======================================================================= *)
+(** ** 单个螺旋桨的拉力和反扭力矩模型 *)
+(* 拉力和反扭矩的原理：
+   参考：
+   https://www.askpure.com/course_7SR7K4NZ-V5DGOW2H-Q5OXGY5H-JJB712HG.html
+   https://www.wrjzx.com/214i4.html
+
+   1. 多旋翼的动力系来源于高速电机带动螺旋桨转动而产生的拉力。
+   2. 假设电机带动螺旋桨顺时针运动，由于桨叶螺距对空气作用的效果会产生一个向下的推力与
+      水平方向的推力。（无论叶片怎么摆放，或旋转方向如何，推力总是z轴负方向）
+   3. 向下的推力是桨对空气的作用力，根据反作用力原理，空气就会对桨产生一个向上的推力。
+      这就是空气对桨进而作用到机身垂直方向的拉力。
+   4. 而水平方向对空气的推力同样会产生一个空气对桨的反作用力，方向与作用力相反，其
+      作用到多旋翼的轴臂上，就产生了我们所说的反扭力，也称反扭力矩。
+
+   总结：
+   1. 拉力：由于螺旋桨旋转带动空气并反作用于机身的拉力，永远垂直于zb轴负方向。
+      记作 T
+   2. 反扭力矩：由于螺旋桨旋转带动空气并反作用于机身的反转力矩。
+      记作 M
+ *)
+Section onePropellerControlModel.
+  (** 假设单个螺旋桨在t时刻的旋转角速度(rad/s) *)
+  Variable propAngv : R -> R.
+  Notation ϖ := propAngv.
+
+  (** *** 螺旋桨拉力的模型 *)
+
+  (** 单个螺旋桨在t时刻产生的拉力(N) *)
+  Definition onePropThrust (t : R) : R := (Config.c_T * (ϖ t * ϖ t))%R.
+  Notation T := onePropThrust.
+
+  (** 验证此处的定义与PS中的理论一致 *)
+  Lemma onePropThrust_spec : forall t, T t = PSTheory.get_T_by_propAngv (ϖ t).
+  Proof. intros. auto. Qed.
+
+  (** 螺旋桨反扭矩模型有两个：
+     1. 静态模型：多旋翼在无风情况下悬停时
+     2. 动态模型：包括了动态分量 *)
+
+  (** 静态模型：单个螺旋桨在t时刻产生的反扭力矩(N.m) *)
+  Definition onePropTorque (t : R) : R := (Config.c_M * (ϖ t * ϖ t))%R.
+  Notation M := onePropTorque.
+
+  (** 验证此处的定义与PS中的理论一致 *)
+  Lemma onePropTorque_spec : forall t, M t = PSTheory.get_M_by_propAngv (ϖ t).
+  Proof. intros. auto. Qed.
+
+  (** 动态模型：单个螺旋桨在t时刻产生的反扭力矩(N.m) *)
+  Definition onePropTorqueDynamic (t : R) : R :=
+    (Config.c_M * (ϖ t * ϖ t) + Config.JRP * (ϖ ' t))%R.
+
+  (* ToDo: 上述定义来自公式 6.19，没有做进一步研究 *)
+    
+End onePropellerControlModel.
+
+
+(* ======================================================================= *)
+(** ** 拉力和力矩模型（整体，而非单个螺旋桨） *)
+
+(** ** 十字形四旋翼的拉力力矩模型 *)
+Module PQuadThrustTorque.
+  Section thrust_torque.
+    (** 各螺旋桨的转速 (rad/s) *)
+    Variable propAngv : R -> vec 4.
+    Notation ϖ1 := (fun t => (propAngv t).1).
+    Notation ϖ2 := (fun t => (propAngv t).2).
+    Notation ϖ3 := (fun t => (propAngv t).3).
+    Notation ϖ4 := (fun t => (propAngv t).4).
+
+    (* 无人机固有参数的一些缩写，为了简化输入 *)
+    Let c_T := Config.c_T.
+    Let c_M := Config.c_M.
+    Let d := Config.d.
+
+    (** 作用在该旋翼上的总拉力 *)
+    Definition thrust (t : R) : R :=
+      (c_T * ((ϖ1 t)² + (ϖ2 t)² + (ϖ3 t)² + (ϖ4 t)²))%R.
+
+    (** f = ∑T_i *)
+    Lemma thrust_spec : forall t,
+        thrust t = vsum (fun i => onePropThrust (fun x => propAngv x i) t).
+    Proof. intros. unfold thrust, onePropThrust. v2e (propAngv t). cbv. ra. Qed.
+
+    (* 各个桨的旋转对机体力矩的贡献
+       桨1逆时针转，产生顺时针的反作用力，使飞行器顺时针转，升力使y轴正转
+       桨2顺时针转，产生逆时针的反作用力，使飞行器逆时针转，升力使x轴反转
+       桨3逆时针转，产生顺时针的反作用力，使飞行器顺时针转，升力使y轴反转
+       桨4顺时针转，产生逆时针的反作用力，使飞行器逆时针转，升力使x轴正转 *)
+
+    (** 螺旋桨在xb轴上产生的滚转力矩 *)
+    Definition torquex (t : R) := (d * c_T * (- (ϖ2 t)² + (ϖ4 t)²))%R.
+    (** 螺旋桨在yb轴上产生的俯仰力矩 *)
+    Definition torquey (t : R) := (d * c_T * ((ϖ1 t)² - (ϖ3 t)²))%R.
+    (** 螺旋桨在zb轴上产生的偏航力矩 *)
+    Definition torquez (t : R) :=
+      (d * c_M * ((ϖ1 t)² - (ϖ2 t)² + (ϖ3 t)² - (ϖ2 4)²))%R.
+
+    (** 合并拉力和力矩，构造统一的控制效率模型矩阵 *)
+    Definition controlEffectMat : smat 4 :=
+      l2m [[c_T; c_T; c_T; c_T];
+           [0; - d * c_T; 0; d * c_T];
+           [d * c_T; 0; - d * c_T; 0];
+           [c_M; - c_M; c_M; - c_M]]%R.
+
+    ?验证
+  End thrust_torque.
+End PQuadThrustTorque.
+
+Section thrust_and_torque.
+  
+
+End thrust_and_torque.

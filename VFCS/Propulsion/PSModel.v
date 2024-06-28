@@ -16,7 +16,7 @@
      * better OCaml code extraction, because we will use float number "0.0065", 
        instead of constructed Q type (too complex and inefficient)
      * Constant value is irrelevance to the proof, we usually needn't to unfold it
-
+  2. 模型层面，不需要处理时间问题。在具体应用中才要带上时间变量。
 *)
 
 
@@ -32,7 +32,7 @@ Require Export RAux.
 (** 飞行器状态 *)
 Inductive PlaneState : Set :=
   | Hovering    (* 悬停中 *)
-  | FlatFlying  (* 平飞，即推力、俯仰角和重力满足一定关系 *)
+  | FlatFlying  (* 平飞，即拉力、俯仰角和重力满足一定关系 *)
   | Other       (* 其他 *)
   .
 
@@ -111,8 +111,9 @@ Parameter lambda : R.        (* 螺旋桨修正系数，单位：无 *)
 Parameter T : R.             (* 螺旋桨拉力，单位：N *)
 Parameter M : R.             (* 螺旋桨扭矩，单位：N.m *)
 Parameter N : R.             (* 螺旋桨转速，单位：r/min *)
+Parameter propAngv : R.            (* 螺旋桨旋转角速度，单位：rad/s *)
 Parameter C_d_MODEL : R.           (* 叶片截面翼型的阻力系数，单位：无 *)
-Parameter C_T_MODEL : R.           (* 推力系数, 单位：无 *)
+Parameter C_T_MODEL : R.           (* 拉力系数, 单位：无 *)
 Parameter C_M_MODEL : R.           (* 扭矩系数，单位：无 *)
 Parameter S_sa : R.          (* 桨叶面积，单位：m² *)
 Parameter W : R.             (* 桨叶上的来流速度，单位：m/s *)
@@ -120,11 +121,15 @@ Parameter L : R.             (* 叶片升力，单位：N *)
 Parameter zeta : R.          (* zeta，单位：无 *)
 Parameter gamma : R.         (* 下洗气流引起的阻升角，单位：rad *)
 Parameter delta : R.         (* 下洗效应修正角，单位：rad*)
+(* 拉力常数和扭矩常数，虽然依靠实验得到，但它的一个解析形式仍然值得验证 *)
+Parameter c_T : R.           (* 简化的拉力常数, 单位：无，见6.1.3节 *)
+Parameter c_M : R.           (* 简化的扭矩常数，单位：无，见6.1.3节 *)
 
 (** ** Predication for parameters checking *)
 Definition is_T r := T = r.
 Definition is_M r := M = r.
 Definition is_N r := N = r.
+Definition is_propAngv r := propAngv = r.
 Definition is_C_T r := C_T_MODEL = r.
 Definition is_C_M r := C_M_MODEL = r.
 Definition is_D_p r := D_p = r.
@@ -150,6 +155,8 @@ Definition is_L r := L = r.
 Definition is_zeta r := zeta = r.
 Definition is_gamma r := gamma = r.
 Definition is_delta r := delta = r.
+Definition is_c_T r := c_T = r.
+Definition is_c_M r := c_M = r.
 
 (** ** Expand Auto DB *)
 Global Hint Unfold
@@ -208,6 +215,20 @@ Global Hint Resolve
 
 (** ** Acceptted Theories *)
 
+(** 6.16 螺旋桨旋转角速度(rad/s)与螺旋桨转速(rpm)的转换 *)
+Axiom propAngv_by_N : propAngv = (N * 2 * PI) / 60.
+
+Lemma N_by_propAngv : N = (propAngv * 60) / (2 * PI).
+Proof. rewrite propAngv_by_N. ra. Qed.
+
+(** 0 < N -> 0 < propAngv *)
+Lemma N_gt0_imply_propAngv_gt0 : 0 < N -> 0 < propAngv.
+Proof. intros. rewrite propAngv_by_N. gt0. Qed.
+
+(** 0 < propAngv -> 0 < N *)
+Lemma propAngv_gt0_imply_N_gt0 : 0 < propAngv -> 0 < N.
+Proof. intros. rewrite N_by_propAngv. gt0. Qed.
+
 (** 4.1 螺旋桨拉力计算模型 *)
 Axiom T_def1 : T = C_T_MODEL * rho_MODEL * (N / 60)² * (D_p ^ 4).
 
@@ -256,9 +277,16 @@ Axiom gamma_def : gamma = atan (C_d_MODEL / C1).
 (** p79 下洗效应修正角可以忽略 *)
 Axiom delta_def : delta = 0.
 
+(** p112 简化的拉力系数的定义 *)
+Axiom c_T_def : c_T = 1 / (4 * PI * PI) * rho_MODEL * (D_p ^ 4) * C_T_MODEL.
+
+(** p112 简化的扭矩系数的定义 *)
+Axiom c_M_def : c_M = 1 / (4 * PI * PI) * rho_MODEL * (D_p ^ 5) * C_M_MODEL.
+
 Hint Rewrite
   theta_p_def phi0_def alpha_def alpha_ab_def
   A_def C1_def C_d_def S_sa_def L_def gamma_def delta_def W_def
+  c_T_def c_M_def
   (* get_T_by_N T_def2 get_M_by_N M_def2 *)
   : fcs.
 

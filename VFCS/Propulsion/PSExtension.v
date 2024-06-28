@@ -88,6 +88,12 @@ Hint Resolve zero_lt_C_d : fcs.
 
 #[global] Opaque C_d.
 
+(** 可证明 C_T_MODEL 的等价形式 *)
+Fact C_T_MODEL_eq : 0 < N -> C_T_MODEL = L / (rho * ((N / 60)² * D_p ^ 4)).
+Proof.
+  intros. rewrite <- T_by_L; auto with fcs.
+  rewrite T_def1. rewrite rho_ok. field. neq0.
+Qed.
 
 (** 螺旋桨拉力系数公式。4.6, 4.56 *)
 Definition C_T :=
@@ -96,15 +102,8 @@ Definition C_T :=
 
 Theorem C_T_ok : 0 < N -> is_C_T C_T.
 Proof.
-  fill_params C_T.
-  (* 构造另一个 C_T 的表达式 *)
-  assert (T = L) as H10. { apply T_by_L. auto with fcs. }
-  rewrite T_def1 in H10. repeat rewrite Rmult_assoc in H10.
-  assert (C_T_MODEL = L / (rho * ((N / 60)² * D_p ^ 4))) as H11.
-  { rewrite <- H10. rewrite rho_ok;auto. field. neq0. }
-  (* 构造完毕 *)
-  rewrite H11. autorewrite with fcs. compute.
-  rewrite rho_ok. field. neq0.
+  fill_params C_T. rewrite C_T_MODEL_eq; auto.
+  autorewrite with fcs. compute. rewrite rho_ok. field. neq0.
 Qed.
 
 (* Global Hint Resolve C_T_ok : fcs. *)
@@ -119,20 +118,18 @@ Qed.
 Hint Resolve zero_le_C_T : fcs.
 #[global] Opaque C_T.
 
+(** 可证明 C_M_MODEL 的等价形式 *)
+Fact C_M_MODEL_eq : 0 < N -> C_M_MODEL = M / (rho * ((N / 60)² * D_p ^ 5)).
+Proof. intros. rewrite M_def1. rewrite rho_ok. field. neq0. Qed.
+
 (** 螺旋桨转矩系数公式。4.6, 4.56 *)
 Definition C_M := (1 / (8 * A)) * PI² * C_d * zeta² * lambda * B_p².
   
 (* 为何产生了 0 < N 的这个条件 ？ *)
 Theorem C_M_ok : 0 < N -> is_C_M C_M.
 Proof.
-  fill_params C_M. rewrite <- C_d_ok.
-  (* 同理，需要构造 C_M 的一个中间表达式，再证明二者相等 *)
-  assert (M = M) as H10; auto.
-  rewrite M_def1 in H10 at 1. repeat rewrite Rmult_assoc in H10.
-  assert (C_M_MODEL = M / (rho * ((N / 60)² * D_p ^ 5))) as H11.
-  { rewrite <- H10. rewrite rho_ok. field. neq0. }
-  (* 构造完毕 *)
-  rewrite H11. rewrite M_def2. autorewrite with fcs.
+  fill_params C_M. rewrite <- C_d_ok. rewrite C_M_MODEL_eq; auto.
+  rewrite M_def2. autorewrite with fcs.
   rewrite rho_ok. compute. field. neq0.
 Qed.
 
@@ -160,6 +157,22 @@ Proof.
   rewrite <- rho_ok; auto.
 Qed.
 
+(** 由螺旋桨旋转角速度计算螺旋桨拉力 *)
+Definition get_T_by_propAngv propAngv' := c_T * (propAngv' * propAngv').
+
+Theorem get_T_by_propAngv_ok propAngv' :
+  0 < propAngv' ->
+  is_propAngv propAngv' ->
+  is_T (get_T_by_propAngv propAngv').
+Proof.
+  intros. pose proof (get_T_by_N_ok N). unfold is_propAngv, is_T, is_N in *.
+  rewrite N_by_propAngv in H1. unfold get_T_by_N, get_T_by_propAngv in *.
+  rewrite c_T_def. subst. rewrite H1; auto.
+  - rewrite rho_ok. rewrite C_T_ok; auto. ra.
+    apply propAngv_gt0_imply_N_gt0; auto.
+  - gt0.
+Qed.
+
 (** 由螺旋桨转速计算螺旋桨扭矩 *)
 Definition get_M_by_N (N' : R) := C_M * rho * (N' / 60)² * (D_p ^ 5).
 
@@ -170,6 +183,22 @@ Theorem get_M_by_N_ok N' :
 Proof.
   fill_params get_M_by_N. rewrite M_def1. rewrite rho_ok.
   rewrite C_M_ok; auto. 
+Qed.
+
+(** 由螺旋桨旋转角速度计算螺旋桨扭矩 *)
+Definition get_M_by_propAngv propAngv' := c_M * (propAngv' * propAngv').
+
+Theorem get_M_by_propAngv_ok propAngv' :
+  0 < propAngv' ->
+  is_propAngv propAngv' ->
+  is_M (get_M_by_propAngv propAngv').
+Proof.
+  intros. pose proof (get_M_by_N_ok N). unfold is_propAngv, is_M, is_N in *.
+  rewrite N_by_propAngv in H1. unfold get_M_by_N, get_M_by_propAngv in *.
+  rewrite c_M_def. subst. rewrite H1; auto.
+  - rewrite rho_ok. rewrite C_M_ok; auto. ra.
+    apply propAngv_gt0_imply_N_gt0; auto.
+  - gt0.
 Qed.
 
 (** 由螺旋桨拉力计算螺旋桨转速 *)
