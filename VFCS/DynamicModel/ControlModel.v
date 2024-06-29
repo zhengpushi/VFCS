@@ -520,7 +520,6 @@ End QuatRigidModel.
 (* ######################################################################### *)
 (** * 控制效率模型 *)
 
-
 (* ======================================================================= *)
 (** ** 单个螺旋桨的拉力和反扭力矩模型 *)
 (* 拉力和反扭矩的原理：
@@ -581,9 +580,15 @@ End onePropellerControlModel.
 (* ======================================================================= *)
 (** ** 拉力和力矩模型（整体，而非单个螺旋桨） *)
 
-(** ** 十字形四旋翼的拉力力矩模型 *)
+(** *** 十字形四旋翼的拉力力矩模型 *)
 Module PQuadThrustTorque.
+  Open Scope R_scope.
   Section thrust_torque.
+    (** 无人机全局固有参数的缩写，为了简化输入 *)
+    Let c_T := Config.c_T.
+    Let c_M := Config.c_M.
+    Let d := Config.d.
+
     (** 各螺旋桨的转速 (rad/s) *)
     Variable propAngv : R -> vec 4.
     Notation ϖ1 := (fun t => (propAngv t).1).
@@ -591,14 +596,9 @@ Module PQuadThrustTorque.
     Notation ϖ3 := (fun t => (propAngv t).3).
     Notation ϖ4 := (fun t => (propAngv t).4).
 
-    (* 无人机固有参数的一些缩写，为了简化输入 *)
-    Let c_T := Config.c_T.
-    Let c_M := Config.c_M.
-    Let d := Config.d.
-
     (** 作用在该旋翼上的总拉力 *)
     Definition thrust (t : R) : R :=
-      (c_T * ((ϖ1 t)² + (ϖ2 t)² + (ϖ3 t)² + (ϖ4 t)²))%R.
+      c_T * ((ϖ1 t)² + (ϖ2 t)² + (ϖ3 t)² + (ϖ4 t)²).
 
     (** f = ∑T_i *)
     Lemma thrust_spec : forall t,
@@ -606,31 +606,201 @@ Module PQuadThrustTorque.
     Proof. intros. unfold thrust, onePropThrust. v2e (propAngv t). cbv. ra. Qed.
 
     (* 各个桨的旋转对机体力矩的贡献
-       桨1逆时针转，产生顺时针的反作用力，使飞行器顺时针转，升力使y轴正转
-       桨2顺时针转，产生逆时针的反作用力，使飞行器逆时针转，升力使x轴反转
-       桨3逆时针转，产生顺时针的反作用力，使飞行器顺时针转，升力使y轴反转
-       桨4顺时针转，产生逆时针的反作用力，使飞行器逆时针转，升力使x轴正转 *)
+       桨1,3逆时针转，产生顺时针的反作用力，使飞行器顺时针转；
+       桨2,4顺时针转，产生逆时针的反作用力，使飞行器逆时针转；
+       桨1的升力使x轴反转，力臂为d，力矩使z轴正转
+       桨2的升力使y轴正转，力臂为d，力矩使z轴反转
+       桨4的升力使y轴反转，力臂为d，力矩使z轴正转
+       桨4的升力使x轴正转，力臂为d，力矩使z轴反转 *)
 
     (** 螺旋桨在xb轴上产生的滚转力矩 *)
-    Definition torquex (t : R) := (d * c_T * (- (ϖ2 t)² + (ϖ4 t)²))%R.
+    Definition torquex (t : R) := d * c_T * (- (ϖ2 t)² + (ϖ4 t)²).
     (** 螺旋桨在yb轴上产生的俯仰力矩 *)
-    Definition torquey (t : R) := (d * c_T * ((ϖ1 t)² - (ϖ3 t)²))%R.
+    Definition torquey (t : R) := d * c_T * ((ϖ1 t)² - (ϖ3 t)²).
     (** 螺旋桨在zb轴上产生的偏航力矩 *)
     Definition torquez (t : R) :=
-      (d * c_M * ((ϖ1 t)² - (ϖ2 t)² + (ϖ3 t)² - (ϖ2 4)²))%R.
+      c_M * ((ϖ1 t)² - (ϖ2 t)² + (ϖ3 t)² - (ϖ4 t)²).
+    Notation τx := torquex.
+    Notation τy := torquey.
+    Notation τz := torquez.
 
-    (** 合并拉力和力矩，构造统一的控制效率模型矩阵 *)
-    Definition controlEffectMat : smat 4 :=
+    (* 合并拉力和力矩，构造统一的控制效率模型矩阵 *)
+
+    (** 拉力和力矩构成的向量 [f;τx;τy;τz] *)
+    Definition thrustTorque (t : R) : vec 4 := l2v [thrust t; τx t; τy t; τz t].
+    (** 螺旋桨旋转角速度平方的向量 [ϖ1²;ϖ2²;ϖ3²;ϖ4²] *)
+    Definition propAngvSquare (t : R) : vec 4 :=
+      l2v [(ϖ1 t)²; (ϖ2 t)²; (ϖ3 t)²; (ϖ4 t)²].
+    (** 由螺旋桨旋转角速度计算拉力和力矩的控制效率矩阵  *)
+    Definition controlMat : smat 4 :=
       l2m [[c_T; c_T; c_T; c_T];
            [0; - d * c_T; 0; d * c_T];
            [d * c_T; 0; - d * c_T; 0];
-           [c_M; - c_M; c_M; - c_M]]%R.
+           [c_M; - c_M; c_M; - c_M]].
 
-    ?验证
+    (** 控制效率模型 *)
+    Lemma thrustTorque_eq : forall t, thrustTorque t = controlMat *v propAngvSquare t.
+    Proof.
+      intros. unfold thrustTorque, controlMat, propAngvSquare.
+      unfold thrust, torquex, torquey, torquez. v2e (propAngv t). veq; try lra.
+    Qed.
   End thrust_torque.
 End PQuadThrustTorque.
 
-Section thrust_and_torque.
-  
+(** *** X字形四旋翼的拉力力矩模型 *)
+Module XQuadThrustTorque.
+  Open Scope R_scope.
+  Section thrust_torque.
+    (** 无人机全局固有参数的缩写，为了简化输入 *)
+    Let c_T := Config.c_T.
+    Let c_M := Config.c_M.
+    Let d := Config.d.
 
-End thrust_and_torque.
+    (** 各螺旋桨的转速 (rad/s) *)
+    Variable propAngv : R -> vec 4.
+    Notation ϖ1 := (fun t => (propAngv t).1).
+    Notation ϖ2 := (fun t => (propAngv t).2).
+    Notation ϖ3 := (fun t => (propAngv t).3).
+    Notation ϖ4 := (fun t => (propAngv t).4).
+
+    (** 作用在该旋翼上的总拉力 *)
+    Definition thrust (t : R) : R :=
+      c_T * ((ϖ1 t)² + (ϖ2 t)² + (ϖ3 t)² + (ϖ4 t)²).
+
+    (** f = ∑T_i *)
+    Lemma thrust_spec : forall t,
+        thrust t = vsum (fun i => onePropThrust (fun x => propAngv x i) t).
+    Proof. intros. unfold thrust, onePropThrust. v2e (propAngv t). cbv. ra. Qed.
+
+    (* 各个桨的旋转对机体力矩的贡献
+       桨1,3逆时针转，产生顺时针的反作用力，使飞行器顺时针转；
+       桨2,4顺时针转，产生逆时针的反作用力，使飞行器逆时针转；
+       桨1的升力使x轴正转，y轴正转，力臂为 (√2/2)*d，力矩使z轴正转
+       桨2的升力使x轴反转，y轴正转，力臂为 (√2/2)*d，力矩使z轴反转
+       桨3的升力使x轴反转，y轴反转，力臂为 (√2/2)*d，力矩使z轴正转
+       桨4的升力使x轴正转，y轴反转，力臂为 (√2/2)*d，力矩使z轴反转 *)
+                        
+    (** 螺旋桨在xb轴上产生的滚转力矩 *)
+    Definition torquex (t : R) :=
+      (sqrt 2) / 2 * d * c_T * ((ϖ1 t)² - (ϖ2 t)² - (ϖ3 t)² + (ϖ4 t)²).
+    (** 螺旋桨在yb轴上产生的俯仰力矩 *)
+    Definition torquey (t : R) :=
+      (sqrt 2) / 2 * d * c_T * ((ϖ1 t)² + (ϖ2 t)² - (ϖ3 t)² - (ϖ4 t)²).
+    (** 螺旋桨在zb轴上产生的偏航力矩 *)
+    Definition torquez (t : R) :=
+      (c_M * ((ϖ1 t)² - (ϖ2 t)² + (ϖ3 t)² - (ϖ4 t)²))%R.
+    Notation τx := torquex.
+    Notation τy := torquey.
+    Notation τz := torquez.
+
+    (* 合并拉力和力矩，构造统一的控制效率模型矩阵 *)
+
+    (** 拉力和力矩构成的向量 [f;τx;τy;τz] *)
+    Definition thrustTorque (t : R) : vec 4 := l2v [thrust t; τx t; τy t; τz t].
+    (** 螺旋桨旋转角速度平方的向量 [ϖ1²;ϖ2²;ϖ3²;ϖ4²] *)
+    Definition propAngvSquare (t : R) : vec 4 :=
+      l2v [(ϖ1 t)²; (ϖ2 t)²; (ϖ3 t)²; (ϖ4 t)²].
+    (** 由螺旋桨旋转角速度计算拉力和力矩的控制效率矩阵  *)
+    Definition controlMat : smat 4 :=
+      let dcT2 := d * c_T * ((sqrt 2) / 2) in
+      l2m [[c_T; c_T; c_T; c_T];
+           [dcT2; - dcT2; - dcT2; dcT2];
+           [dcT2; dcT2; - dcT2; - dcT2];
+           [c_M; - c_M; c_M; - c_M]]%R.
+
+    (** 控制效率模型 *)
+    Lemma thrustTorque_eq : forall t, thrustTorque t = controlMat *v propAngvSquare t.
+    Proof.
+      intros. unfold thrustTorque, controlMat, propAngvSquare.
+      unfold thrust, torquex, torquey, torquez. v2e (propAngv t). veq; try lra.
+    Qed.
+  End thrust_torque.
+End XQuadThrustTorque.
+
+(** *** 多旋翼的拉力力矩模型 *)
+Module MulticopterThrustTorque.
+  Open Scope R_scope.
+  Section thrust_torque.
+    (** 无人机全局固有参数的缩写，为了简化输入 *)
+    Let c_T := Config.c_T.
+    Let c_M := Config.c_M.
+
+    (** 假设共有n个螺旋桨，按顺时针方向从i=1到i=n依次标记螺旋桨 *)
+    Variable n : nat.
+    (** 假设obxb轴与每个桨所在的支撑臂的夹角为 φ_i *)
+    Variable armAngles : vec n.
+    Notation φ := armAngles.
+    (** 假设机体中心与第i个电机的距离为d_i *)
+    Variable d : vec n.
+
+    (** 各螺旋桨的转速 (rad/s) *)
+    Variable propAngv : R -> vec n.
+    Notation ϖ := propAngv.
+
+    (** 作用在该旋翼上的总拉力 f = ∑T_i *)
+    Definition thrust (t : R) : R := vsum (fun i => c_T * (ϖ t i)²).
+
+    (* 各个桨的旋转对机体力矩的贡献
+       奇数编号的桨逆时针转，产生顺时针的反作用力，使飞行器顺时针转，力矩使z轴正转；
+       偶数编号的桨顺时针转，产生逆时针的反作用力，使飞行器逆时针转，力矩使z轴反转；
+       每个桨的升力对x轴的翻滚力矩和y轴的俯仰力矩分析：
+       1. 升力对x轴产生负力矩，力臂是 sin φ_i
+       2. 升力对y轴产生正力矩，力臂是 cos φ_i *)
+
+    (** 第 i 个 (i = 1, ..., n) 螺旋桨产生的对 zb 轴的反扭力矩的方向 *)
+    Definition delta (i : 'I_n) : R :=
+      (* 注意，fin2nat i 是从0开始，所以要 +1 才是需要的 1, ..., 2 *)
+      let id := S i in
+      if Nat.odd id then 1 else -1.
+                        
+    (** 螺旋桨在xb轴上产生的滚转力矩 *)
+    Definition torquex (t : R) : R :=
+      vsum (fun i => - (d i) * sin (φ i) * (c_T * (ϖ t i)²)).
+    (** 螺旋桨在yb轴上产生的俯仰力矩 *)
+    Definition torquey (t : R) : R :=
+      vsum (fun i => (d i) * cos (φ i) * (c_T * (ϖ t i)²)).
+    (** 螺旋桨在zb轴上产生的偏航力矩 *)
+    Definition torquez (t : R) := vsum (fun i => c_M * (delta i * (ϖ t i)²)).
+    Notation τx := torquex.
+    Notation τy := torquey.
+    Notation τz := torquez.
+
+    (* 合并拉力和力矩，构造统一的控制效率模型矩阵 *)
+
+    (** 拉力和力矩构成的向量 [f;τx;τy;τz] *)
+    Definition thrustTorque (t : R) : vec 4 := l2v [thrust t; τx t; τy t; τz t].
+    (** 螺旋桨旋转角速度平方的向量 [ϖ1²; ... ; ϖn²] *)
+    Definition propAngvSquare (t : R) : vec n := fun i => (ϖ t i)².
+    (** 由螺旋桨旋转角速度计算拉力和力矩的控制效率矩阵  *)
+    Definition controlMat : mat 4 n :=
+      fun i j => match fin2nat i with
+               | 0 => c_T
+               | 1 => - (d j) * c_T * sin (φ j)
+               | 2 => (d j) * c_T * cos (φ j)
+               | 3 => c_M * (delta j)
+               | _ => 0
+               end.
+
+    (** 控制效率模型 *)
+    Lemma thrustTorque_eq : forall t, thrustTorque t = controlMat *v propAngvSquare t.
+    Proof.
+      intros. unfold thrustTorque, controlMat, propAngvSquare.
+      unfold thrust, torquex, torquey, torquez.
+      apply veq_iff_vnth; intros.
+      rewrite vnth_l2v. rewrite vnth_mmulv. simpl.
+      destruct i. simpl. unfold vdot, Vector.vdot. unfold vsum.
+      destruct i; [f_equal | try lia].
+      destruct i; [f_equal | try lia]. apply veq_iff_vnth; intros; cbv; lra.
+      destruct i; [f_equal | try lia]. apply veq_iff_vnth; intros; cbv; lra.
+      destruct i; [f_equal | try lia]. apply veq_iff_vnth; intros; cbv; lra.
+    Qed.
+  End thrust_torque.
+End MulticopterThrustTorque.
+
+
+
+(* ######################################################################### *)
+(** * 动力单元模型 *)
+
+(* 涉及到：传递函数、拉式变换，我可能还无法形式化它们 *)
+
