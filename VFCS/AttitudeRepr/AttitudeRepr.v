@@ -22,7 +22,7 @@
 From FinMatrix Require Import MatrixR.
 
 Require Export Calculus.
-From OrienRepr Require Export Pose.
+From PoseRepr Require Export Pose.
 From FinMatrix Require Export MatrixR.
 
 Open Scope R_scope.
@@ -347,7 +347,7 @@ Section derivQuat_and_angv.
     (* 定义旋转轴 *)
     Let rotAxis (t : R) : vec 3 := vnorm (b_ω t).
     (* 定义旋转摄动 Δq *)
-    Definition deltaQuat (t : R) : quat := aa2quat (mkAA (θ t) (rotAxis t)).
+    Definition deltaQuat (t : R) : quat := aa2quat (mkAA (rotAxis t) (θ t)).
     
     (* 当Δt足够小时，Δq可简化为简单的表达式 *)
     Lemma deltaQuat_eq : forall t,
