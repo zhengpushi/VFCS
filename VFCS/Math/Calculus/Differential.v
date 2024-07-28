@@ -121,6 +121,14 @@ Qed.
 (* ======================================================================= *)
 (** ** Definitions of derivative operation 导函数  *)
 
+Section test.
+  (* 导函数的定义 *)
+  Import Coquelicot.Coquelicot.
+  Variable f : R -> R.
+  Check Derive f.    (* : R -> R *)
+End test.
+  
+
 (** derivative operator *)
 Notation "f '" :=
   (Derive f) (at level 10, left associativity, format "f '") : RFun_scope.
@@ -142,15 +150,15 @@ Section practice_models_using_derivative.
   (* 2D曲线 => 法线斜率 *)
   Let k' (f : R -> R) x := (- (1 / f ' x)).
   (* 路程 => 速度 *)
-  Let v (s : R -> R) t := s ' t.
-  (* 速度 => 加速度 *)
-  Let a (v : R -> R) t := v ' t.
+  Let v (s : R -> R) : R -> R := fun t => s ' t.
+  (* 路程 => 加速度 *)
+  Let a (v : R -> R) : R -> R := fun t => v '' t.
   (* 旋转角度 => 角速度 *)
   Let ω (θ : R -> R) t := θ ' t.
   (* 电量 => 电流强度 *)
   Let I (Q : R -> R) t := Q ' t.
   (* 人口数量 => 人口增长率 *)
-  Let v1 (P : R -> R) t := P ' t.
+  Let v1 (P : R -> R) : R -> R := fun t => P ' t.
 
 End practice_models_using_derivative.
 

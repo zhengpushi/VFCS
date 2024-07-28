@@ -37,8 +37,8 @@ Section example.
   (* 计算其表达式 *)
   (* Eval cbv in fun t => v2l (v t). *)
   
-  (* 验证位置矢量和速度矢量的等式 *)
-  Goal forall t, (vderiv p) t = l2v [px ' t; py ' t; pz ' t].
+  (* 验证度矢量的定义 *)
+  Goal forall t, v t = l2v [px ' t; py ' t; pz ' t].
   Proof. intros. veq. Qed.
 End example.
 
@@ -49,7 +49,7 @@ Proof.
 Qed.
 
 Lemma vderiv_scal : forall n (c : R) (u : R -> vec n),
-    vderiv (fun t => c s* u t) = fun t => c s* (vderiv u) t.
+    vderiv (fun t => c s* u t) = fun t => c s* ((vderiv u) t).
 Proof.
   intros. unfold vderiv. extensionality t. extensionality i.
   replace (fun t : R => (c s* u t) i) with (fun x : R => c * (u x i)); auto.
@@ -135,4 +135,31 @@ Lemma vderiv_mmulv : forall {r c} (A : R -> mat r c) (a : R -> vec c),
       fun t => (A t *v (vderiv a) t + mderiv A t *v a t)%V.
 Proof.
   intros. unfold mderiv, vderiv. extensionality t.
+  extensionality i.
+
+  (* 
+     步骤 1：定义函数和导数
+     定义函数 F(t)=A(t)v(t)F(t)=A(t)v(t)。我们的目标是求 F(t)F(t) 的导数 F′(t)F′(t)。
+
+     步骤 2：应用乘积法则
+     由于 F(t)F(t) 是两个函数的乘积，我们可以使用乘积法则：
+     F′(t)=ddt(A(t)v(t))=A′(t)v(t)+A(t)v′(t)F′(t)=dtd​(A(t)v(t))=A′(t)v(t)+A(t)v′(t)
+
+     步骤 3：展开矩阵和向量乘法
+     将 A(t)A(t) 和 v(t)v(t) 视为矩阵和向量乘积的元素展开：
+     F′(t)=[∑j=1ndAij(t)dtvj(t)]+[∑k=1nAik(t)dvk(t)dt]F′(t)=[∑j=1n​dtdAij​(t)​vj​(t)]+[∑k=1n​Aik​(t)dtdvk​(t)​]
+
+     这里，Aij(t)Aij​(t) 表示矩阵 A(t)A(t) 中第 ii 行第 jj 列的元素，vj(t)vj​(t) 是向量 v(t)v(t) 的第 jj 个元素。
+
+     步骤 4：重新排列项
+     注意到上式中的两个求和可以交换，因为它们是线性操作。这允许我们将导数项重新排列，以显示它们是如何组合的。
+
+     步骤 5：证明等价性
+     通过重新排列项，我们可以看到 F′(t)F′(t) 的表达式与我们要证明的形式相同。这完成了证明。
+ *)
+  (* unfold Derive. *)
+  (* simpl. *)
+  (* cbn. *)
+  (* Check ((fun x : R => (A x *v a x) i)') t. *)
+  
 Admitted.
