@@ -22,7 +22,8 @@
 From FinMatrix Require Import MatrixR.
 
 Require Export Calculus.
-From PoseRepr Require Export Pose.
+From OrienRepr Require Export OrienRepr.
+(* From PoseRepr Require Export Pose. *)
 From FinMatrix Require Export MatrixR.
 
 Open Scope R_scope.
